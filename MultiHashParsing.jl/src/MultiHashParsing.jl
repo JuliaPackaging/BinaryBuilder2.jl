@@ -1,3 +1,5 @@
+module MultiHashParsing
+
 using SHA
 
 export MultiHash
@@ -14,8 +16,12 @@ abstract type MultiHash; end
 hash_prefix(::T) where {T <: MultiHash} = hash_prefix(T)
 hash_length(::T) where {T <: MultiHash} = hash_length(T)
 Base.string(hash::MultiHash) = string(hash_prefix(hash), ":", bytes2hex(hash.data))
+Base.bytes2hex(hash::MultiHash) = bytes2hex(hash.data)
 Base.:(==)(hash::MultiHash, data::Union{Vector{UInt8}, NTuple{N, UInt8}}) where {N} = all(hash.data .== data)
+Base.:(==)(data::Union{Vector{UInt8}, NTuple{N, UInt8}}, hash::MultiHash) where {N} = hash == data
 Base.show(io::IO, hash::MultiHash) = println(io, string(hash))
+# If we already have a `MultiHash`, just return that back
+MultiHash(hash::T) where {T <: MultiHash} = hash
 
 const MULTIHASH_TYPES = Type{<:MultiHash}[]
 
@@ -49,18 +55,20 @@ macro define_multi_hash(prefix, len, func)
             end
             return $T(tuple(data...))
         end
+        $T(data::String) = $T(hex2bytes(data))
 
-        function verify(hash::$T, input)
-            return hash == $(esc(func))(input)
-        end
+        # Create trivial identity constructors
+        $T(hash::$T) = hash
 
+        $(esc(:hash_like))(::$T, input) = $T($(esc(func))(input))
+        $(esc(:verify))(hash::$T, input) = hash == hash_like(hash, input)
         push!(MULTIHASH_TYPES, $T)
     end
 end
 
 # Use that macro to define our MultiHash sub-types
 @define_multi_hash("sha1", 20, SHA.sha1)
-@define_multi_hash("sha256", 32, SHA.sha25)
+@define_multi_hash("sha256", 32, SHA.sha256)
 
 function Base.parse(::Type{T}, hash::AbstractString) where {T <: MultiHash}
     if length(hash) != hash_length(T)*2
@@ -98,3 +106,5 @@ function MultiHash(hash::AbstractString)
     end
     return MultiHash(hex2bytes(hash))
 end
+
+end # module MultiHashParsing

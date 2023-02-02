@@ -1,22 +1,21 @@
-using Test, BB2, SHA
+using Test, MultiHashParsing, SHA
 
 @testset "MultiHash" begin
-    using BB2: hash_length, hash_prefix, MULTIHASH_TYPES
+    using MultiHashParsing: hash_length, hash_prefix, MULTIHASH_TYPES, hash_like, verify
 
     HASH_TEST_HASHES = Dict(
-        SHA1Hash => sha1("BB2"),
-        SHA256Hash => sha256("BB2"),
+        SHA1Hash => sha1("MultiHashParsing"),
+        SHA256Hash => sha256("MultiHashParsing"),
     )
     HASH_TEST_SETS = Tuple[]
     for H in MULTIHASH_TYPES
-        h_str = bytes2hex(HASH_TEST_HASHES[H])
-        append!(HASH_TEST_SETS, [
-            (H, HASH_TEST_HASHES[H], hash_length(H), hash_prefix(H), h_str),
-            (H, HASH_TEST_HASHES[H], hash_length(H), hash_prefix(H), uppercase(h_str)),
-            (H, HASH_TEST_HASHES[H], hash_length(H), hash_prefix(H), "$(hash_prefix(H)):$(h_str)"),
-            (H, HASH_TEST_HASHES[H], hash_length(H), hash_prefix(H), hex2bytes(h_str)),
-            (H, HASH_TEST_HASHES[H], hash_length(H), hash_prefix(H), tuple(hex2bytes(h_str)...)),
-        ])
+        push!(HASH_TEST_SETS,
+            (H,
+            HASH_TEST_HASHES[H],
+            hash_length(H),
+            hash_prefix(H),
+            bytes2hex(HASH_TEST_HASHES[H])),
+        )
     end
 
     # Test that fully-specified parsing works correctly:
@@ -27,6 +26,16 @@ using Test, BB2, SHA
         @test hash_prefix(h) == prefix
         @test startswith(string(h), prefix)
         @test h == h_bytes
+        @test bytes2hex(h) == lowercase(h_str)
+        @test hash_like(h, "MultiHashParsing") == h
+        @test verify(h, "MultiHashParsing")
+
+        @test MultiHash(h) == h
+        @test MultiHash(uppercase(h_str)) == h
+        @test MultiHash(tuple(hex2bytes(h_str)...)) == h
+        @test MultiHash("$(prefix):$(h_str)") == h
+        @test MultiHash("$(prefix):$(uppercase(h_str))") == h
+        @test MultiHash(hex2bytes(h_str)) == h
     end
 
     # Test that attempting to feed in bad hashes doesn't work:

@@ -1,12 +1,9 @@
-using LibGit2, Scratch, Preferences, SHA
+using LibGit2, Scratch, Downloads, SHA
 
 export ArchiveSource, FileSource, GitSource, DirectorySource
 
 """
 An `AbstractSource` is something used as source to build a package.
-
-TODO:
- - document scratch space and preference setting
 
 Concrete subtypes of `AbstractSource` are:
 
@@ -15,77 +12,257 @@ Concrete subtypes of `AbstractSource` are:
 * [`GitSource`](@ref): a remote Git repository to clone;
 * [`DirectorySource`](@ref): a local directory to mount.
 """
-abstract type AbstractSource end
+abstract type AbstractSource; end
 
 
 """
 All AbstractSource objects must support the following operations:
 
-* download(::AbstractSource; cache_dir::String)
-* unpack(::AbstractSource, prefix::String; cache_dir::String)
+* download(::AbstractSource)
+* deploy(::AbstractSource, prefix::String)
 """
 
-
 """
-    ArchiveSource(url::String, hash; unpack_target::String = "")
+    ArchiveSource(url, hash; target = "")
 
-Specify a remote archive in one of the supported archive formats (e.g., TAR or
-ZIP balls) to be downloaded from the Internet from `url`.  `hash` is the
-64-character SHA256 checksum of the file.
+Specify a remote archive in one of the supported archive formats (e.g.,
+compressed tarballs or zip balls) to be downloaded from the Internet
+from `url`.  `hash` is a `MultiHash`-compatible archive integrity hash,
+typically a 64-character hexadecimal SHA256 hash.
 
 In the builder environment, the archive will be automatically unpacked to
 `\${WORKSPACE}/srcdir`, or in its subdirectory pointed to by the optional
-keyword `unpack_target`, if provided.
+keyword `target`, if provided.
 """
 struct ArchiveSource <: AbstractSource
     url::String
     hash::MultiHash
-    unpack_target::String
+    target::String
 end
-ArchiveSource(url::String, hash::String; unpack_target::String = "") =
-    ArchiveSource(url, hash, unpack_target)
 
-# List of optionally compressed TAR archives that we know how to deal with
-const tar_extensions = [".tar", ".tar.gz", ".tgz", ".tar.bz", ".tar.bz2",
-                        ".tar.xz", ".tar.Z", ".txz", ".tar.zst"]
-# List of general archives that we know about
-const archive_extensions = vcat(tar_extensions, ".zip")
+function noabspath!(target)
+    if isabspath(target)
+        throw(ArgumentError("Target '$(target)' is an absolute path!"))
+    end
+end
+
+function ArchiveSource(url, hash; target = "")
+    noabspath!(target)
+    return ArchiveSource(
+        string(url),
+        MultiHash(hash),
+        string(target)
+    )
+end
+
 
 """
-    FileSource(url::String, hash::String; filename::String = basename(url))
+    FileSource(url, hash; target = basename(url))
 
 Specify a remote file to be downloaded from the Internet from `url`.  `hash` is
-the 64-character SHA256 checksum of the file.
+a `MultiHash`-compatible file integrity hash, typically a 64-character
+hexadecimal SHA256 hash.
 
-In the builder environment, the file will be saved under `\${WORKSPACE}/srcdir`
-with the same name as the basename of the originating URL, unless the the
-keyword argument `filename` is specified.
+In the builder environment, the file will be automatically deployed to
+`\${WORKSPACE}/srcdir/\$(target)`, where `basename(url)` is 
 """
+
 struct FileSource <: AbstractSource
     url::String
-    hash::String
-    filename::String
+    hash::MultiHash
+    target::String
 end
-FileSource(url::String, hash::String; filename::String = basename(url)) =
-    FileSource(url, hash, filename)
+
+function FileSource(url, hash; target = basename(url))
+    noabspath!(target)
+    return FileSource(
+        string(url),
+        MultiHash(hash),
+        string(target),
+    )
+end
+
+# We deal with these together so often, might as well make this a thing
+const FileArchiveSource = Union{FileSource,ArchiveSource}
+
 
 """
-    GitSource(url::String, hash::String; unpack_target::String = "")
+    download_cache_path(fas::FileArchiveSource, download_cache::String)
 
-Specify a remote Git repository to clone form `url`.  `hash` is the 40-character
-SHA1 revision to checkout after cloning.
+Returns the full path to the file that will be written to in `download(as)`
+"""
+function download_cache_path(fas::FileArchiveSource, download_cache::String = source_download_cache())
+    return joinpath(download_cache, bytes2hex(fas.hash))
+end
 
-The repository will be cloned in `\${WORKSPACE}/srcdir`, or in its subdirectory
-pointed to by the optional keyword `unpack_target`, if provided.
+using MultiHashParsing: hash_like
+function verify(fas::FileArchiveSource, download_cache::String = source_download_cache())
+    # If the file does not exist at all, fail verification
+    source_path = download_cache_path(fas, download_cache)
+    if !isfile(source_path)
+        @debug("Verification fast-fail; file nonexistent", source=fas, source_path)
+        return false
+    end
+
+    # This is a lovely variable name
+    hash_cache_path = string(source_path, ".", MultiHashParsing.hash_prefix(fas.hash))
+
+    # If there is no cached hash file or it is stale, re-hash the file here
+    # Note that `stat()` of a nonexistant file returns `0`.
+    if stat(hash_cache_path).mtime < stat(source_path).mtime
+        check_hash = open(io -> hash_like(fas.hash, io), source_path; read=true)
+        if check_hash != fas.hash 
+            # Verification failed!
+            msg  = "Hash Mismatch for $(fas)\n"
+            msg *= "  Expected:   $(fas.hash)\n"
+            msg *= "  Calculated: $(check_hash)\n"
+            throw(ArgumentError(msg))
+        end
+
+        # If verification passes, touch the cache path and continue
+        touch(hash_cache_path)
+    end
+
+    # Otherwise, the hash cache file exists (and is named as the hash, so we know the content
+    # of the hash last time it was created), so return true!
+    @debug("Verification pass", source=fas, source_path, hash_cache_path)
+    return true
+end
+
+function download(fas::FileArchiveSource)
+    # Only download if verification fails
+    download_cache = source_download_cache()
+    if !verify(fas, download_cache)
+        download_target = download_cache_path(fas, download_cache)
+
+        # Ensure the directory that should hold this source exists, otherwise `download()` fails
+        mkpath(dirname(download_target))
+        Downloads.download(fas.url, download_target)
+
+        # If we still don't verify properly, throw an error
+        if !verify(fas, download_cache)
+            throw(ArgumentError("Invalid hash"))
+        end
+    end
+end
+
+function deploy(as::ArchiveSource, prefix::String)
+    download_cache = source_download_cache()
+    if !verify(as, download_cache)
+        throw(InvalidStateException("You must `download()` before you `deploy()` an `ArchiveSource`", :NotDownloaded))
+    end
+
+    # We unpack the archive into the desired location
+    unarchive(download_cache_path(as, download_cache), joinpath(prefix, as.target))
+end
+
+function deploy(fs::FileSource, prefix::String)
+    download_cache = source_download_cache()
+    if !verify(fs, download_cache)
+        throw(InvalidStateException("You must `download()` before you `deploy()` a `FileSource`", :NotDownloaded))
+    end
+
+    # We just copy the file into the desired location
+    target_path = joinpath(prefix, fs.target)
+    mkpath(dirname(target_path))
+    cp(download_cache_path(fs, download_cache), target_path)
+end
+
+"""
+    GitSource(url, hash; target = basename(url))
+
+Specify a remote Git repository to clone down from `url`. `hash` is a SHA1Hash,
+typically a 40-character hexadecimal string.
+
+The repository will be cloned in `\${WORKSPACE}/srcdir`, with a directory name
+equal to the basename of the `url`, or in some other directory pointed to by
+the optional keyword argument `target`.
 """
 struct GitSource <: AbstractSource
     url::String
-    hash::String
-    unpack_target::String
+    hash::SHA1Hash
+    target::String
 end
-GitSource(url::String, hash::String; unpack_target::String = "") =
-    GitSource(url, hash, unpack_target)
 
+function GitSource(url, hash; target = basename(url))
+    noabspath!(target)
+    return GitSource(
+        string(url),
+        SHA1Hash(hash),
+        string(target)
+    )
+end
+
+"""
+    download_cache_path(gs::GitSource, download_cache::String)
+
+Returns the full path to the local clone that will be written to in `download(gs)`
+"""
+function download_cache_path(gs::GitSource, download_cache::String = source_download_cache())
+    return joinpath(download_cache, bytes2hex(sha256(gs.url)))
+end
+
+function verify(gs::GitSource, download_cache::String = source_download_cache())
+    repo_path = download_cache_path(gs, download_cache)
+    if !isdir(repo_path)
+        @debug("Verification fast-fail; repository nonexistent", source=gs, repo_path)
+        return false
+    end
+
+    commit = bytes2hex(gs.hash)
+    commit_exists = LibGit2.with(LibGit2.GitRepo(repo_path)) do repo
+        LibGit2.iscommit(commit, repo)
+    end
+
+    if !commit_exists
+        @debug("Commit does not exist", source=gs, repo_path, commit)
+        return false
+    else
+        @debug("Commit found", source=gs, repo_path, commit)
+        return true
+    end
+end
+
+function download(gs::GitSource)
+    download_cache = source_download_cache()
+    repo_path = download_cache_path(gs, download_cache)
+    if isdir(repo_path)
+        # It's a little awkard to re-use `verify()` here; we just inline the pieces we need
+        @debug("Using cached git repository", gs, repo_path)
+        LibGit2.with(LibGit2.GitRepo(repo_path)) do repo
+            if !LibGit2.iscommit(bytes2hex(gs.hash), repo)
+                @debug("Fetching repository to try and find commit", gs, repo_path)
+                LibGit2.fetch(repo)
+            end
+        end
+    else
+        @debug("Cloning git repository", gs, repo_path)
+        LibGit2.clone(gs.url, repo_path; isbare=true)
+    end
+
+    # If we can't verify after cloning/fetching, we have the wrong hash
+    if !verify(gs, download_cache)
+        throw(ArgumentError("Commit $(gs.hash) not found in GitSource '$(gs.url)'"))
+    end
+    return repo_path
+end
+
+function deploy(gs::GitSource, prefix::String)
+    download_cache = source_download_cache()
+    if !verify(gs, download_cache)
+        throw(InvalidStateException("You must `download()` before you `deploy()` a `GitSource`", :NotDownloaded))
+    end
+
+    # We check the git repository out into the given target
+    repo_path = download_cache_path(gs, download_cache)
+    target_path = joinpath(prefix, gs.target)
+    mkpath(dirname(target_path))
+    LibGit2.with(LibGit2.clone(repo_path, target_path)) do repo
+        LibGit2.checkout!(repo, bytes2hex(gs.hash))
+    end
+end
+
+#=
 """
     DirectorySource(path::String; target::String = basename(path), follow_symlinks=false)
 
@@ -136,7 +313,7 @@ struct PatchSource
 end
 
 function download_source(source::T; verbose::Bool = false, downloads_dir = storage_dir("downloads")) where {T<:Union{ArchiveSource,FileSource}}
-    gettarget(s::ArchiveSource) = s.unpack_target
+    gettarget(s::ArchiveSource) = s.target
     gettarget(s::FileSource) = s.filename
     if isfile(source.url)
         # Immediately abspath() a src_url so we don't lose track of
@@ -185,7 +362,7 @@ end
 
 function download_source(source::GitSource; kwargs...)
     src_path = cached_git_clone(source.url; hash_to_check=source.hash, kwargs...)
-    return SetupSource{GitSource}(src_path, source.hash, source.unpack_target)
+    return SetupSource{GitSource}(src_path, source.hash, source.target)
 end
 
 function download_source(source::DirectorySource; verbose::Bool = false)
@@ -249,3 +426,4 @@ function coerce_source(source::Pair)
         return FileSource(src_url, src_hash)
     end
 end
+=#

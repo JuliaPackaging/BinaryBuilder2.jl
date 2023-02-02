@@ -1,0 +1,9 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.9.0-beta3"
+manifest_format = "2.0"
+project_hash = "6a2bc76e9b3bd74644517927c755c3c99df132b2"
+
+[[deps.SHA]]
+uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+version = "0.7.0"

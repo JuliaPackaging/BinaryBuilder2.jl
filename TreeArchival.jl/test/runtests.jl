@@ -1,6 +1,6 @@
-using BB2, Test, Pkg
+using TreeArchival, Test, Pkg
 
-@testset "Compressors" begin
+@testset "TreeArchival" begin
     mktempdir() do src_dir
         # Generate sample file tree
         open(joinpath(src_dir, "hello"), write=true) do io
@@ -18,23 +18,23 @@ using BB2, Test, Pkg
         src_treehash = Pkg.GitTools.tree_hash(src_dir)
 
         # For each compressor, create an archive of that type, then decompress it
-        for compressor in keys(BB2.Compressors.compressor_magic_bytes)
+        for compressor in keys(TreeArchival.compressor_magic_bytes)
+            # Skip `.zip`, we refuse to create these
+            if compressor == "zip"
+                continue
+            end
+
             mktempdir() do archive_dir
-                archive_path = joinpath(archive_dir, "test.archive")
-                BB2.Compressors.compress(src_dir, archive_path, compressor)
+                archive_path = joinpath(archive_dir, "test.$(compressor)")
+                archive(src_dir, archive_path, compressor)
                 @test isfile(archive_path)
 
+                # Test that we can in-situ treehash:
+                @test treehash(archive_path) == src_treehash
+
+                # Ensure that we unpack properly
                 mktempdir() do out_dir
-                    BB2.Compressors.decompress(archive_path, out_dir)
-
-                    if compressor == "zip"
-                        # If we're dealing with a `zip` file, we need to set the permissions since
-                        # they're not saved and can be randomized by `umask`, etc...
-                        chmod(joinpath(out_dir, "hello"), 0o644)
-                        chmod(joinpath(out_dir, "sub", "zero"), 0o644)
-                    end
-
-                    # Ensure that we roundtrip properly
+                    unarchive(archive_path, out_dir)
                     @test Pkg.GitTools.tree_hash(out_dir) == src_treehash
                 end
             end

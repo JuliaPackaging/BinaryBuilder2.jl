@@ -5,17 +5,19 @@ version = "2.0.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
+LibGit2 = "76f85450-5226-5b5a-8eaa-529ad045b433"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Sandbox = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-Tar_jll = "9b64493d-8859-5bf3-93d7-7c32dd38186f"
-Zstd_jll = "3161d3a3-bdf6-5164-811a-617609db77b4"
-p7zip_jll = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
+TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
 julia = "1.9"
