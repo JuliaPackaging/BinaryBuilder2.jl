@@ -15,9 +15,11 @@ Concrete subtypes of `AbstractSource` are:
 abstract type AbstractSource; end
 
 
+
 """
 All AbstractSource objects must support the following operations:
 
+* verify(::AbstractSource)
 * download(::AbstractSource)
 * deploy(::AbstractSource, prefix::String)
 """
@@ -168,6 +170,8 @@ function deploy(fs::FileSource, prefix::String)
     cp(download_cache_path(fs, download_cache), target_path)
 end
 
+
+
 """
     GitSource(url, hash; target = basename(url))
 
@@ -262,28 +266,62 @@ function deploy(gs::GitSource, prefix::String)
     end
 end
 
-#=
+
 """
-    DirectorySource(path::String; target::String = basename(path), follow_symlinks=false)
+    DirectorySource(path; target = "", follow_symlinks=false)
 
 Specify a local directory to mount from `path`.
 
-The content of the directory will be mounted in `\${WORKSPACE}/srcdir`, or in
-its subdirectory pointed to by the optional keyword `target`, if provided.
-Symbolic links are replaced by a copy of the target when `follow_symlinks` is
-`true`.
+The contents of the directory will be placed in `\${WORKSPACE}/srcdir`, unless
+the optional keyword argument `target` gives a different subdirectory to place
+the contents within. Symbolic links are replaced by a copy of their target when
+`follow_symlinks` is `true`, allowing for source directories that contain
+symlinks to external files, such as when sharing patchsets among a common build
+recipe in Yggdrasil.
 """
-struct DirectorySource <: AbstractSource
-    path::String
+struct DirectorySource
+    source::String
     target::String
     follow_symlinks::Bool
 end
-# When setting up the source, by default we won't follow symlinks.  However,
-# there are cases where this is necessary, for example when we have symlink
-# patchsets across multiple versions of GCC, etc...
-DirectorySource(path::String; target::String = "", follow_symlinks::Bool=false) =
-    DirectorySource(path, target, follow_symlinks)
 
+
+function DirectorySource(source; target = "",
+                                 follow_symlinks=false)
+    noabspath!(target)
+
+    # Only allow real directory, and immediately `abspath()` them
+    if !isdir(source)
+        throw(ArgumentError("Directory does not exist: '$(source)'"))
+    end
+    source = abspath(source)
+    return DirectorySource(
+        string(source),
+        string(target),
+        Bool(follow_symlinks),
+    )
+end
+
+# This guy is pretty simple
+verify(ds::DirectorySource) = true
+download(ds::DirectorySource) = nothing
+function deploy(ds::DirectorySource, prefix::String)
+    # We want to be able to merge the contents of `ds.source` into `prefix`,
+    # so we can't use a top-level `cp()`, sadly.
+    target_dir = joinpath(prefix, ds.target)
+    mkpath(target_dir)
+
+    for f in readdir(ds.source)
+        # Copy the content of the source directory to the destination
+        cp(joinpath(ds.source, f),
+           joinpath(target_dir, basename(f));
+           follow_symlinks=ds.follow_symlinks,
+        )
+    end
+end
+
+
+#=
 # This is not meant to be used as source in the `build_tarballs.jl` scripts but
 # only to set up the source in the workspace.
 struct SetupSource{T<:AbstractSource}
@@ -312,58 +350,6 @@ struct PatchSource
     patch::String
 end
 
-function download_source(source::T; verbose::Bool = false, downloads_dir = storage_dir("downloads")) where {T<:Union{ArchiveSource,FileSource}}
-    gettarget(s::ArchiveSource) = s.target
-    gettarget(s::FileSource) = s.filename
-    if isfile(source.url)
-        # Immediately abspath() a src_url so we don't lose track of
-        # sources given to us with a relative path
-        src_path = abspath(source.url)
-
-        # And if this is a locally-sourced tarball, just verify
-        verify(src_path, source.hash) || error("Verification failed")
-    else
-        # Otherwise, download and verify
-        src_path = joinpath(downloads_dir, string(source.hash, "-", basename(source.url)))
-        download_verify(source.url, source.hash, src_path)
-    end
-    return SetupSource{T}(src_path, source.hash, gettarget(source))
-end
-
-function cached_git_clone(url::String;
-                          hash_to_check::Union{Nothing, String} = nothing,
-                          downloads_dir::String = storage_dir("downloads"),
-                          verbose::Bool = false,
-                          )
-    repo_path = joinpath(downloads_dir, "clones", string(basename(url), "-", bytes2hex(sha256(url))))
-    if isdir(repo_path)
-        if verbose
-            @info("Using cached git repository", url, repo_path)
-        end
-        # If we didn't just mercilessly obliterate the cached git repo, use it!
-        LibGit2.with(LibGit2.GitRepo(repo_path)) do repo
-            # In some cases, we know the hash we're looking for, so only fetch() if
-            # this git repository doesn't contain the hash we're seeking
-            # this is not only faster, it avoids race conditions when we have
-            # multiple builders on the same machine all fetching at once.
-            if hash_to_check === nothing || !LibGit2.iscommit(hash_to_check, repo)
-                LibGit2.fetch(repo)
-            end
-        end
-    else
-        if verbose
-            @info("Cloning git repository", url, repo_path)
-        end
-        # If there is no repo_path yet, clone it down into a bare repository
-        LibGit2.clone(url, repo_path; isbare=true)
-    end
-    return repo_path
-end
-
-function download_source(source::GitSource; kwargs...)
-    src_path = cached_git_clone(source.url; hash_to_check=source.hash, kwargs...)
-    return SetupSource{GitSource}(src_path, source.hash, source.target)
-end
 
 function download_source(source::DirectorySource; verbose::Bool = false)
     if !isdir(source.path)

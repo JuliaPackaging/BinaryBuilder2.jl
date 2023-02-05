@@ -205,14 +205,8 @@ struct BuildConfig
     sources::Vector{<:AbstractSource}
 
     # Dependencies that must be installed in the build environment.
-    # Contains host and target dependencies.
+    # Contains host dependencies, target dependencies, and cross-dependencies (e.g. compilers).
     dependencies::Vector{<:AbstractDependency}
-
-    # The compiler packages to mount within the rootfs.  In a future update, this will be
-    # merged into `dependencies`, once we are properly constructing our build environment
-    # through things like `GCC_jll` and `Clang_jll`, instead of special compiler shards.
-    compilers::Vector{Symbol}
-    shards::Vector{BinaryBuilderBase.CompilerShard}
 
     # Flags that influence the build environment and the generated compiler wrappers
     allow_unsafe_flags::Bool
@@ -225,7 +219,7 @@ struct BuildConfig
     # (possibly not-fully-concretized) as well as the fully-concretized
     # due to compiler ABI constraints.
     target::AbstractPlatform
-    concrete_target::AbstractPlatform
+    #concrete_target::AbstractPlatform
 
     function BuildConfig(src_name::AbstractString,
                      src_version::VersionNumber,

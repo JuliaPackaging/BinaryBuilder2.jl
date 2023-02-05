@@ -164,5 +164,47 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             # SHA256 hashes not allowed (yet)
             @test_throws ArgumentError GitSource(url, sha256("foo"))
         end
+
+        @testset "DirectorySource" begin
+            mktempdir() do build_dir; cd(build_dir) do
+                # Generate a directory to use as our source
+                mkdir("src")
+                open(joinpath("src", "foo"); write=true) do io
+                    println(io, "I am foo!")
+                end
+                symlink("foo", joinpath("src", "link_to_foo"))
+
+                ds = DirectorySource("src")
+                @test ds.source == abspath("src")
+                @test ds.target == ""
+                @test ds.follow_symlinks == false
+
+                # Test that these can be run, even though they don't do anything
+                @test verify(ds)
+                download(ds)
+
+                # Deploy works
+                mktempdir() do prefix
+                    deploy(ds, prefix)
+                    @test isfile(joinpath(prefix, "foo"))
+                    @test islink(joinpath(prefix, "link_to_foo"))
+                end
+
+                # target and follow_symlinks work:
+                ds = DirectorySource("src"; target="bar/baz", follow_symlinks=true)
+                @test ds.target == "bar/baz"
+                @test ds.follow_symlinks == true
+
+                mktempdir() do prefix
+                    deploy(ds, prefix)
+                    @test isfile(joinpath(prefix, ds.target, "foo"))
+                    @test !islink(joinpath(prefix, ds.target, "link_to_foo"))
+                    @test isfile(joinpath(prefix, ds.target, "link_to_foo"))
+                end
+
+                # Invalid source directories throw
+                @test_throws ArgumentError DirectorySource("blah")
+            end; end
+        end
     end
 end
