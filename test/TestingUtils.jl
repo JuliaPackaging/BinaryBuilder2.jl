@@ -56,6 +56,18 @@ function setmtime(path::AbstractString, mtime::Real, atime::Real=mtime)
 end
 export setmtime
 
+
+# TODO: Eliminate these, they should come from BB2 itself
+const exext = Sys.iswindows() ? ".exe" : ""
+export exext
+
+const soext = Sys.iswindows() ? ".dll" :
+              Sys.isapple() ? ".dylib" : ".so"
+export soext
+
+const binlib = Sys.iswindows() ? "bin" : "lib"
+export binlib
+
 end # module TestingUtils
 
 using .TestingUtils

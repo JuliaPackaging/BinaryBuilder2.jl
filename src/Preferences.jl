@@ -11,7 +11,7 @@ using Scratch, Preferences
 # Used by `with_storage_locations()` in the test suite
 const storage_locations = Dict{Symbol, Function}()
 
-macro define_storage_location(name)
+macro define_storage_location(name, default)
     refvar = Symbol(string("_", name))
     return quote
         # A caching variable so that we don't have to lookup preferences and scratch
@@ -21,7 +21,7 @@ macro define_storage_location(name)
         Base.@__doc__ function $(esc(name))()
             global $(esc(refvar))
             if !isassigned($(esc(refvar)))
-                $(esc(refvar))[] = @load_preference($(string(name)), @get_scratch!($(string(name))))
+                $(esc(refvar))[] = @load_preference($(string(name)), $(esc(default)))
             end
             return $(esc(refvar))[]
         end
@@ -43,8 +43,16 @@ Returns the path of the directory used to store downloaded sources, e.g. where
 `AbstractSource`s get stored when you call `download()`.  This can be set
 through the `source_download_cache` preference.
 """
-@define_storage_location source_download_cache
+@define_storage_location source_download_cache @get_scratch!("source_download_cache")
 
+"""
+    dependency_depot()
+
+Returns the path of the depot to be used to store downloaded dependencies, e.g.
+where `JLLDependency`s get stored when you call `download()`.  This can be set
+throug the `dependency_depot` preference.
+"""
+@define_storage_location dependency_depot Pkg.depots1()
 
 """
     ccache_cache()
@@ -52,5 +60,5 @@ through the `source_download_cache` preference.
 Returns the path of the directory used to store `ccache` state.  This can be
 set through the `ccache_cache` preference.
 """
-@define_storage_location ccache_cache
+@define_storage_location ccache_cache @get_scratch!("ccache_cache")
 

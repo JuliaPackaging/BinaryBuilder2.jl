@@ -5,6 +5,7 @@ using TreeArchival, MultiHashParsing
 include("PlatformExtensions.jl")
 include("Sources.jl")
 include("Preferences.jl")
+include("Dependencies.jl")
 #include("BuildMeta.jl")
 
 
