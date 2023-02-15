@@ -4,7 +4,7 @@ if !isdefined(Main, :TestingUtils)
     include("TestingUtils.jl")
 end
 
-using BB2: verify, download, download_cache_path, source_download_cache, deploy
+using BB2: verify, prepare, deploy, download_cache_path, source_download_cache
 @testset "Sources" begin
     with_temp_storage_locations() do
         # A nice small download
@@ -26,7 +26,7 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             @test_throws InvalidStateException deploy(as, @__DIR__)
 
             # Download succeeds
-            download(as)
+            prepare(as)
             @test isfile(download_path)
             @test verify(as)
 
@@ -60,7 +60,7 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             as = ArchiveSource(url, hash; target="foo/bar")
             @test as.target == "foo/bar"
 
-            # We don't need to download() a second time, it's already good:
+            # We don't need to prepare() a second time, it's already good:
             @test verify(as)
             mktempdir() do prefix
                 deploy(as, prefix)
@@ -88,7 +88,7 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             rm(download_path)
             @test !verify(fs)
             @test_throws InvalidStateException deploy(fs, @__DIR__)
-            download(fs)
+            prepare(fs)
             @test isfile(download_path)
             @test verify(fs)
 
@@ -128,7 +128,7 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             @test_throws InvalidStateException deploy(gs, @__DIR__)
 
             # Download succeeds
-            download(gs)
+            prepare(gs)
             @test isdir(clone_path)
             @test verify(gs)
 
@@ -142,7 +142,7 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
             # Invalid commit throws
             gs = GitSource(url, sha1("not a real commit sha"))
             @test !verify(gs)
-            @test_throws ArgumentError download(gs)
+            @test_throws ArgumentError prepare(gs)
 
             # Commits we know we already have verify immediately
             gs = GitSource(url, prev_hash)
@@ -179,9 +179,8 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
                 @test ds.target == ""
                 @test ds.follow_symlinks == false
 
-                # Test that these can be run, even though they don't do anything
-                @test verify(ds)
-                download(ds)
+                # Test that this can be run, even though they don't do anything
+                prepare(ds)
 
                 # Deploy works
                 mktempdir() do prefix
@@ -205,6 +204,60 @@ using BB2: verify, download, download_cache_path, source_download_cache, deploy
                 # Invalid source directories throw
                 @test_throws ArgumentError DirectorySource("blah")
             end; end
+        end
+        @testset "JLLSource" begin
+            bzip2_dep = JLLSource("Bzip2_jll", HostPlatform())
+            zstd_dep = JLLSource("Zstd_jll", HostPlatform())
+            @test bzip2_dep.package.name == "Bzip2_jll"
+            @test zstd_dep.package.name == "Zstd_jll"
+            @test bzip2_dep.subprefix == ""
+            @test zstd_dep.subprefix == ""
+            @test isempty(bzip2_dep.artifact_paths)
+            @test isempty(zstd_dep.artifact_paths)
+
+            # Download the files, check that they have artifact paths now:
+            prepare([bzip2_dep, zstd_dep])
+            @test !isempty(bzip2_dep.artifact_paths)
+            @test !isempty(zstd_dep.artifact_paths)
+            depot_artifacts_dir = joinpath(source_download_cache(), "jllsource_depot", "artifacts")
+            @test all(startswith.(bzip2_dep.artifact_paths, Ref(depot_artifacts_dir)))
+            @test all(startswith.(zstd_dep.artifact_paths, Ref(depot_artifacts_dir)))
+
+            mktempdir() do prefix
+                deploy([bzip2_dep, zstd_dep], prefix)
+                @test isfile(joinpath(prefix, "bin", "zstd$(exext)"))
+                @test isfile(joinpath(prefix, binlib, "libbz2$(soext)"))
+            end
+
+            # Test that subprefix works
+            ccache_dep = JLLSource("Ccache_jll", HostPlatform(); subprefix="ext")
+            @test ccache_dep.subprefix == "ext"
+            prepare([ccache_dep])
+            mktempdir() do prefix
+                deploy([bzip2_dep, ccache_dep], prefix)
+                # Ccache depends on zstd_jll, and that also gets installed in `ext`
+                @test isfile(joinpath(prefix, "ext", "bin", "ccache$(exext)"))
+                @test isfile(joinpath(prefix, "ext", "bin", "zstd$(exext)"))
+
+                # bzip2 is still installed to the correct spot:
+                @test isfile(joinpath(prefix, binlib, "libbz2$(soext)"))
+            end
+
+            # Test that installing a specific platform works:
+            local foreign_platform
+            if Sys.isapple()
+                foreign_platform = Platform("x86_64", "linux")
+                foreign_soext = ".so"
+            else
+                foreign_platform = Platform("aarch64", "macos")
+                foreign_soext = ".dylib"
+            end
+            bzip2_foreign_dep = JLLSource("Bzip2_jll", foreign_platform)
+            mktempdir() do prefix
+                prepare(bzip2_foreign_dep)
+                deploy(bzip2_foreign_dep, prefix)
+                @test isfile(joinpath(prefix, "lib", "libbz2$(foreign_soext)"))
+            end
         end
     end
 end

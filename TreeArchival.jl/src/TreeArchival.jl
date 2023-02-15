@@ -164,13 +164,36 @@ function archive(source_dir::String, output_path::String, compressor::String; kw
     return nothing
 end
 
-function treehash(source_file::String; compressor = detect_compressor(source_file))
+"""
+    treehash(source_file::String; compressor::String = detect_compressor(source_file),
+                                  ignore_unstable_formats::Bool = false)
+
+Treehash the archive given in `source_file`, automatically determining the compression
+type by inspecting the first few bytes.  Returns a vector of bytes.
+
+If the compression type cannot be auto-determined, throws an error.
+
+If `source_file` is a `.zip` file, throws an error unless `ignore_unstable_formats`
+is set to `true`.  Even then, it prints out a warning.
+"""
+function treehash(source_file::String; compressor = detect_compressor(source_file),
+                                       ignore_unstable_formats::Bool = false)
     if compressor ∈ ("gzip", "bzip2", "7z", "xz", "zstd")
         return hex2bytes(Tar.tree_hash(decompress_cmd(source_file; compressor)))
     elseif compressor ∈ ("tar",)
         return hex2bytes(Tar.tree_hash(source_file))
     elseif compressor ∈ ("zip",)
-        throw(ArgumentError("Cannot tree hash a $(compressor) file"))
+        # By default, we refuse to do this
+        if !ignore_unstable_formats
+            throw(ArgumentError("Refusing to tree hash a $(compressor) file without `ignore_unstable_formats` set!"))
+        end
+
+        # Even if you force us, complain.
+        @warn("Treehashing an unstable archive format!", source_file, compressor)
+        mktempdir() do dir
+            unarchive(source_file, dir; compressor)
+            return Pkg.GitTools.tree_hash(dir)
+        end
     else
         throw(ArgumentError("Unknown compression type '$(compressor)'"))
     end

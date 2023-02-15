@@ -1,5 +1,7 @@
 # Re-export some useful definitions from Base
-export AbstractDependency, AbstractSource, AbstractPlatform
+export AbstractPlatform
+
+# And then our exports
 export BuildMeta, BuildConfig, BuildResult, ExtractConfig, ExtractResult, PackageConfig, PackageResult
 
 const BUILD_HELP = (
@@ -206,7 +208,9 @@ struct BuildConfig
 
     # Dependencies that must be installed in the build environment.
     # Contains host dependencies, target dependencies, and cross-dependencies (e.g. compilers).
-    dependencies::Vector{<:AbstractDependency}
+    # Organized by installation prefix (e.g. `/usr/local` for host dependencies, `/opt/$(triplet)`
+    # for cross-compilers, etc...)
+    dep_trees::Dict{String,Vector{JLLSource}}
 
     # Flags that influence the build environment and the generated compiler wrappers
     allow_unsafe_flags::Bool
@@ -222,41 +226,64 @@ struct BuildConfig
     #concrete_target::AbstractPlatform
 
     function BuildConfig(src_name::AbstractString,
-                     src_version::VersionNumber,
-                     sources::Vector{<:AbstractSource},
-                     script::AbstractString,
-                     target::AbstractPlatform,
-                     dependencies::Vector{<:AbstractDependency};
-                     # For GCC, default to oldest version for compatibility
-                     preferred_gcc_version::VersionNumber = BinaryBuilderBase.getversion(BinaryBuilderBase.available_gcc_builds[1]),
-                     # LLVM doesn't have the compatibility issues that GCC does, so default to the latest and greatest
-                     preferred_llvm_version::VersionNumber = BinaryBuilderBase.getversion(BinaryBuilderBase.available_llvm_builds[end]),
-                     allow_unsafe_flags::Bool = false,
-                     lock_microarchitecture::Bool = true,
-                     # By default, only provide C/C++/Fortran compilers
-                     compilers::Vector{Symbol} = [:c],
-                     )
-        shards = choose_shards(target; preferred_gcc_version, preferred_llvm_version, compilers)
+                         src_version::VersionNumber,
+                         sources::Vector{<:AbstractSource},
+                         script::AbstractString,
+                         target::AbstractPlatform;
+                         target_deps::Vector{<:JLLSource} = JLLSource[],
+                         host_deps::Vector{<:JLLSource} = JLLSource[],
+                         allow_unsafe_flags::Bool = false,
+                         lock_microarchitecture::Bool = true,
+                         toolchains = default_toolchains(),
+                         )
+
+        compilers = Set(compilers)
+        cross_platform = CrossPlatform(
+            Platform("x86_64", "linux"),
+            target,
+        )
+        append!(host_deps, host_build_tools(cross_platform))
+
+        # Construct our various trees of dependencies:
+        dep_trees = Dict{String,Vector{JLLSource}}(
+            # We will place our compilers at `/opt/$(gcc_triplet())`
+            # This allows us to have multiple different compilers!
+            "/opt/$(triplet(gcc_target(target)))" => compiler_deps(compilers, cross_platform),
+
+            # Host dependencies get installed into `/usr/local` so they can be run natively
+            "/usr/local" => host_deps,
+            
+            # Target dependencies are assumed to be 
+            "/workspace/destdir" => target_deps,
+        )
+
         # Now that we know which compilers we're building with, let's figure out our actual
         # platform that we will use to construct the build environment (this will strictly be
         # a valid sub-platform of the `target` given here).
-        concrete_target = BinaryBuilderBase.get_concrete_platform(target, shards)
+        #concrete_target = BinaryBuilderBase.get_concrete_platform(target, shards)
         return new(
             String(src_name),
             src_version,
             sources,
-            dependencies,
+            dep_trees,
             compilers,
             shards,
             allow_unsafe_flags,
             lock_microarchitecture,
             String(script),
             target,
-            concrete_target,
+            #concrete_target,
         )
     end
 end
 
+# Helper function to better control when we download all our deps
+function prepare(config::BuildConfig)
+    prepare(config.sources)
+    for (prefix, deps) in config.dep_trees
+        prepare(deps)
+    end
+end
 
 
 """
@@ -324,26 +351,20 @@ struct ExtractConfig
     script::String
 
     # The products that this package will ensure are available
-    products::Vector{<:Product}
+    products::Vector{<:AbstractProduct}
 
-    # This contains a fine-grained list of audit actions that should be skipped for this
-    # build.  If the special value `:all` exists wtihin this Vector, auditing is skipped
-    # completely.
-    audit_action_blocklist::Vector{Symbol}
+    # TODO: Add an `AuditConfig` field
+    #audit::AuditConfig
 
     function ExtractConfig(build::BuildResult,
-                              script::AbstractString,
-                              products::Vector{Product},
-                              audit_action_blocklist::Vector{Symbol} = Symbol[])
-        # if !isempty(builds) && any(b.config.src_name != builds[1].config.src_name for b in builds)
-        #     # I don't know why anyone would want to do this; let's just not allow it.
-        #     throw(ArgumentError("Cannot package unrelated builds together!"))
-        # end
+                           script::AbstractString,
+                           products::Vector{<:AbstractProduct},
+                           audit_config = nothing)
         return new(
             build,
             String(script),
             products,
-            audit_action_blocklist,
+            #audit_config,
         )
     end
 end

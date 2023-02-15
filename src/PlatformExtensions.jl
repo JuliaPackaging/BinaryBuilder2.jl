@@ -152,16 +152,16 @@ Base.BinaryPlatforms.platforms_match(p::Platform, cp::CrossPlatform) = platforms
 
 
 """
-    abi_agnostic(p::AbstractPlatform)
+    gcc_platform(p::AbstractPlatform)
 
 Strip out any tags that are not the basic annotations like `libc` and `call_abi`.
 """
-function abi_agnostic(p::Platform)
+function gcc_platform(p::Platform)
     keeps = ("libc", "call_abi", "os_version")
     filtered_tags = Dict{Symbol,String}(Symbol(k) => v for (k, v) in tags(p) if k ∈ keeps)
     return Platform(arch(p)::String, os(p)::String; filtered_tags...)
 end
-abi_agnostic(p::AnyPlatform) = p
+gcc_platform(p::AnyPlatform) = p
 
 
 """
@@ -278,3 +278,4 @@ const ARCHITECTURE_FLAGS = Dict(
     ),
 )
 march(p::AbstractPlatform; default=nothing) = get(tags(p), "march", default)
+@warn("TODO: integrate march tests!")

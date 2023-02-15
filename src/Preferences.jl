@@ -40,19 +40,10 @@ end
     source_download_cache()
 
 Returns the path of the directory used to store downloaded sources, e.g. where
-`AbstractSource`s get stored when you call `download()`.  This can be set
+`AbstractSource`s get stored when you call `prepare()`.  This can be set
 through the `source_download_cache` preference.
 """
 @define_storage_location source_download_cache @get_scratch!("source_download_cache")
-
-"""
-    dependency_depot()
-
-Returns the path of the depot to be used to store downloaded dependencies, e.g.
-where `JLLDependency`s get stored when you call `download()`.  This can be set
-throug the `dependency_depot` preference.
-"""
-@define_storage_location dependency_depot Pkg.depots1()
 
 """
     ccache_cache()

@@ -20,6 +20,25 @@ function default_kernel_version(target::AbstractPlatform)
     return v"5.15.14"
 end
 
+
+function host_build_tools(platform::CrossPlatform)
+    return JLLDependency[
+        # TODO: version these?
+        JLLDependency("GNUMake_jll"; platform.host),
+        JLLDependency("Ccache_jll"; platform.host),
+    ]
+end
+
+
+
+
+
+
+
+
+
+
+#=
 function collect_compiler_artifacts(prefix::String,
                                     platform::CrossPlatform;
                                     kernel_headers_version = default_kernel_version(platform.target),
@@ -60,8 +79,10 @@ function collect_compiler_artifacts(prefix::String,
         JLLPrefixes.hardlink_artifact_paths(art_prefix, paths)
     end
 end
+=#
 
 function SandboxConfig(platform::CrossPlatform; kwargs...)
+
 end
 
 function runshell(platform::CrossPlatform; kwargs...)
