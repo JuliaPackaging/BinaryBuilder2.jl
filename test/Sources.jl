@@ -210,8 +210,8 @@ using BB2: verify, prepare, deploy, download_cache_path, source_download_cache
             zstd_dep = JLLSource("Zstd_jll", HostPlatform())
             @test bzip2_dep.package.name == "Bzip2_jll"
             @test zstd_dep.package.name == "Zstd_jll"
-            @test bzip2_dep.subprefix == ""
-            @test zstd_dep.subprefix == ""
+            @test bzip2_dep.target == ""
+            @test zstd_dep.target == ""
             @test isempty(bzip2_dep.artifact_paths)
             @test isempty(zstd_dep.artifact_paths)
 
@@ -230,8 +230,8 @@ using BB2: verify, prepare, deploy, download_cache_path, source_download_cache
             end
 
             # Test that subprefix works
-            ccache_dep = JLLSource("Ccache_jll", HostPlatform(); subprefix="ext")
-            @test ccache_dep.subprefix == "ext"
+            ccache_dep = JLLSource("Ccache_jll", HostPlatform(); target="ext")
+            @test ccache_dep.target == "ext"
             prepare([ccache_dep])
             mktempdir() do prefix
                 deploy([bzip2_dep, ccache_dep], prefix)
