@@ -1,3 +1,5 @@
+export DirectorySource
+
 """
     DirectorySource(path; target = "", follow_symlinks=false)
 

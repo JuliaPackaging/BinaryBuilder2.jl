@@ -219,10 +219,8 @@ struct BuildConfig
     # Bash script that will perform the actual build itself
     script::String
 
-    # The platform this build will target, both the user-requested
-    # (possibly not-fully-concretized) as well as the fully-concretized
-    # due to compiler ABI constraints.
-    target::AbstractPlatform
+    # The cross-platform we're using for this build
+    platform::CrossPlatform
     #concrete_target::AbstractPlatform
 
     function BuildConfig(src_name::AbstractString,
@@ -230,49 +228,28 @@ struct BuildConfig
                          sources::Vector{<:AbstractSource},
                          script::AbstractString,
                          target::AbstractPlatform;
-                         target_deps::Vector{<:JLLSource} = JLLSource[],
-                         host_deps::Vector{<:JLLSource} = JLLSource[],
+                         host::AbstractPlatform = Platform("x86_64", "linux"),
                          allow_unsafe_flags::Bool = false,
                          lock_microarchitecture::Bool = true,
-                         toolchains = default_toolchains(),
+                         kwargs...,
                          )
-
-        compilers = Set(compilers)
+        # We're building for this cross_platform
         cross_platform = CrossPlatform(
-            Platform("x86_64", "linux"),
+            host,
             target,
         )
-        append!(host_deps, host_build_tools(cross_platform))
 
-        # Construct our various trees of dependencies:
-        dep_trees = Dict{String,Vector{JLLSource}}(
-            # We will place our compilers at `/opt/$(gcc_triplet())`
-            # This allows us to have multiple different compilers!
-            "/opt/$(triplet(gcc_target(target)))" => compiler_deps(compilers, cross_platform),
-
-            # Host dependencies get installed into `/usr/local` so they can be run natively
-            "/usr/local" => host_deps,
-            
-            # Target dependencies are assumed to be 
-            "/workspace/destdir" => target_deps,
-        )
-
-        # Now that we know which compilers we're building with, let's figure out our actual
-        # platform that we will use to construct the build environment (this will strictly be
-        # a valid sub-platform of the `target` given here).
-        #concrete_target = BinaryBuilderBase.get_concrete_platform(target, shards)
+        dep_trees_kwargs = @extract_kwargs!(kwargs, toolchains, target_deps, host_deps)
+        dep_trees = toolchain_map(cross_platform; dep_trees_kwargs...)
         return new(
             String(src_name),
             src_version,
             sources,
             dep_trees,
-            compilers,
-            shards,
             allow_unsafe_flags,
             lock_microarchitecture,
             String(script),
-            target,
-            #concrete_target,
+            cross_platform,
         )
     end
 end

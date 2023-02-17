@@ -1,6 +1,8 @@
 using JLLPrefixes
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
 
+export JLLSource
+
 struct JLLSource <: AbstractSource
     # The JLL that will be installed
     package::PkgSpec
@@ -9,24 +11,24 @@ struct JLLSource <: AbstractSource
     platform::AbstractPlatform
 
     # The subpath it will be installed to
-    subprefix::String
+    target::String
 
     # The artifacts that belong to this JLL and must be linked in.
     # This is filled out by `prepare()`
     artifact_paths::Vector{String}
 
-    function JLLSource(package::PkgSpec, platform::AbstractPlatform; subprefix = "")
+    function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
         return new(
             package,
             platform,
-            string(subprefix),
+            string(target),
             String[],
         )
     end
 end
 
-function JLLSource(name::String, platform; subprefix = "", kwargs...)
-    return JLLSource(PkgSpec(;name, kwargs...), platform; subprefix)
+function JLLSource(name::String, platform; target = "", kwargs...)
+    return JLLSource(PkgSpec(;name, kwargs...), platform; target)
 end
 
 """
@@ -35,7 +37,7 @@ end
 Ensures that all given JLL sources are downloaded and ready to be used within
 the build environment.
 """
-function prepare(jlls::Vector{JLLSource}; verbose::Bool = true)
+function prepare(jlls::Vector{JLLSource}; verbose::Bool = false)
     # Split JLLs by platform and prefix:
     jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
     for jll in jlls
@@ -77,23 +79,24 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
     # First, check to make sure the jlls have all been downloaded:
     checkprepared!("deploy", jlls)
 
-    # Sort paths by subprefix
+    # Sort paths by target
     jlls_by_prefix = Dict{String,Vector{JLLSource}}()
     for jll in jlls
-        if jll.subprefix ∉ keys(jlls_by_prefix)
-            jlls_by_prefix[jll.subprefix] = JLLSource[]
+        if jll.target ∉ keys(jlls_by_prefix)
+            jlls_by_prefix[jll.target] = JLLSource[]
         end
-        push!(jlls_by_prefix[jll.subprefix], jll)
+        push!(jlls_by_prefix[jll.target], jll)
     end
 
-    # Install each to their relative subprefixes
-    for (subprefix, subprefix_jlls) in jlls_by_prefix
-        install_path = joinpath(prefix, subprefix)
+    # Install each to their relative targetes
+    for (target, target_jlls) in jlls_by_prefix
+        install_path = joinpath(prefix, target)
         mkpath(install_path)
-        deploy_artifact_paths(install_path, vcat((jll.artifact_paths for jll in subprefix_jlls)...))
+        deploy_artifact_paths(install_path, vcat((jll.artifact_paths for jll in target_jlls)...))
     end
 end
 
 # Compatibility; don't use these
 prepare(jll::JLLSource; kwargs...) = prepare([jll]; kwargs...)
 deploy(jll::JLLSource, prefix::String) = deploy([jll], prefix)
+

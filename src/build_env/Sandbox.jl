@@ -1,33 +1,52 @@
 using Sandbox
 
-function SandboxConfig(config::BuildConfig;)
-    workspace = mktempdir()
-    mkpath(joinpath(workspace, "destdir"))
-    
-    
+function Sandbox.SandboxConfig(config::BuildConfig)
+    # Prepare every source and dependency.  Ideally, we'd parallelize this somehow.
+    @info("Preparing all sources")
+    for source in config.sources
+        prepare(source)
+    end
+    @info("Preparing all dependencies")
+    for (prefix, deps) in config.dep_trees
+        prepare(deps)
+    end
+
+    # Generate temporary directories for each individual prefix
+    @info("Deploying dependencies")
+    ro_maps = Dict{String,String}(
+        "/" => Sandbox.debian_rootfs(;platform = config.platform.host),
+    )
+    for (prefix, deps) in config.dep_trees
+        ro_maps[prefix] = mktempdir()
+        deploy(deps, ro_maps[prefix])
+    end
+
+    @info("Deploying sources")
+    srcdir = mktempdir()
+    for source in config.sources
+        deploy(source, srcdir)
+    end
+    rw_maps = Dict{String,String}(
+        "/workspace/srcdir" => srcdir,
+    )
+
 
     config = SandboxConfig(
-        Dict(
-            "/" => Sandbox.debian_rootfs(),
-            "/opt/$(triplet(platform.host))" => target_tool_dir,
-        ),
-        Dict(
-            "/workspace" => workspace,
-        ),
+        ro_maps,
+        rw_maps,
         Dict{String,String}(
-            "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/$(triplet(platform.host))/bin",
-            "CC" => "$(triplet(platform.host))-gcc",
-            "CXX" => "$(triplet(platform.host))-g++",
-            "AR" => "$(triplet(platform.host))-ar",
-            "LD" => "$(triplet(platform.host))-ld",
+            "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin:/opt/$(triplet(config.platform.target))/bin",
+            "CC" => "$(triplet(config.platform.target))-gcc",
+            "CXX" => "$(triplet(config.platform.target))-g++",
+            "AR" => "$(triplet(config.platform.target))-ar",
+            "LD" => "$(triplet(config.platform.target))-ld",
         );
         hostname = "bb8",
-        pwd = "/workspace",
+        pwd = "/workspace/srcdir",
         stdin,
         stdout,
-        stderr
+        stderr,
+        multiarch=[config.platform.host],
     )
-    with_executor() do exe
-        run(exe, config, `/bin/bash`)
-    end
+    return config
 end

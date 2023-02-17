@@ -1,7 +1,3 @@
-using LibGit2, Scratch, Downloads, SHA
-
-export ArchiveSource, FileSource, GitSource, DirectorySource, JLLSource
-
 """
 An `AbstractSource` is something used as source to build a package.
 

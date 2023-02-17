@@ -1,4 +1,7 @@
+using SHA, Downloads, TreeArchival
 using MultiHashParsing: hash_like
+
+export FileSource, ArchiveSource
 
 # We deal with these together so often, might as well make this a thing
 abstract type FileArchiveSource <: AbstractSource; end

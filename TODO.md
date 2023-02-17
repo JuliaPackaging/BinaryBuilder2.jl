@@ -2,6 +2,9 @@ Useful features I want to add before I call this rewrite "done":
 
 * Product re-design
   - Build DAG among products, encode in machine-readable JLL info
+  - Get rid of dlopen checks completely
+* JLL output metadata
+  - Discussion here: https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/639
 * Create `GeneratedDependency`
   - Takes in the `BuildConfig` object, generates a directory as a dependency (e.g. compiler wrappers)
   - Resultant directory gets hashed, just like a `DirectorySource`
@@ -12,6 +15,8 @@ Useful features I want to add before I call this rewrite "done":
 * Create mappings from all old style syntax to new style
   - `build_tarballs()` -> `BuildMeta()`, `BuildConfig()`, `build()`, `extract()`, `package()`, etc...
   - `compilers = [:c]` => `toolchains = [CToolchain()]`.
+  - `HostBuildDependency()` => `JLLDependency` with appropriate platforms
+* Copy over as many tests as possible from BB.jl and BBB.jl
 
 Things that would be nice to have, but we don't _need_:
 * Capture the environment at the end of the build, use it to interpolate products

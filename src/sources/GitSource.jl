@@ -1,4 +1,6 @@
-using LibGit2
+using Git
+
+export GitSource
 
 """
     GitSource(url, hash; target = basename(url))
@@ -42,11 +44,7 @@ function verify(gs::GitSource, download_cache::String = source_download_cache())
     end
 
     commit = bytes2hex(gs.hash)
-    commit_exists = LibGit2.with(LibGit2.GitRepo(repo_path)) do repo
-        LibGit2.iscommit(commit, repo)
-    end
-
-    if !commit_exists
+    if !iscommit(repo_path, commit)
         @debug("Commit does not exist", source=gs, repo_path, commit)
         return false
     else
@@ -58,22 +56,10 @@ end
 function prepare(gs::GitSource)
     download_cache = source_download_cache()
     repo_path = download_cache_path(gs, download_cache)
-    if isdir(repo_path)
-        # It's a little awkard to re-use `verify()` here; we just inline the pieces we need
-        @debug("Using cached git repository", gs, repo_path)
-        LibGit2.with(LibGit2.GitRepo(repo_path)) do repo
-            if !LibGit2.iscommit(bytes2hex(gs.hash), repo)
-                @debug("Fetching repository to try and find commit", gs, repo_path)
-                LibGit2.fetch(repo)
-            end
-        end
-    else
-        @debug("Cloning git repository", gs, repo_path)
-        LibGit2.clone(gs.url, repo_path; isbare=true)
-    end
+    cached_git_clone(gs.url, repo_path; desired_commit=gs.hash)
 
     # If we can't verify after cloning/fetching, we have the wrong hash
-    if !verify(gs, download_cache)
+    if !iscommit(repo_path, gs.hash)
         throw(ArgumentError("Commit $(gs.hash) not found in GitSource '$(gs.url)'"))
     end
     return repo_path
@@ -87,9 +73,7 @@ function deploy(gs::GitSource, prefix::String)
     repo_path = download_cache_path(gs, download_cache)
     target_path = joinpath(prefix, gs.target)
     mkpath(dirname(target_path))
-    LibGit2.with(LibGit2.clone(repo_path, target_path)) do repo
-        LibGit2.checkout!(repo, bytes2hex(gs.hash))
-    end
+    git_checkout(repo_path, target_path, gs.hash)
 end
 
 function content_hash(gs::GitSource)
