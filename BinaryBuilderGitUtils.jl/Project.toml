@@ -1,0 +1,18 @@
+name = "BinaryBuilderGitUtils"
+uuid = "654d7472-7548-7361-4832-74694762694c"
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
+Git_jll = "f8c6e375-362e-5223-8a59-34ff63f689eb"
+MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
+
+[compat]
+Git_jll = ">= 2.36.1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
