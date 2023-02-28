@@ -17,9 +17,25 @@ hash_prefix(::T) where {T <: MultiHash} = hash_prefix(T)
 hash_length(::T) where {T <: MultiHash} = hash_length(T)
 Base.string(hash::MultiHash) = string(hash_prefix(hash), ":", bytes2hex(hash.data))
 Base.bytes2hex(hash::MultiHash) = bytes2hex(hash.data)
+
+# Equality convenience methods
 Base.:(==)(hash::MultiHash, data::Union{Vector{UInt8}, NTuple{N, UInt8}}) where {N} = all(hash.data .== data)
 Base.:(==)(data::Union{Vector{UInt8}, NTuple{N, UInt8}}, hash::MultiHash) where {N} = hash == data
-Base.show(io::IO, hash::MultiHash) = println(io, string(hash))
+
+# For strings, we try to parse them and then do the comparison
+function Base.:(==)(hash::MultiHash, str::String)
+    try
+        return hash == MultiHash(str)
+    catch e
+        if isa(e, ArgumentError)
+            return false
+        end
+        rethrow(e)
+    end
+end
+Base.:(==)(str::String, hash::MultiHash) = hash == str
+
+Base.show(io::IO, hash::MultiHash) = print(io, string(hash))
 # If we already have a `MultiHash`, just return that back
 MultiHash(hash::T) where {T <: MultiHash} = hash
 

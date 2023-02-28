@@ -46,4 +46,16 @@ using Test, MultiHashParsing, SHA
         @test_throws ArgumentError MultiHash(string(hash_prefix(H), ":", "00"))
         @test_throws ArgumentError MultiHash(string(hash_prefix(H), ":", "x"^hash_length(H)))
     end
+
+    # Test that our string-equality-auto-parsing stuff works:
+    h_str = bytes2hex(sha1(""))
+    h = MultiHash(h_str)
+    @test h == h_str
+    @test h == "sha1:$(h_str)"
+    @test h_str == h
+    @test "sha1:$(h_str)" == h
+    @test h != "$(h_str)0"
+    @test h != "$(h_str)00"
+    @test h != bytes2hex(sha256(""))
+    @test bytes2hex(sha256("")) != h
 end
