@@ -16,7 +16,7 @@ iscommit(repo::String, commit::HashOrString) = success(git(["-C", repo, "cat-fil
 quiet_args(verbose::Bool) = verbose ? String[] : String["--quiet"]
 
 function fetch!(repo_path::String; verbose::Bool = false)
-    return run(git["-C", repo_path, "fetch", "-a", quiet_args(verbose)...])
+    return run(git(["-C", repo_path, "fetch", "-a", quiet_args(verbose)...]))
 end
 
 function clone!(url::String, repo_path::String;
@@ -30,7 +30,11 @@ function clone!(url::String, repo_path::String;
         # In some cases, we know the hash we're looking for, so only fetch() if
         # this git repository doesn't contain the hash we're seeking.
         if commit === nothing || !iscommit(repo_path, commit)
-            fetch(repo_path; verbose)
+            fetch!(repo_path; verbose)
+        end
+
+        if !iscommit(repo_path, commit)
+            throw(ArgumentError("Invalid commit specified: '$(commit)'"))
         end
     else
         if verbose
@@ -52,7 +56,10 @@ end
 function Base.log(repo_path::String, tip::HashOrString = "HEAD"; limit::Union{Int,Nothing} = nothing, reverse::Bool = false)
     # Fetch once if we don't have the `tip` on disk already
     if !iscommit(repo_path, tip)
-        fetch(repo_path)
+        fetch!(repo_path)
+    end
+    if !iscommit(repo_path, tip)
+        throw(ArgumentError("Invalid commit specified: '$(to_commit_str(tip))'"))
     end
 
     limit_args = limit === nothing ? String[] : String["--max-count=$(limit)"]
@@ -70,7 +77,7 @@ end
 function log_between(repo_path::String, before::HashOrString, after::HashOrString)
     # Fetch once if we don't have the `after` commit, just in case we have a stale clone
     if !iscommit(repo_path, after)
-        fetch(repo_path)
+        fetch!(repo_path)
     end
 
     # If we still can't find either of the commits, complain
