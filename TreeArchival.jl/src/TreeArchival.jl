@@ -192,11 +192,13 @@ function treehash(source_file::String; compressor = detect_compressor(source_fil
         @warn("Treehashing an unstable archive format!", source_file, compressor)
         mktempdir() do dir
             unarchive(source_file, dir; compressor)
-            return Pkg.GitTools.tree_hash(dir)
+            return tree_hash(dir)
         end
     else
         throw(ArgumentError("Unknown compression type '$(compressor)'"))
     end
 end
 
-end # module Compressors
+include("TreeHashing.jl")
+
+end # module

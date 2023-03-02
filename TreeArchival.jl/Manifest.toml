@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-beta3"
+julia_version = "1.9.0-beta4"
 manifest_format = "2.0"
-project_hash = "6e385f7cdff93d0df49cdf627c93761b2cffcdec"
+project_hash = "767dfbf3de72d4b021f3042617b1cc291ddc0555"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
