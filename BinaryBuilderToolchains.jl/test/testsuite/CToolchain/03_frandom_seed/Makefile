@@ -37,11 +37,13 @@ run: check
 check: $(OBJS)
 	@if ! cmp $(PROJECT_DIR)/build/frandom_seed.good_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.good_seed.o.2; then \
 		echo "Good seeds still not reproducible!" >&2; \
+		false; \
 	fi
-	@if cmp $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.2; then \
+	@if cmp -s $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.2; then \
 		echo "Bad seeds reproducible?!" >&2; \
-		false ; \
+		false; \
 	fi
 	@if ! cmp $(PROJECT_DIR)/build/frandom_seed.no_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.no_seed.o.2; then \
 		echo "No good default seed!" >&2; \
+		false; \
 	fi

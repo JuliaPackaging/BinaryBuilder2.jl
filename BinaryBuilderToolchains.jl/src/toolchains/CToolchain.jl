@@ -11,11 +11,19 @@ struct CToolchain <: AbstractToolchain
     # or the other, or leave it to default to a smart per-platform choice.
     vendor::Symbol
     deps::Vector{JLLSource}
+
+    # If we're the default CToolchain (we assume we are) generate `cc`
+    # wrapper scripts, and set `CC="cc"`, etc...
     default_ctoolchain::Bool
+
+    # If this is set to true (which is the default) we won't allow packages
+    # to specify a `-march`; we're in control of that.
+    lock_microarchitecture::Bool
 
     function CToolchain(platform;
                         vendor = :auto,
-                        default_ctoolchain = false,
+                        default_ctoolchain = true,
+                        lock_microarchitecture = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("*"),
                         binutils_version = v"2.38.0+4",
@@ -113,6 +121,7 @@ struct CToolchain <: AbstractToolchain
             vendor,
             deps,
             default_ctoolchain,
+            lock_microarchitecture,
         )
     end
 end
@@ -144,9 +153,11 @@ function toolchain_sources(toolchain::CToolchain)
         if any(jll.package.name == "GCC_jll" for jll in toolchain.deps)
             gcc_wrappers(toolchain, out_dir)
         end
-
         if any(jll.package.name == "Clang_jll" for jll in toolchain.deps)
             clang_wrappers(toolchain, out_dir)
+        end
+        if any(jll.package.name == "Binutils_jll" for jll in toolchain.deps)
+            binutils_wrappers(toolchain, out_dir)
         end
     end)
 
@@ -167,6 +178,13 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_ENV 
     env = Dict{String,String}(
         "PATH" => join(PATH, ":"),
     )
+
+    triplet = gcc_target_triplet(toolchain.platform)
+    if toolchain.default_ctoolchain
+        env["CC"] = "cc"
+        env["CXX"] = "c++"
+        env["AR"] = "ar"
+    end
     return env
 end
 
@@ -214,6 +232,17 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
     function _gcc_wrapper(tool_name, tool_target)
         compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+
+            # Fail out noisily if `-march` is set, but we're locking microarchitectures.
+            if toolchain.lock_microarchitecture
+                flagmatch(io, [flag"-march="r]) do io
+                    println(io, """
+                    echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
+                    exit 1
+                    """)
+                end
+            end
+            
             compile_flagmatch(io) do io
                 if Sys.islinux(p) || Sys.isfreebsd(p)
                     # Help GCCBootstrap find its own libraries under
@@ -221,10 +250,19 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                     # the wrappers before any additional arguments because we want this path to have
                     # precedence over anything else.  In this way for example we avoid libraries
                     # from `CompilerSupportLibraries_jll` in `${libdir}` are picked up by mistake.
+                    @warn("TODO: determine if this is actually needed", maxlog=1)
                     libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
-                    append_flags(io, :PRE, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
+                    append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
                 end
+
+                if toolchain.lock_microarchitecture
+                    append_flags(io, :PRE, get_march_flags(arch(p), march(p), "gcc"))
+                end
+
+                @warn("TODO: add sanitize compile flags!", maxlog=1)
+                #sanitize_compile_flags!(p, flags)
             end
+
             # Force proper cxx11 string ABI usage, if it is set at all
             if cxxstring_abi(p) == "cxx11"
                 append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=1")
@@ -234,7 +272,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
             if Sys.isapple(p)
                 if os_version(p) === nothing
-                    @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p))
+                    @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
                 end
 
                 # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
@@ -253,11 +291,39 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
             # Use hash of arguments to provide the random seed, for increased reproducibility,
             # but only do this if it has not already been specified:
-            flagmatch(io, [!flag"-frandom-seed*"]) do io
+            flagmatch(io, [!flag"-frandom-seed"r]) do io
                 append_flags(io, :PRE, "-frandom-seed=0x\${ARGS_HASH}")
+            end
+
+            # Add link-time-only flags
+            link_flagmatch(io) do io
+                # Yes, it does seem that the inclusion of `/lib64` on `powerpc64le` was fixed
+                # in GCC 6, broken again in GCC 7, and then fixed again in GCC 8+
+                if arch(p) == "powerpc64le" && Sys.islinux(p) && gcc_version.major in (4, 5, 7)
+                    append_flags(io, :POST, [
+                        "-L$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
+                        "-Wl,-rpath-link,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
+                    ])
+                end
+
+                # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
+                # to have extra space in the MachO headers so we can expand names, if necessary.
+                if Sys.isapple(p)
+                    append_flags(io, :POST, "-headerpad_max_install_names")
+                end
+
+                # Do not embed timestamps, for reproducibility:
+                # https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/1232
+                if Sys.iswindows(p) && gcc_version ≥ v"5"
+                    append_flags(io, :POST, "-Wl,--no-insert-timestamp")
+                end
+
+                @warn("TODO: sanitize_link_flags()", maxlog=1)
             end
         end
     end
+
+    @warning("TODO: Add ccache ability back in", maxlog=1)
 
     # Generate target-specific wrappers always:
     _gcc_wrapper("$(gcc_target_triplet(p))-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
@@ -273,6 +339,66 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             _gcc_wrapper("cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
             _gcc_wrapper("c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
         end
+    end
+end
+
+function binutils_wrappers(toolchain::CToolchain, dir::String)
+    p = toolchain.platform.target
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+    function _ar_wrapper(tool_name, tool_target)
+        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+            # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
+            # `ar` accepts many forms of its arguments, and we want to catch all of them.
+
+            println(io, raw"""
+            NONDETERMINISTIC=0
+            warn_nondeterministic() {
+                if [[ "${NONDETERMINISTIC}" != "1" ]]; then
+                    echo "Non-reproducibility alert: This 'ar' invocation uses the '-U' flag which embeds timestamps." >&2
+                    echo "ar flags: ${ARGS[@]}" >&2
+                    echo "Continuing build, but please repent." >&2
+                fi
+                NONDETERMINISTIC=1
+            }
+            """)
+
+            # We'll start with the easy stuff; `-U` by itself!
+            flagmatch(io, [flag"-U"]) do io
+                println(io, "warn_nondeterministic")
+            end
+
+            # However, the more traditional way to use `ar` is to mash a bunch of
+            # single-letter flags together into the first argument.  This can be
+            # preceeded by a dash, but doesn't have to be (sigh).
+            flagmatch(io, [flag"-?[^-]*U"r]; match_target="\${ARGS[0]}") do io
+                println(io, "warn_nondeterministic")
+            end
+
+            # Figure out if we've already set `-D`
+            flagmatch(io, [flag"-D"]) do io
+                println(io, "DETERMINISTIC=1")
+            end
+            flagmatch(io, [!flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
+                println(io, "DETERMINISTIC=1")
+            end
+
+            # If we haven't already set `-U`, _and_ we haven't already set `-D`, then
+            # we'll try to set `-D`:
+            flagmatch(io, [!flag"--.*"r]; match_target="\${ARGS[0]}") do io
+                # If our first flag is not a double-dashed option, we will just
+                # slap `D` onto the end of it:
+                println(io, raw"""
+                if [[ "${NONDETERMINISTIC}" != "1" ]] && [[ "${DETERMINISTIC}" != "1" ]]; then
+                    ARGS[0]="${ARGS[0]}D"
+                fi
+                """)
+            end
+        end
+    end
+
+    _ar_wrapper("$(gcc_target_triplet(p))-ar", "ar")
+    if toolchain.default_ctoolchain
+        _ar_wrapper("ar", "ar")
     end
 end
 
@@ -300,18 +426,18 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
-    _clang_wrapper("clang-$(gcc_target_triplet(p))", "clang-$(gcc_target_triplet(p))")
-    _clang_wrapper("clang++-$(gcc_target_triplet(p))", "clang++-$(gcc_target_triplet(p))")
+    _clang_wrapper("$(gcc_target_triplet(p))-clang", "$(gcc_target_triplet(p))-clang")
+    _clang_wrapper("$(gcc_target_triplet(p))-clang++", "$(gcc_target_triplet(p))-clang++")
 
     # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
     # the C toolchain "vendor" is clang!)
     if toolchain.default_ctoolchain
-        _clang_wrapper("clang", "clang-$(gcc_target_triplet(p))")
-        _clang_wrapper("clang++", "clang++-$(gcc_target_triplet(p))")
+        _clang_wrapper("clang", "$(gcc_target_triplet(p))-clang")
+        _clang_wrapper("clang++", "$(gcc_target_triplet(p))-clang++")
 
         if toolchain.vendor == :clang
-            _clang_wrapper("cc", "clang-$(gcc_target_triplet(p))")
-            _clang_wrapper("c++", "clang++-$(gcc_target_triplet(p))")
+            _clang_wrapper("cc", "$(gcc_target_triplet(p))-clang")
+            _clang_wrapper("c++", "$(gcc_target_triplet(p))-clang++")
         end
     end
 end

@@ -26,9 +26,12 @@ All toolchains must define the following methods:
 abstract type AbstractToolchain; end
 
 include("PlatformExtensions.jl")
+include("Microarchitectures.jl")
 include("WrapperUtils.jl")
 include("toolchains/CToolchain.jl")
 include("toolchains/HostToolsToolchain.jl")
-include("pkg_utils.jl")
+include("PkgUtils.jl")
+include("InteractiveUtils.jl")
+
 
 end # module

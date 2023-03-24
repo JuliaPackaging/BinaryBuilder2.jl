@@ -37,3 +37,7 @@ endif
 # variables in the BB shell)
 CC ?= $(target)-cc
 CXX ?= $(target)-c++
+AR ?= $(target)-ar
+
+# Magic variables
+SPACE:=$(eval) $(eval)

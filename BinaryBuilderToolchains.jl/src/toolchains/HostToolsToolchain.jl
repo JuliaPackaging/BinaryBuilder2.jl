@@ -15,7 +15,9 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     deps = JLLSource[
         # TODO: version these?
         JLLSource("GNUMake_jll", toolchain.platform),
+        JLLSource("Patchelf_jll", toolchain.platform),
         JLLSource("Ccache_jll", toolchain.platform),
     ]
+    @warn("TODO: Generate wrapper scripts for Patchelf")
     return deps
 end

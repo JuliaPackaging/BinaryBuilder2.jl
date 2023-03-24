@@ -11,20 +11,21 @@ f_asm = flag"-x assembler"
 """
 struct FlagString
     s::String
-    match::Bool
+    positive::Bool
+    isregex::Bool
 end
 
-macro flag_str(s)
+macro flag_str(s, flags...)
+    isregex = "r" ∈ flags
     return quote
-        FlagString($(esc(s)), true)
+        FlagString($(esc(s)), true, $(isregex))
     end
 end
-Base.:(!)(fs::FlagString) = FlagString(fs.s, !fs.match)
+Base.:(!)(fs::FlagString) = FlagString(fs.s, !fs.positive, fs.isregex)
 
 function indent(x::String, amount::Int = 4)
     return join([string(" "^amount, l) for l in split(strip(x), '\n')], "\n")
 end
-indent(io::IOBuffer, args...) = indent(String(take!(io)), args...)
 
 
 """
@@ -41,26 +42,34 @@ wrappers; an invocation such as:
 
 Will result in a string that looks like:
 
-    if [[ " \${ARGS} " == *' -march= '* ]]; then
+    if [[ " \${ARGS[@]} " == *' -march= '* ]]; then
         die 'Cannot force an architecture via -march'
     fi
 """
-function flagmatch(f::Function, io::IO, flags::Vector{FlagString})
-    print(io, "if ")
-    first = true
-    for flag in flags
-        if !first
-            print(io, " && \\\n   ")
+function flagmatch(f::Function, io::IO, flags::Vector{FlagString}; match_target::String = "\${ARGS[@]}")
+    # First, run the given callback; if nothing is generated, don't emit anything.
+    # This dodges the issue that `bash` doesn't like empty `if` statements. :(
+    sub_io = IOBuffer()
+    f(sub_io)
+    sub_str = String(take!(sub_io))
+
+    if !isempty(sub_str)
+        print(io, "if ")
+        first = true
+        for flag in flags
+            if !first
+                print(io, " && \\\n   ")
+            end
+            negation = flag.positive ? "" : "!"
+            comparison = flag.isregex ? "=~" : "=="
+            needle = flag.isregex ? flag.s : "*' $(flag.s) '*"
+            print(io, "[[ $(negation) \" $(match_target) \" $(comparison) $(needle) ]]")
+            first = false
         end
-        comparison = flag.match ? "==" : "!="
-        print(io, "[[ \" \${ARGS[@]} \" $(comparison) *' $(flag.s) '* ]]")
-        first = false
+        println(io, "; then")
+        println(io, indent(sub_str))
+        println(io, "fi")
     end
-    println(io, "; then")
-    indented_io = IOBuffer()
-    f(indented_io)
-    println(io, indent(indented_io))
-    println(io, "fi")
 end
 
 """

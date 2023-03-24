@@ -1,4 +1,4 @@
-using Test, BinaryBuilderSources, BinaryBuilderToolchains, Base.BinaryPlatforms
+using Test, BinaryBuilderSources, BinaryBuilderToolchains, Base.BinaryPlatforms, Scratch
 
 function capture_output(cmd)
     output = Pipe()
@@ -19,14 +19,14 @@ end
     # Download the toolchain, make sure it runs
     srcs = toolchain_sources(toolchain)
     prepare(srcs; verbose=true)
-    mktempdir() do prefix
+    mktempdir(@get_scratch!("tempdirs")) do prefix
         deploy(srcs, prefix)
 
         env = toolchain_env(toolchain, prefix)
         cd(testsuite_path) do
             # Run our entire test suite first
-            @test success(addenv(`make cleancheck-all`, env))
-
+            p = run(addenv(`make cleancheck-all`, env))
+            @test success(p)
 
             # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
             # `cxxstring_abi` defines showing in the build log:
@@ -40,14 +40,12 @@ end
             debug_env = copy(env)
             debug_env["BB_WRAPPERS_VERBOSE"] = "true"
             debug_env["CXX"] = "g++"
-            p, debug_out = capture_output(addenv(`make cleancheck-2_cxx_string_abi`, debug_env))
+            p, debug_out = capture_output(addenv(`make cleancheck-02_cxx_string_abi`, debug_env))
             @test success(p)
             @test occursin(cxxstring_abi_define, debug_out)
         end
     end
 end
 
-@warn "TODO: Test each flag we add:"
-@warn "macos version min?"
-@warn "clang against libgcc!"
-@warn "test link-only and compile-only flags!"
+@warn "TODO: test macos version min?"
+@warn "TODO: test clang against libgcc!"
