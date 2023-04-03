@@ -62,7 +62,7 @@ function flagmatch(f::Function, io::IO, flags::Vector{FlagString}; match_target:
             end
             negation = flag.positive ? "" : "!"
             comparison = flag.isregex ? "=~" : "=="
-            needle = flag.isregex ? flag.s : "*' $(flag.s) '*"
+            needle = flag.isregex ? "[[:space:]]$(flag.s)[[:space:]]" : "*' $(flag.s) '*"
             print(io, "[[ $(negation) \" $(match_target) \" $(comparison) $(needle) ]]")
             first = false
         end

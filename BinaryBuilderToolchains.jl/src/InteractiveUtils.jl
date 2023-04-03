@@ -8,9 +8,9 @@ export runshell
 Convenience function to launch a shell with the generated wrapper scripts for
 the given toolchains
 """
-function runshell(toolchains::Vector{<:AbstractToolchain})
+function runshell(toolchains::Vector{<:AbstractToolchain}; verbose::Bool = false)
     srcs = vcat(toolchain_sources.(toolchains)...)
-    prepare(srcs)
+    prepare(srcs; verbose)
 
     # Use a scratch space here so that it's more likely that we have a
     # deployment directory that is on the same filesystem as our artifacts.
@@ -28,9 +28,9 @@ function runshell(toolchains::Vector{<:AbstractToolchain})
 end
 
 # Easy way to get e.g. a default `CToolchain` for the current host platform
-function runshell(toolchain_types::Vector{DataType})
+function runshell(toolchain_types::Vector{DataType}; kwargs...)
     platform = CrossPlatform(HostPlatform() => HostPlatform())
     toolchains = [T(platform) for T in toolchain_types]
-    return runshell(toolchains)
+    return runshell(toolchains; kwargs...)
 end
-runshell(x::Union{<:AbstractToolchain,Type{<:AbstractToolchain}}) = runshell([x])
+runshell(x::Union{<:AbstractToolchain,Type{<:AbstractToolchain}}; kwargs...) = runshell([x]; kwargs...)

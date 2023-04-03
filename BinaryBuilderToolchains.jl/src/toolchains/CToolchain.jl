@@ -161,6 +161,8 @@ function toolchain_sources(toolchain::CToolchain)
         end
     end)
 
+    @warn("TODO: Generate xcrun shim", maxlog=1)
+
     # Add the JLLs as well.
     # Note that we eliminate the illegal "version" fields from our PackageSpec
     # objects here, because we occasionally 
@@ -181,9 +183,31 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_ENV 
 
     triplet = gcc_target_triplet(toolchain.platform)
     if toolchain.default_ctoolchain
+        env["AR"] = "ar"
+        env["AS"] = "as"
         env["CC"] = "cc"
         env["CXX"] = "c++"
-        env["AR"] = "ar"
+        env["LD"] = "ld"
+        env["NM"] = "nm"
+        env["RANLIB"] = "ranlib"
+        env["OBJCOPY"] = "objcopy"
+        env["OBJDUMP"] = "objdump"
+        env["STRIP"] = "strip"
+
+        if Sys.isapple(toolchain.platform.target)
+            env["DSYMUTIL"] = "dsymutil"
+            env["LIPO"] = "lipo"
+        end
+
+        if !Sys.isapple(toolchain.platform.target)
+            env["READELF"] = "readelf"
+        end
+
+        if Sys.iswindows(toolchain.platform.target)
+            env["DLLTOOL"] = "dlltool"
+            env["WINDRES"] = "windres"
+            env["WINMC"] = "winmc"
+        end
     end
     return env
 end
@@ -235,7 +259,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
             # Fail out noisily if `-march` is set, but we're locking microarchitectures.
             if toolchain.lock_microarchitecture
-                flagmatch(io, [flag"-march="r]) do io
+                flagmatch(io, [flag"-march=.*"r]) do io
                     println(io, """
                     echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
                     exit 1
@@ -323,11 +347,12 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
-    @warning("TODO: Add ccache ability back in", maxlog=1)
+    @warn("TODO: Add ccache ability back in", maxlog=1)
 
     # Generate target-specific wrappers always:
     _gcc_wrapper("$(gcc_target_triplet(p))-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
     _gcc_wrapper("$(gcc_target_triplet(p))-g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+    _gcc_wrapper("$(gcc_target_triplet(p))-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
 
     # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
     # the C toolchain "vendor" is GCC!)
@@ -338,6 +363,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
         if toolchain.vendor == :gcc
             _gcc_wrapper("cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
             _gcc_wrapper("c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+            _gcc_wrapper("cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
         end
     end
 end
@@ -345,11 +371,74 @@ end
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+
+    # Most tools don't need anything fancy; just `compiler_wrapper()`
+    simple_tools = [
+        "as",
+        "ld",
+        "libtool",
+        "nm",
+        "objcopy",
+        "objdump",
+        "strip",
+    ]
+    @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
+    @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
+    if Sys.isapple(p)
+        append!(simple_tools, [
+            "dsymutil",
+            "install_name_tool",
+            "lipo",
+            "otool",
+        ])
+    end
+    if Sys.iswindows(p)
+        append!(simple_tools, [
+            "windres",
+            "winmc",
+        ])
+    end
+    if !Sys.isapple(p)
+        # Amusingly, windows binutils does have a `readelf`.
+        append!(simple_tools, [
+            "readelf",
+        ])
+    end
+
+    # Helper function to make many tool symlinks
+    # `tool` is the name that we export, (which will be prefixed by
+    # our target triplet) e.g. `ar`.  `tool_target` is the name of
+    # the wrapped executable (e.g. `llvm-ar`).
+    function make_tool_symlinks(tool, tool_target; wrapper::Function = identity)
+        compiler_wrapper(wrapper,
+            joinpath(dir, "$(gcc_target_triplet(p))-$(tool)"),
+            "$(toolchain_prefix)/bin/$(tool_target)"
+        )
+        if toolchain.default_ctoolchain
+            compiler_wrapper(wrapper,
+                joinpath(dir, tool),
+                "$(toolchain_prefix)/bin/$(tool_target)"
+            )
+        end
+    end
+
+    for tool in simple_tools
+        make_tool_symlinks(tool, "$(gcc_target_triplet(p))-$(tool)")
+    end
+
+    # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
+    if Sys.isapple(p)
+        make_tool_symlinks("c++filt", "llvm-cxxfilt")
+    else
+        make_tool_symlinks("c++filt", "$(gcc_target_triplet(p))-c++filt")
+    end
+
+    # `ar` and `ranlib` have special treatment due to determinism requirements.
+    # Additionally, we use the `llvm-` prefixed tools on macOS.
     function _ar_wrapper(tool_name, tool_target)
         compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
             # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
             # `ar` accepts many forms of its arguments, and we want to catch all of them.
-
             println(io, raw"""
             NONDETERMINISTIC=0
             warn_nondeterministic() {
@@ -362,7 +451,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             }
             """)
 
-            # We'll start with the easy stuff; `-U` by itself!
+            # We'll start with the easy stuff; `-U` by itself, as any argument!
             flagmatch(io, [flag"-U"]) do io
                 println(io, "warn_nondeterministic")
             end
@@ -370,7 +459,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             # However, the more traditional way to use `ar` is to mash a bunch of
             # single-letter flags together into the first argument.  This can be
             # preceeded by a dash, but doesn't have to be (sigh).
-            flagmatch(io, [flag"-?[^-]*U"r]; match_target="\${ARGS[0]}") do io
+            flagmatch(io, [flag"-?[^-]*U.*"r]; match_target="\${ARGS[0]}") do io
                 println(io, "warn_nondeterministic")
             end
 
@@ -378,7 +467,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             flagmatch(io, [flag"-D"]) do io
                 println(io, "DETERMINISTIC=1")
             end
-            flagmatch(io, [!flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
+            flagmatch(io, [flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
                 println(io, "DETERMINISTIC=1")
             end
 
@@ -396,9 +485,44 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
-    _ar_wrapper("$(gcc_target_triplet(p))-ar", "ar")
+    function _ranlib_wrapper(tool_name, tool_target)
+        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+            # Warn the user if they provide `-U` in their build script
+            flagmatch(io, [flag"-[^-]*U.*"r]) do io
+                println(io, raw"""
+                echo "Non-reproducibility alert: This 'ranlib' invocation uses the '-U' flag which embeds timestamps." >&2
+                echo "ranlib flags: ${ARGS[@]}" >&2
+                echo "Continuing build, but please repent." >&2
+                """)
+            end
+
+            # If there's no `-U`, and we haven't already provided `-D`, insert it!
+            flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"]) do io
+                append_flags(io, :PRE, "-D")
+            end
+        end
+    end
+
+    ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_target_triplet(p))-ar"
+    ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_target_triplet(p))-ranlib"
+    _ar_wrapper("$(gcc_target_triplet(p))-ar", ar_name)
+    _ranlib_wrapper("$(gcc_target_triplet(p))-ranlib", ranlib_name)
     if toolchain.default_ctoolchain
-        _ar_wrapper("ar", "ar")
+        _ar_wrapper("ar", ar_name)
+        _ranlib_wrapper("ranlib", ranlib_name)
+    end
+
+    # dlltool needs some determinism fixes as well
+    function _dlltool_wrapper(tool_name, tool_target)
+        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+            append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
+        end
+    end
+    if Sys.iswindows(p)
+        _dlltool_wrapper("$(gcc_target_triplet(p))-dlltool", "$(gcc_target_triplet(p))-dlltool")
+        if toolchain.default_ctoolchain
+            _dlltool_wrapper("dlltool", "$(gcc_target_triplet(p))-dlltool")
+        end
     end
 end
 

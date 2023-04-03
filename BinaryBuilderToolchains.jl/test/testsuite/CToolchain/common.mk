@@ -38,6 +38,7 @@ endif
 CC ?= $(target)-cc
 CXX ?= $(target)-c++
 AR ?= $(target)-ar
+RANLIB ?= $(target)-ranlib
 
 # Magic variables
 SPACE:=$(eval) $(eval)
