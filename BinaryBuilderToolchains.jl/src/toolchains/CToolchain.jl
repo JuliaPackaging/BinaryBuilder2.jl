@@ -181,7 +181,6 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_ENV 
         "PATH" => join(PATH, ":"),
     )
 
-    triplet = gcc_target_triplet(toolchain.platform)
     if toolchain.default_ctoolchain
         env["AR"] = "ar"
         env["AS"] = "as"

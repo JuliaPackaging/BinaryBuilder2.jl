@@ -75,7 +75,6 @@ function resolve_versions!(jlls::Vector{JLLSource}; julia_version=VERSION)
     update_pkgspec_versions!(jll_pkgs, resolved_pkgs)
 end
 
-# 
 function filter_illegal_versionspecs!(pkgs::Vector{PackageSpec})
     for pkg in pkgs
         if pkg.repo.source !== nothing || pkg.repo.rev !== nothing

@@ -159,6 +159,7 @@ function gcc_platform(p::Platform)
     filtered_tags = Dict{Symbol,String}(Symbol(k) => v for (k, v) in tags(p) if k ∈ keeps)
     return Platform(arch(p)::String, os(p)::String; filtered_tags...)
 end
+gcc_platform(p::CrossPlatform) = CrossPlatform(gcc_platform(p.host), gcc_platform(p.target))
 gcc_platform(p::AnyPlatform) = p
 
 
