@@ -18,19 +18,26 @@ struct JLLSource <: AbstractSource
     # The artifacts that belong to this JLL and must be linked in.
     # This is filled out by `prepare()`
     artifact_paths::Vector{String}
+end
 
-    function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
-        return new(
-            package,
-            platform,
-            string(target),
-            String[],
-        )
-    end
+function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
+    noabspath!(target)
+    return JLLSource(
+        package,
+        platform,
+        string(target),
+        String[],
+    )
 end
 
 function JLLSource(name::String, platform; target = "", kwargs...)
+    noabspath!(target)
     return JLLSource(PkgSpec(;name, kwargs...), platform; target)
+end
+
+function retarget(jll::JLLSource, new_target::String)
+    noabspath!(new_target)
+    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths)
 end
 
 """

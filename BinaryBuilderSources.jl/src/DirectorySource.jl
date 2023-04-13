@@ -38,6 +38,11 @@ function DirectorySource(source; target = "",
     )
 end
 
+function retarget(ds::DirectorySource, new_target::String)
+    noabspath!(new_target)
+    return DirectorySource(ds.source, new_target, ds.follow_symlinks)
+end
+
 # Nothing to prepare!
 prepare(ds::DirectorySource; verbose::Bool = false) = nothing
 

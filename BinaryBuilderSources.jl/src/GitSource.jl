@@ -54,6 +54,11 @@ function verify(gs::GitSource, download_cache::String = source_download_cache())
     end
 end
 
+function retarget(gs::GitSource, new_target::String)
+    noabspath!(new_target)
+    return GitSource(gs.url, gs.hash, new_target)
+end
+
 function prepare(gs::GitSource; verbose::Bool = false)
     download_cache = source_download_cache()
     repo_path = download_cache_path(gs, download_cache)

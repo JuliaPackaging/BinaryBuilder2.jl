@@ -35,6 +35,11 @@ end
 # This is just used to check whether we've run `prepare()` yet
 verify(gs::GeneratedSource) = isdir(gs.ds.source)
 
+function retarget(gs::GeneratedSource, new_target::String)
+    noabspath!(new_target)
+    return GeneratedSource(gs.generator, retarget(gs.ds, new_target))
+end
+
 function prepare(gs::GeneratedSource; verbose::Bool = false)
     # Run the generator on the source
     mkpath(gs.ds.source)

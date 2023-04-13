@@ -19,6 +19,8 @@ All `AbstractSource`` objects must support the following operations:
 * prepare(::AbstractSource)
 * deploy(::AbstractSource, prefix::String)
 * content_hash(::AbstractSource)::SHA1Hash
+* target(::AbstractSource)::String
+* retarget(::AbstractSource, new_target::String)::AbstractSource
 
 Note that you must manually call `prepare()` before you call `deploy()`
 or `content_hash()` upon an `AbstractSource`.
@@ -29,7 +31,7 @@ define significantly more efficient methods for batch-`prepare()`.
 """
 abstract type AbstractSource; end
 
-export prepare, deploy, content_hash
+export prepare, deploy, content_hash, target, retarget
 
 """
     checkprepared!(me::String, type_name::String)
@@ -73,6 +75,14 @@ function content_hash(sources::Vector{<:AbstractSource})
     entries = [(basename(h), hex2bytes(basename(h)), TreeArchival.mode_dir) for apath in jll.artifact_paths]
     return SHA1Hash(TreeArchival.tree_node_hash(SHA.SHA1_CTX, entries))
 end
+
+"""
+    target(as::AbstractSource)
+
+Returns the `target` that this source will unpack itself into.
+TODO: determine if we should remove this function.
+"""
+target(as::AbstractSource) = as.target
 
 include("FileArchiveSource.jl")
 include("DirectorySource.jl")

@@ -103,6 +103,11 @@ function verify(fas::FileArchiveSource, download_cache::String = source_download
     return true
 end
 
+function retarget(fas::T, new_target::String) where {T <: FileArchiveSource}
+    noabspath!(new_target)
+    return T(fas.url, fas.hash, new_target)
+end
+
 function prepare(fas::FileArchiveSource; verbose::Bool = false)
     # Only download if verification fails
     download_cache = source_download_cache()

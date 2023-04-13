@@ -96,6 +96,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             end
 
             @test_throws ArgumentError ArchiveSource(url, hash; target="/foo/bar")
+
+            # retarget works
+            as = retarget(as, "baz")
+            @test as.target == "baz"
+            @test_throws ArgumentError retarget(as, "/foo/bar")
         end
 
         @testset "FileSource" begin
@@ -137,6 +142,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
 
             # No absolute paths allowed
             @test_throws ArgumentError FileSource(url, hash; target="/foo/bar")
+
+            # retarget works
+            fs = retarget(fs, "baz")
+            @test fs.target == "baz"
+            @test_throws ArgumentError retarget(fs, "/foo/bar")
         end
 
         url = "https://github.com/ralna/ARCHDefs.git"
@@ -192,6 +202,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
 
             # SHA256 hashes not allowed (yet)
             @test_throws ArgumentError GitSource(url, sha256("foo"))
+
+            # retarget works
+            gs = retarget(gs, "baz")
+            @test gs.target == "baz"
+            @test_throws ArgumentError retarget(gs, "/foo/bar")
         end
 
         @testset "DirectorySource" begin
@@ -234,6 +249,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
 
                 # Invalid source directories throw
                 @test_throws ArgumentError DirectorySource("blah")
+
+                # retarget works
+                ds = retarget(ds, "baz")
+                @test ds.target == "baz"
+                @test_throws ArgumentError retarget(ds, "/foo/bar")
             end; end
         end
 
@@ -274,6 +294,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                     @test isfile(joinpath(prefix, gs.ds.target, "foo"))
                     @test islink(joinpath(prefix, gs.ds.target, "link_to_foo"))
                 end
+
+                # retarget works
+                gs = retarget(gs, "baz")
+                @test gs.ds.target == "baz"
+                @test_throws ArgumentError retarget(gs, "/foo/bar")
             end; end
         end
 
@@ -332,6 +357,11 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 deploy(bzip2_foreign_dep, prefix)
                 @test isfile(joinpath(prefix, "lib", "libbz2$(foreign_soext)"))
             end
+
+            # retarget works
+            bzip2_dep = retarget(bzip2_dep, "baz")
+            @test bzip2_dep.target == "baz"
+            @test_throws ArgumentError retarget(bzip2_dep, "/foo/bar")
         end
     end
 end
