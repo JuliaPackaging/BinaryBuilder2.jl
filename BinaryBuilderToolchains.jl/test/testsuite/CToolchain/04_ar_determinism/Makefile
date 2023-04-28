@@ -50,6 +50,11 @@ $(eval $(call gen_libsplit,PASS_AR_LIBS,-D -r))
 $(eval $(call gen_libsplit,PASS_AR_LIBS,-Dr))
 $(eval $(call gen_libsplit,PASS_AR_LIBS,Dr))
 
+# Test that using `-u` gets dropped as long as we're in deterministic mode:
+$(eval $(call gen_libsplit,PASS_AR_LIBS,-r -u -D))
+$(eval $(call gen_libsplit,PASS_AR_LIBS,-ruD))
+$(eval $(call gen_libsplit,PASS_AR_LIBS,ruD))
+
 # Next, do the same tests, but for `ranlib` on copies of the `ar -r -D` invocation's output:
 $(eval $(call index_libsplit,FAIL_RANLIB_LIBS,-U))
 $(eval $(call index_libsplit,FAIL_RANLIB_LIBS,-UU))

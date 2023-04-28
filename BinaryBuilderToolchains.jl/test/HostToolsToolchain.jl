@@ -3,10 +3,12 @@ using Test, BinaryBuilderToolchains, BinaryBuilderSources, Base.BinaryPlatforms,
 @testset "HostToolsToolchain" begin
     platform = CrossPlatform(HostPlatform() => HostPlatform())
     toolchain = HostToolsToolchain(platform)
+    @test !isempty(filter(jll -> jll.package.name == "GNUMake_jll", toolchain.deps))
+    @test !isempty(filter(jll -> jll.package.name == "Patchelf_jll", toolchain.deps))
+    @test !isempty(filter(jll -> jll.package.name == "Ccache_jll", toolchain.deps))
 
     # Download the toolchain, make sure it runs
     srcs = toolchain_sources(toolchain)
-    @test !isempty(filter(src -> isa(src, JLLSource) && src.package.name == "GNUMake_jll", srcs))
     prepare(srcs; verbose=true)
     mktempdir(@get_scratch!("tempdirs")) do prefix
         deploy(srcs, prefix)
@@ -16,3 +18,5 @@ using Test, BinaryBuilderToolchains, BinaryBuilderSources, Base.BinaryPlatforms,
         @test success(addenv(`ccache --version`, env))
     end
 end
+
+@warn("TODO: Test automake/autoconf")

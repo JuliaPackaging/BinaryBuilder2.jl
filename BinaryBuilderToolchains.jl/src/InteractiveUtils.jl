@@ -21,7 +21,7 @@ function runshell(toolchains::Vector{<:AbstractToolchain}; verbose::Bool = false
         
         env = copy(ENV)
         for toolchain in toolchains
-            env = toolchain_env(toolchain, prefix; base_ENV=env)
+            env = toolchain_env(toolchain, prefix; base_env=env)
         end
         return run(ignorestatus(addenv(`/bin/bash`, env)))
     end

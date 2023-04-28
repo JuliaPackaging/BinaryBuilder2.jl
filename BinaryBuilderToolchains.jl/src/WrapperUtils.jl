@@ -145,7 +145,7 @@ function compiler_wrapper(f::Function, io::IO, prog::String)
     #!/bin/bash
     # This compiler wrapper script brought into existence by `compiler_wrapper()` in $(basename(@__FILE__))
 
-    WRAPPER_DIR="\$( cd -- "\$( dirname -- "\${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+    WRAPPER_DIR="\$( cd -- "\$( dirname -- "\$( realpath "\${BASH_SOURCE[0]}" )" )" &> /dev/null && pwd )"
 
     if [ "x\${SUPER_VERBOSE}" != "x" ]; then
         echo -e "\\e[93mWARN: SUPER_VERBOSE is deprecated, use BB_WRAPPERS_VERBOSE instead!\\e[0m" >&2
@@ -173,7 +173,7 @@ function compiler_wrapper(f::Function, io::IO, prog::String)
     ARGS=( "\$@" )
     PRE_FLAGS=()
     POST_FLAGS=()
-    PROG=( "$(prog)" )
+    PROG=( $(prog) )
     
     # Some tools like to have a hash of the args (e.g. for random seeds)
     ARGS_HASH="\$(echo -n "\${ARGS[@]}" | sha1sum | cut -c1-8)"

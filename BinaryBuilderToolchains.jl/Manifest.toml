@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.0-rc1"
+julia_version = "1.9.0-rc2"
 manifest_format = "2.0"
-project_hash = "8de178fc58e6557204e57bd7bf160cdce2c81be2"
+project_hash = "ce7582418969ab5884c24c3bb166a5c51ff065c9"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -69,7 +69,7 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
 path = "/home/sabae/.julia/dev/JLLPrefixes"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.2.2"
+version = "0.3.0"
 
 [[deps.JLLWrappers]]
 deps = ["Preferences"]

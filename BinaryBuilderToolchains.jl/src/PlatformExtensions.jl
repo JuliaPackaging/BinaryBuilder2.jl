@@ -17,6 +17,15 @@ Base.BinaryPlatforms.arch(::AnyPlatform) = "any"
 Base.BinaryPlatforms.os(::AnyPlatform) = "any"
 Base.show(io::IO, ::AnyPlatform) = print(io, "AnyPlatform")
 
+# Helper parsing function: it extends `parse(Platform, p)` by supporting
+# `AnyPlatform` as well.
+function Base.parse(::Type{AbstractPlatform}, p::AbstractString)
+    if p == "any"
+        return AnyPlatform()
+    else
+        parse(Platform, p; validate_strict=true)
+    end
+end
 
 const AnyPlat = Union{AnyPlatform,Platform}
 
@@ -161,6 +170,15 @@ function gcc_platform(p::Platform)
 end
 gcc_platform(p::CrossPlatform) = CrossPlatform(gcc_platform(p.host), gcc_platform(p.target))
 gcc_platform(p::AnyPlatform) = p
+
+"""
+    gcc_target_triplet(p::AbstractPlatform)
+
+Return the kind of triplet that gcc would give for the given platform.  For a
+`CrossPlatform`, applies to the `target`.
+"""
+gcc_target_triplet(target::AbstractPlatform) = triplet(gcc_platform(target))
+gcc_target_triplet(platform::CrossPlatform) = gcc_target_triplet(platform.target)
 
 
 function macos_version(kernel_version::Integer)

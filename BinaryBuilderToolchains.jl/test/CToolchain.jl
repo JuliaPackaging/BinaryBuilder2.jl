@@ -44,6 +44,11 @@ end
             @test success(p)
             @test occursin(cxxstring_abi_define, debug_out)
         end
+
+        # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
+        for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
+            @test success(addenv(`$(wrapper) --version`))
+        end
     end
 end
 

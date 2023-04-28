@@ -15,18 +15,28 @@ struct CToolchain <: AbstractToolchain
     # If we're the default CToolchain (we assume we are) generate `cc`
     # wrapper scripts, and set `CC="cc"`, etc...
     default_ctoolchain::Bool
+    host_ctoolchain::Bool
 
     # If this is set to true (which is the default) we won't allow packages
     # to specify a `-march`; we're in control of that.
     lock_microarchitecture::Bool
 
+    # Extra compiler and linker flags that should be inserted.
+    # We typically use these to add `-L/workspace/destdir/${target}`
+    # in BinaryBuilder.
+    extra_cflags::Vector{String}
+    extra_ldflags::Vector{String}
+
     function CToolchain(platform;
                         vendor = :auto,
                         default_ctoolchain = true,
+                        host_ctoolchain = true,
                         lock_microarchitecture = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("*"),
                         binutils_version = v"2.38.0+4",
+                        extra_cflags = String[],
+                        extra_ldflags = String[],
                         glibc_version = :oldest)
         if vendor ∉ (:auto, :gcc, :clang)
             throw(ArgumentError("Unknown C toolchain vendor '$(vendor)'"))
@@ -121,7 +131,10 @@ struct CToolchain <: AbstractToolchain
             vendor,
             deps,
             default_ctoolchain,
+            host_ctoolchain,
             lock_microarchitecture,
+            string.(extra_cflags),
+            string.(extra_ldflags),
         )
     end
 end
@@ -132,17 +145,6 @@ function Base.show(io::IO, toolchain::CToolchain)
         println(io, " - $(dep.package.name[1:end-4]) v$(dep.package.version)")
     end
 end
-
-function gcc_target_triplet(target::AbstractPlatform)
-    tags = Dict{Symbol,String}()
-    for tag in ("call_abi", "libc")
-        if haskey(target, tag)
-            tags[Symbol(tag)] = target[tag]
-        end
-    end
-    return triplet(Platform(arch(target), os(target); tags...))
-end
-gcc_target_triplet(platform::CrossPlatform) = gcc_target_triplet(platform.target)
 
 function toolchain_sources(toolchain::CToolchain)
     sources = AbstractSource[]
@@ -163,54 +165,62 @@ function toolchain_sources(toolchain::CToolchain)
 
     @warn("TODO: Generate xcrun shim", maxlog=1)
 
-    # Add the JLLs as well.
     # Note that we eliminate the illegal "version" fields from our PackageSpec
-    # objects here, because we occasionally 
     jll_deps = copy(toolchain.deps)
+    @warn("TODO: do I need to filter these out here?")
     filter_illegal_versionspecs!([jll.package for jll in jll_deps])
     append!(sources, jll_deps)
     return sources
 end
 
-function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_ENV = ENV)
-    PATH = [
+function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_env = ENV)
+    env = copy(base_env)
+    insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),
-        split(get(base_ENV, "PATH", ""), ":")...,
-    ]
-    env = Dict{String,String}(
-        "PATH" => join(PATH, ":"),
-    )
+        joinpath(deployed_prefix, "bin"),
+    ])
 
-    if toolchain.default_ctoolchain
-        env["AR"] = "ar"
-        env["AS"] = "as"
-        env["CC"] = "cc"
-        env["CXX"] = "c++"
-        env["LD"] = "ld"
-        env["NM"] = "nm"
-        env["RANLIB"] = "ranlib"
-        env["OBJCOPY"] = "objcopy"
-        env["OBJDUMP"] = "objdump"
-        env["STRIP"] = "strip"
+    function set_envvars(envvar_prefix::String, tool_prefix::String)
+        env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
+        env["$(envvar_prefix)AS"] = "$(tool_prefix)as"
+        env["$(envvar_prefix)CC"] = "$(tool_prefix)cc"
+        env["$(envvar_prefix)CXX"] = "$(tool_prefix)c++"
+        env["$(envvar_prefix)LD"] = "$(tool_prefix)ld"
+        env["$(envvar_prefix)NM"] = "$(tool_prefix)nm"
+        env["$(envvar_prefix)RANLIB"] = "$(tool_prefix)ranlib"
+        env["$(envvar_prefix)OBJCOPY"] = "$(tool_prefix)objcopy"
+        env["$(envvar_prefix)OBJDUMP"] = "$(tool_prefix)objdump"
+        env["$(envvar_prefix)STRIP"] = "$(tool_prefix)strip"
 
         if Sys.isapple(toolchain.platform.target)
-            env["DSYMUTIL"] = "dsymutil"
-            env["LIPO"] = "lipo"
+            env["$(envvar_prefix)DSYMUTIL"] = "$(tool_prefix)dsymutil"
+            env["$(envvar_prefix)LIPO"] = "$(tool_prefix)lipo"
         end
 
         if !Sys.isapple(toolchain.platform.target)
-            env["READELF"] = "readelf"
+            env["$(envvar_prefix)READELF"] = "$(tool_prefix)readelf"
         end
 
         if Sys.iswindows(toolchain.platform.target)
-            env["DLLTOOL"] = "dlltool"
-            env["WINDRES"] = "windres"
-            env["WINMC"] = "winmc"
+            env["$(envvar_prefix)DLLTOOL"] = "$(tool_prefix)dlltool"
+            env["$(envvar_prefix)WINDRES"] = "$(tool_prefix)windres"
+            env["$(envvar_prefix)WINMC"] = "$(tool_prefix)winmc"
         end
+    end
+
+    # If we're the default C toolchain, `$CC` points to `cc` (which we generated in our GeneratedSource)
+    if toolchain.default_ctoolchain
+        set_envvars("", "")
+    end
+    if toolchain.host_ctoolchain
+        set_envvars("HOST", "$(gcc_target_triplet(toolchain.platform.target))-")
     end
     return env
 end
 
+function platform(toolchain::CToolchain)
+    return toolchain.platform
+end
 
 
 
@@ -223,7 +233,7 @@ writing, this only excludes the case where `clang` has been invoked as an
 assembler via the `-x assembler` flag.
 """
 function compile_flagmatch(f::Function, io::IO)
-    flagmatch(f, io, [!flag"-x assembler"])
+    flagmatch(f, io, [!flag"-x assembler", !flag"-v"r])
 end
 
 """
@@ -235,7 +245,7 @@ where the compiler has been invoked to preprocess, compile without linking, act
 as an assembler, etc...
 """
 function link_flagmatch(f::Function, io::IO)
-    flagmatch(f, io, [!flag"-c", !flag"-E", !flag"-M", !flag"-fsyntax-only", !flag"-x assembler"])
+    flagmatch(f, io, [!flag"-c", !flag"-E", !flag"-M", !flag"-fsyntax-only", !flag"-x assembler", !flag"-v"r])
 end
 
 
@@ -281,6 +291,9 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 if toolchain.lock_microarchitecture
                     append_flags(io, :PRE, get_march_flags(arch(p), march(p), "gcc"))
                 end
+
+                # Add any extra CFLAGS the user has requested of us
+                append_flags(io, :PRE, toolchain.extra_cflags)
 
                 @warn("TODO: add sanitize compile flags!", maxlog=1)
                 #sanitize_compile_flags!(p, flags)
@@ -341,6 +354,9 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                     append_flags(io, :POST, "-Wl,--no-insert-timestamp")
                 end
 
+                # Add any extra linker flags that the user has requested of us
+                append_flags(io, :POST, toolchain.extra_ldflags)
+
                 @warn("TODO: sanitize_link_flags()", maxlog=1)
             end
         end
@@ -351,7 +367,12 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     # Generate target-specific wrappers always:
     _gcc_wrapper("$(gcc_target_triplet(p))-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
     _gcc_wrapper("$(gcc_target_triplet(p))-g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
-    _gcc_wrapper("$(gcc_target_triplet(p))-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
+
+    if toolchain.vendor == :gcc
+        _gcc_wrapper("$(gcc_target_triplet(p))-cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
+        _gcc_wrapper("$(gcc_target_triplet(p))-c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+        _gcc_wrapper("$(gcc_target_triplet(p))-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
+    end
 
     # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
     # the C toolchain "vendor" is GCC!)
@@ -375,7 +396,6 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     simple_tools = [
         "as",
         "ld",
-        "libtool",
         "nm",
         "objcopy",
         "objdump",
@@ -478,9 +498,26 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
                 println(io, raw"""
                 if [[ "${NONDETERMINISTIC}" != "1" ]] && [[ "${DETERMINISTIC}" != "1" ]]; then
                     ARGS[0]="${ARGS[0]}D"
+                    DETERMINISTIC="1"
                 fi
                 """)
             end
+
+            # Eliminate the `u` option, as it's incompatible with `D` and is just an optimization
+            println(io, raw"""
+            if [[ "${DETERMINISTIC}" == "1" ]]; then
+                for ((i=0; i<"${#ARGS[@]}"; ++i)); do
+                    if [[ "${ARGS[i]}" == "-u" ]]; then
+                        unset ARGS[$i]
+                    fi
+                done
+
+                # Also find examles like `ar -ruD` or `ar ruD`
+                if [[ " ${ARGS[0]} " == *'u'* ]]; then
+                    ARGS[0]=$(echo "${ARGS[0]}" | tr -d u)
+                fi
+            fi
+            """)
         end
     end
 

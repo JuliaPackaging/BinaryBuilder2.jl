@@ -2,7 +2,7 @@ module BinaryBuilderToolchains
 using Base.BinaryPlatforms, BinaryBuilderSources
 using Pkg.Types: VersionSpec
 
-export AbstractToolchain, toolchain_sources, toolchain_env
+export AbstractToolchain, toolchain_sources, toolchain_env, platform
 
 """
     AbstractToolchain
@@ -19,15 +19,20 @@ All toolchains must define the following methods:
 * toolchain_sources(toolchain)
     - returns a vector of `AbstractSource`'s representing the dependencies
       needed to run this toolchain
-* toolchain_env(toolchain)
+* toolchain_env(toolchain, deployed_prefix::String; base_env = ENV)
     - returns a dictionary listing the environment variables to be added
       in to commands that use this toolchain.
+* platform(toolchain)
+    - returns the platform this toolchain was constructed for.  Could be
+      a `CrossPlatform` (in the case of CToolchain) or a plain `Platform`
+      (in the case of HostToolsToolchain).
 """
 abstract type AbstractToolchain; end
 
 include("PlatformExtensions.jl")
 include("Microarchitectures.jl")
 include("WrapperUtils.jl")
+include("PathUtils.jl")
 include("toolchains/CToolchain.jl")
 include("toolchains/HostToolsToolchain.jl")
 include("PkgUtils.jl")
