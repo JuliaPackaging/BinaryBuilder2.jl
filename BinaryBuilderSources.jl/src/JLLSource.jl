@@ -67,10 +67,11 @@ function prepare(jlls::Vector{JLLSource}; verbose::Bool = false)
         pkgs = [deepcopy(jll.package) for jll in platform_jlls]
         collect_artifact_metas(pkgs; platform, verbose, pkg_depot)
 
-        # Next, collect each JLL individually, and fill out its
+        # Collect group of paths
+        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, pkg_depot)
         for jll in platform_jlls
-            art_paths = collect_artifact_paths([jll.package]; platform, pkg_depot)
-            append!(jll.artifact_paths, flatten_artifact_paths(art_paths))
+            pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
+            append!(jll.artifact_paths, art_paths[pkg])
         end
     end
 end

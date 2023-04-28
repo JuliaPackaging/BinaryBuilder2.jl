@@ -65,10 +65,18 @@ function prepare(sources::Vector{<:AbstractSource}; verbose::Bool = false)
     # Special-case JLL sources, as we get a material benefit when batching those:
     jlls = JLLSource[s for s in sources if isa(s, JLLSource)]
     non_jlls = [s for s in sources if !isa(s, JLLSource)]
-    prepare(jlls; verbose)
+    if !isempty(jlls)
+        prepare(jlls; verbose)
+    end
     prepare.(non_jlls; verbose)
 end
-deploy(sources::Vector{<:AbstractSource}, prefix::String) = deploy.(sources, Ref(prefix))
+function deploy(sources::Vector{<:AbstractSource}, prefix::String)
+    # Special-case JLL sources, as we get a material benefit when batching those:
+    jlls = JLLSource[s for s in sources if isa(s, JLLSource)]
+    non_jlls = [s for s in sources if !isa(s, JLLSource)]
+    deploy(jlls, prefix)
+    deploy.(non_jlls, Ref(prefix))
+end
 verify(sources::Vector{<:AbstractSource}) = all(verify.(sources))
 function content_hash(sources::Vector{<:AbstractSource})
     content_hashes = content_hash.(sources)

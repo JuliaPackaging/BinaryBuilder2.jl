@@ -1,16 +1,6 @@
 using Sandbox
 
 function Sandbox.SandboxConfig(config::BuildConfig)
-    # Prepare every source and dependency.  Ideally, we'd parallelize this somehow.
-    @info("Preparing all sources")
-    for source in config.sources
-        prepare(source)
-    end
-    @info("Preparing all dependencies")
-    for (prefix, deps) in config.dep_trees
-        prepare(deps)
-    end
-
     # Generate temporary directories for each individual prefix
     @info("Deploying dependencies")
     ro_maps = Dict{String,String}(

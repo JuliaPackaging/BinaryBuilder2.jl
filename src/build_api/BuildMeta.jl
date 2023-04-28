@@ -1,8 +1,7 @@
-# Re-export some useful definitions from Base
-export AbstractPlatform
+using TimerOutputs
 
 # And then our exports
-export BuildMeta, BuildConfig, BuildResult, ExtractConfig, ExtractResult, PackageConfig, PackageResult
+export BuildMeta, BuildResult, ExtractConfig, ExtractResult, PackageConfig, PackageResult
 
 const BUILD_HELP = (
     """
@@ -172,268 +171,12 @@ function parse_build_tarballs_args(ARGS::Vector{String})
 
     # Slurp up the last argument as platforms
     if length(ARGS) == 1
-        parse_platform(p::AbstractString) = p == "any" ? AnyPlatform() : parse(Platform, p; validate_strict=true)
-        parsed_kwargs[:target_list] = parse_platform.(split(ARGS[1], ","))
+        parsed_kwargs[:target_list] = parse.(AbstractPlatform, split(ARGS[1], ","))
     elseif length(ARGS) > 1
         throw(ArgumentError("Extraneous arguments to `build_tarballs.jl`: $(join([string("\"", x, "\"") for x in ARGS[2:end]], " "))"))
     end
 
     return parsed_kwargs
-end
-
-# Helper to convert SubStrings to Strings, but only if they're not `nothing`
-string_or_nothing(x::AbstractString) = String(x)
-string_or_nothing(::Nothing) = nothing
-
-"""
-    BuildConfig
-
-This structure holds all of the inputs that are needed to generate a build of a software
-project in the build environment.  Things such as the project name, the list of sources,
-the build script, the dependencies, etc... are all listed within this structure.  Once
-the user calls `build!()`, each `BuildConfig` will get a `BuildResult` packed into the
-overall `BuildMeta` object.
-"""
-struct BuildConfig
-    # The name of the package being built.  This is exported as an environment variable during build
-    # so that internal tooling such as "install_license" can install into intelligent paths.
-    src_name::String
-
-    # The source version; this may not be what the resultant JLL gets published under, but it will
-    # be recorded as metadata in the JLL itself.
-    src_version::VersionNumber
-
-    # Sources that we will build from (Git repositories, tarballs, directories on-disk, etc...)
-    sources::Vector{<:AbstractSource}
-
-    # Dependencies that must be installed in the build environment.
-    # Contains host dependencies, target dependencies, and cross-dependencies (e.g. compilers).
-    # Organized by installation prefix (e.g. `/usr/local` for host dependencies, `/opt/$(triplet)`
-    # for cross-compilers, etc...)
-    dep_trees::Dict{String,Vector{JLLSource}}
-
-    # Flags that influence the build environment and the generated compiler wrappers
-    allow_unsafe_flags::Bool
-    lock_microarchitecture::Bool
-
-    # Bash script that will perform the actual build itself
-    script::String
-
-    # The cross-platform we're using for this build
-    platform::CrossPlatform
-    #concrete_target::AbstractPlatform
-
-    function BuildConfig(src_name::AbstractString,
-                         src_version::VersionNumber,
-                         sources::Vector{<:AbstractSource},
-                         script::AbstractString,
-                         target::AbstractPlatform;
-                         host::AbstractPlatform = Platform("x86_64", "linux"),
-                         allow_unsafe_flags::Bool = false,
-                         lock_microarchitecture::Bool = true,
-                         kwargs...,
-                         )
-        # We're building for this cross_platform
-        cross_platform = CrossPlatform(
-            host,
-            target,
-        )
-
-        dep_trees_kwargs = @extract_kwargs!(kwargs, toolchains, target_deps, host_deps)
-        dep_trees = toolchain_map(cross_platform; dep_trees_kwargs...)
-        return new(
-            String(src_name),
-            src_version,
-            sources,
-            dep_trees,
-            allow_unsafe_flags,
-            lock_microarchitecture,
-            String(script),
-            cross_platform,
-        )
-    end
-end
-
-# Helper function to better control when we download all our deps
-function prepare(config::BuildConfig)
-    prepare(config.sources)
-    for (prefix, deps) in config.dep_trees
-        prepare(deps)
-    end
-end
-
-
-"""
-    BuildResult
-
-A `BuildResult` represents a constructed build prefix; it contains the paths to the
-binaries (typically within an artifact directory) as well as some metadata about the
-audit passes and whatnot that ran upon the files.
-"""
-struct BuildResult
-    # The config that this result was built from
-    config::BuildConfig
-
-    # The overall status of the build.  One of [:successful, :failed, :skipped]
-    status::Symbol
-
-    # The location of the build prefix on-disk (typically an artifact directory)
-    # For a failed or skipped build, this may be empty or only partially filled.
-    prefix::String
-
-    # Logs that are generated from build invocations and audit passes.
-    # Key name is an identifier for the operation, value is the log content.
-    # Example: ("audit-libfoo-relink_to_rpath").
-    logs::Dict{String,String}
-
-    # These are `@info`/`@warn`/`@error` messages that get emitted during the build/audit
-    # we may eventually want to make this more structured, e.g. organize them by audit
-    # pass and whatnot.  These messages are not written out to disk during packaging.
-    #msgs::Vector{Test.LogRecord}
-
-    ## TODO: merge `logs` and `msgs` with a better, more structured logging facility?
-
-    function BuildResult(config::BuildConfig,
-                         status::Symbol,
-                         prefix::AbstractString,
-                         logs::Dict{AbstractString,AbstractString})
-                         #msgs::Vector{Test.LogRecord})
-        return new(
-            config,
-            status,
-            String(prefix),
-            Dict(String(k) => String(v) for (k, v) in logs),
-            #msgs,
-        )
-    end
-end
-
-# Helper function for skipped builds
-function BuildResult_skipped(config::BuildConfig)
-    return BuildResult(
-        config,
-        :skipped,
-        "/dev/null",
-        Dict{String,String}(),
-    )
-end
-
-# TODO: construct helper to reconstruct BuildResult objects from S3-saved tarballs
-
-struct ExtractConfig
-    # The build result we're packaging up
-    build::BuildResult
-
-    # The extraction script that we're using to copy build results out into our artifacts
-    script::String
-
-    # The products that this package will ensure are available
-    products::Vector{<:AbstractProduct}
-
-    # TODO: Add an `AuditConfig` field
-    #audit::AuditConfig
-
-    function ExtractConfig(build::BuildResult,
-                           script::AbstractString,
-                           products::Vector{<:AbstractProduct},
-                           audit_config = nothing)
-        return new(
-            build,
-            String(script),
-            products,
-            #audit_config,
-        )
-    end
-end
-
-struct ExtractResult
-    # Link back to the originating ExtractResult
-    config::ExtractConfig
-
-    # The overall status of the extraction.  One of :successful, :failed, :skipped.
-    status::Symbol
-
-    # Treehash that represents the packaged output for the given config
-    # On a failed/skipped build, this may be the special all-zero artifact hash.
-    artifact::Base.SHA1
-
-    # Logs generated during this extraction (audit logs, mostly)
-    logs::Dict{String,String}
-
-    function ExtractResult(config::ExtractConfig, status::Symbol,
-                              artifact::Base.SHA1, logs::Dict{AbstractString,AbstractString})
-        return new(
-            config,
-            status,
-            artifact,
-            Dict(String(k) => String(v) for (k,v) in logs),
-        )
-    end
-end
-
-function ExtractResult_skipped(config::ExtractConfig)
-    return ExtractResult(
-        config,
-        :skipped,
-        Base.SHA1("0"^40),
-        Dict{String,String}(),
-    )
-end
-
-struct PackageConfig
-    # The name of the generated JLL; if not specified, defaults to `$(src_name)_jll`.
-    # Note that by default we add `_jll` at the end, but this is not enforced in code!
-    name::String
-
-    # The list of successful extractions that we're going to combine
-    # together into a single package
-    extractions::Vector{ExtractResult}
-
-    function PackageConfig(extractions::Vector{ExtractResult}; name::Union{AbstractString,Nothing} = nothing)
-        if !isempty(extractions) && any(e.config.builds[1].name != extractions[1].config.builds[1].name for e in extractions)
-            throw(ArgumentError("Cannot package extractions from different builds!"))
-        end
-        # We allow overriding the name, but default to `$(src_name)_jll`
-        if name === nothing
-            name = string(extractions[1].config.builds[1].config.src_name, "_jll")
-        end
-        if !Base.isidentifier(name)
-            throw(ArgumentError("Package name '$(name)' is not a valid identifier!"))
-        end
-        return new(name, extractions)
-    end    
-end
-
-struct PackageResult
-    # Link back to the originating Package Config
-    config::PackageConfig
-
-    # Overall status of the packaging.  One of :successful, :failed or :skipped
-    status::Symbol
-
-    # The version number this package result is getting published under
-    # (may disagree with `src_version`).
-    published_version::VersionNumber
-
-    function PackageResult(config::PackageConfig,
-                           status::Symbol,
-                           published_version::VersionNumber)
-        return new(
-            config,
-            status,
-            published_version,
-        )
-    end
-end
-
-# Note that this helper still takes in the `published_version`, as that is
-# potentially quite useful for static analysis to know.
-function PackageResult_skipped(config::PackageConfig, published_version::VersionNumber)
-    return PackageResult(
-        config,
-        :skipped,
-        published_version,
-    )
 end
 
 """
@@ -495,6 +238,9 @@ struct BuildMeta
                         build_dir::AbstractString = joinpath(pwd(), "build"),
                         output_dir::AbstractString = joinpath(pwd(), "products"),
                        )
+        # Helper to convert SubStrings to Strings, but only if they're not `nothing`
+        string_or_nothing(x::AbstractString) = String(x)
+        string_or_nothing(::Nothing) = nothing
         if debug !== nothing
             if debug ∉ ("begin", "end", "error")
                 throw(ArgumentError("If `debug` is specified, it must be one of \"begin\", \"end\" or \"error\""))

@@ -11,7 +11,7 @@ using Scratch, Preferences
 # Used by `with_storage_locations()` in the test suite
 const storage_locations = Dict{Symbol, Function}()
 
-macro define_storage_location(name, default)
+macro define_storage_location(name, default, sub_module = nothing)
     refvar = Symbol(string("_", name))
     return quote
         # A caching variable so that we don't have to lookup preferences and scratch
@@ -21,14 +21,18 @@ macro define_storage_location(name, default)
         Base.@__doc__ function $(esc(name))()
             global $(esc(refvar))
             if !isassigned($(esc(refvar)))
-                $(esc(refvar))[] = @load_preference($(string(name)), $(esc(default)))
+                return $(esc(name))(@load_preference($(string(name)), $(esc(default))))
             end
             return $(esc(refvar))[]
         end
 
         function $(esc(name))(new_value::String)
             $(esc(refvar))[] = new_value
-            return new_value
+            if $(esc(sub_module)) !== nothing
+                $(esc(sub_module)).$(esc(name))(new_value)
+            else
+                return $(esc(refvar))[]
+            end
         end
 
         # Add this storage location to our mapping of storage locations
@@ -43,7 +47,7 @@ Returns the path of the directory used to store downloaded sources, e.g. where
 `AbstractSource`s get stored when you call `prepare()`.  This can be set
 through the `source_download_cache` preference.
 """
-@define_storage_location source_download_cache @get_scratch!("source_download_cache")
+@define_storage_location source_download_cache @get_scratch!("source_download_cache") BinaryBuilderSources
 
 """
     ccache_cache()
@@ -53,3 +57,10 @@ set through the `ccache_cache` preference.
 """
 @define_storage_location ccache_cache @get_scratch!("ccache_cache")
 
+"""
+    builds_dir()
+
+Returns the path of the directory used to store in-progress build files.  This can
+be set through the `builds_dir` preference.
+"""
+@define_storage_location builds_dir @get_scratch!("builds_dir")
