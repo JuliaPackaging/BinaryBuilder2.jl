@@ -1,5 +1,6 @@
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet
 
+#=
 """
     deduplicate_jlls(jlls::Vector{JLLSource})
 
@@ -21,6 +22,7 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
     end
     return values(seen_jlls)
 end
+=#
 
 function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[])
     toolchains = AbstractToolchain[]

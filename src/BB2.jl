@@ -15,8 +15,8 @@ include("BuildAPI.jl")
 
 
 include("build_env/Toolchains.jl")
-include("build_env/Sandbox.jl")
+#include("build_env/Sandbox.jl")
 
-
+include("Compat.jl")
 include("precompile.jl")
 end

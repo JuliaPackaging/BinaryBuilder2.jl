@@ -8,6 +8,9 @@ function capture_output(cmd)
     return p, output
 end
 
+# Enable this for lots of JLLPrefixes output
+const verbose = false
+
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(HostPlatform() => HostPlatform())
@@ -18,11 +21,16 @@ end
 
     # Download the toolchain, make sure it runs
     srcs = toolchain_sources(toolchain)
-    prepare(srcs; verbose=true)
+    prepare(srcs; verbose)
     mktempdir(@get_scratch!("tempdirs")) do prefix
         deploy(srcs, prefix)
 
         env = toolchain_env(toolchain, prefix)
+        # Do not allow external MAKEFLAGS to leak through:
+        env = merge(env, Dict(
+            "MAKEFLAGS" => nothing,
+            "GNUMAKEFLAGS" => nothing
+        ))
         cd(testsuite_path) do
             # Run our entire test suite first
             p = run(addenv(`make cleancheck-all`, env))

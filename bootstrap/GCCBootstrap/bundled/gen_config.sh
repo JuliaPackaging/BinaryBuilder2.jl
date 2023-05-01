@@ -11,8 +11,10 @@ CT_GCC_V_9=y
 
 # Disable progress bar, it fills up our logs:
 CT_LOG_PROGRESS_BAR=n
-CT_LOG_LEVEL_MAX="ALL"
-CT_LOG_ALL=y
+
+# If something goes wrong, this can be helpful to watch it all scroll by
+#CT_LOG_LEVEL_MAX="ALL"
+#CT_LOG_ALL=y
 
 # We use some experimental features, just enable them for all
 CT_EXPERIMENTAL=y

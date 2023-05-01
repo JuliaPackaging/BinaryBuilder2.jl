@@ -161,6 +161,13 @@ function deploy(config::BuildConfig)
     )
 end
 
+function build(dconfig::DeployedBuildConfig)
+    sandbox_config = SandboxConfig(dconfig; verbose)
+    with_executor() do exe
+        run(exe, sandbox_config, shell)
+    end
+end
+
 function Sandbox.SandboxConfig(dconfig::DeployedBuildConfig; verbose::Bool = false)
     return SandboxConfig(
         dconfig.mounts,

@@ -1,19 +1,33 @@
+using NetworkOptions
 export HostToolsToolchain
 
+"""
+    HostToolsToolchain
+
+This toolchain contains a large number of useful host tools, such as 
+"""
 @kwdef struct HostToolsToolchain <: AbstractToolchain
     platform::Platform = HostPlatform()
     deps::Vector{AbstractSource}
 
-    function HostToolsToolchain(platform, extras=AbstractSource[])
+    function HostToolsToolchain(platform, overrides=AbstractSource[])
         peel_host(p::Platform) = p
         peel_host(p::CrossPlatform) = p.host
         platform = peel_host(platform)
+
+        # If the user is lazy and only gives us names, just turn them into JLLSource objects
+        overrides = map(overrides) do tool
+            if isa(tool, String)
+                return JLLSource(tool, platform)
+            end
+            return tool
+        end
 
         @warn("TODO: Version these by sticking them in a `Manifest.toml` somewhere for easy updating?")
         default_tools = [
             # Build tools
             "automake_jll",
-            #"autoconf_jll",
+            "autoconf_jll",
             "Bison_jll",
             "Ccache_jll",
             "file_jll",
@@ -28,6 +42,7 @@ export HostToolsToolchain
 
             # Networking tools
             "CURL_jll",
+            "Git_jll",
 
             # Compression tools
             "Tar_jll",
@@ -38,14 +53,16 @@ export HostToolsToolchain
         ]
 
         deps = AbstractSource[]
-        extra_jlls = filter(e -> isa(e, JLLSource), extras)
+
+        # Add any JLLS from our default tools that are not already in the overrides list, to prevent duplicates.
+        override_jlls = filter(e -> isa(e, JLLSource), overrides)
         for tool in default_tools
-            if !any(jll.package.name == tool for jll in extra_jlls)
+            if !any(jll.package.name == tool for jll in override_jlls)
                 push!(deps, JLLSource(tool, platform))
             end
         end
-        for extra in extras
-            push!(deps, extra)
+        for override in overrides
+            push!(deps, override)
         end
 
         # Concretize the JLLSource's `PackageSpec`'s version now:
@@ -69,6 +86,10 @@ end
 function toolchain_sources(toolchain::HostToolsToolchain)
     sources = AbstractSource[]
 
+    push!(sources, GeneratedSource(;target="etc/certs") do out_dir
+        cp(ca_roots_path(), joinpath(out_dir, basename(ca_roots_path())))
+    end)
+
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
         toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
         if any(jll.package.name == "Tar_jll" for jll in toolchain.deps)
@@ -87,6 +108,16 @@ function toolchain_sources(toolchain::HostToolsToolchain)
                 # Fix relocatability issues
                 println(io, """
                 export MAGIC=$(toolchain_prefix)/share/misc/magic.mgc
+                """)
+            end
+        end
+        if any(jll.package.name == "Git_jll" for jll in toolchain.deps)
+            compiler_wrapper(joinpath(out_dir, "git"), "$(toolchain_prefix)/bin/git") do io
+                # Fix relocatability issues
+                println(io, """
+                export GIT_EXEC_PATH=\"$(toolchain_prefix)/libexec/git-core\"
+                export GIT_SSL_CAINFO=\"$(toolchain_prefix)/etc/certs/$(basename(ca_roots_path()))\"
+                export GIT_TEMPLATE_DIR=\"$(toolchain_prefix)/share/git-core/templates\"
                 """)
             end
         end

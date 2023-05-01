@@ -5,6 +5,9 @@ Useful features I want to add before I call this rewrite "done":
   - Get rid of dlopen checks completely
 * JLL output metadata
   - Discussion here: https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/639
+  - Break version number equivalency
+  - Build BinaryBuilderJLLWriter.jl
+  - Build BinaryBuilderVersionTool.jl?
 * Create `GeneratedDependency`
   - Takes in the `BuildConfig` object, generates a directory as a dependency (e.g. compiler wrappers)
   - Resultant directory gets hashed, just like a `DirectorySource`
@@ -17,7 +20,12 @@ Useful features I want to add before I call this rewrite "done":
   - `compilers = [:c]` => `toolchains = [CToolchain()]`.
   - `HostBuildDependency()` => `JLLDependency` with appropriate platforms
 * Copy over as many tests as possible from BB.jl and BBB.jl
+* Test all toolchain executables; at least `--version` to ensure they are still running.
 
 Things that would be nice to have, but we don't _need_:
 * Capture the environment at the end of the build, use it to interpolate products
 * LRU cache of specific size for `downloads` folder
+* Progress bars for _everything_
+  - JLL downloads
+  - Source tarball unpacking
+  - Auditing

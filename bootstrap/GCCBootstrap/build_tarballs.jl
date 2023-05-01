@@ -119,6 +119,13 @@ host_dependencies = [
     JLLSource("Ncurses_jll", host),
     JLLSource("Zlib_jll", host),
 ]
+
+# Customize the toolchains that are provided here
+toolchains = BB2.default_toolchains(CrossPlatform(host, target), [
+    # We require make v4.3, rather than the latest.
+    JLLSource("GNUMake_jll", host; version=BB2.VersionSpec("4.3")),
+])
+
 build_config = BuildConfig(
     name,
     version,
@@ -127,5 +134,6 @@ build_config = BuildConfig(
     host_dependencies,
     script,
     target;
+    toolchains,
 )
 BB2.runshell(build_config; verbose=true)

@@ -1,9 +1,3 @@
-
-# Helper that uses python to calculate relative paths
-define relpath
-$(shell python -c 'import os.path, sys; print os.path.relpath("$1", "$2")')
-endef
-
 # Do not, under any circumstances, allow USE_CCACHE when testing the compiler suite
 override USE_CCACHE=0
 export USE_CCACHE
