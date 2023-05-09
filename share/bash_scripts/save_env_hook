@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Save bash history (and optionally echo it out as it happens)
+save_history() {
+    # Skip special commands
+    if [[ "${BASH_COMMAND}" == trap* ]] || [[ "${BASH_COMMAND}" == false ]]; then
+        return
+    fi
+	if [[ "${BB_PRINT_COMMANDS}" == "true" ]]; then
+		echo " ---> ${BASH_COMMAND}" >&2
+	fi
+    history -s "${BASH_COMMAND}"
+    history -a
+}
+
+# Save our environment into `/workspace/metadir/env`, eliminating read-only variables
+# so that this file can be sourced upon entering a debug shell.
+save_env() {
+	set +x
+	set > /workspace/metadir/env
+	# Ignore read-only variables
+	for l in BASHOPTS BASH_VERSINFO UID EUID PPID SHELLOPTS; do
+		grep -v "^$l=" /workspace/metadir/env > /workspace/metadir/env2
+		mv /workspace/metadir/env2 /workspace/metadir/env
+	done
+	echo "cd $(pwd)" >> /workspace/metadir/env
+}
+
+if [ -f /workspace/metadir/env ]; then
+	source /workspace/metadir/env
+fi
+
+# On any kind of exit, save our environment out to our metadir
+trap "RET=\$?; \
+	trap - DEBUG INT TERM ERR EXIT; \
+    set +e +x; \
+	if [[ "\$RET" != 0 ]]; then \
+    	echo Previous command \"'\$!'\" exited with code \$RET >&2; \
+	fi; \
+    save_env; \
+    exit \$RET" \
+    EXIT INT TERM

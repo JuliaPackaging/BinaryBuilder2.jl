@@ -1,3 +1,4 @@
+export PackageConfig, package!
 
 struct PackageConfig
     # The name of the generated JLL; if not specified, defaults to `$(src_name)_jll`.

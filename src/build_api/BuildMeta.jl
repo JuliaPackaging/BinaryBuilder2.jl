@@ -1,7 +1,7 @@
-using TimerOutputs
+using TimerOutputs, Pkg
 
 # And then our exports
-export BuildMeta, BuildResult, ExtractConfig, ExtractResult, PackageConfig, PackageResult
+export BuildMeta
 
 const BUILD_HELP = (
     """
@@ -81,6 +81,38 @@ const BUILD_HELP = (
             minimum of output messages.
     """
 )
+
+"""
+    extract_flag!(args::Vector{String}, flag::String, val = nothing)
+
+Search for flags of the form `--flag` or `--flag=value`
+Return `(found, value)`, where `found` is `true` if the given `flag` is found
+within `args`, `false` otherwise.  If the value is found, return the string
+after the `=` sign, 
+"""
+function extract_flag!(args::Vector{String}, flag::String,
+                       val::Union{String,Nothing} = nothing)
+    for f in args
+        if f == flag || startswith(f, string(flag, "="))
+            # Check if it's just `--flag` or if it's `--flag=foo`
+            if f != flag
+                val = split(f, '=')[2]
+            end
+
+            # Drop this value from our args
+            filter!(x -> x != f, args)
+            return (true, val)
+        end
+    end
+    return (false, val)
+end
+
+"""
+    check_flag!(args::Vector{String}, flag::String)
+
+Return `true` if `flag `is in `args`. Also, remove that flag from `args`
+"""
+check_flag!(args, flag) = extract_flag!(args, flag, nothing)[1]
 
 """
     parse_build_tarballs_args(ARGS::Vector{String})
@@ -195,7 +227,7 @@ When constructed, global options (most commonly passed in on the command line th
 `ARGS`) can be passed to the `BuildMeta` through a `BuildMeta(ARGS::Vector{String})`
 parsing method, or directly through keyword arguments in the constructor.
 """
-struct BuildMeta
+struct BuildMeta <: AbstractBuildMeta
     # Contains a list of builds; when you run build!() with arguments, it records
     # what the metadata for that build was in here.
     builds::Dict{BuildConfig,Union{Nothing,BuildResult}}
@@ -274,7 +306,7 @@ struct BuildMeta
             string_or_nothing(register_depot),
             build_dir,
             output_dir,
-            Dict("bb_version" => get_bb_version())
+            Dict("bb_version" => Base.pkgversion(@__MODULE__)),
         )
     end
 end

@@ -1,4 +1,4 @@
-using BB2
+using BB2, Artifacts
 
 name = "GCCBootstrap"
 version = v"9.4.0"
@@ -126,6 +126,7 @@ toolchains = BB2.default_toolchains(CrossPlatform(host, target), [
     JLLSource("GNUMake_jll", host; version=BB2.VersionSpec("4.3")),
 ])
 
+meta = BuildMeta()
 build_config = BuildConfig(
     name,
     version,
@@ -136,4 +137,15 @@ build_config = BuildConfig(
     target;
     toolchains,
 )
-BB2.runshell(build_config; verbose=true)
+build_result = build!(meta, build_config)
+
+extract_config = ExtractConfig(
+    build_result,
+    raw"""
+    extract ${prefix}/**
+    """,
+    BB2.AbstractProduct[],
+)
+extract_result = extract!(meta, extract_config)
+@info("Build complete", artifact=artifact_path(extract_result.artifact))
+display(extract_result.config.to)

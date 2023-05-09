@@ -7,15 +7,12 @@ using Reexport
 @reexport using BinaryBuilderToolchains
 
 include("ExtractKwargs.jl")
-include("PlatformExtensions.jl")
-include("GitUtils.jl")
 include("Preferences.jl")
 include("Products.jl")
 include("BuildAPI.jl")
 
 
 include("build_env/Toolchains.jl")
-#include("build_env/Sandbox.jl")
 
 include("Compat.jl")
 include("precompile.jl")

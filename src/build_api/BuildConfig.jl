@@ -1,9 +1,11 @@
+using Base.BinaryPlatforms
 using TimerOutputs, Sandbox, BinaryBuilderToolchains
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
+using MultiHashParsing
 
-export BuildConfig
+export BuildConfig, build!
 
 """
     BuildConfig
@@ -50,7 +52,7 @@ struct BuildConfig
     function BuildConfig(src_name::AbstractString,
                          src_version::VersionNumber,
                          sources::Vector{<:AbstractSource},
-                         dependencies::Vector{<:AbstractSource},
+                         target_dependencies::Vector{<:AbstractSource},
                          host_dependencies::Vector{<:AbstractSource},
                          script::AbstractString,
                          target::AbstractPlatform;
@@ -58,7 +60,6 @@ struct BuildConfig
                          toolchains::Vector{<:AbstractToolchain} = default_toolchains(CrossPlatform(host, target)),
                          allow_unsafe_flags::Bool = false,
                          lock_microarchitecture::Bool = true,
-                         target_deps::Vector{<:AbstractSource} = AbstractSource[],
                          kwargs...,
                          )
         # We're building for this cross_platform
@@ -72,14 +73,36 @@ struct BuildConfig
         toolchain_prefix(toolchain::HostToolsToolchain) = "/opt/host"
 
         source_trees = Dict{String,Vector{AbstractSource}}(
-            "/workspace/destdir/$(triplet(cross_platform.target))" => dependencies,
+            # Target dependencies
+            "/workspace/destdir/$(triplet(cross_platform.target))" => target_dependencies,
+            # Host dependencies (not including toolchains, those go in `/opt/$(host_triplet)`)
             "/usr/local" => host_dependencies,
+            # The actual sources we're gonna build
             "/workspace/srcdir" => sources,
+
+            # BB needs some resources mounted in as well:
+            # Metadata such as our build script
+            "/usr/local/share/bb" => [DirectorySource(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"))],
+            "/workspace/metadir" => [GeneratedSource() do out_dir
+                script_path = joinpath(out_dir, "build_script.sh")
+                open(script_path, write=true) do io
+                    println(io, "#!/bin/bash")
+                    println(io, "source /usr/local/share/bb/save_env_hook")
+                    println(io, script)
+                    println(io, "exit 0")
+                end
+                chmod(script_path, 0o755)
+                cp(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts", "save_env_hook"),
+                   joinpath(out_dir, ".bashrc"))
+            end]
         )
         env = Dict{String,String}(
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
             "WORKSPACE" => "/workspace",
+            "HISTFILE" => "/workspace/metadir/.bash_history",
+            "BB_PRINT_COMMANDS" => "true",
+            "HOME" => "/workspace/metadir",
             "prefix" => "/workspace/destdir/$(triplet(cross_platform.target))",
             "target" => "$(gcc_target_triplet(cross_platform.target))",
             "bb_full_target" => "$(triplet(cross_platform.target))",
@@ -94,7 +117,7 @@ struct BuildConfig
         return new(
             String(src_name),
             src_version,
-            [d.package for d in dependencies if isa(JLLSource, d)],
+            [d.package for d in target_dependencies if isa(d, JLLSource)],
             source_trees,
             env,
             allow_unsafe_flags,
@@ -109,7 +132,7 @@ end
 # Helper function to better control when we download all our deps
 # Ideally, this would be paralellized somehow.
 function prepare(config::BuildConfig; verbose::Bool = false)
-    @timeit config.to "prepare() - source" begin
+    @timeit config.to "prepare" begin
         for (prefix, deps) in config.source_trees
             @timeit config.to prefix begin
                 prepare(deps; verbose)
@@ -118,29 +141,20 @@ function prepare(config::BuildConfig; verbose::Bool = false)
     end
 end
 
-struct DeployedBuildConfig
-    config::BuildConfig
+function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String = mktempdir(builds_dir()))
+    # Ensure the `config` has been prepared
+    prepare(config; verbose)
 
-    # The temporary directory where we'll do the build
-    # this needs to be cleaned up eventually.
-    deploy_root::String
-
-    # Data for our eventual SandboxConfig
-    mounts::Dict{String,MountInfo}
-end
-
-function deploy(config::BuildConfig)
-    deploy_root = mktempdir(builds_dir())
-
+    # This is the temporary directory into which we will unpack/deploy sources,
+    # run the actual build itself, etc...
     mounts = Dict{String,MountInfo}(
         "/" => MountInfo(Sandbox.debian_rootfs(;platform = config.platform.host), MountType.Overlayed),
     )
 
-    @timeit config.to "deploy() - source_trees" begin
+    @timeit config.to "deploy" begin
         for (prefix, srcs) in config.source_trees
             mount_type = MountType.Overlayed
 
-            @error("TODO: Experiment with removing files from the lower directory and see what happens in the overlay?!")
             # Special-case some mounts to be read-write so we can get the result back out again
             #if prefix ∈ ("/workspace/srcdir", "/workspace/destdir/$(triplet(config.platform.target))")
             #    mount_type = MountType.ReadWrite
@@ -153,25 +167,21 @@ function deploy(config::BuildConfig)
             @timeit config.to prefix deploy(srcs, host_path)
         end
     end
-
-    return DeployedBuildConfig(
-        config,
-        deploy_root,
-        mounts,
-    )
+    return mounts
 end
 
-function build(dconfig::DeployedBuildConfig)
-    sandbox_config = SandboxConfig(dconfig; verbose)
-    with_executor() do exe
-        run(exe, sandbox_config, shell)
-    end
-end
-
-function Sandbox.SandboxConfig(dconfig::DeployedBuildConfig; verbose::Bool = false)
+import Sandbox: SandboxConfig
+function SandboxConfig(config::BuildConfig,
+                       mounts::Dict{String,MountInfo};
+                       env = config.env,
+                       stdout = stdout,
+                       stdin = stdin,
+                       stderr = stderr,
+                       verbose::Bool = false,
+                       kwargs...)
     return SandboxConfig(
-        dconfig.mounts,
-        dconfig.config.env;
+        mounts,
+        env;
         hostname = "bb8",
         pwd = "/workspace/srcdir",
         persist = true,
@@ -179,17 +189,65 @@ function Sandbox.SandboxConfig(dconfig::DeployedBuildConfig; verbose::Bool = fal
         stdout,
         stderr,
         verbose,
-        multiarch=[dconfig.config.platform.host],
+        # TODO: Add `config.platform.target` here as well!
+        multiarch = [config.platform.host],
+        kwargs...,
     )
 end
 
-function runshell(dconfig::DeployedBuildConfig; verbose::Bool = false, shell::Cmd=`/bin/bash`)
-    sandbox_config = SandboxConfig(dconfig; verbose)
+function runshell(config::BuildConfig; verbose::Bool = false, shell::Cmd = `/bin/bash`)
+    mounts = deploy(config; verbose)
+    sandbox_config = SandboxConfig(config, mounts; verbose)
     with_executor() do exe
         run(exe, sandbox_config, shell)
     end
 end
-function runshell(config::BuildConfig; verbose::Bool = false, kwargs...)
-    prepare(config; verbose)
-    runshell(deploy(config); verbose, kwargs...)
+
+function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
+    local run_status
+    run_exception = nothing
+    try
+        if success(run(exe, config, cmd))
+            run_status = :success
+        else
+            run_status = :failed
+        end
+    catch e
+        if isa(e, InterruptException)
+            cleanup(exe)
+            rethrow(e)
+        end
+        run_status = :errored
+        run_exception = e
+    end
+    return run_status, run_exception
+end
+
+function build!(meta::AbstractBuildMeta, config::BuildConfig; deploy_root::String = mktempdir(builds_dir()))
+    @warn("TODO: Check config tree hashes, don't build again if not necessary", maxlog=1)
+
+    mounts = deploy(config; verbose=meta.verbose, deploy_root)
+    sandbox_config = SandboxConfig(
+        config, mounts;
+        # TODO: Spit these out into a logfile or something
+        stdout=stdout,
+        stderr=stderr,
+        verbose=meta.verbose,
+    )
+    local run_status, run_exception
+    exe = Sandbox.preferred_executor()()
+    @timeit config.to "build" begin
+        run_status, run_exception = run_trycatch(exe, sandbox_config, `/workspace/metadir/build_script.sh`)
+    end
+
+    result = BuildResult(
+        config,
+        run_status,
+        run_exception,
+        exe,
+        mounts,
+        Dict{String,String}(),
+    )
+    meta.builds[config] = result
+    return result
 end

@@ -122,16 +122,20 @@ using Base.BinaryPlatforms
                   name = "Foo",
                   src_version = v"1.0.0",
                   sources = [ArchiveSource("url", "0"^40)],
-                  script = "make install",
                   target = Platform("x86_64", "linux"),
-                  dependencies = [Dependency("Bar_jll")])
+                  host = Platform("x86_64", "linux"),
+                  dependencies = [JLLSource("Bar_jll", target)],
+                  host_dependencies = AbstractSource[],
+                  script = "make install")
         return BuildConfig(
             name,
             src_version,
             sources,
-            script,
-            target,
             dependencies,
+            host_dependencies,
+            script,
+            target;
+            host
         )
     end
 
@@ -140,13 +144,10 @@ using Base.BinaryPlatforms
         config = mock(BuildConfig)
         @test config.src_name == "Foo"
         @test config.src_version == v"1.0.0"
-        @test isempty(config.sources) == sources
+        @test only(config.source_trees["/workspace/srcdir"]) == ArchiveSource("url", "0"^40)
         @test config.script == "make install"
-        @test config.target == Platform("x86_64", "linux")
-        # Note that this test relies upon the behavior of `get_concrete_platform()`
-        @test config.concrete_target == Platform("x86_64", "linux"; libc="glibc", cxxstring_abi="cxx03", libgfortran_version=v"3")
-        @test isempty(config.dependencies)
-
+        @test config.platform.target == Platform("x86_64", "linux")
+        @test length(config.pkg_deps) == 1
 
         # Create a `BuildMeta` with `dry_run` set to turn off builds, then call `build!()`
         meta = BuildMeta(;dry_run = [:build])
@@ -157,7 +158,7 @@ using Base.BinaryPlatforms
 
         # Create a simple build invocation, ensure that it creates a `BuildConfig` as we expect
         sources = [ArchiveSource("url", "0"^40)]
-        deps = [Dependency("Bar_jll")]
+        deps = [JLLSource("Bar_jll")]
         meta = BuildMeta(;dry_run = [:build])
         config = build!(
             meta,

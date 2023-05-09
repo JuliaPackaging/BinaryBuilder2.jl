@@ -1,0 +1,19 @@
+#!/bin/bash
+
+extract() {
+    prefix="$(realpath "${prefix}")"
+    for arg in "$@"; do
+        files=( $(compgen -G "${arg}") )
+        for file in "${files[@]}"; do
+            file="$(realpath "${file}")"
+
+            if [[ "${BB_PRINT_COMMANDS}" ]]; then
+                echo "extracting: ${file##${prefix}/}" >&2
+            fi
+
+            dest="${extract_dir}/${file##${prefix}/}"
+            mkdir -p "$(dirname "${dest}")"
+            cp -a "${file}" "${dest}"
+        done
+    done
+}

@@ -1,3 +1,5 @@
+export BuildResult
+
 """
     BuildResult
 
@@ -5,16 +7,20 @@ A `BuildResult` represents a constructed build prefix; it contains the paths to 
 binaries (typically within an artifact directory) as well as some metadata about the
 audit passes and whatnot that ran upon the files.
 """
-struct BuildResult
+mutable struct BuildResult
     # The config that this result was built from
     config::BuildConfig
 
-    # The overall status of the build.  One of [:successful, :failed, :skipped]
+    # The overall status of the build.  One of [:successful, :failed, :errored, :skipped]
     status::Symbol
 
-    # The location of the build prefix on-disk (typically an artifact directory)
-    # For a failed or skipped build, this may be empty or only partially filled.
-    prefix::String
+    # If `status` is `:errored`, this should contain the exception that was thrown during execution
+    # This generally denotes a bug.
+    exception::Union{Nothing,Exception}
+
+    # The set of mounts used to run the build.
+    exe::SandboxExecutor
+    mounts::Dict{String,MountInfo}
 
     # Logs that are generated from build invocations and audit passes.
     # Key name is an identifier for the operation, value is the log content.
@@ -30,16 +36,24 @@ struct BuildResult
 
     function BuildResult(config::BuildConfig,
                          status::Symbol,
-                         prefix::AbstractString,
-                         logs::Dict{AbstractString,AbstractString})
+                         exception::Union{Nothing,Exception},
+                         exe::SandboxExecutor,
+                         mounts::Dict{<:String,MountInfo},
+                         logs::Dict{<:AbstractString,<:AbstractString})
                          #msgs::Vector{Test.LogRecord})
-        return new(
+        obj = new(
             config,
             status,
-            String(prefix),
+            exception,
+            exe,
+            Dict(String(k) => v for (k, v) in mounts),
             Dict(String(k) => String(v) for (k, v) in logs),
             #msgs,
         )
+        finalizer(obj) do obj
+            Sandbox.cleanup(obj.exe)
+        end
+        return obj
     end
 end
 
@@ -48,9 +62,16 @@ function BuildResult_skipped(config::BuildConfig)
     return BuildResult(
         config,
         :skipped,
+        nothing,
         "/dev/null",
         Dict{String,String}(),
     )
+end
+
+Sandbox.SandboxConfig(result::BuildResult; verbose::Bool = false) = SandboxConfig(result.config, result.mounts; verbose)
+
+function runshell(result::BuildResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
+    run(result.exe, SandboxConfig(result; verbose), shell)
 end
 
 # TODO: construct helper to reconstruct BuildResult objects from S3-saved tarballs

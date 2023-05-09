@@ -1,4 +1,4 @@
-
+export PackageResult
 
 struct PackageResult
     # Link back to the originating Package Config
