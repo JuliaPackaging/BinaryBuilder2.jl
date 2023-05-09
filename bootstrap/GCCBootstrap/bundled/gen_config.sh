@@ -96,7 +96,6 @@ case "${target}" in
         echo "CT_ARCH_64=y"
         ;;
     riscv64*)
-        echo "CT_EXPERIMENTAL=y"
         echo "CT_ARCH_RISCV=y"
         echo "CT_ARCH_64=y"
     *)
