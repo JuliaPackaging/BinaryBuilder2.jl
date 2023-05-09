@@ -68,11 +68,11 @@ function content_hash(ds::DirectorySource)
     if ds.follow_symlinks
         mktempdir() do dir
             deploy(ds, dir)
-            hash = SHA1Hash(tree_hash(dir))
+            hash = SHA1Hash(treehash(dir))
         end
     else
         # Otherwise, we can just directly treehash the source directory.
-        hash = SHA1Hash(tree_hash(ds.source))
+        hash = SHA1Hash(treehash(ds.source))
     end
     return hash
 end

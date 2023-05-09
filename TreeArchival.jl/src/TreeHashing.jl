@@ -1,6 +1,6 @@
 using SHA
 
-export tree_hash
+export treehash
 
 # This file exists for TWO purposes:
 #  * First, when treehashing `.zip` files, we basically need to unpack and use this.  Sad.
@@ -126,15 +126,15 @@ end
 
 
 """
-    tree_hash(HashType::Type, root::AbstractString)
+    treehash(HashType::Type, root::AbstractString)
 
 Calculate the git tree hash of a given path.
 """
-function tree_hash(::Type{HashType},
-                   root::AbstractString;
-                   debug_out::Union{IO,Nothing} = nothing,
-                   indent::Int=1,
-                   mimic_git::Bool = false) where HashType
+function treehash(::Type{HashType},
+                  root::AbstractString;
+                  debug_out::Union{IO,Nothing} = nothing,
+                  indent::Int=1,
+                  mimic_git::Bool = false) where HashType
     entries = Tuple{String, Vector{UInt8}, GitMode}[]
 
     indent_prefix = "│ "^(max(indent - 1, 0))
@@ -154,7 +154,7 @@ function tree_hash(::Type{HashType},
             contains_files(filepath; mimic_git) || continue
 
             # Otherwise, hash it up!
-            hash = tree_hash(HashType, filepath; debug_out=container_stream, indent=indent+1, mimic_git)
+            hash = treehash(HashType, filepath; debug_out=container_stream, indent=indent+1, mimic_git)
         else
             hash = blob_hash(HashType, filepath)
             if debug_out !== nothing
@@ -172,4 +172,3 @@ function tree_hash(::Type{HashType},
     end
     return hash
 end
-tree_hash(root::AbstractString; kwargs...) = tree_hash(SHA.SHA1_CTX, root; kwargs...)

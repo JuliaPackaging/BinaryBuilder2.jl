@@ -1,10 +1,10 @@
 using TreeArchival, Test
 
 @testset "TreeHashing" begin
-    tree_hash_str(args...; kwargs...) = bytes2hex(tree_hash(args...; kwargs...))
+    treehash_str(args...; kwargs...) = bytes2hex(treehash(args...; kwargs...))
     mktempdir() do dir
         # test "well known" empty tree hash
-        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == tree_hash_str(dir)
+        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == treehash_str(dir)
         # create a text file
         file = joinpath(dir, "hello.txt")
         open(file, write=true) do io
@@ -12,29 +12,29 @@ using TreeArchival, Test
         end
         chmod(file, 0o644)
         # reference hash generated with command-line git
-        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == tree_hash_str(dir)
+        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == treehash_str(dir)
         # test with various executable bits set
         chmod(file, 0o645) # other x bit doesn't matter
-        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == tree_hash_str(dir)
+        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == treehash_str(dir)
         chmod(file, 0o654) # group x bit doesn't matter
-        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == tree_hash_str(dir)
+        @test "0a890bd10328d68f6d85efd2535e3a4c588ee8e6" == treehash_str(dir)
         chmod(file, 0o744) # user x bit matters
-        @test "952cfce0fb589c02736482fa75f9f9bb492242f8" == tree_hash_str(dir)
+        @test "952cfce0fb589c02736482fa75f9f9bb492242f8" == treehash_str(dir)
     end
 
     # Test for empty directory hashing
     mktempdir() do dir
-        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == tree_hash_str(dir)
+        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == treehash_str(dir)
 
         # Directories containing other empty directories are also empty
         mkdir(joinpath(dir, "foo"))
         mkdir(joinpath(dir, "foo", "bar"))
-        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == tree_hash_str(dir)
+        @test "4b825dc642cb6eb9a060e54bf8d69288fbee4904" == treehash_str(dir)
 
         # Directories containing symlinks (even if they point to other directories)
         # are NOT empty:
         symlink("bar", joinpath(dir, "foo", "bar_link"))
-        @test "8bc80be82b2ae4bd69f50a1a077a81b8678c9024" == tree_hash_str(dir)
+        @test "8bc80be82b2ae4bd69f50a1a077a81b8678c9024" == treehash_str(dir)
     end
 
     # Test for directory with .git hashing
@@ -135,13 +135,13 @@ using TreeArchival, Test
         generate_fake_package(joinpath(dir, "Foo"))
         generate_fake_package(joinpath(dir, "FooGit"); with_git_dir=true)
 
-        tree_hash_str(joinpath(dir, "Foo"))
-        tree_hash_str(joinpath(dir, "FooGit"); mimic_git=true)
+        treehash_str(joinpath(dir, "Foo"))
+        treehash_str(joinpath(dir, "FooGit"); mimic_git=true)
 
         debug_out_foo = IOBuffer()
         debug_out_foogit = IOBuffer()
-        @test tree_hash_str(joinpath(dir, "Foo"); debug_out=debug_out_foo) ==
-                tree_hash_str(joinpath(dir, "FooGit"); debug_out=debug_out_foogit, mimic_git=true) ==
+        @test treehash_str(joinpath(dir, "Foo"); debug_out=debug_out_foo) ==
+                treehash_str(joinpath(dir, "FooGit"); debug_out=debug_out_foogit, mimic_git=true) ==
                 "3cfb0b26b00661acbf0def94d76a6e65bcda4832"
         # Ignore name of top-level directory
         debug_out_foo_lines = split(String(take!(debug_out_foo)), "\n")[2:end]
@@ -160,7 +160,7 @@ using TreeArchival, Test
         chmod(joinpath(dir, "5.28.1", "foo"), 0o644)
         symlink("5.28.1", joinpath(dir, "5.28"))
 
-        @test tree_hash_str(dir) == "5e50a4254773a7c689bebca79e2954630cab9c04"
+        @test treehash_str(dir) == "5e50a4254773a7c689bebca79e2954630cab9c04"
     end
 end
 
@@ -179,7 +179,7 @@ end
         symlink(joinpath("sub", "zero"), joinpath(src_dir, "linky"))
 
         # Calculate its treehash
-        src_treehash = tree_hash(src_dir)
+        src_treehash = treehash(src_dir)
 
         # For each compressor, create an archive of that type, then decompress it
         for compressor in keys(TreeArchival.compressor_magic_bytes)
@@ -199,7 +199,7 @@ end
                 # Ensure that we unpack properly
                 mktempdir() do out_dir
                     unarchive(archive_path, out_dir)
-                    @test tree_hash(out_dir) == src_treehash
+                    @test treehash(out_dir) == src_treehash
                 end
             end
         end

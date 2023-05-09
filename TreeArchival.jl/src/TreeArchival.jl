@@ -36,7 +36,10 @@ function detect_compressor(header::Vector)
     return nothing
 end
 function detect_compressor(source_file::String)
-    return detect_compressor(read(open(source_file; read=true), max_magic_bytes_len))
+    if isfile(source_file)
+        return detect_compressor(read(open(source_file; read=true), max_magic_bytes_len))
+    end
+    return nothing
 end
 
 function decompress_cmd(source_path::String;
@@ -177,7 +180,13 @@ If `source_file` is a `.zip` file, throws an error unless `ignore_unstable_forma
 is set to `true`.  Even then, it prints out a warning.
 """
 function treehash(source_file::String; compressor = detect_compressor(source_file),
-                                       ignore_unstable_formats::Bool = false)
+                                       ignore_unstable_formats::Bool = false,
+                                       kwargs...)
+    if isdir(source_file)
+        # Sub off to the other `treehash()` implementation in `TreeHashing.jl`
+        return treehash(SHA.SHA1_CTX, source_file; kwargs...)
+    end
+
     if compressor ∈ ("gzip", "bzip2", "7z", "xz", "zstd")
         return hex2bytes(Tar.tree_hash(decompress_cmd(source_file; compressor)))
     elseif compressor ∈ ("tar",)
@@ -192,7 +201,7 @@ function treehash(source_file::String; compressor = detect_compressor(source_fil
         @warn("Treehashing an unstable archive format!", source_file, compressor)
         mktempdir() do dir
             unarchive(source_file, dir; compressor)
-            return tree_hash(dir)
+            return treehash(dir)
         end
     else
         throw(ArgumentError("Unknown compression type '$(compressor)'"))
