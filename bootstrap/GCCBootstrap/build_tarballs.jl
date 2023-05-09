@@ -124,7 +124,7 @@ host_dependencies = [
 toolchains = BB2.default_toolchains(CrossPlatform(host, target), [
     # We require make v4.3, rather than the latest.
     JLLSource("GNUMake_jll", host; version=BB2.VersionSpec("4.3")),
-])
+]; host_only=true)
 
 meta = BuildMeta()
 build_config = BuildConfig(

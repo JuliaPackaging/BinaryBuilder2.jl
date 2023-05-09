@@ -24,7 +24,7 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
 end
 =#
 
-function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[])
+function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[]; host_only::Bool = false)
     toolchains = AbstractToolchain[]
 
     function extra_flags(platform, prefix)
@@ -41,12 +41,23 @@ function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:Abstrac
         )
     end
     
-    # We _always_ have the target compiler, and it's typically the default toolchain
-    push!(toolchains, CToolchain(platform; default_ctoolchain = true, extra_flags(platform.target, "/workspace/destdir/$(triplet(platform.target))")...))
+    # As long as we're not `host_only`, we add the target compiler, and it's typically the default toolchain
+    if !host_only
+        push!(toolchains, CToolchain(
+            platform;
+            default_ctoolchain = true,
+            extra_flags(platform.target, "/workspace/destdir/$(triplet(platform.target))")...,
+        ))
+    end
 
     # The host toolchain (even if it's the same as the default toolchain) gets
     # different wrappers with different default flags.
-    push!(toolchains, CToolchain(CrossPlatform(platform.host, platform.host); host_ctoolchain = true, extra_flags(platform.host, "/usr/local")...))
+    push!(toolchains, CToolchain(
+        CrossPlatform(platform.host, platform.host);
+        host_ctoolchain = true,
+        default_ctoolchain = host_only,
+        extra_flags(platform.host, "/usr/local")...,
+    ))
 
     push!(toolchains, HostToolsToolchain(platform.host, host_deps))
     return toolchains
