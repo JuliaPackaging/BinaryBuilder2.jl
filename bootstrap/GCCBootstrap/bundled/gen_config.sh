@@ -95,6 +95,10 @@ case "${target}" in
         echo "CT_ARCH_LE=y"
         echo "CT_ARCH_64=y"
         ;;
+    riscv*)
+        echo "CT_EXPERIMENTAL=y"
+        echo "CT_ARCH_RISCV=y"
+        echo "CT_ARCH_64=y"
     *)
         echo "ERROR: Unhandled arch '${target}'" >&2
         exit 1
