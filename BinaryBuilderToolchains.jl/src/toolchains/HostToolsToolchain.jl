@@ -23,7 +23,7 @@ This toolchain contains a large number of useful host tools, such as
             return tool
         end
 
-        @warn("TODO: Version these by sticking them in a `Manifest.toml` somewhere for easy updating?")
+        @warn("TODO: Version these by sticking them in a `Manifest.toml` somewhere for easy updating?", maxlog=1)
         default_tools = [
             # Build tools
             "automake_jll",

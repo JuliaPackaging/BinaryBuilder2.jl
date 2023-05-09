@@ -167,7 +167,7 @@ function toolchain_sources(toolchain::CToolchain)
 
     # Note that we eliminate the illegal "version" fields from our PackageSpec
     jll_deps = copy(toolchain.deps)
-    @warn("TODO: do I need to filter these out here?")
+    @warn("TODO: do I need to filter these out here?", maxlog=1)
     filter_illegal_versionspecs!([jll.package for jll in jll_deps])
     append!(sources, jll_deps)
     return sources
