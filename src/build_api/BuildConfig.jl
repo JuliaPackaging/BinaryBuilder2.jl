@@ -155,16 +155,15 @@ function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String 
         for (prefix, srcs) in config.source_trees
             mount_type = MountType.Overlayed
 
-            # Special-case some mounts to be read-write so we can get the result back out again
-            #if prefix ∈ ("/workspace/srcdir", "/workspace/destdir/$(triplet(config.platform.target))")
-            #    mount_type = MountType.ReadWrite
-            #end
-
             # Strip leading slashes so that `joinpath()` works as expected
             host_path = joinpath(deploy_root, lstrip(prefix, '/'))
             mounts[prefix] = MountInfo(host_path, mount_type)
-            mkpath(host_path)
-            @timeit config.to prefix deploy(srcs, host_path)
+
+            # Avoid deploying a second time if we're coming at this a second time
+            if !isdir(host_path)
+                mkpath(host_path)
+                @timeit config.to prefix deploy(srcs, host_path)
+            end
         end
     end
     return mounts

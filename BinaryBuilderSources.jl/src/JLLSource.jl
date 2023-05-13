@@ -41,15 +41,26 @@ function retarget(jll::JLLSource, new_target::String)
 end
 
 """
-    prepare(jlls::Vector{JLLSource})
+    prepare(jlls::Vector{JLLSource}; verbose=false, force=false)
 
 Ensures that all given JLL sources are downloaded and ready to be used within
-the build environment.
+the build environment.  JLLs that already have `artifact_paths` filled out from
+a previous invocation of `prepare()` will not be re-prepared, unless `force` is
+set to `true`.
 """
-function prepare(jlls::Vector{JLLSource}; verbose::Bool = false)
+function prepare(jlls::Vector{JLLSource}; verbose::Bool = false, force::Bool = false)
     # Split JLLs by platform and prefix:
     jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
     for jll in jlls
+        # If this JLL has been previously prepared, don't bother to prepare it
+        # again, unless we've set `force` to re-prepare the source.
+        if !isempty(jll.artifact_paths)
+            if force
+                empty!(jll.artifact_paths)
+            else
+                continue
+            end
+        end
         if jll.platform ∉ keys(jlls_by_platform)
             jlls_by_platform[jll.platform] = JLLSource[]
         end
@@ -100,7 +111,7 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
     for (target, target_jlls) in jlls_by_prefix
         install_path = joinpath(prefix, target)
         mkpath(install_path)
-        deploy_artifact_paths(install_path, vcat((jll.artifact_paths for jll in target_jlls)...))
+        deploy_artifact_paths(install_path, unique(vcat((jll.artifact_paths for jll in target_jlls)...)))
     end
 end
 

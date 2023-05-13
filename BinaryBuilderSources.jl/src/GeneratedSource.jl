@@ -42,8 +42,10 @@ end
 
 function prepare(gs::GeneratedSource; verbose::Bool = false)
     # Run the generator on the source
-    mkpath(gs.ds.source)
-    gs.generator(gs.ds.source)
+    if !isdir(gs.ds.source)
+        mkpath(gs.ds.source)
+        gs.generator(gs.ds.source)
+    end
 
     # As of the time of this writing, `DirectorySource` has no `prepare()` function,
     # but let's be forward-thinking in case we end up adding something here.
