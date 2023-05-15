@@ -87,7 +87,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     sources = AbstractSource[]
 
     push!(sources, GeneratedSource(;target="etc/certs") do out_dir
-        cp(ca_roots_path(), joinpath(out_dir, basename(ca_roots_path())))
+        cp(ca_roots_path(), joinpath(out_dir, basename(ca_roots_path())); force=true)
     end)
 
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
@@ -159,8 +159,8 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     return sources
 end
 
-function toolchain_env(::HostToolsToolchain, deployed_prefix::String; base_env = ENV)
-    env = copy(base_env)
+function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
+    env = Dict{String,String}()
     
     insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),

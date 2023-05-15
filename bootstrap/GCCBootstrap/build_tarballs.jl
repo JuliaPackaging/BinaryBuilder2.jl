@@ -5,7 +5,7 @@ version = v"9.4.0"
 
 # Build a native compiler right now
 host = Platform("x86_64", "linux")
-target = Platform("x86_64", "linux")
+target = Platform("riscv64", "linux")
 
 # Collection of sources required to complete build
 sources = [
@@ -138,14 +138,15 @@ build_config = BuildConfig(
     toolchains,
 )
 build_result = build!(meta, build_config)
+runshell(build_result)
 
-extract_config = ExtractConfig(
-    build_result,
-    raw"""
-    extract ${prefix}/**
-    """,
-    BB2.AbstractProduct[],
-)
-extract_result = extract!(meta, extract_config)
-@info("Build complete", artifact=artifact_path(extract_result.artifact))
-display(extract_result.config.to)
+# extract_config = ExtractConfig(
+#     build_result,
+#     raw"""
+#     extract ${prefix}/**
+#     """,
+#     BB2.AbstractProduct[],
+# )
+# extract_result = extract!(meta, extract_config)
+# @info("Build complete", artifact=artifact_path(extract_result.artifact))
+# display(extract_result.config.to)

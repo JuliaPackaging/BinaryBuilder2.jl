@@ -17,13 +17,6 @@ end
 
 function GeneratedSource(generator::Function; target::String = "", output_dir::String = mktempdir())
     noabspath!(target)
-
-    # We actually don't like `output_dir` to exist, as that's our condition for
-    # knowing whether or not this source has had `prepare()` called yet.
-    # This also implicitly enforces that you can't put a `GeneratedSource` into
-    # a pre-existing directory, which I think makes sense
-    rm(output_dir)
-
     return GeneratedSource(
         generator,
         # We have to tell `DirectorySource` to trust that we'll create
@@ -42,10 +35,8 @@ end
 
 function prepare(gs::GeneratedSource; verbose::Bool = false)
     # Run the generator on the source
-    if !isdir(gs.ds.source)
-        mkpath(gs.ds.source)
-        gs.generator(gs.ds.source)
-    end
+    mkpath(gs.ds.source)
+    gs.generator(gs.ds.source)
 
     # As of the time of this writing, `DirectorySource` has no `prepare()` function,
     # but let's be forward-thinking in case we end up adding something here.

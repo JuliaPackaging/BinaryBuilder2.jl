@@ -11,17 +11,7 @@ const verbose = false
     @test !isempty(filter(jll -> jll.package.name == "Ccache_jll", toolchain.deps))
 
     # Download the toolchain, make sure it runs
-    srcs = toolchain_sources(toolchain)
-    prepare(srcs; verbose)
-    mktempdir(@get_scratch!("tempdirs")) do prefix
-        deploy(srcs, prefix)
-        env = toolchain_env(toolchain, prefix)
-        # Do not allow external MAKEFLAGS to leak through:
-        env = merge(env, Dict(
-            "MAKEFLAGS" => nothing,
-            "GNUMAKEFLAGS" => nothing
-        ))
-
+    with_toolchains([toolchain]) do prefix, env
         # This list should more or less mirror the `default_tools` in 
         host_tools = [
             # Build tools

@@ -29,8 +29,8 @@ struct CToolchain <: AbstractToolchain
 
     function CToolchain(platform;
                         vendor = :auto,
-                        default_ctoolchain = true,
-                        host_ctoolchain = true,
+                        default_ctoolchain = false,
+                        host_ctoolchain = false,
                         lock_microarchitecture = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("*"),
@@ -208,12 +208,15 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_env 
         end
     end
 
-    # If we're the default C toolchain, `$CC` points to `cc` (which we generated in our GeneratedSource)
+    # Even though the default toolchain generated the non-triplet-prefixed names,
+    # we prefer to be explicit whenever possible.  It makes it a lot easier to
+    # debug when things aren't what we expect.
+    tool_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(toolchain.platform.target))-" : "$(gcc_target_triplet(toolchain.platform.target))-"
     if toolchain.default_ctoolchain
-        set_envvars("", "")
+        set_envvars("", tool_prefix)
     end
     if toolchain.host_ctoolchain
-        set_envvars("HOST", "$(gcc_target_triplet(toolchain.platform.target))-")
+        set_envvars("HOST", tool_prefix)
     end
     return env
 end
@@ -364,14 +367,17 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
     @warn("TODO: Add ccache ability back in", maxlog=1)
 
-    # Generate target-specific wrappers always:
-    _gcc_wrapper("$(gcc_target_triplet(p))-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-    _gcc_wrapper("$(gcc_target_triplet(p))-g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+    # Generate target-specific wrappers always.  If we're a host toolchain, prefix with `host-`
+    # so that when doing a native build, you can call `host-x86_64-linux-gnu-gcc` and `x86_64-linux-gnu-gcc`
+    # separately, to disambiguate which should be used.
+    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
+    _gcc_wrapper("$(triplet_prefix)-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
+    _gcc_wrapper("$(triplet_prefix)-g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
 
     if toolchain.vendor == :gcc
-        _gcc_wrapper("$(gcc_target_triplet(p))-cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-        _gcc_wrapper("$(gcc_target_triplet(p))-c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
-        _gcc_wrapper("$(gcc_target_triplet(p))-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
+        _gcc_wrapper("$(triplet_prefix)-cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
+        _gcc_wrapper("$(triplet_prefix)-c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+        _gcc_wrapper("$(triplet_prefix)-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
     end
 
     # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
@@ -391,6 +397,7 @@ end
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
 
     # Most tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = [
@@ -441,15 +448,19 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
+    # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
     for tool in simple_tools
-        make_tool_symlinks(tool, "$(gcc_target_triplet(p))-$(tool)")
+        make_tool_symlinks("$(triplet_prefix)-$(tool)", "$(gcc_target_triplet(p))-$(tool)")
+        if toolchain.default_ctoolchain
+            make_tool_symlinks(tool, "$(gcc_target_triplet(p))-$(tool)")
+        end
     end
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
-    if Sys.isapple(p)
-        make_tool_symlinks("c++filt", "llvm-cxxfilt")
-    else
-        make_tool_symlinks("c++filt", "$(gcc_target_triplet(p))-c++filt")
+    cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_target_triplet(p))-c++filt"
+    make_tool_symlinks("$(triplet_prefix)-c++filt", cxxfilt_name)
+    if toolchain.default_ctoolchain
+        make_tool_symlinks("c++filt", cxxfilt_name)
     end
 
     # `ar` and `ranlib` have special treatment due to determinism requirements.
@@ -541,8 +552,8 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_target_triplet(p))-ar"
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_target_triplet(p))-ranlib"
-    _ar_wrapper("$(gcc_target_triplet(p))-ar", ar_name)
-    _ranlib_wrapper("$(gcc_target_triplet(p))-ranlib", ranlib_name)
+    _ar_wrapper("$(triplet_prefix)-ar", ar_name)
+    _ranlib_wrapper("$(triplet_prefix)-ranlib", ranlib_name)
     if toolchain.default_ctoolchain
         _ar_wrapper("ar", ar_name)
         _ranlib_wrapper("ranlib", ranlib_name)
@@ -555,7 +566,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
     end
     if Sys.iswindows(p)
-        _dlltool_wrapper("$(gcc_target_triplet(p))-dlltool", "$(gcc_target_triplet(p))-dlltool")
+        _dlltool_wrapper("$(triplet_prefix)-dlltool", "$(gcc_target_triplet(p))-dlltool")
         if toolchain.default_ctoolchain
             _dlltool_wrapper("dlltool", "$(gcc_target_triplet(p))-dlltool")
         end
@@ -573,6 +584,8 @@ interposed.
 function clang_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
+
     function _clang_wrapper(tool_name, tool_target)
         compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
             append_flags(io, :PRE, [
@@ -586,8 +599,8 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
-    _clang_wrapper("$(gcc_target_triplet(p))-clang", "$(gcc_target_triplet(p))-clang")
-    _clang_wrapper("$(gcc_target_triplet(p))-clang++", "$(gcc_target_triplet(p))-clang++")
+    _clang_wrapper("$(triplet_prefix)-clang", "$(gcc_target_triplet(p))-clang")
+    _clang_wrapper("$(triplet_prefix)-clang++", "$(gcc_target_triplet(p))-clang++")
 
     # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
     # the C toolchain "vendor" is clang!)

@@ -1,6 +1,6 @@
 using Base.BinaryPlatforms
 using TimerOutputs, Sandbox, BinaryBuilderToolchains
-using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform
+using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
 using MultiHashParsing
@@ -93,7 +93,7 @@ struct BuildConfig
                 end
                 chmod(script_path, 0o755)
                 cp(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts", "save_env_hook"),
-                   joinpath(out_dir, ".bashrc"))
+                   joinpath(out_dir, ".bashrc"); force=true)
             end]
         )
         env = Dict{String,String}(
@@ -110,8 +110,12 @@ struct BuildConfig
             "bb_full_host" => "$(triplet(cross_platform.host))",
         )
         for toolchain in toolchains
-            source_trees[toolchain_prefix(toolchain)] = toolchain_sources(toolchain)
-            env = toolchain_env(toolchain, toolchain_prefix(toolchain); base_env = env)
+            tc_prefix = toolchain_prefix(toolchain)
+            if !haskey(source_trees, tc_prefix)
+                source_trees[tc_prefix] = AbstractSource[]
+            end
+            append!(source_trees[tc_prefix], toolchain_sources(toolchain))
+            env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
         end
 
         return new(
@@ -198,7 +202,7 @@ function runshell(config::BuildConfig; verbose::Bool = false, shell::Cmd = `/bin
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
     with_executor() do exe
-        run(exe, sandbox_config, shell)
+        run(exe, sandbox_config, setenv(shell, config.env))
     end
 end
 
