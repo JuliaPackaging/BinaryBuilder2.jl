@@ -1,3 +1,18 @@
+NEXT THINGS TO DO:
+
+- Build package!() API
+  - Build BinaryBuilderJLLEmitter.jl
+- Integrate `Ccache_jll`
+- Build GCCBootstrap for all linuces
+- Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
+- Build Clang via GCCBoostrap
+- Expand GCCBootstrap for Windows
+- Expand GCCBootstrap for macOS
+- Expand GCCBootstrap for FreeBSD
+- Build caching infrastructure
+
+
+
 Useful features I want to add before I call this rewrite "done":
 
 * Product re-design

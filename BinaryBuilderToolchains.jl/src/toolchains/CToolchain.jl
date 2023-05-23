@@ -173,8 +173,9 @@ function toolchain_sources(toolchain::CToolchain)
     return sources
 end
 
-function toolchain_env(toolchain::CToolchain, deployed_prefix::String; base_env = ENV)
-    env = copy(base_env)
+function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
+    env = Dict{String,String}()
+
     insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),
         joinpath(deployed_prefix, "bin"),

@@ -96,7 +96,16 @@ struct BuildConfig
                    joinpath(out_dir, ".bashrc"); force=true)
             end]
         )
-        env = Dict{String,String}(
+        env = Dict{String,String}()
+        for toolchain in toolchains
+            tc_prefix = toolchain_prefix(toolchain)
+            if !haskey(source_trees, tc_prefix)
+                source_trees[tc_prefix] = AbstractSource[]
+            end
+            append!(source_trees[tc_prefix], toolchain_sources(toolchain))
+            env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
+        end
+        env = path_appending_merge(env, Dict(
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
             "WORKSPACE" => "/workspace",
@@ -108,15 +117,7 @@ struct BuildConfig
             "bb_full_target" => "$(triplet(cross_platform.target))",
             "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
             "bb_full_host" => "$(triplet(cross_platform.host))",
-        )
-        for toolchain in toolchains
-            tc_prefix = toolchain_prefix(toolchain)
-            if !haskey(source_trees, tc_prefix)
-                source_trees[tc_prefix] = AbstractSource[]
-            end
-            append!(source_trees[tc_prefix], toolchain_sources(toolchain))
-            env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
-        end
+        ))
 
         return new(
             String(src_name),

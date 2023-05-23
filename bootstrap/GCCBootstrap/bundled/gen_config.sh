@@ -96,9 +96,12 @@ case "${target}" in
         echo "CT_ARCH_64=y"
         ;;
     riscv64*)
-        echo "CT_EXPERIMENTAL=y"
         echo "CT_ARCH_RISCV=y"
         echo "CT_ARCH_64=y"
+        echo "CT_ARCH_USE_MMU=y"
+        echo "CT_ARCH_ARCH=\"rv64imafdc\""
+        echo "CT_ARCH_ABI=\"lp64d\""
+        echo "CT_ARCH_TUNE=\"sifive-7-series\""
         ;;
     *)
         echo "ERROR: Unhandled arch '${target}'" >&2

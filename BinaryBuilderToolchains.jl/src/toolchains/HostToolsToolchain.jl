@@ -43,6 +43,7 @@ This toolchain contains a large number of useful host tools, such as
             # Networking tools
             "CURL_jll",
             "Git_jll",
+            "rsync_jll",
 
             # Compression tools
             "Tar_jll",
@@ -177,6 +178,9 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
     env["AUTOCONF"] = joinpath(deployed_prefix, "wrappers", "autoconf")
     env["AUTOM4TE"] = joinpath(deployed_prefix, "wrappers", "autom4te")
     env["M4"] = joinpath(deployed_prefix, "bin", "m4")
+
+    # Use the bundled CA root file
+    env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", basename(ca_roots_path()))
     return env
 end
 

@@ -9,6 +9,7 @@ function filter_env_vars(env)
         return k ∉ (
             "MAKEFLAGS",
             "GNUMAKEFLAGS",
+            "LD_LIBRARY_PATH",
             # Perhaps I should filter out external `CFLAGS`, `CPPFLAGS`, `LDFLAGS`, etc?
         )
     end
@@ -93,7 +94,7 @@ function with_toolchains(f::Function, toolchains::Vector{<:AbstractToolchain};
         deploy(srcs, prefix)
 
         # Generate the env, given that we know the `prefix` we've deployed to
-        env = reduce(path_appending_merge, [
+        env = foldl(path_appending_merge, [
             toolchain_env.(toolchains, Ref(prefix))...,
             filter_env_vars(env),
         ])
