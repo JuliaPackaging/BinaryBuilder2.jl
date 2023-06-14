@@ -12,12 +12,17 @@ define project_targets
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep))
 	$(JULIA) --project=$(1) -e 'import Pkg; Pkg.test()'
 
-# Updating can happen in massively parallel
+# Updating can happen in parallel
 update-$(1):
 	$(JULIA) --project=$(1) -e 'import Pkg; Pkg.update()'
 
+# Same with instantiation
+instantiate-$(1):
+	$(JULIA) --project=$(1) -e 'import Pkg; Pkg.instantiate()'
+
 testall: test-$(1)
 updateall: update-$(1)
+instantiateall: instantiate-$(1)
 .PHONY: test-$(1) update-$(1)
 endef
 $(foreach project,$(PROJECTS),$(eval $(call project_targets,$(project))))
