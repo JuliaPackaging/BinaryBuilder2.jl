@@ -162,6 +162,11 @@ using TreeArchival, Test
 
         @test treehash_str(dir) == "5e50a4254773a7c689bebca79e2954630cab9c04"
     end
+
+    # Test for non-existent files/directories
+    mktempdir() do dir
+        @test_throws SystemError treehash_str(joinpath(dir, "foo"))
+    end
 end
 
 @testset "TreeArchival" begin
