@@ -182,6 +182,11 @@ is set to `true`.  Even then, it prints out a warning.
 function treehash(source_file::String; compressor = detect_compressor(source_file),
                                        ignore_unstable_formats::Bool = false,
                                        kwargs...)
+    if !ispath(source_file)
+        # Throw a typical "file does not exist" error.
+        open(source_file)
+    end
+
     if isdir(source_file)
         # Sub off to the other `treehash()` implementation in `TreeHashing.jl`
         return treehash(SHA.SHA1_CTX, source_file; kwargs...)
