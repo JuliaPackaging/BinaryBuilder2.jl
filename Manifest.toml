@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.1"
+julia_version = "1.9.2"
 manifest_format = "2.0"
 project_hash = "155928a0191e347ddc9aad8275b8d72122448bf1"
 
@@ -176,7 +176,7 @@ version = "10.42.0+0"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.9.0"
+version = "1.9.2"
 
 [[deps.Preferences]]
 deps = ["TOML"]
@@ -207,7 +207,7 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-git-tree-sha1 = "c2e030c38ad9e1c8611b3d66789086ff227c8c06"
+git-tree-sha1 = "98546b969d703e97f2613c2ffb1a87ff5853e77b"
 repo-rev = "sf/overlayed_mounts"
 repo-url = "https://github.com/staticfloat/Sandbox.jl.git"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
