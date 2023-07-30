@@ -27,7 +27,9 @@ or `content_hash()` upon an `AbstractSource`.
 
 We define fallthrough methods for batch-preparing and deploying abstract
 sources, but homogenous batches of certain sources (e.g. `JLLSource`s) may
-define significantly more efficient methods for batch-`prepare()`.
+define significantly more efficient methods for batch-`prepare()`. Note
+that batches of JLLSources in particular should have `deduplicate_jlls()`
+applied to them before `prepare()` is even called.
 """
 abstract type AbstractSource; end
 

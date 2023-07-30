@@ -75,14 +75,16 @@ struct BuildConfig
         source_trees = Dict{String,Vector{AbstractSource}}(
             # Target dependencies
             "/workspace/destdir/$(triplet(cross_platform.target))" => target_dependencies,
-            # Host dependencies (not including toolchains, those go in `/opt/$(host_triplet)`)
-            "/usr/local" => host_dependencies,
+            "/usr/local" => [
+                # Host dependencies (not including toolchains, those go in `/opt/$(host_triplet)`)
+                host_dependencies...;
+                # Also, our `BB` resources
+                DirectorySource(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"); target="share/bb")
+            ],
             # The actual sources we're gonna build
             "/workspace/srcdir" => sources,
 
-            # BB needs some resources mounted in as well:
             # Metadata such as our build script
-            "/usr/local/share/bb" => [DirectorySource(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"))],
             "/workspace/metadir" => [GeneratedSource() do out_dir
                 script_path = joinpath(out_dir, "build_script.sh")
                 open(script_path, write=true) do io
@@ -105,6 +107,18 @@ struct BuildConfig
             append!(source_trees[tc_prefix], toolchain_sources(toolchain))
             env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
         end
+
+        # Deduplicate JLLs; we tend to have a lot of duplicates, this ensures that
+        # versions are consistent within a single prefix, and that we don't waste
+        # time deploying the same JLL over and over again to the same prefix.
+        # (Zlib_jll, I'm looking at you, you desirable little chap).
+        for (prefix, sources) in source_trees
+            jlls = JLLSource[s for s in sources if isa(s, JLLSource)]
+            non_jlls = [s for s in sources if !isa(s, JLLSource)]
+            jlls = deduplicate_jlls(jlls)
+            source_trees[prefix] = [non_jlls..., jlls...]
+        end
+
         env = path_appending_merge(env, Dict(
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",

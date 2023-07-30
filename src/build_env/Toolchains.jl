@@ -1,29 +1,5 @@
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet
 
-#=
-"""
-    deduplicate_jlls(jlls::Vector{JLLSource})
-
-When compiling for the native architecture, our host and target triplets are
-the same; this results in both host dependencies and target dependencies co-
-existing in the same location.
-"""
-function deduplicate_jlls(jlls::Vector{JLLSource})
-    seen_jlls = Dict{String,JLLSource}()
-    for jll in jlls
-        name = jll.package.name
-        if name ∈ keys(seen_jlls)
-            new_version = seen_jlls[name].package.version ∩ jll.package.version
-            if isempty(new_version)
-                throw(ArgumentError("Impossible constraints on $(name): $(seen_jlls[name].package.version) ∩ $(jll.package.version)"))
-            end
-            seen_jlls[name].package.version = new_version
-        end
-    end
-    return values(seen_jlls)
-end
-=#
-
 function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[]; host_only::Bool = false)
     toolchains = AbstractToolchain[]
 

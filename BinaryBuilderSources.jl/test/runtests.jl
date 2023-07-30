@@ -1,4 +1,4 @@
-using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms
+using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache
 
 function with_temp_storage_locations(f::Function)
@@ -362,6 +362,24 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             bzip2_dep = retarget(bzip2_dep, "baz")
             @test bzip2_dep.target == "baz"
             @test_throws ArgumentError retarget(bzip2_dep, "/foo/bar")
+
+            # Test that multiple versions can be coalesced down to one:
+            zstd_any_dep = JLLSource(
+                PackageSpec(;name="Zstd_jll", version=Pkg.Types.VersionSpec("*")),
+                HostPlatform(),
+            )
+            zstd_specific_dep = JLLSource(
+                PackageSpec(;name="Zstd_jll", version=zstd_dep.package.version),
+                HostPlatform(),
+            )
+            @test length(deduplicate_jlls([zstd_any_dep, zstd_specific_dep])) == 1
+
+            # Test that disjoint versions throw an error:
+            zstd_impossible_dep = JLLSource(
+                PackageSpec(;name="Zstd_jll", version=v"0.0.0"),
+                HostPlatform(),
+            )
+            @test_throws ArgumentError deduplicate_jlls([zstd_impossible_dep, zstd_specific_dep])
         end
     end
 end

@@ -1,9 +1,9 @@
 using TreeArchival
 
-using Base.BinaryPlatforms, JLLPrefixes
+using Base.BinaryPlatforms, JLLPrefixes, Pkg
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
 
-export JLLSource
+export JLLSource, deduplicate_jlls
 
 struct JLLSource <: AbstractSource
     # The JLL that will be installed
@@ -41,6 +41,54 @@ function retarget(jll::JLLSource, new_target::String)
 end
 
 """
+    deduplicate_jlls(jlls::Vector{JLLSource})
+
+When we stack multiple independent resolutions of packages together into a
+single prefix, we sometimes try to install dependencies more than once.  This
+method deduplicates JLLs by attempting to constrain down to a single version
+bound that satisfies all duplicate JLLs.  Usage:
+
+```
+jlls = deduplicate_jlls(jlls)
+```
+
+Note that `prepare(jlls)` will fail if you have not already called
+`deduplicate_jlls(jlls)`; it checks upon every preparation.
+"""
+function deduplicate_jlls(jlls::Vector{JLLSource})
+    # Point intersection, either exactly the same, or nothing at all
+    function insersect_versions(v1::VersionNumber, v2::VersionNumber)
+        if v1 == v2
+            return v1
+        else
+            return Pkg.Types.VersionSpec([])
+        end
+    end
+    insersect_versions(v1, v2) = v1 ∩ v2
+
+    # First, deduplicate JLLs; occasionally, we are asked to install
+    # the same JLL to the same prefix but with different version constraints,
+    # e.g. GCC_jll requires `Zlib_jll`, and so does `Binutils_jll`.
+    # We need to collapse down to a single version of `Zlib_jll` that
+    # satisfies all constraints, if we can't do that, we should error here.
+    seen_jlls = Dict{Tuple{String,String,AbstractPlatform},JLLSource}()
+    for jll in jlls
+        key = (jll.package.name, jll.target, jll.platform)
+        if key ∈ keys(seen_jlls)
+            # Compute new version that is the intersection of the versions
+            new_version = insersect_versions(seen_jlls[key].package.version, jll.package.version)
+            if !isa(new_version, VersionNumber) && isempty(new_version)
+                throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jlls[key].package.version) ∩ $(jll.package.version)"))
+            end
+            seen_jlls[key].package.version = new_version
+        else
+            seen_jlls[key] = jll
+        end
+    end
+    return values(seen_jlls)
+end
+
+"""
     prepare(jlls::Vector{JLLSource}; verbose=false, force=false)
 
 Ensures that all given JLL sources are downloaded and ready to be used within
@@ -49,7 +97,7 @@ a previous invocation of `prepare()` will not be re-prepared, unless `force` is
 set to `true`.
 """
 function prepare(jlls::Vector{JLLSource}; verbose::Bool = false, force::Bool = false)
-    # Split JLLs by platform and prefix:
+    # Split JLLs by platform:
     jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
     for jll in jlls
         # If this JLL has been previously prepared, don't bother to prepare it
@@ -109,7 +157,7 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
         push!(jlls_by_prefix[jll.target], jll)
     end
 
-    # Install each to their relative targetes
+    # Install each to their relative targets
     for (target, target_jlls) in jlls_by_prefix
         install_path = joinpath(prefix, target)
         mkpath(install_path)
