@@ -2,6 +2,9 @@ NEXT THINGS TO DO:
 
 - Build package!() API
   - Build BinaryBuilderJLLEmitter.jl
+- Build GCC <-> Glibc baked header diff tarballs
+  - Build easy "diff/core" packaging utility to analyze a set of outputs for
+    shared content and create a `FooCore_jll` and `FooXYZ_jll` set of artifacts
 - Integrate `Ccache_jll`
 - Build GCCBootstrap for all linuces
 - Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
