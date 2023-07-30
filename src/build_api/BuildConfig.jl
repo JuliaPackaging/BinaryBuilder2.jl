@@ -171,11 +171,14 @@ function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String 
     )
 
     @timeit config.to "deploy" begin
-        for (prefix, srcs) in config.source_trees
+        for (idx, (prefix, srcs)) in enumerate(config.source_trees)
             mount_type = MountType.Overlayed
 
-            # Strip leading slashes so that `joinpath()` works as expected
-            host_path = joinpath(deploy_root, lstrip(prefix, '/'))
+            # Strip leading slashes so that `joinpath()` works as expected,
+            # prefix with `idx` so that we can overlay multiple disparate folders
+            # onto eachother in the sandbox, without clobbering each directory on
+            # the host side.
+            host_path = joinpath(deploy_root, string(idx, "-", lstrip(prefix, '/')))
             mounts[prefix] = MountInfo(host_path, mount_type)
 
             # Avoid deploying a second time if we're coming at this a second time
