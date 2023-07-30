@@ -34,16 +34,16 @@ abstract type AbstractSource; end
 export prepare, deploy, content_hash, target, retarget
 
 """
-    checkprepared!(me::String, type_name::String)
+    checkprepared!(me::String, x::AbstractSource)
 
 Helper function to throw an `InvalidStateException` when you've tried to
 perform an operation upon an `AbstractSource` that requires you calling
 `prepare()` beforehand (such as `deploy()` or `content_hash()`).
 """
-function checkprepared!(caller::String, x::Union{Vector{T},T}, args...) where {T <: AbstractSource}
+function checkprepared!(caller::String, x::AbstractSource, args...)
     if !verify(x, args...)
         throw(InvalidStateException(
-            string("You must `prepare()` before you `", caller, "()` an object of type $(T)"),
+            string("You must `prepare()` before you `", caller, "()` an object of type $(typeof(x)): $(x)"),
             :MustPrepareFirst,
         ))
     end

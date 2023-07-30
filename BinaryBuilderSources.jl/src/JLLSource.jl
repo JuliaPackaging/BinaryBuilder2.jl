@@ -96,7 +96,9 @@ Deploy the previously-downloaded JLL sources to the given `prefix`.
 """
 function deploy(jlls::Vector{JLLSource}, prefix::String)
     # First, check to make sure the jlls have all been downloaded:
-    checkprepared!("deploy", jlls)
+    for jll in jlls
+        checkprepared!("deploy", jll)
+    end
 
     # Sort paths by target
     jlls_by_prefix = Dict{String,Vector{JLLSource}}()
