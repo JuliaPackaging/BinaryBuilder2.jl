@@ -5,6 +5,7 @@ using Reexport
 @reexport using MultiHashParsing
 @reexport using BinaryBuilderSources
 @reexport using BinaryBuilderToolchains
+@reexport using Base.BinaryPlatforms
 
 include("ExtractKwargs.jl")
 include("Preferences.jl")
