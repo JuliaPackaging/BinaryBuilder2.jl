@@ -36,7 +36,12 @@ This toolchain contains a large number of useful host tools, such as
             "GNUMake_jll",
             "Libtool_jll",
             "M4_jll",
-            "Patchelf_jll",
+
+            # We used to version Patchelf with date-based versions, but then
+            # we switched to actual upstream version numbers; Pkg chooses the
+            # date-based versions because they're higher, so we have to explicitly
+            # choose the correct version number here
+            PackageSpec(name ="Patchelf_jll", version=v"0.17.2+0"),
             "Perl_jll",
             "patch_jll",
 
@@ -58,10 +63,14 @@ This toolchain contains a large number of useful host tools, such as
         # Add any JLLS from our default tools that are not already in the overrides list, to prevent duplicates.
         override_jlls = filter(e -> isa(e, JLLSource), overrides)
         for tool in default_tools
-            if !any(jll.package.name == tool for jll in override_jlls)
+            if isa(tool, AbstractString)
+                tool = PackageSpec(;name=tool)
+            end
+            if !any(jll.package.name == tool.name for jll in override_jlls)
                 push!(deps, JLLSource(tool, platform))
             end
         end
+
         for override in overrides
             push!(deps, override)
         end

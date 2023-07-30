@@ -103,7 +103,7 @@ struct CToolchain <: AbstractToolchain
                 "GCC_jll",
                 platform;
                 repo=Pkg.Types.GitRepo(
-                    rev="6e04e57d78fe742bcc357e7e7349dbe6e8ae4e2f",
+                    rev="8d632ad5f2e2c419a4e67da14bf1609ab0291b24",
                     source="https://github.com/staticfloat/GCC_jll.jl"
                 ),
                 # eventually, include a resolved version
