@@ -4,7 +4,7 @@ if !isdefined(@__MODULE__, :TestingUtils)
     include("TestingUtils.jl")
 end
 
-
+const native_arch = arch(HostPlatform())
 @testset "Build API" begin
     # Test building `zlib`
     meta = BuildMeta(; verbose=false)
@@ -24,9 +24,10 @@ end
         make install
         export FOO=foo
         """,
-        Platform("x86_64", "linux"),
+        Platform(native_arch, "linux"),
     )
     build_result = build!(meta, build_config);
+    @test build_result.status == :success
 
     extract_config = ExtractConfig(
         build_result,
@@ -37,6 +38,7 @@ end
         BB2.AbstractProduct[],
     )
     extract_result = extract!(meta, extract_config)
+    @test extract_result.status == :success
 
     # Test that it built correctly
     install_prefix = Artifacts.artifact_path(extract_result.artifact)

@@ -56,7 +56,7 @@ struct BuildConfig
                          host_dependencies::Vector{<:AbstractSource},
                          script::AbstractString,
                          target::AbstractPlatform;
-                         host::AbstractPlatform = Platform("x86_64", "linux"),
+                         host::AbstractPlatform = Platform(arch(HostPlatform()), "linux"),
                          toolchains::Vector{<:AbstractToolchain} = default_toolchains(CrossPlatform(host, target)),
                          allow_unsafe_flags::Bool = false,
                          lock_microarchitecture::Bool = true,
