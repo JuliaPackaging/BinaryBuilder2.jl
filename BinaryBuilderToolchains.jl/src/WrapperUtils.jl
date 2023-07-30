@@ -8,6 +8,12 @@ wrapper bash script.  Use with the `@flag_str` macro, like so:
 ```
 f_asm = flag"-x assembler"
 ```
+
+Can use regular expression matching if the `r` flag macro flag is included:
+
+```
+f_march = flag"-march=.*"r
+```
 """
 struct FlagString
     s::String
@@ -35,7 +41,7 @@ Used to construct strings of bash snippets for use in creation of compiler
 wrappers; an invocation such as:
 
     io = IOBuffer()
-    flagmatch(io, [flag"-march="]) do fio
+    flagmatch(io, [flag"-march=.*"r]) do fio
         println(fio, "die 'Cannot force an architecture via -march'")
     end
     println(String(take!(io)))
@@ -45,6 +51,9 @@ Will result in a string that looks like:
     if [[ " \${ARGS[@]} " == *' -march= '* ]]; then
         die 'Cannot force an architecture via -march'
     fi
+
+Multiple flags passed into `flagmatch()` result in multiple conditionals,
+combined via the `&&` bash operator.
 """
 function flagmatch(f::Function, io::IO, flags::Vector{FlagString}; match_target::String = "\${ARGS[@]}")
     # First, run the given callback; if nothing is generated, don't emit anything.
