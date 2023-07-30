@@ -67,7 +67,7 @@ Call `f(prefix, env)` with the given `toolchains` deployed and ready to go
 within `deploy_root`.  Use this to quickley set up the given toolchains for
 usage with `run()` commands as follows:
 
-    with_toolchains(toolchains) do (prefix, env)
+    with_toolchains(toolchains) do prefix, env
         cd(build_path) do
             run(addenv(`make install`, env))
         end
@@ -117,7 +117,7 @@ Convenience function to launch a shell with the generated wrapper scripts for
 the given toolchains
 """
 function runshell(toolchains::Vector{<:AbstractToolchain}; shell::Cmd = `/bin/bash`, kwargs...)
-    with_toolchains(toolchains; kwargs...) do (prefix, env)
+    with_toolchains(toolchains; kwargs...) do prefix, env
         run(ignorestatus(setenv(shell, env)))
     end
 end
