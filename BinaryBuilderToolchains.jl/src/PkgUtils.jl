@@ -4,6 +4,7 @@ using Pkg.API: handle_package_input!
 using Pkg.Operations: targeted_resolve
 
 function resolve(pkgs::Vector{PackageSpec}; julia_version=VERSION)
+    any_unresolved(pkgs) = any(pkg.uuid === nothing for pkg in pkgs)
     # There doesn't seem to be a better way to get an "empty" `EnvCache`
     # than to construct it off of an empty directory, so that's what we do
     mktempdir() do dir
@@ -14,7 +15,27 @@ function resolve(pkgs::Vector{PackageSpec}; julia_version=VERSION)
 
         # Normalize each pkg
         handle_package_input!.(pkgs)
-        registry_resolve!(ctx.registries, pkgs)
+
+        # If any are unresolved, try to resolve them:
+        if any_unresolved(pkgs)
+            registry_resolve!(ctx.registries, pkgs)
+
+            # If any are still unresolved, try updating the registry
+            if any_unresolved(pkgs)
+                specs = [Pkg.Registry.RegistrySpec(;name=r.name, uuid=r.uuid, url=r.repo, path=r.path) for r in ctx.registries]
+                Pkg.Registry.update(specs; force=true)
+                # Re-create `ctx` to get the new registry states
+                ctx = Context(;env=EnvCache(dir))
+                registry_resolve!(ctx.registries, pkgs)
+
+                # If any are _still_ unresolved, error out
+                for pkg in pkgs
+                    if pkg.uuid === nothing
+                        throw(ArgumentError("Unable to resolve '$(pkg.name)', is it registered?"))
+                    end
+                end
+            end
+        end
 
         # Resolve to get versions
         pkgs, deps_map = Pkg.Operations.targeted_resolve(
