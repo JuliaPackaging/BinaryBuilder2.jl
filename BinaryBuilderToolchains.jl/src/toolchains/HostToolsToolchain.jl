@@ -54,6 +54,7 @@ This toolchain contains a large number of useful host tools, such as
             "Tar_jll",
             "Gzip_jll",
             "Bzip2_jll",
+            "unzip_jll",
             "Zstd_jll",
             "XZ_jll",
         ]

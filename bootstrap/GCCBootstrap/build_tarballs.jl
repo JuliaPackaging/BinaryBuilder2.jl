@@ -57,7 +57,7 @@ cd ${WORKSPACE}/srcdir/crosstool-ng*/
 
 # These tools will help us to bootstrap
 apt update
-apt install -y texinfo unzip help2man python3
+apt install -y texinfo help2man python3
 
 # Copy in our extra patches for all packages
 for package in ${WORKSPACE}/srcdir/patches/*; do
