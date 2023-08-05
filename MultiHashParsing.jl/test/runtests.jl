@@ -58,4 +58,9 @@ using Test, MultiHashParsing, SHA
     @test h != "$(h_str)00"
     @test h != bytes2hex(sha256(""))
     @test bytes2hex(sha256("")) != h
+
+    # Test that we can turn a `Base.SHA1` into a `SHA1Hash` and back:
+    @test SHA1Hash(Base.SHA1(sha1(""))) == SHA1Hash(sha1(""))
+    @test Base.SHA1(SHA1Hash(sha1(""))) == Base.SHA1(sha1(""))
+    @test MultiHash(Base.SHA1(sha1(""))) == SHA1Hash(sha1(""))
 end

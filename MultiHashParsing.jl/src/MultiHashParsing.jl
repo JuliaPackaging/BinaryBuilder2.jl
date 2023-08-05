@@ -123,4 +123,9 @@ function MultiHash(hash::AbstractString)
     return MultiHash(hex2bytes(hash))
 end
 
+# Special constructor for Base.SHA1
+SHA1Hash(hash::Base.SHA1) = SHA1Hash(hash.bytes)
+Base.SHA1(hash::SHA1Hash) = Base.SHA1(hash.data)
+MultiHash(hash::Base.SHA1) = SHA1Hash(hash.bytes)
+
 end # module MultiHashParsing
