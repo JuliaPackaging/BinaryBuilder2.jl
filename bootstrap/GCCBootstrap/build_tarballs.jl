@@ -29,6 +29,8 @@ sources = [
                "fd4829912cddd12f84181c3451cc752be224643e87fac497b69edddadc49b4f2"),
     FileSource("http://mirrors.kernel.org/pub/linux/kernel/v4.x/linux-4.1.49.tar.xz",
                "ff2e0ea5c536650aef64447c3aaa49c1a25e8f1db4ec4f7da700d3176f512ba8"),
+    FileSource("https://mirrors.kernel.org/gnu/glibc/glibc-2.17.tar.xz",
+               "6914e337401e0e0ade23694e1b2c52a5f09e4eda3270c67e7c3ba93a89b5b23e"),
     FileSource("https://mirrors.kernel.org/gnu/glibc/glibc-2.19.tar.xz",
                "2d3997f588401ea095a0b27227b1d50cdfdd416236f6567b564549d3b46ea2a2"),
     FileSource("https://musl.libc.org/releases/musl-1.2.2.tar.gz",

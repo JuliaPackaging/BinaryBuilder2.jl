@@ -56,9 +56,7 @@ struct CToolchain <: AbstractToolchain
             if glibc_version == :oldest
                 # TODO: Should glibc_version be embedded within the triplet somehow?
                 #       Non-default glibc version is kind of a compatibility issue....
-                if arch(platform) ∈ ("x86_64", "i686")
-                    glibc_version = VersionSpec("2.12.2")
-                elseif arch(platform) ∈ ("powerpc64le",)
+                if arch(platform) ∈ ("x86_64", "i686", "powerpc64le",)
                     glibc_version = VersionSpec("2.17")
                 elseif arch(platform) ∈ ("armv7l", "aarch64")
                     glibc_version = VersionSpec("2.19")

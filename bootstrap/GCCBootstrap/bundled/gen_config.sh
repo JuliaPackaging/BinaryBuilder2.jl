@@ -111,7 +111,11 @@ esac
 # Handle libc stuff
 case "${target}" in
     *gnu*)
-        echo "CT_GLIBC_V_2_19=y"
+        if [[ "${target}" == x86_64* ]] || [[ "${target}" == i686* ]] || [[ "${target}" == powerpc64le* ]]; then
+            echo "CT_GLIBC_V_2_17=y"
+        else
+            echo "CT_GLIBC_V_2_19=y"
+        fi
         ;;
     *musl*)
         echo "CT_LIBC_MUSL=y"
