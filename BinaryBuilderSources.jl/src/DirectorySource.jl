@@ -76,3 +76,5 @@ function content_hash(ds::DirectorySource)
     end
     return hash
 end
+
+source(ds::DirectorySource) = ds.source

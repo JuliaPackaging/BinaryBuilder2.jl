@@ -179,3 +179,10 @@ end
 prepare(jll::JLLSource; kwargs...) = prepare([jll]; kwargs...)
 deploy(jll::JLLSource, prefix::String) = deploy([jll], prefix)
 
+function source(jll::JLLSource)
+    if jll.package.version != Pkg.Types.VersionSpec("*")
+        return string(jll.package.name, "@v", jll.package.version)
+    else
+        return jll.package.name
+    end
+end

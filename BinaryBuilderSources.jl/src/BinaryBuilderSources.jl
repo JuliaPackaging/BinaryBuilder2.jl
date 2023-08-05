@@ -21,6 +21,7 @@ All `AbstractSource`` objects must support the following operations:
 * content_hash(::AbstractSource)::SHA1Hash
 * target(::AbstractSource)::String
 * retarget(::AbstractSource, new_target::String)::AbstractSource
+* source(::AbstractSource)::String
 
 Note that you must manually call `prepare()` before you call `deploy()`
 or `content_hash()` upon an `AbstractSource`.
@@ -33,7 +34,7 @@ applied to them before `prepare()` is even called.
 """
 abstract type AbstractSource; end
 
-export prepare, deploy, content_hash, target, retarget
+export prepare, deploy, content_hash, target, retarget, source
 
 """
     checkprepared!(me::String, x::AbstractSource)
@@ -93,6 +94,23 @@ Returns the `target` that this source will unpack itself into.
 TODO: determine if we should remove this function.
 """
 target(as::AbstractSource) = as.target
+
+"""
+    source(as::AbstractSource)
+
+Return a `String` representation of the source `as` stems from.
+This is typically some kind of `URL`.  Pair this with `content_hash(as)`
+for reproducible source tracking.
+"""
+function source end
+
+"""
+    content_hash(as::AbstractSource)
+
+Return a `SHA1Hash` representing the content hash of the given source.
+"""
+function content_hash end
+
 
 include("FileArchiveSource.jl")
 include("DirectorySource.jl")

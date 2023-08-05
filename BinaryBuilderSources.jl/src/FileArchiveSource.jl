@@ -163,3 +163,5 @@ function content_hash(fs::FileSource)
     path = download_cache_path(fs, download_cache)
     return SHA1Hash(TreeArchival.blob_hash(SHA1_CTX, path))
 end
+
+source(fas::FileArchiveSource) = fas.url

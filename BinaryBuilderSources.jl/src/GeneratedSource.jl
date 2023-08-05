@@ -53,3 +53,5 @@ function content_hash(gs::GeneratedSource)
     checkprepared!("content_hash", gs)
     return content_hash(gs.ds)
 end
+
+source(gs::GeneratedSource) = "<generated>"

@@ -90,3 +90,5 @@ function content_hash(gs::GitSource)
 
     return gs.hash
 end
+
+source(gs::GitSource) = string(gs.url)

@@ -101,6 +101,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             as = retarget(as, "baz")
             @test as.target == "baz"
             @test_throws ArgumentError retarget(as, "/foo/bar")
+
+            # source works
+            @test source(as) == url
         end
 
         @testset "FileSource" begin
@@ -147,6 +150,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             fs = retarget(fs, "baz")
             @test fs.target == "baz"
             @test_throws ArgumentError retarget(fs, "/foo/bar")
+
+            # source works
+            @test source(fs) == url
         end
 
         url = "https://github.com/ralna/ARCHDefs.git"
@@ -207,6 +213,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             gs = retarget(gs, "baz")
             @test gs.target == "baz"
             @test_throws ArgumentError retarget(gs, "/foo/bar")
+
+            # source works
+            @test source(gs) == url
         end
 
         @testset "DirectorySource" begin
@@ -254,6 +263,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 ds = retarget(ds, "baz")
                 @test ds.target == "baz"
                 @test_throws ArgumentError retarget(ds, "/foo/bar")
+
+                # source works
+                @test source(ds) == abspath("src")
             end; end
         end
 
@@ -299,6 +311,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 gs = retarget(gs, "baz")
                 @test gs.ds.target == "baz"
                 @test_throws ArgumentError retarget(gs, "/foo/bar")
+
+                # source works
+                @test source(gs) == "<generated>"
             end; end
         end
 
@@ -363,11 +378,17 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @test bzip2_dep.target == "baz"
             @test_throws ArgumentError retarget(bzip2_dep, "/foo/bar")
 
+            # source works
+            @test startswith(source(bzip2_dep), "Bzip2_jll@v")
+
             # Test that multiple versions can be coalesced down to one:
             zstd_any_dep = JLLSource(
                 PackageSpec(;name="Zstd_jll", version=Pkg.Types.VersionSpec("*")),
                 HostPlatform(),
             )
+            # Test that before we've done any version resolution, we get no version suffix
+            @test source(zstd_any_dep) == "Zstd_jll"
+
             zstd_specific_dep = JLLSource(
                 PackageSpec(;name="Zstd_jll", version=zstd_dep.package.version),
                 HostPlatform(),
@@ -380,6 +401,9 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 HostPlatform(),
             )
             @test_throws ArgumentError deduplicate_jlls([zstd_impossible_dep, zstd_specific_dep])
+            @test startswith(source(zstd_specific_dep), "Zstd_jll@v")
+            @test startswith(source(zstd_any_dep), "Zstd_jll@v")
+            @show source(zstd_any_dep)
         end
     end
 end
