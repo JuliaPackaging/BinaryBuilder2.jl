@@ -22,8 +22,9 @@ struct BuildConfig
     src_name::String
 
     # The source version; this may not be what the resultant JLL gets published under, but it will
-    # be recorded as metadata in the JLL itself.
-    src_version::VersionNumber
+    # be recorded as metadata in the JLL itself.  We store this as a string because upstream version
+    # numbers aren't always VersionNumber-compatible, and we want to store the precise upstream version.
+    src_version::String
 
     # PackageSpec's that we depend on (for future consumption by the packaging step)
     pkg_deps::Vector{PackageSpec}
@@ -44,13 +45,12 @@ struct BuildConfig
 
     # The cross-platform we're using for this build
     platform::CrossPlatform
-    #concrete_target::AbstractPlatform
 
     # We're going to store all sorts of timing information about our build in here
     to::TimerOutput
 
     function BuildConfig(src_name::AbstractString,
-                         src_version::VersionNumber,
+                         src_version::Union{VersionNunmber, String},
                          sources::Vector{<:AbstractSource},
                          target_dependencies::Vector{<:AbstractSource},
                          host_dependencies::Vector{<:AbstractSource},
@@ -119,6 +119,8 @@ struct BuildConfig
             source_trees[prefix] = [non_jlls..., jlls...]
         end
 
+        prefix = "/workspace/destdir/$(triplet(cross_platform.target))"
+        host_prefix = "/workspace/destdir/$(triplet(cross_platform.host))"
         env = path_appending_merge(env, Dict(
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
@@ -126,22 +128,36 @@ struct BuildConfig
             "HISTFILE" => "/workspace/metadir/.bash_history",
             "BB_PRINT_COMMANDS" => "true",
             "HOME" => "/workspace/metadir",
-            "prefix" => "/workspace/destdir/$(triplet(cross_platform.target))",
+            "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
+
+            # Platform-targeting niceties
             "target" => "$(gcc_target_triplet(cross_platform.target))",
             "bb_full_target" => "$(triplet(cross_platform.target))",
-            "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
+            "prefix" => prefix,
+            "bindir" => "$(prefix)/bin",
+            "libdir" => "$(prefix)/lib",
+            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(prefix)/bin" : "$(prefix)/bin",
+            "includedir" => "$(prefix)/include",
+
+            # The same things, repeated for `host`
+            "host" => "$(gcc_target_triplet(cross_platform.host))",
             "bb_full_host" => "$(triplet(cross_platform.host))",
+            "host_prefix" => host_prefix,
+            "host_bindir" => "$(host_prefix)/bin",
+            "host_libdir" => "$(host_prefix)/lib",
+            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix)/bin" : "$(host_prefix)/bin",
+            "host_includedir" => "$(host_prefix)/include",
         ))
 
         return new(
-            String(src_name),
-            src_version,
+            string(src_name),
+            string(src_version),
             [d.package for d in target_dependencies if isa(d, JLLSource)],
             source_trees,
             env,
             allow_unsafe_flags,
             lock_microarchitecture,
-            String(script),
+            string(script),
             cross_platform,
             TimerOutput(),
         )
