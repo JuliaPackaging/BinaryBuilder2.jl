@@ -24,12 +24,8 @@ Useful features I want to add before I call this rewrite "done":
 * JLL output metadata
   - Discussion here: https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/639
   - Break version number equivalency
-  - Build BinaryBuilderJLLWriter.jl
+  - Build JLLGenerator.jl
   - Build BinaryBuilderVersionTool.jl?
-* Create `GeneratedDependency`
-  - Takes in the `BuildConfig` object, generates a directory as a dependency (e.g. compiler wrappers)
-  - Resultant directory gets hashed, just like a `DirectorySource`
-  - Should dependencies and sources be the same thing?!
 * Parallel/much faster Auditor
 * Auto-install license as a Julia audit pass, not as a bash `trap` statement
 * Shared read-only depot that we can "compact" compiler shards and whatnot into (perhaps this should be a buildkite plugin?)
@@ -50,3 +46,4 @@ Things that would be nice to have, but we don't _need_:
   - Source tarball unpacking
   - Auditing
 * https://github.com/JuliaPackaging/BinaryBuilderBase.jl/pull/288
+* Automatic apk/apt caching server

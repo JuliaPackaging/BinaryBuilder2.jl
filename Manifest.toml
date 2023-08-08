@@ -27,7 +27,7 @@ uuid = "654d7472-7548-7361-4832-74694762694c"
 version = "0.1.0"
 
 [[deps.BinaryBuilderSources]]
-deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "SHA", "Scratch", "TreeArchival"]
+deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "SHA", "Scratch", "TreeArchival"]
 path = "BinaryBuilderSources.jl"
 uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
