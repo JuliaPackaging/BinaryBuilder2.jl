@@ -1,6 +1,9 @@
 module BinaryBuilderToolchains
-using Base.BinaryPlatforms, BinaryBuilderSources
+using Base.BinaryPlatforms, BinaryBuilderSources, Reexport
 using Pkg.Types: VersionSpec
+
+# These are so useful to anyone who's using us, just reexport them.
+@reexport using BinaryBuilderPlatformExtensions
 
 export AbstractToolchain, toolchain_sources, toolchain_env, platform
 
@@ -29,14 +32,11 @@ All toolchains must define the following methods:
 """
 abstract type AbstractToolchain; end
 
-include("PlatformExtensions.jl")
-include("Microarchitectures.jl")
 include("WrapperUtils.jl")
 include("PathUtils.jl")
 include("toolchains/CToolchain.jl")
 include("toolchains/HostToolsToolchain.jl")
 include("PkgUtils.jl")
 include("InteractiveUtils.jl")
-
 
 end # module

@@ -1,3 +1,7 @@
+using OrderedCollections
+
+export get_march_flags, get_all_arch_names, get_all_march_names, march, sanitize
+
 # Recursively test for key presence in nested dicts
 function haskeys(d, keys...)
     for key in keys

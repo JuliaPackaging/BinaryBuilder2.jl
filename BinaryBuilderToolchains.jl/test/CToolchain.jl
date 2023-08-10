@@ -1,4 +1,4 @@
-using Test, BinaryBuilderSources, BinaryBuilderToolchains, Base.BinaryPlatforms, Scratch
+using Test, BinaryBuilderSources, BinaryBuilderToolchains, BinaryBuilderPlatformExtensions, Base.BinaryPlatforms, Scratch
 
 # Enable this for lots of JLLPrefixes output
 const verbose = false
