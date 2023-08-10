@@ -39,8 +39,9 @@ using BinaryBuilderGitUtils
         @test only(log(r160_path; limit=1)) == "sha1:05fa7f93f73afdabd251247d03144de9f7b36b50"
         @test only(log(r161_path; limit=1)) == "sha1:c78a8be9af8aa0944b74f297791e10933f223aad" 
 
-        # `clone!()` with a bad commit fails
+        # `clone!()` with a bad commit fails, but `nothing` succeeds:
         @test_throws ArgumentError clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path; commit="0"^40)
+        clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path; commit=nothing)
         @test_throws ArgumentError log(pkg_path, "0"^40)
     end
 end

@@ -33,7 +33,7 @@ function clone!(url::String, repo_path::String;
             fetch!(repo_path; verbose)
         end
 
-        if !iscommit(repo_path, commit)
+        if commit !== nothing && !iscommit(repo_path, commit)
             throw(ArgumentError("Invalid commit specified: '$(commit)'"))
         end
     else
