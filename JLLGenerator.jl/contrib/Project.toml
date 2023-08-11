@@ -1,0 +1,7 @@
+[deps]
+Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+BinaryBuilderGitUtils = "654d7472-7548-7361-4832-74694762694c"
+BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
+Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

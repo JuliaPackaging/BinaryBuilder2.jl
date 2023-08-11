@@ -1,0 +1,23 @@
+name = "JLLGenerator"
+uuid = "73536572-7074-4e69-5270-206c4c6a2061"
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
+version = "0.1.0"
+
+[deps]
+BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
+Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
+StructEquality = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
+[compat]
+julia = "1.6"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
