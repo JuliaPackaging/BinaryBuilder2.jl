@@ -1,2 +1,3 @@
 .vscode/
 LocalPreferences.toml
+.buildkite/logs/
