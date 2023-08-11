@@ -50,7 +50,7 @@ struct BuildConfig
     to::TimerOutput
 
     function BuildConfig(src_name::AbstractString,
-                         src_version::Union{VersionNunmber, String},
+                         src_version::Union{VersionNumber, String},
                          sources::Vector{<:AbstractSource},
                          target_dependencies::Vector{<:AbstractSource},
                          host_dependencies::Vector{<:AbstractSource},

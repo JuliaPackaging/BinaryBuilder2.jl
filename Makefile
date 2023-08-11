@@ -24,8 +24,10 @@ $(foreach project,$(PROJECTS),$(eval $(call project_deps,$(project))))
 
 define project_targets
 # I'm lazy and I forget to add licenses to things all the time
+ifneq ($(1),.)
 $(1)/LICENSE: LICENSE
 	cp $$< $$@
+endif
 
 # Only test after our dependencies are finished test
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
