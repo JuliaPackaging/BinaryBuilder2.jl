@@ -1,5 +1,8 @@
 module BinaryBuilderPlatformExtensions
 
+using Reexport
+@reexport using Base.BinaryPlatforms
+
 include("AnyPlatform.jl")
 include("CrossPlatform.jl")
 include("PlatformProperties.jl")
