@@ -115,6 +115,7 @@ Base.parse(::Type{CrossPlatform}, triplet::AbstractString) = CrossPlatform(parse
 Base.BinaryPlatforms.tags(cp::CrossPlatform) = Base.BinaryPlatforms.tags(cp.encoded)
 Base.BinaryPlatforms.triplet(cp::CrossPlatform) = Base.BinaryPlatforms.triplet(cp.encoded)
 Base.show(io::IO, cp::CrossPlatform) = print(io, "CrossPlatform(", cp.host, " -> ", cp.target, ")")
+Base.repr(cp::CrossPlatform) = "CrossPlatform($(repr(cp.encoded)))"
 
 # Specifically override comparison between a `CrossPlatform` and a `Platform` to compare against the `target`,
 # unless the other `Platform` is actually an encoded `CrossPlatform`, in which case we just use the `encoded`

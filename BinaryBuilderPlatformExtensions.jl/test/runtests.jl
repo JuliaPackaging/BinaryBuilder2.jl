@@ -43,6 +43,9 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
                 # Test serialization round-trip
                 @test parse(CrossPlatform, triplet(cp)) == cp
 
+                # Test `repr()` round-trip
+                @test eval(Meta.parse(repr(cp))) == cp
+
                 # Test packing round-trip
                 artifact_dict = Dict()
                 Artifacts.pack_platform!(artifact_dict, cp)

@@ -15,6 +15,7 @@ Base.BinaryPlatforms.triplet(::AnyPlatform) = "any"
 Base.BinaryPlatforms.arch(::AnyPlatform) = "any"
 Base.BinaryPlatforms.os(::AnyPlatform) = "any"
 Base.show(io::IO, ::AnyPlatform) = print(io, "AnyPlatform")
+Base.repr(::AnyPlatform) = "AnyPlatform()"
 
 # Helper parsing function: it extends `parse(Platform, p)` by supporting
 # `AnyPlatform` as well.
