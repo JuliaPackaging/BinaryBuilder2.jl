@@ -21,3 +21,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test"]
+
+[weakdeps]
+BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
+
+[extensions]
+BinaryBuilderSourcesExt = "BinaryBuilderSources"

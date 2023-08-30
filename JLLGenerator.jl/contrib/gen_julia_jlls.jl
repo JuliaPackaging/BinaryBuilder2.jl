@@ -1,8 +1,10 @@
-using JLLGenerator, Base.BinaryPlatforms, Test
+using JLLGenerator, Base.BinaryPlatforms, Test, TOML
 
 # Quick and dirty Julia JLLs generation
 out_dir = joinpath(@__DIR__, "stdlib")
 rm(out_dir; force=true, recursive=true)
+
+ENV["JULIA_PKG_PRECOMPILE_AUTO"] = "false"
 
 for file in readdir(joinpath(@__DIR__, "stdlib_jllinfos"); join=true)
     m = Module()

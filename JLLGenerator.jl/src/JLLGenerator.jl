@@ -4,7 +4,7 @@ using Pkg, MultiHashParsing, StructEquality, TOML, SHA, Reexport
 import Base: UUID
 @reexport using BinaryBuilderPlatformExtensions
 
-export JLLInfo, JLLArtifactInfo, JLLSource, JLLArtifactSource, JLLLibraryDep,
+export JLLInfo, JLLArtifactInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
        JLLPackageDependency,
        generate_jll, generate_toml_dict, parse_toml_dict
@@ -154,29 +154,29 @@ function parse_toml_dict(::Type{AbstractJLLProduct}, d)
 end
 
 """
-    JLLSource
+    JLLSourceRecord
 
 A simplified record of where a particular source came from, tracking the URL and
 content hash.
 """
-struct JLLSource
+struct JLLSourceRecord
     url::String
     treehash::MultiHash
 
-    function JLLSource(url, treehash)
+    function JLLSourceRecord(url, treehash)
         return new(string(url), MultiHash(treehash))
     end
 end
 
-function generate_toml_dict(js::JLLSource)
+function generate_toml_dict(js::JLLSourceRecord)
     return Dict(
         "url" => js.url,
         "treehash" => string(js.treehash),
     )
 end
 
-function parse_toml_dict(::Type{JLLSource}, d)
-    return JLLSource(
+function parse_toml_dict(::Type{JLLSourceRecord}, d)
+    return JLLSourceRecord(
         d["url"],
         d["treehash"],
     )
@@ -284,7 +284,7 @@ easier for non-BB2 users to make use of this package if needed.
     deps::Vector{JLLPackageDependency}
 
     # A list of sources as `(source_url, hash)` pairs
-    sources::Vector{JLLSource}
+    sources::Vector{JLLSourceRecord}
 
     # The platform this is built for
     platform::AbstractPlatform
@@ -340,7 +340,7 @@ easier for non-BB2 users to make use of this package if needed.
         return new(
             string(src_version),
             empty_convert(JLLPackageDependency, deps),
-            empty_convert(JLLSource, sources),
+            empty_convert(JLLSourceRecord, sources),
             platform,
             string(name),
             MultiHash(treehash),
@@ -376,7 +376,7 @@ function parse_toml_dict(::Type{JLLArtifactInfo}, d::Dict)
     return JLLArtifactInfo(;
         src_version = d["src_version"],
         deps = [parse_toml_dict(JLLPackageDependency, p) for p in d["deps"]],
-        sources = [parse_toml_dict(JLLSource, p) for p in d["sources"]],
+        sources = [parse_toml_dict(JLLSourceRecord, p) for p in d["sources"]],
         platform = parse(AbstractPlatform, d["platform"]),
         name = d["name"],
         treehash = MultiHash(d["treehash"]),
@@ -514,7 +514,7 @@ function generate_jll(out_dir::String, info::JLLInfo)
     # Generate `Project.toml`
     open(joinpath(out_dir, "Project.toml"); write=true) do io
         project_dict = Dict(
-            "name" => info.name,
+            "name" => "$(info.name)_jll",
             "uuid" => string(UUID(info)),
             "version" => string(info.version),
             # We'll add either `Pkg` or `Artifacts` to this list, depending on the `julia_compat`.
@@ -589,11 +589,11 @@ function generate_jll(out_dir::String, info::JLLInfo)
     end
 
     # Generate JLLWrapper stub
-    open(joinpath(out_dir, "src", "$(info.name).jl"); write=true) do io
+    open(joinpath(out_dir, "src", "$(info.name)_jll.jl"); write=true) do io
         println(io, """
-        baremodule $(info.name)_jll
+        module $(info.name)_jll
         using JLLWrappers
-        @setup_jll
+        @generate_jll_from_toml()
         end # module $(info.name)_jll
         """)
     end

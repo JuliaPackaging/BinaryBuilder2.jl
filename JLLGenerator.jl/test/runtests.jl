@@ -25,7 +25,7 @@ end
 @testset "Hand-crafted XZ_jll" begin
     # Hand-crafted XZ_jll impersonation
     xz_sources = [
-        JLLSource("https://tukaani.org/xz/xz-5.4.3.tar.xz", "92177bef62c3824b4badc524f8abcce54a20b7dbcfb84cde0a2eb8b49159518c"),
+        JLLSourceRecord("https://tukaani.org/xz/xz-5.4.3.tar.xz", "92177bef62c3824b4badc524f8abcce54a20b7dbcfb84cde0a2eb8b49159518c"),
     ]
     # These dependencies are not real, but I want to include them anyway for test coverage
     liblzma_deps = [
@@ -35,7 +35,7 @@ end
         JLLPackageDependency(:Glibc_jll),
     ]
     jll = JLLInfo(;
-        name = "XZ_jll",
+        name = "XZ",
         version = v"5.4.3+1",
         artifacts = [
             JLLArtifactInfo(;
@@ -103,7 +103,7 @@ end
     d, _ = roundtrip_jll_through_toml(jll)
 
     # Do some very basic assertions on the contents of this TOML file
-    @test d["name"] == "XZ_jll"
+    @test d["name"] == "XZ"
     @test d["version"] == "5.4.3+1"
     @test length(d["artifacts"]) == 3
 
@@ -131,7 +131,7 @@ end
         @test isfile(joinpath(dir, "JLL.toml"))
         @test isfile(joinpath(dir, "README.md"))
         @test isfile(joinpath(dir, "Project.toml"))
-        @test isfile(joinpath(dir, "src", "$(jll.name).jl"))
+        @test isfile(joinpath(dir, "src", "$(jll.name)_jll.jl"))
 
         # Parse the TOML back on disk, make sure it matches
         @test jll == parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
@@ -139,6 +139,7 @@ end
         # Test that the Project.toml declares Glibc_jll as a dependency,
         # and that there is a compat bound on Julia itself.
         project = TOML.parsefile(joinpath(dir, "Project.toml"))
+        @test project["name"] ==  "XZ_jll"
         @test haskey(project["deps"], "Glibc_jll")
         @test haskey(project["compat"], "julia")
 
