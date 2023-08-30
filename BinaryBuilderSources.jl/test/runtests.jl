@@ -403,7 +403,6 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @test_throws ArgumentError deduplicate_jlls([zstd_impossible_dep, zstd_specific_dep])
             @test startswith(source(zstd_specific_dep), "Zstd_jll@v")
             @test startswith(source(zstd_any_dep), "Zstd_jll@v")
-            @show source(zstd_any_dep)
         end
     end
 end
