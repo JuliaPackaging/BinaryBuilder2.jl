@@ -7,6 +7,10 @@ version = "0.1.0"
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
+
+[compat]
+ObjectFile = "0.4.1"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

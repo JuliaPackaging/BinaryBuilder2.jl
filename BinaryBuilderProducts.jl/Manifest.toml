@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.9.2"
+julia_version = "1.9.3"
 manifest_format = "2.0"
-project_hash = "5721f281d779491171a431d91904e1de9c9e8188"
+project_hash = "6dbf426fe474dcdad3072ba77f704bd330d49b7e"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -89,18 +89,22 @@ deps = ["BinaryBuilderPlatformExtensions", "Libdl", "MultiHashParsing", "Pkg", "
 path = "../JLLGenerator.jl"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
 version = "0.1.0"
+weakdeps = ["BinaryBuilderSources"]
+
+    [deps.JLLGenerator.extensions]
+    BinaryBuilderSourcesExt = "BinaryBuilderSources"
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "dd28ba18e6f1e4062937a53664cb982e509a7743"
+git-tree-sha1 = "9343fd4bcb8a4f4f661325e353d70aa00be884c2"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.3.3"
+version = "0.3.4"
 
 [[deps.JLLWrappers]]
-deps = ["Preferences"]
-git-tree-sha1 = "abc9885a7ca2052a736a600f7fa66209f96506e1"
+deps = ["Artifacts", "Preferences"]
+git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
-version = "1.4.1"
+version = "1.5.0"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -155,6 +159,12 @@ version = "0.1.0"
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[deps.ObjectFile]]
+deps = ["Reexport", "StructIO"]
+git-tree-sha1 = "195e0a19842f678dd3473ceafbe9d82dfacc583c"
+uuid = "d8793406-e978-5875-9003-1fc021f44a92"
+version = "0.4.1"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -222,6 +232,12 @@ git-tree-sha1 = "192a9f1de3cfef80ab1a4ba7b150bb0e11ceedcf"
 uuid = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
 version = "2.1.0"
 
+[[deps.StructIO]]
+deps = ["Test"]
+git-tree-sha1 = "010dc73c7146869c042b49adcdb6bf528c12e859"
+uuid = "53d494c1-5632-5724-8f4c-31dff12d585f"
+version = "0.3.0"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
@@ -231,6 +247,10 @@ version = "1.0.3"
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 version = "1.10.0"
+
+[[deps.Test]]
+deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.TreeArchival]]
 deps = ["SHA", "Tar", "Zstd_jll", "p7zip_jll"]
