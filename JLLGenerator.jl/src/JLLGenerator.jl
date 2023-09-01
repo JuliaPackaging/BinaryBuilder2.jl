@@ -6,7 +6,7 @@ import Base: UUID
 
 export JLLInfo, JLLArtifactInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
-       JLLPackageDependency,
+       JLLPackageDependency, AbstractProducts,
        generate_jll, generate_toml_dict, parse_toml_dict
 
 include("RTLD_flags.jl")
@@ -606,5 +606,10 @@ TODO: Add the following to our JLL.toml output:
 - Upstream URL
 - Description
 """)
+
+# This function will be overloaded by `BinaryBuilderProductsExt`
+function AbstractProducts(infos, platform)
+    error("Must load BinaryBuilderProducts to reconstruct products from JLLInfos!")
+end
 
 end # module JLLGenerator
