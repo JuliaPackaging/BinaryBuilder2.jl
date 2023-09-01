@@ -26,6 +26,12 @@ path = "../BinaryBuilderPlatformExtensions.jl"
 uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
+[[deps.BinaryBuilderProducts]]
+deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl", "ObjectFile"]
+path = "/Users/sabae/.julia/dev/BB2/BinaryBuilderProducts.jl"
+uuid = "21737265-7a69-6e4f-4974-6375646f7270"
+version = "0.1.0"
+
 [[deps.BinaryBuilderSources]]
 deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "SHA", "Scratch", "TreeArchival"]
 path = "../BinaryBuilderSources.jl"
@@ -89,9 +95,10 @@ deps = ["BinaryBuilderPlatformExtensions", "Libdl", "MultiHashParsing", "Pkg", "
 path = "../JLLGenerator.jl"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
 version = "0.1.0"
-weakdeps = ["BinaryBuilderSources"]
+weakdeps = ["BinaryBuilderProducts", "BinaryBuilderSources"]
 
     [deps.JLLGenerator.extensions]
+    BinaryBuilderProductsExt = "BinaryBuilderProducts"
     BinaryBuilderSourcesExt = "BinaryBuilderSources"
 
 [[deps.JLLPrefixes]]
@@ -129,10 +136,10 @@ version = "1.10.2+0"
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 
 [[deps.Libiconv_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "c7cb1f5d892775ba13767a87c7ada0b980ea0a71"
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "f9557a255370125b405568f9767d6d195822a175"
 uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
-version = "1.16.1+2"
+version = "1.17.0+0"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
