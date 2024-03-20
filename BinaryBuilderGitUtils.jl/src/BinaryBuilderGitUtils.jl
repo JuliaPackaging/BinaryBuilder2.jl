@@ -1,7 +1,7 @@
 module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing
-export iscommit, fetch!, clone!, checkout!, log, log_between
+export iscommit, commit!, fetch!, clone!, checkout!, push!, log, log_between
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -45,12 +45,21 @@ function clone!(url::String, repo_path::String;
     end
 end
 
-function checkout!(repo_path::String, target::String, commit::HashOrString; verbose::Bool = false)
+function checkout!(repo_path::String, target::String, commit::HashOrString = only(log(repo_path; limit=1)); verbose::Bool = false)
     if !iscommit(repo_path, commit)
         fetch!(repo_path; verbose)
     end
     run(git(["clone", "--shared", repo_path, target, quiet_args(verbose)...]))
     run(git(["-C", target, "checkout", quiet_args(verbose)..., to_commit_str(commit)]))
+end
+
+function commit!(checkout_path::String, message::String; push::Bool = true, verbose::Bool = false)
+    run(git(["-C", checkout_path, "commit", "-av", "-m", message, quiet_args(verbose)...]))
+    return only(log(checkout_path; limit=1))
+end
+
+function Base.push!(repo_path::String, remote::String = "origin"; verbose::Bool = false)
+    run(git(["-C", repo_path, "push", remote,  quiet_args(verbose)...]))
 end
 
 function Base.log(repo_path::String, tip::HashOrString = "HEAD"; limit::Union{Int,Nothing} = nothing, reverse::Bool = false)

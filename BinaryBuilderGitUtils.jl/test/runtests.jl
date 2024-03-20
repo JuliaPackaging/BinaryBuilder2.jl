@@ -1,7 +1,7 @@
 using Test
 using BinaryBuilderGitUtils
 
-@testset "cached_git_clone" begin
+@testset "Basics" begin
     mktempdir() do dir
         pkg_path = joinpath(dir, "Pkg-master")
         clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path)
@@ -43,5 +43,36 @@ using BinaryBuilderGitUtils
         @test_throws ArgumentError clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path; commit="0"^40)
         clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path; commit=nothing)
         @test_throws ArgumentError log(pkg_path, "0"^40)
+
+        # Test `commit!()` on the `master` branch
+        local new_commit_hash
+        mktempdir() do pkg_checkout
+            checkout!(pkg_path, pkg_checkout, "master")
+            project_toml_path = joinpath(pkg_checkout, "Project.toml")
+            @test isfile(project_toml_path)
+            open(project_toml_path, write=true) do io
+                seekend(io)
+                println(io, "foo")
+            end
+            new_commit_hash = commit!(pkg_checkout, "Appended `foo`")
+            # This pushes back to the bare clone that we checked out from
+            push!(pkg_checkout)
+
+            # Make a second commit to this checkout, but don't push it
+            open(project_toml_path, write=true) do io
+                seekend(io)
+                println(io, "bar")
+            end
+            commit!(pkg_checkout, "Appended `bar`"; push=false)
+        end
+        
+        # Test that checking out that same git repository has the appropriate changes:
+        mktempdir() do pkg_checkout
+            checkout!(pkg_path, pkg_checkout, "master")
+            @test only(log(pkg_checkout; limit=1)) == new_commit_hash
+            project_toml_path = joinpath(pkg_checkout, "Project.toml")
+            @test isfile(project_toml_path)
+            @test endswith(String(read(project_toml_path)), "foo\n")
+        end
     end
 end
