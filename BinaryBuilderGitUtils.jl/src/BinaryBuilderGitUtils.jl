@@ -1,7 +1,7 @@
 module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing
-export iscommit, commit!, fetch!, clone!, checkout!, push!, log, log_between
+export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, log, log_between
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -17,6 +17,20 @@ quiet_args(verbose::Bool) = verbose ? String[] : String["--quiet"]
 
 function fetch!(repo_path::String; verbose::Bool = false)
     return run(git(["-C", repo_path, "fetch", "-a", quiet_args(verbose)...]))
+end
+
+function init!(repo_path::String; initial_branch::String = "main", verbose::Bool = false)
+    mkpath(repo_path)
+    run(git(["-C", repo_path, "init", "--bare", "--initial-branch=$(initial_branch)", quiet_args(verbose)...]))
+
+    # We always add a single commit as otherwise other commands like `log` don't work.
+    # We'll just add an empty `.gitignore` file, which should be pretty safe.
+    mktempdir() do checkout_dir
+        run(git(["clone", "--shared", repo_path, checkout_dir, quiet_args(verbose)...]))
+        touch(joinpath(checkout_dir, ".gitignore"))
+        commit!(checkout_dir, "Initial commit"; verbose)
+        push!(checkout_dir; verbose)
+    end
 end
 
 function clone!(url::String, repo_path::String;
@@ -53,7 +67,8 @@ function checkout!(repo_path::String, target::String, commit::HashOrString = onl
     run(git(["-C", target, "checkout", quiet_args(verbose)..., to_commit_str(commit)]))
 end
 
-function commit!(checkout_path::String, message::String; push::Bool = true, verbose::Bool = false)
+function commit!(checkout_path::String, message::String; verbose::Bool = false)
+    run(git(["-C", checkout_path, "add", "--all"]))
     run(git(["-C", checkout_path, "commit", "-av", "-m", message, quiet_args(verbose)...]))
     return only(log(checkout_path; limit=1))
 end

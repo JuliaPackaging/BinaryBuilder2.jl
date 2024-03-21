@@ -63,7 +63,7 @@ using BinaryBuilderGitUtils
                 seekend(io)
                 println(io, "bar")
             end
-            commit!(pkg_checkout, "Appended `bar`"; push=false)
+            commit!(pkg_checkout, "Appended `bar`")
         end
         
         # Test that checking out that same git repository has the appropriate changes:
@@ -73,6 +73,26 @@ using BinaryBuilderGitUtils
             project_toml_path = joinpath(pkg_checkout, "Project.toml")
             @test isfile(project_toml_path)
             @test endswith(String(read(project_toml_path)), "foo\n")
+        end
+    end
+end
+
+@testset "init()" begin
+    mktempdir() do dir
+        bare_dir = joinpath(dir, "bare")
+        init!(bare_dir; initial_branch="main")
+        working_dir = joinpath(dir, "working_dir")
+        checkout!(bare_dir, working_dir, "main")
+        open(joinpath(working_dir, "foo.txt"), write=true) do io
+            println(io, "foo!")
+        end
+        commit!(working_dir, "added foo.txt")
+        push!(working_dir)
+        @test length(log(bare_dir)) == 2
+
+        mktempdir() do second_clone_dir
+            checkout!(bare_dir, second_clone_dir)
+            @test isfile(joinpath(second_clone_dir, "foo.txt"))
         end
     end
 end
