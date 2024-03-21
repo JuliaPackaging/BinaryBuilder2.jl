@@ -475,7 +475,16 @@ function parse_toml_dict(::Type{JLLInfo}, d::Dict)
 end
 parse_toml_dict(d::Dict) = parse_toml_dict(JLLInfo, d)
 
-function generate_jll(out_dir::String, info::JLLInfo)
+function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true)
+    if clear && isdir(out_dir)
+        for child in readdir(out_dir)
+            # Don't clear `.git` directories
+            if child == ".git"
+                continue
+            end
+            rm(joinpath(out_dir, child); force=true, recursive=true)
+        end
+    end
     mkpath(joinpath(out_dir, "src"))
 
     # Generate `jll.toml`, which contains _all_ information about this JLL

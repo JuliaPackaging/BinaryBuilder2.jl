@@ -381,3 +381,70 @@ end
         end
     end
 end
+
+@testset "Upgrade" begin
+    zlib_products = [
+        JLLLibraryProduct(:libz, "lib/libz.so.1", []),
+    ]
+    old_zlib_jll = JLLInfo(;
+        name = "Zlib",
+        version = v"1.2.13+1",
+        artifacts = [
+            JLLArtifactInfo(;
+                src_version = v"1.2.13+1",
+                deps = [],
+                platform = Platform("aarch64", "linux"; libc = "glibc"),
+                name = "Zlib",
+                treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                download_sources = [],
+                products = zlib_products,
+            ),
+            JLLArtifactInfo(;
+                src_version = v"1.2.13+1",
+                deps = [],
+                platform = Platform("aarch64", "linux"; libc = "musl"),
+                name = "Zlib",
+                treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
+                download_sources = [],
+                products = zlib_products,
+            ),
+        ]
+    )
+
+    new_zlib_jll = JLLInfo(;
+        name = "Zlib",
+        version = v"1.2.13+1",
+        artifacts = [
+            JLLArtifactInfo(;
+                src_version = v"1.2.13+1",
+                deps = [],
+                platform = Platform("aarch64", "linux"; libc = "glibc"),
+                name = "Zlib",
+                treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                download_sources = [],
+                products = zlib_products,
+            ),
+        ]
+    )
+
+    mktempdir() do dir
+        mkpath(joinpath(dir, ".git"))
+        touch(joinpath(dir, ".git", "bar"))
+        generate_jll(dir, old_zlib_jll)
+        touch(joinpath(dir, "foo.txt"))
+
+        @test isfile(joinpath(dir, "foo.txt"))
+        @test isfile(joinpath(dir, ".git", "bar"))
+        jll_dict = parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
+        @test length(jll_dict.artifacts) == 2
+
+        # Ensure that if we generate_jll() into the same location
+        # we clear out extraneous files (but not `.git/*`) and
+        # lose all previous content.
+        generate_jll(dir, new_zlib_jll)
+        jll_dict = parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
+        @test !isfile(joinpath(dir, "foo.txt"))
+        @test isfile(joinpath(dir, ".git", "bar"))
+        @test length(jll_dict.artifacts) == 1
+    end
+end
