@@ -1,4 +1,5 @@
-using Libdl, Base.BinaryPlatforms
+using Base.BinaryPlatforms
+import Libdl
 
 if isdefined(Base.Libc.Libdl, :default_rtld_flags)
     const default_rtld_flags::UInt32 = Base.Libc.Libdl.default_rtld_flags

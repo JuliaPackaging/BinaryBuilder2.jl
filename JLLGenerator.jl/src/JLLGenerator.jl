@@ -424,6 +424,10 @@ JLL is stored within, including sources
     # information is stored in `artifacts`
     artifacts::Vector{JLLArtifactInfo}
 
+    # A snippet of Julia code that is used to add specific tags to the platform that will
+    # be used to look up the correct artifact from `artifacts`.
+    platform_augmentation_code::String
+
     # This JLL can declare a compatibility against Julia itself.
     # If `artifacts` contains builds for one of the platforms that requires
     # `v1.6` (such as `aarch64-apple-darwin` or `armv6l-linux-gnueabihf`) we
@@ -432,14 +436,20 @@ JLL is stored within, including sources
     # but we still do our best to support older julia versions.
     julia_compat::String
 
-    function JLLInfo(;name, version, artifacts, julia_compat = guess_julia_compat(artifacts))
+    function JLLInfo(name, version, artifacts, platform_augmentation_code, julia_compat)
         return new(
             string(name),
             VersionNumber(version),
             artifacts,
+            string(platform_augmentation_code),
             julia_compat,
         )
     end
+end
+function JLLInfo(;name, version, artifacts,
+                  platform_augmentation_code = "",
+                  julia_compat = guess_julia_compat(artifacts))
+    return JLLInfo(name, version, artifacts, platform_augmentation_code, julia_compat)
 end
 
 # For historical reasons, our UUIDs are generated with some rather strange constants
@@ -462,6 +472,7 @@ function generate_toml_dict(info::JLLInfo)
         "version" => string(info.version),
         "artifacts" => generate_toml_dict.(info.artifacts),
         "julia_compat" => info.julia_compat,
+        "platform_augmentation_code" => info.platform_augmentation_code,
     )
 end
 
@@ -470,6 +481,7 @@ function parse_toml_dict(::Type{JLLInfo}, d::Dict)
         name = d["name"],
         version = VersionNumber(d["version"]),
         artifacts = [parse_toml_dict(JLLArtifactInfo, p) for p in d["artifacts"]],
+        platform_augmentation_code = d["platform_augmentation_code"],
         julia_compat = d["julia_compat"],
     )
 end

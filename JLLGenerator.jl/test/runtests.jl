@@ -448,3 +448,11 @@ end
         @test length(jll_dict.artifacts) == 1
     end
 end
+
+# Ensure that all of our example JLLInfos are valid and roundtrip properly.
+@testset "Example JLLInfos" begin
+    for example_file in readdir(joinpath(dirname(@__DIR__), "contrib", "example_jllinfos"); join=true)
+        jll = include(example_file)
+        @test roundtrip_jll_through_toml(jll)[2] == jll
+    end
+end
