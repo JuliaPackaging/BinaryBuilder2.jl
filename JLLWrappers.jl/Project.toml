@@ -5,7 +5,6 @@ version = "2.0.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
-JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
@@ -17,8 +16,9 @@ julia = "1.0.0"
 
 [extras]
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
+JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Downloads", "Pkg", "Test"]
+test = ["Downloads", "JLLGenerator", "Pkg", "Test"]
