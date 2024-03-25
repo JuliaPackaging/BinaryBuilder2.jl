@@ -1,3 +1,20 @@
+# Note: This has been altered to use a new FileProduct, `terminfo`,
+# instead of using `artifact_dir`, as that no longer exists, due
+# to JLLs being able to be altered by preferences and no longer
+# belonging to a single artifact; users should instead just use
+# `FileProduct`s to get at what they want.
+ncurses_init = """
+if Sys.isunix()
+    path = joinpath(terminfo, "share", "terminfo")
+    old = get(ENV, "TERMINFO_DIRS", nothing)
+    if old === nothing
+        ENV["TERMINFO_DIRS"] = path
+    else
+        ENV["TERMINFO_DIRS"] = old * ":" * path
+    end
+end
+"""
+
 jll = JLLInfo(;
     name = "Ncurses",
     version = v"6.4.1+0",
@@ -17,6 +34,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.dylib",
@@ -42,17 +63,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -70,6 +81,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -95,17 +110,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -123,6 +128,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -148,17 +157,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -176,6 +175,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -201,17 +204,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -229,6 +222,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -254,17 +251,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -282,6 +269,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -307,17 +298,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -335,6 +316,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -360,17 +345,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -388,6 +363,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -413,17 +392,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -441,6 +410,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -466,17 +439,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -494,6 +457,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "bin\\libform6.dll",
@@ -519,17 +486,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -547,6 +504,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -572,17 +533,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -600,6 +551,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.dylib",
@@ -625,17 +580,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -653,6 +598,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -678,17 +627,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -706,6 +645,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -731,17 +674,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -759,6 +692,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "lib/libform.so",
@@ -784,17 +721,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
         JLLArtifactInfo(;
@@ -812,6 +739,10 @@ jll = JLLInfo(;
                 ),
             ],
             products = [
+                JLLFileProduct(
+                    :terminfo,
+                    "share/terminfo",
+                ),
                 JLLLibraryProduct(
                     :libform,
                     "bin\\libform6.dll",
@@ -837,17 +768,7 @@ jll = JLLInfo(;
                     [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
-            init_def = """
-            if Sys.isunix()
-                path = joinpath(artifact_dir, "share", "terminfo")
-                old = get(ENV, "TERMINFO_DIRS", nothing)
-                if old === nothing
-                    ENV["TERMINFO_DIRS"] = path
-                else
-                    ENV["TERMINFO_DIRS"] = old * ":" * path
-                end
-            end
-            """,
+            init_def = ncurses_init,
         ),
 
     ]

@@ -300,7 +300,7 @@ easier for non-BB2 users to make use of this package if needed.
     # on-callback function definitions in the form of `func_name => code_as_string`
     callback_defs::Dict{Symbol,String}
 
-    # __init__ function definition as a string, or `nothing` if not needed.
+    # __init__ snippet definition as a string, or `nothing` if not needed.
     init_def::Union{Nothing,String}
 
     # List of products in cut-down JLL format
