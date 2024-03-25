@@ -25,11 +25,13 @@ function init!(repo_path::String; initial_branch::String = "main", verbose::Bool
 
     # We always add a single commit as otherwise other commands like `log` don't work.
     # We'll just add an empty `.gitignore` file, which should be pretty safe.
-    mktempdir() do checkout_dir
-        run(git(["clone", "--shared", repo_path, checkout_dir, quiet_args(verbose)...]))
-        touch(joinpath(checkout_dir, ".gitignore"))
-        commit!(checkout_dir, "Initial commit"; verbose)
-        push!(checkout_dir; verbose)
+    if !iscommit(repo_path, "HEAD")
+        mktempdir() do checkout_dir
+            run(git(["clone", "--shared", repo_path, checkout_dir, quiet_args(verbose)...]))
+            touch(joinpath(checkout_dir, ".gitignore"))
+            commit!(checkout_dir, "Initial commit"; verbose)
+            push!(checkout_dir; verbose)
+        end
     end
 end
 
