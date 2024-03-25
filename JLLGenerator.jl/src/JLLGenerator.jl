@@ -463,7 +463,7 @@ end
 const uuid_package = UUID("cfb74b52-ec16-5bb7-a574-95d9e393895e")
 # For even more interesting historical reasons, we append an extra
 # "_jll" to the name of the new package before computing its UUID.
-UUID(info::JLLInfo) = jll_specific_uuid5(uuid_package, "$(info.name)_jll")
+UUID(info::JLLInfo) = jll_specific_uuid5(uuid_package, "$(info.name)_jll_jll")
 
 
 function generate_toml_dict(info::JLLInfo)
