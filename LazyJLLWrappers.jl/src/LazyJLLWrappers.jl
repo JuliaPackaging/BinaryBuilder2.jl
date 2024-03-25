@@ -1,4 +1,4 @@
-module JLLWrappers
+module LazyJLLWrappers
 
 @warn("TODO: Remove JLLGenerator from the deps, it should be a test-only dependency")
 
@@ -171,6 +171,11 @@ macro generate_jll_from_toml()
     for product in lib_products
         library_product_definition(jb, artifact, product)
     end
+
+    # Also, create our `eager_mode()` function body which will open all of our
+    # libraries and tell all of our dependencies to open their libraries too.
+    # This allows these packages to co-exist with the old `JLLWrappers`
+    build_eager_mode(jb, artifact["deps"], lib_products)
     
     # Next all the other products
     for product in artifact["products"]
@@ -195,4 +200,4 @@ macro generate_jll_from_toml()
     return synthesize(jb)
 end
 
-end # module JLLWrappers
+end # module LazyJLLWrappers

@@ -40,7 +40,7 @@ function executable_product_definition(jb::JLLBlocks, artifact, product)
     push!(jb.top_level_blocks, quote
         function $(var_name)(; adjust_PATH::Bool = true, adjust_LIBPATH::Bool = true)
             env = Base.invokelatest(
-                JLLWrappers.adjust_ENV!,
+                LazyJLLWrappers.adjust_ENV!,
                 copy(ENV),
                 PATH[],
                 LIBPATH[],

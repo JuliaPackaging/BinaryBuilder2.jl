@@ -1,6 +1,4 @@
-# TODO: Create a testing JLL that has all our different kinds of products, uses init blocks, etc...
-# Use that to test this package here.
-using JLLWrappers, Pkg, Test, JLLGenerator, Preferences
+using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences
 
 # For more debugging info, set `io = stdout`
 function generate_and_load_jll(jllinfo, test_code::String;
@@ -12,7 +10,7 @@ function generate_and_load_jll(jllinfo, test_code::String;
         JLLGenerator.generate_jll(dir, jllinfo)
         Pkg.activate(dir) do
             Preferences.set_preferences!("$(jllinfo.name)_jll", pairs(extra_preferences)...)
-            # Ensure we're using the current version of JLLWrappers.jl
+            # Ensure we're using the current version of LazyJLLWrappers.jl
             Pkg.develop(;path=dirname(@__DIR__), io)
             Pkg.instantiate(;io)
         end

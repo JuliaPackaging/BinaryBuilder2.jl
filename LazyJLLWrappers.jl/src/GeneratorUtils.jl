@@ -82,10 +82,10 @@ end
 
 function top_level_statements(jb::JLLBlocks, artifact, platform)
     if VERSION >= v"1.6.0"
-        push!(jb.top_level_blocks, :(using Libdl, JLLWrappers, Artifacts))
+        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Artifacts))
     elseif VERSION >= v"1.3.0-rc4"
         # Use slower Pkg-based artifacts
-        push!(jb.top_level_blocks, :(using Libdl, JLLWrappers, Pkg.Artifacts))
+        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Pkg.Artifacts))
     else
         error("Unable to use $(src_name)_jll on Julia versions older than 1.3!")
     end
@@ -117,6 +117,31 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
 
     # Add our platform object, so that we can introspect the result of platform augmentation
     push!(jb.top_level_blocks, emit_typed_global(:platform, typeof(platform), platform; isconst=true))
+end
+
+"""
+    build_eager_mode(jb, deps, lib_products)
+
+In order to be compatible with JLLWrappers (the old version) we need to
+support a way to force all libraries to load eagerly so that downstream
+JLLs are able to make use of our libraries.  This method will define an
+`eager_mode()` function that ensures that all libraries in this JLL are
+dlopen()'ed and ready for use.  Old JLLWrappers will then call
+`eager_mode()` on all dependencies to ensure that they are available.
+"""
+function build_eager_mode(jb::JLLBlocks, lib_products)
+    statements = Expr[]
+    # For every library in `lib_products`, open it!
+    for lib in lib_products
+        _, path_var_name, _ = product_names(lib)
+        push!(statements, :(dlopen($(path_var_name))))
+    end
+
+    push!(jb.top_level_blocks, quote
+        function eager_mode()
+            $(statements...)
+        end
+    end)
 end
 
 
@@ -214,6 +239,6 @@ function init_footer(jb::JLLBlocks, artifact)
         unique!(PATH_list)
         unique!(LIBPATH_list)
         PATH[] = join(PATH_list, $(pathsep))
-        LIBPATH[] = join(vcat(LIBPATH_list, Base.invokelatest(JLLWrappers.get_julia_libpaths))::Vector{String}, $(pathsep))
+        LIBPATH[] = join(vcat(LIBPATH_list, Base.invokelatest(LazyJLLWrappers.get_julia_libpaths))::Vector{String}, $(pathsep))
     end)
 end

@@ -612,16 +612,12 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             "version" => string(info.version),
             # We'll add either `Pkg` or `Artifacts` to this list, depending on the `julia_compat`.
             "deps" => Dict{String,Any}(
-                "JLLWrappers" => "692b3bcd-3c85-4b1f-b108-f13ce0eb3210",
+                "JLLWrappers2" => "21706172-204c-4d4f-5420-656854206f44",
                 "Libdl" => "8f399da3-3557-5675-b5ff-fb832c97cbdb",
             ),
 
-            # We require at least JLLWrappers 2.0+, as that's when we implemented
-            # this whole TOML loading business.  Note that the user can still override
-            # this (likely to their detriment) by putting an explicit entry for
-            # `JLLWrappers` in their `deps` field.
             "compat" => Dict{String,Any}(
-                "JLLWrappers" => "2.0.0",
+                "JLLWrappers2" => "1.0.0",
                 "julia" => info.julia_compat,
             )
         )
