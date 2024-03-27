@@ -2,10 +2,14 @@ steps:
   - label: ":julia: :linux: ${ARCH?} Julia ${JULIA_VERSION?}"
     plugins:
       - JuliaCI/julia#v1:
-          version: "${JULIA_VERSION}"
+          version: "${JULIA_VERSION?}"
           arch: "${ARCH?}"
+      - JuliaCI/jack#v1:
+          install:
+            - "GNUMake_jll"
     command: "make testall"
     agents:
       queue: "juliaecosystem"
       os: "linux"
+      sandbox_capable: "true"
       arch: "${ARCH?}"
