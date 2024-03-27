@@ -1,0 +1,11 @@
+steps:
+  - label: ":julia: :linux: ${ARCH?} Julia ${JULIA_VERSION?}"
+    plugins:
+      - JuliaCI/julia#v1:
+          version: "${JULIA_VERSION}"
+          arch: "${ARCH?}"
+    command: "make testall"
+    agents:
+      queue: "juliaecosystem"
+      os: "linux"
+      arch: "${ARCH?}"
