@@ -93,5 +93,6 @@ include("FileProduct.jl")
 include("ExecutableProduct.jl")
 include("LibraryProduct.jl")
 include("FrameworkProduct.jl")
+include("JLLGeneratorExt.jl")
 
 end # module BinaryBuilderProducts
