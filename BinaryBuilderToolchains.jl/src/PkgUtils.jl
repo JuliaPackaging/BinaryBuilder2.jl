@@ -3,7 +3,7 @@ using Pkg.Types: PackageSpec, VersionSpec, Context, EnvCache, registry_resolve!,
 using Pkg.API: handle_package_input!
 using Pkg.Operations: targeted_resolve
 
-function resolve(pkgs::Vector{PackageSpec}; julia_version=VERSION)
+function resolve(pkgs::Vector{PackageSpec}; julia_version::Union{Nothing,VersionNumber}=VERSION)
     any_unresolved(pkgs) = any(pkg.uuid === nothing for pkg in pkgs)
     # There doesn't seem to be a better way to get an "empty" `EnvCache`
     # than to construct it off of an empty directory, so that's what we do
@@ -50,7 +50,7 @@ function resolve(pkgs::Vector{PackageSpec}; julia_version=VERSION)
 end
 
 # Calls `resolve()` but only returns pkgs we asked for, in a Dict
-function resolve_versions(pkgs::Vector{PackageSpec}; julia_version=VERSION)
+function resolve_versions(pkgs::Vector{PackageSpec}; julia_version::Union{Nothing,VersionNumber}=VERSION)
     # Force all pkgs to have a UUID, so we can match them afterward
     registry_resolve!(Context().registries, pkgs)
 
@@ -81,7 +81,7 @@ end
 Given a vector of `JLLSource`'s, resolve any that are not already concretized
 down to a specific version, 
 """
-function resolve_versions!(jlls::Vector{JLLSource}; julia_version=VERSION)
+function resolve_versions!(jlls::Vector{JLLSource}; julia_version::Union{Nothing,VersionNumber}=VERSION)
     # Get a new set of versions for the jlls' package specs
     # Ignore any package that already has a `treehash` or a `repo` field.
     already_resolved(p) = p.tree_hash !== nothing ||

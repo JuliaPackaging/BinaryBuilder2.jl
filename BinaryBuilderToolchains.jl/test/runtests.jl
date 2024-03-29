@@ -1,5 +1,5 @@
 using Test, BinaryBuilderToolchains
 
-include("WrapperUtils.jl")
-include("CToolchain.jl")
-include("HostToolsToolchain.jl")
+include("WrapperUtilsTests.jl")
+include("CToolchainTests.jl")
+include("HostToolsToolchainTests.jl")

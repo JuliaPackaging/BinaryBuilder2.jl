@@ -14,7 +14,7 @@ end
 
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
-    platform = CrossPlatform(HostPlatform() => HostPlatform())
+    platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
     testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
     @test toolchain.vendor ∈ (:gcc, :clang)
