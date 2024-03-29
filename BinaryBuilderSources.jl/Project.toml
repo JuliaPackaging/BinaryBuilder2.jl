@@ -16,6 +16,7 @@ TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
 JLLPrefixes = "0.3"
+julia = "1.8"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
