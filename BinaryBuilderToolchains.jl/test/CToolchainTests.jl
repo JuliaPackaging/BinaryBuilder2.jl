@@ -93,7 +93,9 @@ end
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do
                         @test success(addenv(Cmd(["/bin/bash", "-c", "make install CC=$(cc) prefix=$(install_prefix) VERSION=$(libfoo_version)"]), env))
-                        @test isfile(joinpath(install_prefix, "include", "libfoo.h"))
+                        libfoo_h_path = joinpath(install_prefix, "include", "libfoo.h")
+                        @test isfile(libfoo_h_path)
+                        @test contains(String(read(libfoo_h_path)), "#define LIBFOO_VERSION $(libfoo_version)")
                         @test isdir(joinpath(install_prefix, "lib"))
                     end
                 end
@@ -115,7 +117,7 @@ end
                         # with the right SOVERSION:
                         mkpath(joinpath(install_prefix, "bin"))
                         run(addenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
-                        p, output = capture_output(addenv(`readelf -d $(install_prefix)/bin/foo`))
+                        p, output = capture_output(addenv(`readelf -d $(install_prefix)/bin/foo`, env))
                         @test success(p)
                         m = match(r"Shared library: \[(libfoo[^ ]+)\]", output)
                         @test m !== nothing

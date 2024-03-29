@@ -53,7 +53,7 @@ const verbose = false
         # Run our more extensive test suites
         testsuite_path = joinpath(@__DIR__, "testsuite", "HostToolsToolchain")
         cd(testsuite_path) do
-            p = run(addenv(`make cleancheck-all`, env))
+            p = run(addenv(`make -s cleancheck-all`, env))
             @test success(p)
         end
     end
