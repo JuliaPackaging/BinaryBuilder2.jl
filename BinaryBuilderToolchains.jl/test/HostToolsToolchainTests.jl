@@ -10,8 +10,10 @@ const verbose = false
     @test !isempty(filter(jll -> jll.package.name == "Patchelf_jll", toolchain.deps))
     @test !isempty(filter(jll -> jll.package.name == "Ccache_jll", toolchain.deps))
 
-    # Download the toolchain, make sure it runs
-    with_toolchains([toolchain]) do prefix, env
+    # Download the toolchain, make sure it runs.
+    # We include a host-targeted C toolchain here, because our `autotools` test requires one.
+    c_toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
+    with_toolchains([toolchain, c_toolchain]) do prefix, env
         # This list should more or less mirror the `default_tools` in 
         host_tools = [
             # Build tools
@@ -50,7 +52,7 @@ const verbose = false
         @test startswith(readchomp(addenv(`sh -c "which bzip2"`, env)), prefix)
         @test success(pipeline(addenv(`bzip2 --version`, env), stdout=devnull))
 
-        # Run our more extensive test suites
+        # Run our more extensive test suites.
         testsuite_path = joinpath(@__DIR__, "testsuite", "HostToolsToolchain")
         cd(testsuite_path) do
             p = run(addenv(`make -s cleancheck-all`, env))
