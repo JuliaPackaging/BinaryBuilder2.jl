@@ -7,7 +7,8 @@ steps:
       - JuliaCI/jack#v1:
           install:
             - "GNUMake_jll"
-    command: "make testall"
+    commands: |
+      make --output-sync=target -j$$(nproc) testall
     agents:
       queue: "juliaecosystem"
       os: "linux"

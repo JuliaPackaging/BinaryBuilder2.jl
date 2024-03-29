@@ -32,7 +32,11 @@ endif
 # Only test after our dependencies are finished test
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
 	@if [ "$${BUILDKITE}" = "true" ]; then \
-		echo "--- $(1)"; \
+		if [ "$(1)" == "." ]; then \
+			echo "+++ BB2"; \
+		else \
+			echo "--- $(1)"; \
+		fi; \
 	fi
 	$(call run_with_log,$(1),import Pkg; Pkg.test(),test-$(1))
 
