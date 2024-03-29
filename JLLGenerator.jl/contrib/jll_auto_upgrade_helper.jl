@@ -61,7 +61,7 @@ mktempdir() do dir
     global deps = []
     for (name, uuid) in project["deps"]
         # Drop default dependencies `JLLWrappers`, `Artifacts` and `Libdl`, these are implicit.
-        if name ∈ ("JLLWrappers2", "JLLWrappers", "Artifacts", "Libdl", "Pkg")
+        if name ∈ ("LazyJLLWrappers", "JLLWrappers", "Artifacts", "Libdl", "Pkg")
             continue
         end
         push!(deps, (
