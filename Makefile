@@ -31,11 +31,17 @@ endif
 
 # Only test after our dependencies are finished test
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
+	@if [ "$${BUILDKITE}" = "true" ]; then \
+		echo "--- $(1)"; \
+	fi
 	$(call run_with_log,$(1),import Pkg; Pkg.test(),test-$(1))
 
 # Updating can happen in parallel
 update-$(1): $(1)/LICENSE
 	$(call run_with_log,$(1),import Pkg; Pkg.update(),update-$(1))
+
+resolve-$(1): $(1)/LICENSE
+	$(call run_with_log,$(1),import Pkg; Pkg.resolve(),resolve-$(1))
 
 # Same with instantiation
 instantiate-$(1): $(1)/LICENSE
@@ -43,6 +49,7 @@ instantiate-$(1): $(1)/LICENSE
 
 testall: test-$(1)
 updateall: update-$(1)
+resolveall: resolve-$(1)
 instantiateall: instantiate-$(1)
 .PHONY: test-$(1) update-$(1)
 endef
