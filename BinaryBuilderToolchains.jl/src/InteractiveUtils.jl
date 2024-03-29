@@ -124,7 +124,7 @@ end
 
 # Easy way to get e.g. a default `CToolchain` for the current host platform
 function runshell(toolchain_types::Vector{DataType}; kwargs...)
-    platform = CrossPlatform(HostPlatform() => HostPlatform())
+    platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchains = [T(platform) for T in toolchain_types]
     return runshell(toolchains; kwargs...)
 end

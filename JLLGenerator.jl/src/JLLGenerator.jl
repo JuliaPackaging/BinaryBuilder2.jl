@@ -612,12 +612,12 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             "version" => string(info.version),
             # We'll add either `Pkg` or `Artifacts` to this list, depending on the `julia_compat`.
             "deps" => Dict{String,Any}(
-                "JLLWrappers2" => "21706172-204c-4d4f-5420-656854206f44",
+                "LazyJLLWrappers" => "21706172-204c-4d4f-5420-656854206f44",
                 "Libdl" => "8f399da3-3557-5675-b5ff-fb832c97cbdb",
             ),
 
             "compat" => Dict{String,Any}(
-                "JLLWrappers2" => "1.0.0",
+                "LazyJLLWrappers" => "1.0.0",
                 "julia" => info.julia_compat,
             )
         )

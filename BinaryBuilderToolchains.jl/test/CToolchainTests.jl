@@ -14,7 +14,7 @@ end
 
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
-    platform = CrossPlatform(HostPlatform() => HostPlatform())
+    platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
     testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
     @test toolchain.vendor ∈ (:gcc, :clang)
@@ -24,7 +24,11 @@ end
     with_toolchains([toolchain]) do prefix, env
         cd(testsuite_path) do
             # Run our entire test suite first
-            p = run(setenv(`make -s cleancheck-all`, env))
+            p = run(ignorestatus(setenv(`make -s cleancheck-all`, env)))
+            # If this fails, run it again, but with `make` not set to silent
+            if !success(p)
+                run(setenv(`make cleancheck-all`, env))
+            end
             @test success(p)
 
             # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
@@ -89,7 +93,9 @@ end
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do
                         @test success(addenv(Cmd(["/bin/bash", "-c", "make install CC=$(cc) prefix=$(install_prefix) VERSION=$(libfoo_version)"]), env))
-                        @test isfile(joinpath(install_prefix, "include", "libfoo.h"))
+                        libfoo_h_path = joinpath(install_prefix, "include", "libfoo.h")
+                        @test isfile(libfoo_h_path)
+                        @test contains(String(read(libfoo_h_path)), "#define LIBFOO_VERSION $(libfoo_version)")
                         @test isdir(joinpath(install_prefix, "lib"))
                     end
                 end
@@ -111,7 +117,7 @@ end
                         # with the right SOVERSION:
                         mkpath(joinpath(install_prefix, "bin"))
                         run(addenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
-                        p, output = capture_output(addenv(`readelf -d $(install_prefix)/bin/foo`))
+                        p, output = capture_output(addenv(`readelf -d $(install_prefix)/bin/foo`, env))
                         @test success(p)
                         m = match(r"Shared library: \[(libfoo[^ ]+)\]", output)
                         @test m !== nothing

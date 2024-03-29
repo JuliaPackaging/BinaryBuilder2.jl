@@ -7,7 +7,7 @@ export HostToolsToolchain
 This toolchain contains a large number of useful host tools, such as 
 """
 @kwdef struct HostToolsToolchain <: AbstractToolchain
-    platform::Platform = HostPlatform()
+    platform::Platform = BBHostPlatform()
     deps::Vector{AbstractSource}
 
     function HostToolsToolchain(platform, overrides=AbstractSource[])
@@ -78,7 +78,11 @@ This toolchain contains a large number of useful host tools, such as
 
         # Concretize the JLLSource's `PackageSpec`'s version now:
         jll_deps = JLLSource[d for d in deps if isa(d, JLLSource)]
-        resolve_versions!(jll_deps; julia_version=nothing)
+        julia_version = nothing
+        if haskey(tags(platform), "julia_version")
+            julia_version = VersionNumber(platform["julia_version"])
+        end
+        resolve_versions!(jll_deps; julia_version)
 
         return new(
             platform,

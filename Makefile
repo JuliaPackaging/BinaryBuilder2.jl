@@ -26,16 +26,33 @@ define project_targets
 # I'm lazy and I forget to add licenses to things all the time
 ifneq ($(1),.)
 $(1)/LICENSE: LICENSE
-	cp $$< $$@
+	@cp $$< $$@
 endif
 
 # Only test after our dependencies are finished test
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
+	@if [ "$${BUILDKITE}" = "true" ]; then \
+		if [ "$(1)" == "." ]; then \
+			echo "+++ BB2"; \
+		else \
+			echo "--- $(1)"; \
+		fi; \
+	fi
 	$(call run_with_log,$(1),import Pkg; Pkg.test(),test-$(1))
+
+printsorted-$(1): $(foreach dep,$($(1)_DEPS),printsorted-$(dep))
+	@if [ "$(1)" = "." ]; then \
+		echo "BB2.jl"; \
+	else \
+		echo "$(1)"; \
+	fi
 
 # Updating can happen in parallel
 update-$(1): $(1)/LICENSE
 	$(call run_with_log,$(1),import Pkg; Pkg.update(),update-$(1))
+
+resolve-$(1): $(1)/LICENSE
+	$(call run_with_log,$(1),import Pkg; Pkg.resolve(),resolve-$(1))
 
 # Same with instantiation
 instantiate-$(1): $(1)/LICENSE
@@ -43,8 +60,10 @@ instantiate-$(1): $(1)/LICENSE
 
 testall: test-$(1)
 updateall: update-$(1)
+resolveall: resolve-$(1)
 instantiateall: instantiate-$(1)
-.PHONY: test-$(1) update-$(1)
+printsorted: printsorted-$(1)
+.PHONY: test-$(1) update-$(1) printsorted-$(1)
 endef
 $(foreach project,$(PROJECTS),$(eval $(call project_targets,$(project))))
 
