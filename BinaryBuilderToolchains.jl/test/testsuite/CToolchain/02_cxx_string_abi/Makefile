@@ -11,9 +11,11 @@ $(PROJECT_DIR)/build $(PROJECT_DIR)/build/libfoo:
 
 $(LIBSTR): libstring.cpp libstring.h | $(PROJECT_DIR)/build
 	$(CXX) -shared -o $@ $(CPPFLAGS) $(CFLAGS) $< -fPIC
+libstring: $(LIBSTR)
 
 $(CXXABI): cxx_string_abi.cpp $(LIBSTR) | $(PROJECT_DIR)/build
 	$(CXX) -o $@ -I$(PROJECT_DIR)/libfoo $(CPPFLAGS) $(CFLAGS) $< -L$(dir $(LIBSTR)) $(call rpath,.) -lstring $(LDFLAGS)
+cxx_string_abi: $(CXXABI)
 
 clean:
 	rm -rf $(PROJECT_DIR)/build

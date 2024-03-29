@@ -8,10 +8,10 @@ check-$(1):
 clean-$(1):
 	@$$(MAKE) -C $(1) clean
 cleancheck-$(1):
-	@$$(MAKE) -s clean-$(1)
-	@$$(MAKE) -s check-$(1)
+	@$$(MAKE) clean-$(1)
+	@$$(MAKE) check-$(1)
 	@echo "$(1): ✓"
-	@$$(MAKE) -s clean-$(1)
+	@$$(MAKE) clean-$(1)
 check-all: check-$(1)
 clean-all: clean-$(1)
 cleancheck-all: cleancheck-$(1)

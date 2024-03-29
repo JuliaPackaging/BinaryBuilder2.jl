@@ -24,7 +24,11 @@ end
     with_toolchains([toolchain]) do prefix, env
         cd(testsuite_path) do
             # Run our entire test suite first
-            p = run(setenv(`make -s cleancheck-all`, env))
+            p = run(ignorestatus(setenv(`make -s cleancheck-all`, env)))
+            # If this fails, run it again, but with `make` not set to silent
+            if !success(p)
+                run(setenv(`make cleancheck-all`, env))
+            end
             @test success(p)
 
             # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
