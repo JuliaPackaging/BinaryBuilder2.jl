@@ -24,7 +24,7 @@ of these two tags, all valid `CrossPlatform` objects are identifiable by the pre
 of these tags (or the equally-identifiying `target_arch`/`host_os` etc... tags).
 
 In the event that you try to turn a "normal" `Platform` object into a `CrossPlatform`,
-it will return a `CrossPlatform` object that has `host` and `target` equal to eacother.
+it will return a `CrossPlatform` object that has `host` and `target` equal to eachother.
 """
 struct CrossPlatform <: AbstractPlatform
     # We don't allow storing anything other than bog-standard `Platform`s or `AnyPlatform`s
