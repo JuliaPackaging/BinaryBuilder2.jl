@@ -1,49 +1,50 @@
-NEXT THINGS TO DO:
-
-- Build package!() API
-  - Build BinaryBuilderJLLEmitter.jl
+High-priority list:
+- Finish `build()` -> `extract()` -> `package()` workflow.
+  - Need to finish `Universe` support in `BB2`, and make end-to-end tests that show output of one build being used in the next.
+  - Skip auditing for now, just get enough working that I can start building toolchains
+- Build GCCBootstrap for all linuces
+  - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BB2.
+- Build caching infrastructure
+  - Hash all inputs, if the inputs are the same, look up cached output artifact and just use that if it's still around.
+  - Make this flexible enough to work with backends other than local paths, e.g. S3-based caching for Yggdrasil.
+- Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
+  - Build Clang via GCCBoostrap
+  - Look into this: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
+- Expand GCCBootstrap for Windows
+  - Ensure that we have the patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)
+- Expand GCCBootstrap for macOS
+- Expand GCCBootstrap for FreeBSD
 - Build GCC <-> Glibc baked header diff tarballs
   - Build easy "diff/core" packaging utility to analyze a set of outputs for
     shared content and create a `FooCore_jll` and `FooXYZ_jll` set of artifacts
 - Integrate `Ccache_jll`
-- Build GCCBootstrap for all linuces
-- Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
-- Build Clang via GCCBoostrap
-- Expand GCCBootstrap for Windows
-- Expand GCCBootstrap for macOS
-- Expand GCCBootstrap for FreeBSD
-- Build caching infrastructure
-
-
-
-Useful features I want to add before I call this rewrite "done":
-
-* Product re-design
-  - Build DAG among products, encode in machine-readable JLL info
-  - Get rid of dlopen checks completely
-* JLL output metadata
+- Fill out more JLL output metadata
   - Discussion here: https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/639
   - Break version number equivalency
-  - Build JLLGenerator.jl
   - Build BinaryBuilderVersionTool.jl?
-* Parallel/much faster Auditor
-* Auto-install license as a Julia audit pass, not as a bash `trap` statement
-* Shared read-only depot that we can "compact" compiler shards and whatnot into (perhaps this should be a buildkite plugin?)
+- Build BinaryBuilderAuditor.jl
+  - Use parallel workqueue
+  - Output results in TOML or JSON or something machine-readable
+  - Build-in to `package!()` step
+  - Auto-install license as an audit pass, not as a bash `trap` statement
+- Finish implementation of `DepotCompactor.jl` to save disk space on Yggdrasil
   - Create torture-test-suite to run a bunch of builds in parallel on a new depot, to make sure that we can share resources properly
-* Create mappings from all old style syntax to new style
+- Create mappings from all old style syntax to new style
   - `build_tarballs()` -> `BuildMeta()`, `BuildConfig()`, `build()`, `extract()`, `package()`, etc...
   - `compilers = [:c]` => `toolchains = [CToolchain()]`.
   - `HostBuildDependency()` => `JLLDependency` with appropriate platforms
-* Copy over as many tests as possible from BB.jl and BBB.jl
-* Test all toolchain executables; at least `--version` to ensure they are still running.
-* https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
+- Copy over as many tests as possible from BB.jl and BBB.jl
+- Build `-debug` variants, deploy them in a JLL, show how to override preferences to switch to them.
+  - This should be doable with separate `extract!()` steps, perhaps?
+  - Integrate with `.pkg` hooks for `select_artifacts.jl` to get them at `Pkg.add()` time?
+- Do `strace` example, where we have statically-linked binaries so we don't need the `libc` tag.
 
-Things that would be nice to have, but we don't _need_:
-* Capture the environment at the end of the build, use it to interpolate products
-* LRU cache of specific size for `downloads` folder
-* Progress bars for _everything_
+Features I'd like but I'm not prioritizing:
+- LRU cache of specific size for `downloads` folder
+- Progress bars for _everything_
   - JLL downloads
   - Source tarball unpacking
   - Auditing
-* https://github.com/JuliaPackaging/BinaryBuilderBase.jl/pull/288
-* Automatic apk/apt caching server
+- Automatic apk/apt caching server for Yggdrasil
+  - Perhaps it'd be better to just have a transparent SQUID proxy to cache _every_ large HTTP request?
+  - Could be another good buildkite plugin
