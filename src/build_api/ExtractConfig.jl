@@ -1,4 +1,4 @@
-using Sandbox, TreeArchival, Pkg
+using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts
 
 export ExtractConfig, extract!
 
@@ -67,6 +67,7 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     # Insert some more environment variables on top of what was defined by the build config
     env = copy(config.build.config.env)
     env["extract_dir"] = "/workspace/extract"
+    env["BB_WRAPPERS_VERBOSE"] = "true"
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
@@ -77,6 +78,30 @@ function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
             sandbox_config = SandboxConfig(config, artifact_dir)
             run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
         end
+    end
+
+    # Run over the extraction result, ensure that all products can be located:
+    unlocatable_products = AbstractProduct[]
+    for product in config.products
+        if locate(product, artifact_path(artifact_hash);
+                  env=config.build.config.env) === nothing
+            push!(unlocatable_products, product)
+        end
+    end
+
+    if !isempty(unlocatable_products)
+        @error("Unable to locate $(length(unlocatable_products)) products:", config.products, platform=config.build.config.platform)
+        error()
+    end
+
+    # Compute dependency structure for all library products
+    library_products = [p for p in config.products if isa(p, LibraryProduct)]
+    if !isempty(library_products)
+        # Reconstruct library products for all of our dependencies
+        #for dep_jll in 
+        #end
+
+        #resolve_dependency_links!(library_products)
     end
 
     result = ExtractResult(

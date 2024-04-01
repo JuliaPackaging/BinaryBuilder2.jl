@@ -1,9 +1,9 @@
 High-priority list:
 - Finish `build()` -> `extract()` -> `package()` workflow.
-  - Need to finish `Universe` support in `BB2`, and make end-to-end tests that show output of one build being used in the next.
+  - Need to finish `Universe` support in `BinaryBuilder2`, and make end-to-end tests that show output of one build being used in the next.
   - Skip auditing for now, just get enough working that I can start building toolchains
 - Build GCCBootstrap for all linuces
-  - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BB2.
+  - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BinaryBuilder2.
 - Build caching infrastructure
   - Hash all inputs, if the inputs are the same, look up cached output artifact and just use that if it's still around.
   - Make this flexible enough to work with backends other than local paths, e.g. S3-based caching for Yggdrasil.

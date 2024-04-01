@@ -1,4 +1,4 @@
-export ExtractResult
+export ExtractResult, ExtractResultSource
 
 struct ExtractResult
     # Link back to the originating ExtractResult
@@ -31,6 +31,27 @@ struct ExtractResult
             Dict(String(k) => String(v) for (k,v) in logs),
         )
     end
+end
+
+Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.artifact)
+
+"""
+    ExtractResultSource(result::ExtractResult)
+
+This is an advanced source that is used to directly mount an `ExtractResult`
+as a source for a further build.  This is useful when an intermediate build is
+not meant to become a published JLL, but is merely intended to be used as
+a target/host dependency during the build of a larger JLL.
+
+If in a large multi-stage build you want to use some smaller JLL that is built
+as a part of the larger build, you should generally use
+`JLLSource(::PackageResult)` instead once the smaller piece has been packaged.
+"""
+function ExtractResultSource(result::ExtractResult, target::String = "")
+    return DirectorySource(
+        artifact_path(result.artifact);
+        target,
+    )
 end
 
 

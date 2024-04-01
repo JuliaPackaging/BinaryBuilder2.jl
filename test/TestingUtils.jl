@@ -1,5 +1,5 @@
 module TestingUtils
-using BB2: storage_locations
+using BinaryBuilder2: storage_locations
 
 # A helper function to set storage locations, mostly for testing
 function with_storage_locations(f::Function, mappings::Dict{Symbol,String})

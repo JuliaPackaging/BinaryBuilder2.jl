@@ -7,7 +7,7 @@ extract() {
         for file in "${files[@]}"; do
             file="$(realpath "${file}")"
 
-            if [[ "${BB_PRINT_COMMANDS}" ]]; then
+            if [[ "${BB_PRINT_COMMANDS}" == "true" ]]; then
                 echo "extracting: ${file##${prefix}/}" >&2
             fi
 

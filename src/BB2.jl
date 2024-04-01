@@ -1,15 +1,16 @@
-module BB2
+module BinaryBuilder2
 
 using Reexport
 @reexport using TreeArchival
 @reexport using MultiHashParsing
 @reexport using BinaryBuilderSources
 @reexport using BinaryBuilderToolchains
+@reexport using BinaryBuilderProducts
 @reexport using Base.BinaryPlatforms
 
 include("ExtractKwargs.jl")
 include("Preferences.jl")
-include("Products.jl")
+include("Universes.jl")
 include("BuildAPI.jl")
 
 

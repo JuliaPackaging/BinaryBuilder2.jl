@@ -1,4 +1,4 @@
-## This file contains the various preferences that can be set to change BB2's behavior.
+## This file contains the various preferences that can be set to change BinaryBuilder2's behavior.
 ## Currently, this includes functionality such as the following:
 #
 #  * Storage directories
@@ -29,7 +29,7 @@ macro define_storage_location(name, default, sub_module = nothing)
         function $(esc(name))(new_value::String)
             $(esc(refvar))[] = new_value
             if $(esc(sub_module)) !== nothing
-                $(esc(sub_module)).$(esc(name))(new_value)
+                getproperty($(esc(sub_module)), $(QuoteNode(name)))(new_value)
             else
                 return $(esc(refvar))[]
             end
@@ -63,4 +63,15 @@ set through the `ccache_cache` preference.
 Returns the path of the directory used to store in-progress build files.  This can
 be set through the `builds_dir` preference.
 """
-@define_storage_location builds_dir @get_scratch!("builds_dir")
+@define_storage_location builds_dir @get_scratch!("builds")
+
+"""
+    universes_dir()
+
+Returns the path of the directory used to store universes, the collection of mini-
+depots used to store registries and environments listing just-built JLLs.  Universes
+can be useful to have around for local testing, but are ultimately ephemeral.  This
+can be set through the `universes_dir` preference.
+"""
+@define_storage_location universes_dir @get_scratch!("universes")
+

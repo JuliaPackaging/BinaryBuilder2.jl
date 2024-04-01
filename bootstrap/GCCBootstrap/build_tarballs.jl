@@ -1,9 +1,9 @@
-using BB2, Artifacts
+using BinaryBuilder2, Artifacts
 
 name = "GCCBootstrap"
 version = v"9.4.0"
 
-# Build a native compiler right now
+# Build a compiler that runs on `host` but builds for `target`
 host = Platform("aarch64", "linux")
 target = Platform("x86_64", "linux")
 
@@ -123,9 +123,9 @@ host_dependencies = [
 ]
 
 # Customize the toolchains that are provided here
-toolchains = BB2.default_toolchains(CrossPlatform(host, target), [
+toolchains = BinaryBuilder2.default_toolchains(CrossPlatform(host, target), [
     # We require make v4.3, rather than the latest.
-    JLLSource("GNUMake_jll", host; version=BB2.VersionSpec("4.3")),
+    JLLSource("GNUMake_jll", host; version=BinaryBuilder2.VersionSpec("4.3")),
 ]; host_only=true)
 
 meta = BuildMeta()
@@ -142,13 +142,39 @@ build_config = BuildConfig(
 build_result = build!(meta, build_config)
 #runshell(build_result)
 
+
+products = BinaryBuilder2.AbstractProduct[]
+
+# For the bootstrap JLL, we contain within ourselves GCC and Binutils
+tool_names = [
+    # Binutils executables
+    :ar, :as, :ld, :nm, :objcopy, :objdump, :ranlib, :readelf, :strings, :binutils_strip,
+    # GCC executables
+    :cc, :gcc, :cpp, :gxx, :gcc,
+]
+
+for varname in tool_names
+    # Special-case troublesome variable names for our executable products
+    if varname == :gxx
+        tool_name = "g++"
+    elseif varname == :binutils_strip
+        tool_name = "strip"
+    else
+        tool_name = string(varname)
+    end
+    push!(products, ExecutableProduct("\${bindir}/\${target}-$(tool_name)", varname))
+end
+
 extract_config = ExtractConfig(
     build_result,
     raw"""
     extract ${prefix}/**
     """,
-    BB2.AbstractProduct[],
+    products,
 )
-# extract_result = extract!(meta, extract_config)
-# @info("Build complete", artifact=artifact_path(extract_result.artifact))
-# display(extract_result.config.to)
+extract_result = extract!(meta, extract_config)
+@info("Build complete", artifact=artifact_path(extract_result.artifact))
+display(extract_result.config.to)
+
+package_config = PackageConfig(extract_result)
+

@@ -119,7 +119,7 @@ include("GitSource.jl")
 include("JLLSource.jl")
 
 
-# These values purposefully mirror those of BB2, which will automatically keep them in-sync
+# These values purposefully mirror those of BinaryBuilder2, which will automatically keep them in-sync
 _source_download_cache = Ref{String}(@get_scratch!("source_download_cache"));
 source_download_cache() = _source_download_cache[]
 source_download_cache(new_path::String) = _source_download_cache[] = new_path

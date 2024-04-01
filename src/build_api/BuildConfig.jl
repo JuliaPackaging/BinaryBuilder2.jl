@@ -56,6 +56,8 @@ struct BuildConfig
                          host_dependencies::Vector{<:AbstractSource},
                          script::AbstractString,
                          target::AbstractPlatform;
+                         # Default to using a Linux host with the same host arch as our machine
+                         # This just makes qemu-user-static's job easier.
                          host::AbstractPlatform = Platform(arch(HostPlatform()), "linux"),
                          toolchains::Vector{<:AbstractToolchain} = default_toolchains(CrossPlatform(host, target)),
                          allow_unsafe_flags::Bool = false,
@@ -136,7 +138,7 @@ struct BuildConfig
             "prefix" => prefix,
             "bindir" => "$(prefix)/bin",
             "libdir" => "$(prefix)/lib",
-            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(prefix)/bin" : "$(prefix)/bin",
+            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(prefix)/bin" : "$(prefix)/lib",
             "includedir" => "$(prefix)/include",
 
             # The same things, repeated for `host`
@@ -145,7 +147,7 @@ struct BuildConfig
             "host_prefix" => host_prefix,
             "host_bindir" => "$(host_prefix)/bin",
             "host_libdir" => "$(host_prefix)/lib",
-            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix)/bin" : "$(host_prefix)/bin",
+            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix)/bin" : "$(host_prefix)/lib",
             "host_includedir" => "$(host_prefix)/include",
         ))
 

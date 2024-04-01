@@ -1,4 +1,4 @@
-name = "BB2"
+name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 version = "2.0.0"

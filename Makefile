@@ -3,7 +3,7 @@ JULIA ?= julia
 
 # I love string manipulation in Make.
 define logfile_name
-$(if $(filter-out .,$(lastword $(subst -, ,$(1)))),$(1),$(firstword $(subst -, ,$(1)))-BB2)
+$(if $(filter-out .,$(lastword $(subst -, ,$(1)))),$(1),$(firstword $(subst -, ,$(1)))-BinaryBuilder2)
 endef
 
 ifneq ($(LOG_OUTPUT),)
@@ -33,7 +33,7 @@ endif
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
 	@if [ "$${BUILDKITE}" = "true" ]; then \
 		if [ "$(1)" == "." ]; then \
-			echo "+++ BB2"; \
+			echo "+++ BinaryBuilder2"; \
 		else \
 			echo "--- $(1)"; \
 		fi; \
@@ -42,7 +42,7 @@ test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
 
 printsorted-$(1): $(foreach dep,$($(1)_DEPS),printsorted-$(dep))
 	@if [ "$(1)" = "." ]; then \
-		echo "BB2.jl"; \
+		echo "BinaryBuilder2.jl"; \
 	else \
 		echo "$(1)"; \
 	fi
