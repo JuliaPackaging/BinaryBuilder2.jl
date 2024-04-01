@@ -16,7 +16,7 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 
 [compat]
-JLLPrefixes = "0.3"
+JLLPrefixes = "0.3.5"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

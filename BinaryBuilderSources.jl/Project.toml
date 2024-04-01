@@ -15,7 +15,7 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
-JLLPrefixes = "0.3"
+JLLPrefixes = "0.3.5"
 julia = "1.8"
 
 [extras]
