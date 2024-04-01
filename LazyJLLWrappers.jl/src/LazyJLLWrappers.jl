@@ -175,7 +175,7 @@ macro generate_jll_from_toml()
     # Also, create our `eager_mode()` function body which will open all of our
     # libraries and tell all of our dependencies to open their libraries too.
     # This allows these packages to co-exist with the old `JLLWrappers`
-    build_eager_mode(jb, artifact["deps"], lib_products)
+    build_eager_mode(jb, lib_products)
     
     # Next all the other products
     for product in artifact["products"]

@@ -120,7 +120,7 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
 end
 
 """
-    build_eager_mode(jb, deps, lib_products)
+    build_eager_mode(jb, lib_products)
 
 In order to be compatible with JLLWrappers (the old version) we need to
 support a way to force all libraries to load eagerly so that downstream
