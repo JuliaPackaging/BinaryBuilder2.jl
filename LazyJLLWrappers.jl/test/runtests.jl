@@ -1,4 +1,4 @@
-using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences
+using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl
 
 # For more debugging info, set `io = stdout`
 function generate_and_load_jll(jllinfo, test_code::String;
@@ -67,7 +67,6 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
             @test occursin(Ncurses_jll.terminfo, ENV["TERMINFO_DIRS"])
         end
         """,
-        io=stderr,
     )
 
     # PlatformAugmentedHelloWorldC_jll just adds an extra tag to the platform it loads based on
@@ -126,3 +125,19 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
 end
 
 
+if isdefined(Libdl, :LazyLibrary)
+    @testset "Laziness" begin
+        generate_and_load_jll(
+            include(joinpath(example_jllinfos_path, "Ncurses_jll.jl")),
+            """
+            using Libdl
+            @test Ncurses_jll.is_available()
+            @test isempty(filter(l -> occursin("libncurses", l), Libdl.dllist()))
+            @test isempty(filter(l -> occursin("libpanel", l), Libdl.dllist()))
+            @test unsafe_string(ccall((:curses_version, libncurses), Cstring, ())) == "ncurses 6.4.20221231"
+            @test !isempty(filter(l -> occursin("libncurses", l), Libdl.dllist()))
+            @test isempty(filter(l -> occursin("libpanel", l), Libdl.dllist()))
+            """,
+        )
+    end
+end
