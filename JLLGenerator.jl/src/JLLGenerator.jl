@@ -681,7 +681,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
     open(joinpath(out_dir, "src", "$(info.name)_jll.jl"); write=true) do io
         println(io, """
         module $(info.name)_jll
-        using JLLWrappers
+        using LazyJLLWrappers
         @generate_jll_from_toml()
         end # module $(info.name)_jll
         """)
