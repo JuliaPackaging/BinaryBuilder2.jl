@@ -27,7 +27,13 @@ function init!(repo_path::String; initial_branch::String = "main", verbose::Bool
     # We'll just add an empty `.gitignore` file, which should be pretty safe.
     if !iscommit(repo_path, "HEAD")
         mktempdir() do checkout_dir
-            run(git(["clone", "--shared", repo_path, checkout_dir, quiet_args(verbose)...]))
+            if verbose
+                run(git(["clone", "--shared", repo_path, checkout_dir]))
+            else
+                # `git` unconditionally warns you when cloning an empty repository,
+                # even if we say `--quiet`, so we manually redirect `stderr` to `devnull` here.
+                run(pipeline(git(["clone", "--shared", repo_path, checkout_dir, "--quiet"]); stdout=devnull, stderr=devnull))
+            end
             touch(joinpath(checkout_dir, ".gitignore"))
             commit!(checkout_dir, "Initial commit"; verbose)
             push!(checkout_dir; verbose)
