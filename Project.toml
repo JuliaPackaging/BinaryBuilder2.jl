@@ -15,10 +15,12 @@ Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+LocalRegistry = "89398ba2-070a-4b16-a995-9893c55d93cf"
 MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
 OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Sandbox = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
@@ -33,7 +35,8 @@ UserNSSandbox_jll = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
 julia = "1.9"
 
 [extras]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Accessors", "Test"]
