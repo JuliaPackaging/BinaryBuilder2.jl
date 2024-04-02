@@ -2,6 +2,7 @@ using Pkg.Registry: RegistrySpec
 using JLLGenerator
 using Random, TOML
 using BinaryBuilderGitUtils
+import LazyJLLWrappers
 import LocalRegistry
 
 export Universe, register!, in_universe
@@ -70,8 +71,14 @@ struct Universe
                 push=false,
             )
         end
+        uni = new(depot_path, registries)
+
+        # Ensure that this universe uses our version of LazyJLLWrappers
+        Pkg.activate(environment_path(uni)) do
+            Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)))
+        end
         
-        return new(depot_path, registries)
+        return uni
     end
 end
 

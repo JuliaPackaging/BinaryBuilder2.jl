@@ -90,7 +90,7 @@ function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
     end
 
     if !isempty(unlocatable_products)
-        @error("Unable to locate $(length(unlocatable_products)) products:", config.products, platform=config.build.config.platform)
+        @error("Unable to locate $(length(unlocatable_products)) products:", unlocatable_products, platform=config.build.config.platform)
         error()
     end
 

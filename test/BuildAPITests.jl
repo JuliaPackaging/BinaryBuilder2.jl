@@ -4,13 +4,11 @@ if !isdefined(@__MODULE__, :TestingUtils)
     include("TestingUtils.jl")
 end
 
+native_arch = arch(HostPlatform())
+
 @testset "BuildAPI" begin
-
-const native_arch = arch(HostPlatform())
-
 @testset "Multi-stage build test" begin
     using Test, BinaryBuilder2, Artifacts
-    const native_arch = arch(HostPlatform())
 
     meta = BuildMeta(; verbose=false)
     # First, build `libstring` from the BBToolchains testsuite
@@ -119,7 +117,7 @@ end
         """,
         [
             LibraryProduct("libz", :libz),
-            FileProduct("include/libz.h", :libh_z),
+            FileProduct("include/zlib.h", :zlib_h),
         ],
     )
     extract_result = extract!(meta, extract_config)
