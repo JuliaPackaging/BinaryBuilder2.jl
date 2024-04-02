@@ -78,7 +78,7 @@ end
 raw"""
     in_universe(f::Function, u::Universe)
 
-Opens the dimensional portal, transporting execution of `f()` into the provided
+Opens the dimensional portal, transporting execution of `f(env)` into the provided
 universe, causing all `Pkg` operations to resolve with respect to that universe.
 
              .,-:;//;:=,
@@ -114,12 +114,12 @@ function in_universe(f::Function, u::Universe)
         abspath(Sys.BINDIR, "..", "share", "julia"),
     ])
 
+    # Ensure that subprocesses use the correct depot path
+    env = Dict("JULIA_DEPOT_PATH" => join(Base.DEPOT_PATH, ":"))
+
     try
-        # Ensure that subprocesses use the correct depot path
-        withenv("JULIA_DEPOT_PATH" => join(Base.DEPOT_PATH, ":")) do
-            # Invoke the user function
-            f()
-        end
+        # Invoke the user function
+        f(env)
     finally
         # No matter what happens, reset the DEPOT_PATH to what it should be.
         empty!(Base.DEPOT_PATH)
@@ -163,12 +163,12 @@ end
 Given a `JLLInfo`, generate the JLL out into the `dev` folder of the given universe,
 """
 function register!(u::Universe, jll::JLLInfo)
-    in_universe(u) do
+    in_universe(u) do env
         # If there already happens to be a JLL with this name registered
         # in one of the registries for this universe, clone it and check
         # it out to `dev/$(jll.name)!`
         jll_repo_url = get_package_repo(u, jll.name)
-        jll_repo_path = joinpath(source_download_cache(), "jll_clones", jll.name)
+        jll_repo_path = joinpath(source_download_cache(), "jll_clones", "$(jll.name)_jll")
         rm(jll_repo_path; force=true, recursive=true)
         if jll_repo_url !== nothing
             clone!(jll_repo_url, jll_repo_path)
@@ -177,7 +177,7 @@ function register!(u::Universe, jll::JLLInfo)
             # create a new bare git repo.
             init!(jll_repo_path)
         end
-        jll_path = joinpath(u.depot_path, "dev", jll.name)
+        jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
         checkout!(jll_repo_path, jll_path)
 
         # Next, generate the JLL in-place and commit it
@@ -185,7 +185,7 @@ function register!(u::Universe, jll::JLLInfo)
         commit!(jll_path, "$(jll.name) v$(jll.version)")
 
         # Next, add that JLL to the universe's environment
-        Pkg.activate(environment_path(u)) do            
+        Pkg.activate(environment_path(u)) do
             Pkg.develop(;path=jll_path)
         end
         
@@ -202,7 +202,7 @@ end
 
 import Pkg
 function Pkg.instantiate(u::Universe; kwargs...)
-    in_universe(u) do
+    in_universe(u) do env
         Pkg.activate(u.depot_path)
         Pkg.instantiate(; kwargs...)
     end

@@ -13,7 +13,9 @@ using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
         register!(uni, hwc_jll)
         Pkg.instantiate(uni)
 
-        # Launch a Julia sub-process and ensure that we can load HelloWorldC_jll from the universe's
-        @test success(run(`$(Base.julia_cmd()) --project=$(BinaryBuilder2.environment_path(uni)) -e "using Pkg; Pkg.instantiate(); using HelloWorldC_jll, Test; @test hello_world()"`))
+        # Launch a Julia sub-process and ensure that we can load HelloWorldC_jll from the universe
+        in_universe(uni) do env
+            @test success(run(addenv(`$(Base.julia_cmd()) --project=$(BinaryBuilder2.environment_path(uni)) -e "using Pkg; Pkg.instantiate(); using HelloWorldC_jll, Test; @test success(hello_world())"`, env)))
+        end
     end
 end
