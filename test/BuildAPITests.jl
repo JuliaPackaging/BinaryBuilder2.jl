@@ -7,9 +7,31 @@ end
 native_arch = arch(HostPlatform())
 
 @testset "BuildAPI" begin
-@testset "Multi-stage build test" begin
-    using Test, BinaryBuilder2, Artifacts
 
+@testset "Failing build" begin
+    # This build explicitly fails because it runs `false`
+    meta = BuildMeta(; verbose=false)
+    bad_build_config = BuildConfig(
+        "foo",
+        v"1.0.0",
+        AbstractSource[],
+        AbstractSource[],
+        AbstractSource[],
+        raw"""
+        env_val=pre
+        false
+        env_val=post
+        """,
+        Platform(native_arch, "linux"),
+    );
+    failing_stderr = IOBuffer()
+    failing_build_result = build!(meta, bad_build_config; stderr=failing_stderr)
+    @test failing_build_result.status == :failed
+    @test failing_build_result.env["env_val"] == "pre"
+    @test occursin("Previous command 'false' exited with code 1", String(take!(failing_stderr)))
+end
+
+@testset "Multi-stage build test" begin
     meta = BuildMeta(; verbose=false)
     # First, build `libstring` from the BBToolchains testsuite
     cxx_string_abi_source =  DirectorySource(joinpath(

@@ -91,6 +91,7 @@ struct BuildConfig
                 script_path = joinpath(out_dir, "build_script.sh")
                 open(script_path, write=true) do io
                     println(io, "#!/bin/bash")
+                    println(io, "set -euo pipefail")
                     println(io, "source /usr/local/share/bb/save_env_hook")
                     println(io, script)
                     println(io, "exit 0")
@@ -246,7 +247,7 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     local run_status
     run_exception = nothing
     try
-        if success(run(exe, config, cmd))
+        if success(run(exe, config, ignorestatus(cmd)))
             run_status = :success
         else
             run_status = :failed
@@ -262,15 +263,15 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     return run_status, run_exception
 end
 
-function build!(meta::AbstractBuildMeta, config::BuildConfig; deploy_root::String = mktempdir(builds_dir()))
+function build!(meta::AbstractBuildMeta, config::BuildConfig; deploy_root::String = mktempdir(builds_dir()), stdout::IO = stdout, stderr::IO = stderr)
     @warn("TODO: Check config tree hashes, don't build again if not necessary", maxlog=1)
 
     mounts = deploy(config; verbose=meta.verbose, deploy_root)
     sandbox_config = SandboxConfig(
         config, mounts;
         # TODO: Spit these out into a logfile or something
-        stdout=stdout,
-        stderr=stderr,
+        stdout,
+        stderr,
         verbose=meta.verbose,
     )
     local run_status, run_exception
