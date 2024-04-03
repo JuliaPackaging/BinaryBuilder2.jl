@@ -32,7 +32,7 @@ endif
 # Only test after our dependencies are finished test
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
 	@if [ "$${BUILDKITE}" = "true" ]; then \
-		if [ "$(1)" == "." ]; then \
+		if [ "$(1)" = "." ]; then \
 			echo "+++ BinaryBuilder2"; \
 		else \
 			echo "--- $(1)"; \
