@@ -70,7 +70,7 @@ end
     libstring_extract_result = extract!(meta, libstring_extract_config)
     @test libstring_extract_result.status == :success
 
-    # Feed it in as a dependency to a further of `cxx_string_abi`
+    # Feed it in as a dependency to a build of `cxx_string_abi`
     cxx_string_abi_build_config = BuildConfig(
         "cxx_string_abi",
         v"1.0.0",
@@ -81,11 +81,12 @@ end
         cd 02_cxx_string_abi
 
         # Explicitly use the `libstring` we built previously,
-        # remove `libstring.cpp` to assert that we're not trying to rebuild
+        # ensure this file does not get rebuilt by checking timestamps
         cp ${shlibdir}/libstring* .
-        rm libstring.cpp
+        orig_mtime=$(stat -c %Y libstring*)
 
         make cxx_string_abi
+        [[ "${orig_mtime}" == "$(stat -c %Y libstring*)" ]]
         mkdir -p ${bindir}
         cp build/cxx_string_abi* ${bindir}/
         """,

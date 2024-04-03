@@ -25,3 +25,5 @@ run: $(CXXABI)
 
 check: $(CXXABI)
 	@[ "$$($(CXXABI))" = "This is outrageous, it's unfair! Take a seat, young Skywalker." ]
+
+.PHONY: libstring cxx_string_abi
