@@ -35,7 +35,7 @@ trap "RET=\$?; \
 	trap - DEBUG INT TERM ERR EXIT; \
     set +e +x; \
 	if [[ "\$RET" != 0 ]]; then \
-    	echo Previous command \"'\$!'\" exited with code \$RET >&2; \
+    	echo Previous command \"'\${BASH_COMMAND}'\" exited with code \$RET >&2; \
 	fi; \
     save_env; \
     exit \$RET" \
