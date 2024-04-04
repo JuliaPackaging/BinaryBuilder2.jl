@@ -279,13 +279,6 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # binaries for Windows, and they're versioned completely separately.
     src_version::String
 
-    # A list of JLL dependencies that must be available to use this JLL
-    # Each element can be just a symbol, or a symbol and a version spec string
-    deps::Vector{JLLPackageDependency}
-
-    # A list of sources as `(source_url, hash)` pairs
-    sources::Vector{JLLSourceRecord}
-
     # The platform this is built for
     platform::AbstractPlatform
 
@@ -293,6 +286,16 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     name::String
     treehash::SHA1Hash
     download_sources::Vector{JLLArtifactSource}
+
+    # List of products in cut-down JLL format
+    products::Vector{<:AbstractJLLProduct}
+
+    # A list of JLL dependencies that must be available to use this JLL
+    # Each element can be just a symbol, or a symbol and a version spec string
+    deps::Vector{JLLPackageDependency}
+
+    # A list of sources as `(source_url, hash)` pairs
+    sources::Vector{JLLSourceRecord}
 
     # Whether this artifact should be considered lazy
     lazy::Bool
@@ -303,12 +306,8 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # __init__ snippet definition as a string, or `nothing` if not needed.
     init_def::Union{Nothing,String}
 
-    # List of products in cut-down JLL format
-    products::Vector{<:AbstractJLLProduct}
-
-    function JLLArtifactInfo(;src_version, platform, name, treehash, download_sources, products,
-                             deps = [], sources = [], lazy = false, callback_defs = Dict(),
-                             init_def = nothing)
+    function JLLArtifactInfo(src_version, platform, name, treehash, download_sources, products,
+                             deps, sources, lazy, callback_defs, init_def)
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
             if isa(p, JLLLibraryProduct)
@@ -339,18 +338,25 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
 
         return new(
             string(src_version),
-            empty_convert(JLLPackageDependency, deps),
-            empty_convert(JLLSourceRecord, sources),
             platform,
             string(name),
             MultiHash(treehash),
             empty_convert(JLLArtifactSource, download_sources),
+            empty_convert(AbstractJLLProduct, products),
+            empty_convert(JLLPackageDependency, deps),
+            empty_convert(JLLSourceRecord, sources),
             lazy,
             Dict{Symbol,String}(Symbol(k) => string(v) for (k,v) in callback_defs),
             init_def,
-            empty_convert(AbstractJLLProduct, products),
         )
     end
+end
+
+function JLLArtifactInfo(;src_version, platform, name, treehash, download_sources, products,
+                          deps = [], sources = [], lazy = false, callback_defs = Dict(),
+                          init_def = nothing)
+    return JLLArtifactInfo(src_version, platform, name, treehash, download_sources, products,
+                           deps, sources, lazy, callback_defs, init_def)
 end
 
 function generate_toml_dict(info::JLLArtifactInfo)
