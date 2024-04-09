@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "163ac15660f5ac1d8b330e17a2571286e248a9e2"
+project_hash = "3f09e2a7abd50640d271105643ba73879330ede4"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -61,7 +61,7 @@ version = "2.28.2+1"
 
 [[deps.MultiHashParsing]]
 deps = ["SHA"]
-path = "../MultiHashParsing.jl"
+git-tree-sha1 = "06af55f60190ce779701804d35bc9b84f85e4809"
 uuid = "73786568-6863-756d-6873-6168796e616d"
 version = "0.1.0"
 
