@@ -173,7 +173,7 @@ function prepare(config::BuildConfig; verbose::Bool = false)
     @timeit config.to "prepare" begin
         for (prefix, deps) in config.source_trees
             @timeit config.to prefix begin
-                prepare(deps; verbose)
+                prepare(deps; verbose, depot=config.meta.universe.depot_path)
             end
         end
     end

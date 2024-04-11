@@ -88,6 +88,10 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
     return values(seen_jlls)
 end
 
+function default_jll_source_depot()
+    return joinpath(source_download_cache(), "jllsource_depot")
+end
+
 """
     prepare(jlls::Vector{JLLSource}; verbose=false, force=false)
 
@@ -96,7 +100,10 @@ the build environment.  JLLs that already have `artifact_paths` filled out from
 a previous invocation of `prepare()` will not be re-prepared, unless `force` is
 set to `true`.
 """
-function prepare(jlls::Vector{JLLSource}; verbose::Bool = false, force::Bool = false)
+function prepare(jlls::Vector{JLLSource};
+                 depot::String = default_jll_source_depot(),
+                 verbose::Bool = false,
+                 force::Bool = false)
     # Split JLLs by platform:
     jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
     for jll in jlls
@@ -115,19 +122,16 @@ function prepare(jlls::Vector{JLLSource}; verbose::Bool = false, force::Bool = f
         push!(jlls_by_platform[jll.platform], jll)
     end
 
-    # We store our downloaded JLL artifacts and whatnot in here
-    pkg_depot = joinpath(source_download_cache(), "jllsource_depot")
-
     # For each group of platforms, we are able to download as a group:
     for (platform, platform_jlls) in jlls_by_platform
         # First, download everyone together, to give `JLLPrefixes` the
         # opportunity to parallelize downloads (we are not doing that
         # in `Pkg.add()` as of the time of this writing)
         pkgs = [deepcopy(jll.package) for jll in platform_jlls]
-        collect_artifact_metas(pkgs; platform, verbose, pkg_depot)
+        collect_artifact_metas(pkgs; platform, verbose, pkg_depot=depot)
 
         # Collect group of paths
-        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, pkg_depot)
+        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, pkg_depot=depot)
         for jll in platform_jlls
             pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
             append!(jll.artifact_paths, art_paths[pkg])

@@ -64,12 +64,12 @@ function noabspath!(target)
 end
 
 # Default fall-through batch `prepare()` and `deploy()` definitions
-function prepare(sources::Vector{<:AbstractSource}; verbose::Bool = false)
+function prepare(sources::Vector{<:AbstractSource}; verbose::Bool = false, depot::String = default_jll_source_depot(), force::Bool = false)
     # Special-case JLL sources, as we get a material benefit when batching those:
     jlls = JLLSource[s for s in sources if isa(s, JLLSource)]
     non_jlls = [s for s in sources if !isa(s, JLLSource)]
     if !isempty(jlls)
-        prepare(jlls; verbose)
+        prepare(jlls; verbose, depot, force)
     end
     prepare.(non_jlls; verbose)
 end

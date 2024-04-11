@@ -57,6 +57,19 @@ struct Universe
         mkpath(depot_path)
         depot_path = abspath(depot_path)
 
+        # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
+        try
+            for name in ("artifacts", "packages")
+                symlink(
+                    joinpath(BinaryBuilderSources.default_jll_source_depot(), name),
+                    joinpath(depot_path, name);
+                    dir_target = true,
+                )
+            end
+        catch e
+            rethrow()
+        end
+
         # Ensure the registries are up to date, with our commits replayed on top
         update_and_checkout_registries!(registries, depot_path; kwargs...)
 
