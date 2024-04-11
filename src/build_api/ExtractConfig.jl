@@ -111,6 +111,6 @@ function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
         artifact_hash,
         Dict{String,String}(),
     )
-    meta.extractions[config] = result
+    config.build.meta.extractions[config] = result
     return result
 end

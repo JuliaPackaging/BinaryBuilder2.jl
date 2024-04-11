@@ -17,6 +17,9 @@ the user calls `build!()`, each `BuildConfig` will get a `BuildResult` packed in
 overall `BuildMeta` object.
 """
 struct BuildConfig
+    # The BuildMeta object that controls all manner of things about the build.
+    meta::AbstractBuildMeta
+
     # The name of the package being built.  This is exported as an environment variable during build
     # so that internal tooling such as "install_license" can install into intelligent paths.
     src_name::String
@@ -49,7 +52,8 @@ struct BuildConfig
     # We're going to store all sorts of timing information about our build in here
     to::TimerOutput
 
-    function BuildConfig(src_name::AbstractString,
+    function BuildConfig(meta::AbstractBuildMeta,
+                         src_name::AbstractString,
                          src_version::Union{VersionNumber, String},
                          sources::Vector{<:AbstractSource},
                          target_dependencies::Vector{<:AbstractSource},
@@ -153,6 +157,7 @@ struct BuildConfig
         ))
 
         return new(
+            meta,
             string(src_name),
             string(src_version),
             [d.package for d in target_dependencies if isa(d, JLLSource)],
@@ -263,16 +268,16 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     return run_status, run_exception
 end
 
-function build!(meta::AbstractBuildMeta, config::BuildConfig; deploy_root::String = mktempdir(builds_dir()), stdout::IO = stdout, stderr::IO = stderr)
+function build!(config::BuildConfig; deploy_root::String = mktempdir(builds_dir()), stdout::IO = stdout, stderr::IO = stderr)
     @warn("TODO: Check config tree hashes, don't build again if not necessary", maxlog=1)
 
-    mounts = deploy(config; verbose=meta.verbose, deploy_root)
+    mounts = deploy(config; verbose=config.meta.verbose, deploy_root)
     sandbox_config = SandboxConfig(
         config, mounts;
         # TODO: Spit these out into a logfile or something
         stdout,
         stderr,
-        verbose=meta.verbose,
+        verbose=config.meta.verbose,
     )
     local run_status, run_exception
     exe = Sandbox.preferred_executor()()
@@ -288,6 +293,6 @@ function build!(meta::AbstractBuildMeta, config::BuildConfig; deploy_root::Strin
         mounts,
         Dict{String,String}(),
     )
-    meta.builds[config] = result
+    config.meta.builds[config] = result
     return result
 end

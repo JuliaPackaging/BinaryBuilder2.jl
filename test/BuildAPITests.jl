@@ -12,6 +12,7 @@ native_arch = arch(HostPlatform())
     # This build explicitly fails because it runs `false`
     meta = BuildMeta(; verbose=false)
     bad_build_config = BuildConfig(
+        meta,
         "foo",
         v"1.0.0",
         AbstractSource[],
@@ -25,7 +26,7 @@ native_arch = arch(HostPlatform())
         Platform(native_arch, "linux"),
     );
     failing_stderr = IOBuffer()
-    failing_build_result = build!(meta, bad_build_config; stderr=failing_stderr)
+    failing_build_result = build!(bad_build_config; stderr=failing_stderr)
     @test failing_build_result.status == :failed
     @test failing_build_result.env["env_val"] == "pre"
     @test occursin("Previous command 'false' exited with code 1", String(take!(failing_stderr)))
@@ -41,6 +42,7 @@ end
         "CToolchain"
     ));
     libstring_build_config = BuildConfig(
+        meta,
         "libstring",
         v"1.0.0",
         [cxx_string_abi_source],
@@ -54,7 +56,7 @@ end
         """,
         Platform(native_arch, "linux"),
     );
-    libstring_build_result = build!(meta, libstring_build_config);
+    libstring_build_result = build!(libstring_build_config);
     @test libstring_build_result.status == :success
 
     # Extract it:
@@ -67,11 +69,12 @@ end
             LibraryProduct("libstring", :libstring),
         ],
     );
-    libstring_extract_result = extract!(meta, libstring_extract_config)
+    libstring_extract_result = extract!(libstring_extract_config)
     @test libstring_extract_result.status == :success
 
     # Feed it in as a dependency to a build of `cxx_string_abi`
     cxx_string_abi_build_config = BuildConfig(
+        meta,
         "cxx_string_abi",
         v"1.0.0",
         [cxx_string_abi_source],
@@ -92,7 +95,7 @@ end
         """,
         Platform(native_arch, "linux"),
     );
-    cxx_string_abi_build_result = build!(meta, cxx_string_abi_build_config);
+    cxx_string_abi_build_result = build!(cxx_string_abi_build_config);
     @test cxx_string_abi_build_result.status == :success
 
     libstring_extract_config = ExtractConfig(
@@ -104,7 +107,7 @@ end
             LibraryProduct("libstring", :libstring),
         ],
     );
-    libstring_extract_result = extract!(meta, libstring_extract_config)
+    libstring_extract_result = extract!(libstring_extract_config)
     @test libstring_extract_result.status == :success
 end
 
@@ -112,6 +115,7 @@ end
     # Test building `zlib`
     meta = BuildMeta(; verbose=false)
     build_config = BuildConfig(
+        meta,
         "zlib",
         v"1.2.13",
         [
@@ -129,7 +133,7 @@ end
         """,
         Platform(native_arch, "linux"),
     )
-    build_result = build!(meta, build_config);
+    build_result = build!(build_config);
     @test build_result.status == :success
 
     extract_config = ExtractConfig(
@@ -143,7 +147,7 @@ end
             FileProduct("include/zlib.h", :zlib_h),
         ],
     )
-    extract_result = extract!(meta, extract_config)
+    extract_result = extract!(extract_config)
     @test extract_result.status == :success
 
     # Test that it built correctly
