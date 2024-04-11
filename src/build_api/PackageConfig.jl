@@ -22,9 +22,9 @@ struct PackageConfig
         end
         =#
 
-        # We allow overriding the name, but default to `$(src_name)_jll`
+        # We allow overriding the name, but default to `src_name`
         if name === nothing
-            name = string(extractions[1].config.build.config.src_name, "_jll")
+            name = extractions[1].config.build.config.src_name
         end
         if !Base.isidentifier(name)
             throw(ArgumentError("Package name '$(name)' is not a valid identifier!"))
@@ -46,7 +46,8 @@ function JLLGenerator.JLLArtifactInfo(result::ExtractResult)
     if result.status != :success
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
-    build_config = result.config.build.config
+    build_config = build_result.config
+
     return JLLArtifactInfo(
         src_version = build_config.src_version,
         deps = [JLLPackageDependency(d.name) for d in build_config.pkg_deps],
@@ -55,13 +56,13 @@ function JLLGenerator.JLLArtifactInfo(result::ExtractResult)
         platform = build_config.platform.target,
         name = build_config.src_name,
         treehash = SHA1Hash(result.artifact),
-        products = [AbstractJLLProduct(p, artifact_path(result); env=build_config.env) for p in result.config.products],
+        products = [AbstractJLLProduct(p, artifact_path(result); env=build_config.env, jll_map=jll_map(result)) for p in result.config.products],
         # No download sources yet
         download_sources = [],
     )
 end
 
-function package!(meta::AbstractBuildMeta, config::PackageConfig)
+function package!(config::PackageConfig)
     jll = JLLInfo(;
         name = config.name,
         version = config.version,
@@ -69,5 +70,6 @@ function package!(meta::AbstractBuildMeta, config::PackageConfig)
         julia_compat = "1.7",
     )
 
-    generate_jll()
+    # Register this JLL out into our universe
+    register!(config.extract.build.meta.universe, jll)
 end

@@ -71,7 +71,16 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
+function collect_library_products(config::ExtractConfig)
+    library_products = Dict(
+        config.build.name => [p for p in config.products if isa(p, LibraryProduct)]
+    )
+
+    # TODO: Collect library products for all dependencies as well
+    return library_products
+end
+
+function extract!(config::ExtractConfig)
     local artifact_hash, run_status, run_exception
     @timeit config.to "extract" begin
         artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
@@ -84,7 +93,7 @@ function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
     unlocatable_products = AbstractProduct[]
     for product in config.products
         if locate(product, artifact_path(artifact_hash);
-                  env=config.build.config.env) === nothing
+                  env=config.build.env) === nothing
             push!(unlocatable_products, product)
         end
     end
@@ -95,13 +104,10 @@ function extract!(meta::AbstractBuildMeta, config::ExtractConfig)
     end
 
     # Compute dependency structure for all library products
-    library_products = [p for p in config.products if isa(p, LibraryProduct)]
+    libmap = library_products_map(config)
+    library_products = collect(Iterators.flatten(values(libmap)))
     if !isempty(library_products)
-        # Reconstruct library products for all of our dependencies
-        #for dep_jll in 
-        #end
-
-        #resolve_dependency_links!(library_products)
+        resolve_dependency_links!(library_products, artifact_path(artifact_hash), config.build.env)
     end
 
     result = ExtractResult(
