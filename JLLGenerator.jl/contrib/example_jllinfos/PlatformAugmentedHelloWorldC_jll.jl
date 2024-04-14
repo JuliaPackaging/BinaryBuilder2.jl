@@ -14,7 +14,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "d4036700fbbf29b31f5d1d5d948547edd3b70e11",
             download_sources = [
                 JLLArtifactSource(
@@ -40,7 +40,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "c82465bd6d0aa1369ff2fd961b73884d1f5de49a",
             download_sources = [
                 JLLArtifactSource(
@@ -66,7 +66,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "cb4b8c88778c6cd93b6df38ec5b95a2678434f5d",
             download_sources = [
                 JLLArtifactSource(
@@ -92,7 +92,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "20a32b71145b67e708f63fb5880a7243727aec0f",
             download_sources = [
                 JLLArtifactSource(
@@ -118,7 +118,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "c1179604ea37fa66ee6d5d592c7bbfd1f20292c3",
             download_sources = [
                 JLLArtifactSource(
@@ -144,7 +144,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "0a8e7b523ef6be31311aefe9983a488616e58201",
             download_sources = [
                 JLLArtifactSource(
@@ -170,7 +170,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "ca94b4d87f1a276066a2994733142e35046c41dd",
             download_sources = [
                 JLLArtifactSource(
@@ -196,7 +196,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "cb1aefe048a6c0395b6b664695c20cb50dbec8e3",
             download_sources = [
                 JLLArtifactSource(
@@ -222,7 +222,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "b50220be02e9c839749f91a70694ae68c2712c8e",
             download_sources = [
                 JLLArtifactSource(
@@ -248,7 +248,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "0f7597f042d16d438f9684e20ca57ea22e4e15c1",
             download_sources = [
                 JLLArtifactSource(
@@ -274,7 +274,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "5e9c87fc4e3372c27a77061a49d97fa5002df0e4",
             download_sources = [
                 JLLArtifactSource(
@@ -300,7 +300,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "09ed293f6f5ebfcaf90eef2b4d45c402d834d33e",
             download_sources = [
                 JLLArtifactSource(
@@ -326,7 +326,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "8c8251b0c21615bce0701995eded26ac7697b5cc",
             download_sources = [
                 JLLArtifactSource(
@@ -352,7 +352,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "cfaaf0517421585561e3b30dd6f53f6c14b2835f",
             download_sources = [
                 JLLArtifactSource(
@@ -378,7 +378,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "9adaeee1375ffd66613afe71f111dad3a88fb302",
             download_sources = [
                 JLLArtifactSource(
@@ -404,7 +404,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "PlatformAugmentedHelloWorldC",
+            name = "default",
             treehash = "59955b315ce95abd82f71d29389be3b734b14821",
             download_sources = [
                 JLLArtifactSource(

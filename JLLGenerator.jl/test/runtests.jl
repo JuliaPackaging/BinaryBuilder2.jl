@@ -43,7 +43,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "linux"),
-                name = "XZ",
+                name = "default",
                 treehash = "214deacf44273474118c5fe83871fdfa8039b4ad",
                 download_sources = [
                     JLLArtifactSource(
@@ -62,7 +62,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "windows"),
-                name = "XZ",
+                name = "default",
                 treehash = "4b8bb762c5118ee8ad81e67b981fe7d6a17fae77",
                 download_sources = [
                     JLLArtifactSource(
@@ -81,7 +81,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("aarch64", "macos"),
-                name = "XZ",
+                name = "default",
                 treehash = "abb153d4516c6a0ee718ea8f8cde9466de07553c",
                 download_sources = [
                     JLLArtifactSource(
@@ -151,7 +151,7 @@ end
 @testset "Duplicate dependencies" begin
     function make_dual_deps_constraint(compat1, compat2)
         return JLLInfo(;
-            name = "Zlib",
+            name = "default",
             version = v"1.2.13+1",
             artifacts = [
                 JLLArtifactInfo(;
@@ -164,7 +164,7 @@ end
                         ),
                     ],
                     platform = Platform("aarch64", "linux"; libc = "glibc"),
-                    name = "Zlib",
+                    name = "default",
                     treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                     download_sources = [],
                     products = [],
@@ -179,7 +179,7 @@ end
                         ),
                     ],
                     platform = Platform("aarch64", "linux"; libc = "musl"),
-                    name = "Zlib",
+                    name = "default",
                     treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
                     download_sources = [],
                     products = [],
@@ -221,7 +221,7 @@ end
             JLLArtifactInfo(;
                 src_version = v"1.2.13+1",
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "Zlib",
+                name = "default",
                 treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                 download_sources = [],
                 products = [
@@ -240,13 +240,13 @@ end
 @testset "Intra-JLL library dependency" begin
     function make_intra_jll_dependency(incoherent)
         return JLLInfo(;
-            name = "CompilerSupportLibraries",
+            name = "default",
             version = v"1.0.5+1",
             artifacts = [
                 JLLArtifactInfo(;
                     src_version = v"1.0.5+1",
                     platform = Platform("aarch64", "macos"; libgfortran_version = "5.0.0"),
-                    name = "CompilerSupportLibraries",
+                    name = "default",
                     treehash = "f9547d56705c03a6e887a01aeb0f0b6b030b7060",
                     download_sources = [
                         JLLArtifactSource(
@@ -302,7 +302,7 @@ end
 @testset "on-load callbacks" begin
     function make_on_load_callback(incoherent)
         return jll = JLLInfo(;
-            name = "libblastrampoline",
+            name = "default",
             version = v"5.8.0+1",
             artifacts = [
                 JLLArtifactInfo(;
@@ -310,7 +310,7 @@ end
                     deps = [],
                     sources = [],
                     platform = Platform("aarch64", "macos"; ),
-                    name = "libblastrampoline",
+                    name = "default",
                     treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
                     download_sources = [
                         JLLArtifactSource(
@@ -394,7 +394,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "Zlib",
+                name = "default",
                 treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                 download_sources = [],
                 products = zlib_products,
@@ -403,7 +403,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "musl"),
-                name = "Zlib",
+                name = "default",
                 treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
                 download_sources = [],
                 products = zlib_products,
@@ -419,7 +419,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "Zlib",
+                name = "default",
                 treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                 download_sources = [],
                 products = zlib_products,

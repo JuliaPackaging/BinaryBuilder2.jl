@@ -18,7 +18,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "97571655c91d9aee2cf4334aaeb50fafdfb37282",
             download_sources = [
                 JLLArtifactSource(
@@ -58,7 +58,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "b22b511adaf51f0847dff19aa8ecdf8742ed0059",
             download_sources = [
                 JLLArtifactSource(
@@ -98,7 +98,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "8cbd94a7d5be584b67d1099d786b28e3b1ff5e90",
             download_sources = [
                 JLLArtifactSource(
@@ -138,7 +138,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "d696ec20362910088f0761b33d9924c7030acacb",
             download_sources = [
                 JLLArtifactSource(
@@ -178,7 +178,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "24acbfc4fccc97602f8a78bd8fbe830980274def",
             download_sources = [
                 JLLArtifactSource(
@@ -218,7 +218,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "f0d931f02abd10500c5b45be29d6dec79b45e017",
             download_sources = [
                 JLLArtifactSource(
@@ -258,7 +258,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx03", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "8710c8e9abd1f4b76a111b75e4e2adb0f40d3573",
             download_sources = [
                 JLLArtifactSource(
@@ -298,7 +298,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx03", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "917ee6877968b3d62c74a7930e250e5f9299a890",
             download_sources = [
                 JLLArtifactSource(
@@ -338,7 +338,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx11", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "6c250e2fab604c86f1dafff1105b6011e6ff9e66",
             download_sources = [
                 JLLArtifactSource(
@@ -378,7 +378,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; cxxstring_abi = "cxx11", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "725bb348ffa98122ed64f764fddc3539e8570867",
             download_sources = [
                 JLLArtifactSource(
@@ -418,7 +418,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "dbef3c5689d2f0928c8696f591138d0e1d48c7cf",
             download_sources = [
                 JLLArtifactSource(
@@ -458,7 +458,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "98a845171373c33f088aa2d79009170f976368ad",
             download_sources = [
                 JLLArtifactSource(
@@ -498,7 +498,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "2525e144d30b6ad0b548c29cc004b0720b19cb59",
             download_sources = [
                 JLLArtifactSource(
@@ -538,7 +538,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "4340250008819e658ee621ab66a8cfdf005cc5ae",
             download_sources = [
                 JLLArtifactSource(
@@ -578,7 +578,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "1c77a547ab3e5625d84c628cb3bb55ec3f145f6c",
             download_sources = [
                 JLLArtifactSource(
@@ -618,7 +618,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "b5b56e149c8a94859bf3cfd981d056497f5be8cd",
             download_sources = [
                 JLLArtifactSource(
@@ -658,7 +658,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "d5234fd49623eb661c972129853e91196783f971",
             download_sources = [
                 JLLArtifactSource(
@@ -698,7 +698,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "ab50439d8683b42dfc6c117525a5b1e2191f4882",
             download_sources = [
                 JLLArtifactSource(
@@ -738,7 +738,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "2f901e4a0f0fc7c8bc4f6768635439af5143ade0",
             download_sources = [
                 JLLArtifactSource(
@@ -778,7 +778,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "efa315ee53fe9aa63ca41ad517771602e156128f",
             download_sources = [
                 JLLArtifactSource(
@@ -818,7 +818,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "f6c956631463e2f86230019e16159c7b8ccdf83e",
             download_sources = [
                 JLLArtifactSource(
@@ -858,7 +858,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "f6c8af4ec810b6e49074207e4b899590e7fda9eb",
             download_sources = [
                 JLLArtifactSource(
@@ -898,7 +898,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "5be9fcfaf13dcd572328ba8aaa830325b8116197",
             download_sources = [
                 JLLArtifactSource(
@@ -938,7 +938,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx03", call_abi = "eabihf", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "50c3c84f188b2fc132cb0c6af3c0360c7ff68044",
             download_sources = [
                 JLLArtifactSource(
@@ -978,7 +978,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "0815696ec063b57b240e43b3035011e3e31638a4",
             download_sources = [
                 JLLArtifactSource(
@@ -1018,7 +1018,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; cxxstring_abi = "cxx11", call_abi = "eabihf", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "cb41396133647f298673ab7dcdb7aa9ed7618be8",
             download_sources = [
                 JLLArtifactSource(
@@ -1058,7 +1058,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "72cdc10dc360d1fe0836ed251bdb98300e0cdce0",
             download_sources = [
                 JLLArtifactSource(
@@ -1098,7 +1098,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "6d7b9554164c9fc562d23284f9d4b606178c3292",
             download_sources = [
                 JLLArtifactSource(
@@ -1138,7 +1138,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "bf3241ce878b68c573280020191fb1bfe3f27923",
             download_sources = [
                 JLLArtifactSource(
@@ -1178,7 +1178,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "f7f51809bd78f9fff4d6be967b2ccee8f5899481",
             download_sources = [
                 JLLArtifactSource(
@@ -1218,7 +1218,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx03", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "55364f774681a5378c2f8e788b6b0b270c2119de",
             download_sources = [
                 JLLArtifactSource(
@@ -1258,7 +1258,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx03", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "a91cbbb51007e4376b4fa91dbc83c99ee7e78561",
             download_sources = [
                 JLLArtifactSource(
@@ -1298,7 +1298,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx11", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "1afcf5eff81efd9c5650c37de74de283d96a4939",
             download_sources = [
                 JLLArtifactSource(
@@ -1338,7 +1338,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx11", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "d976d627a3060c42bd2523958dd3eb1904eeee69",
             download_sources = [
                 JLLArtifactSource(
@@ -1378,7 +1378,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "fd6077017814993a78260e11df1c0c435e2afb61",
             download_sources = [
                 JLLArtifactSource(
@@ -1418,7 +1418,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "48ae1f7bb47445b3a7a2afdaa46340c4ef67eacd",
             download_sources = [
                 JLLArtifactSource(
@@ -1458,7 +1458,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "2e4603c76730df004cb7570428e69b24ba1ae61a",
             download_sources = [
                 JLLArtifactSource(
@@ -1498,7 +1498,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "5fdae5bb95e83dc7e14f53ef07a45e877aeb8ebf",
             download_sources = [
                 JLLArtifactSource(
@@ -1538,7 +1538,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "822587194a18a1664a4fea63e7381311dde6da9e",
             download_sources = [
                 JLLArtifactSource(
@@ -1578,7 +1578,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "0a4bf23beea1e20748363a63a85539021be52ed4",
             download_sources = [
                 JLLArtifactSource(
@@ -1618,7 +1618,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "7aefd885c9a10d4f3b1e61b4a169513af863db76",
             download_sources = [
                 JLLArtifactSource(
@@ -1658,7 +1658,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx03", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "e628a40953ef4aaae1eaa28897b8c03d8c66d97c",
             download_sources = [
                 JLLArtifactSource(
@@ -1698,7 +1698,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "ed7eb62cb0410cda7ddb562713cbebbba97617b2",
             download_sources = [
                 JLLArtifactSource(
@@ -1738,7 +1738,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; llvm_version = "15", sanitize = "memory", libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "libLLVM",
+            name = "default",
             treehash = "ed7eb62cb0410cda7ddb562713cbebbba97617b2",
             download_sources = [
                 JLLArtifactSource(
@@ -1778,7 +1778,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx11", libc = "glibc", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "9f8f6174cc5830ef988184b19bc0470d761e943c",
             download_sources = [
                 JLLArtifactSource(
@@ -1818,7 +1818,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; llvm_version = "15.asserts", sanitize = "memory", libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "libLLVM",
+            name = "default",
             treehash = "9f8f6174cc5830ef988184b19bc0470d761e943c",
             download_sources = [
                 JLLArtifactSource(
@@ -1858,7 +1858,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx03", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "f5a9ce6123e4e182adb61a537d3cb38f2efe23b3",
             download_sources = [
                 JLLArtifactSource(
@@ -1898,7 +1898,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx03", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "895dd658dc0546d2d8074f3e31128d7f092b9295",
             download_sources = [
                 JLLArtifactSource(
@@ -1938,7 +1938,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx11", libc = "musl", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "9c5bd4f23e89c60e80e3aeef8907b4a41853d7c9",
             download_sources = [
                 JLLArtifactSource(
@@ -1978,7 +1978,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; cxxstring_abi = "cxx11", libc = "musl", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "36b219dda552e94acd9c6f1db103c6b3ff8918c5",
             download_sources = [
                 JLLArtifactSource(
@@ -2018,7 +2018,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "e8e4629c84e60d5333cbb10abab8e773fca7a1de",
             download_sources = [
                 JLLArtifactSource(
@@ -2058,7 +2058,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "9e4ef10d337b446cec4d7a946d6bb2937127467d",
             download_sources = [
                 JLLArtifactSource(
@@ -2098,7 +2098,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx03", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "d55eec021ed05e30257b6a635556269faa89760d",
             download_sources = [
                 JLLArtifactSource(
@@ -2138,7 +2138,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx03", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "71a981a9f802ac86f93f5b0bdb0b55531ee0f4a6",
             download_sources = [
                 JLLArtifactSource(
@@ -2178,7 +2178,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx11", llvm_version = "15"),
-            name = "libLLVM",
+            name = "default",
             treehash = "9a709947c8f9e7237eb7ced1720678b1523be326",
             download_sources = [
                 JLLArtifactSource(
@@ -2218,7 +2218,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx11", llvm_version = "15.asserts"),
-            name = "libLLVM",
+            name = "default",
             treehash = "e2aaf4b533b04fb51b655fbb8e804ee3673eece0",
             download_sources = [
                 JLLArtifactSource(

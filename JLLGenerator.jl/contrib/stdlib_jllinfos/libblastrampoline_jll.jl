@@ -17,7 +17,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
             download_sources = [
                 JLLArtifactSource(
@@ -45,7 +45,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "5bf103922e5c4aa83ade2114f83cf2963296cf52",
             download_sources = [
                 JLLArtifactSource(
@@ -73,7 +73,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "b7996a90e1235e7c1d0080e8388bf7f6066af655",
             download_sources = [
                 JLLArtifactSource(
@@ -101,7 +101,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "d7e5b756a45b7c7327483138a58a7cfd0e463286",
             download_sources = [
                 JLLArtifactSource(
@@ -129,7 +129,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "d8813c9fde869d0bda8216cbb96a171271d7e9fa",
             download_sources = [
                 JLLArtifactSource(
@@ -157,7 +157,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "7cc680754ba90204143ca915d94c4afb3fa9950b",
             download_sources = [
                 JLLArtifactSource(
@@ -185,7 +185,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "7894264c826d86c648ba92040333d5e1cd7578a7",
             download_sources = [
                 JLLArtifactSource(
@@ -213,7 +213,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "8ba6693c928cd0f3965fc7e6310587042b675791",
             download_sources = [
                 JLLArtifactSource(
@@ -241,7 +241,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "2e96643d215400d8a2c15eae043f34260d07dde3",
             download_sources = [
                 JLLArtifactSource(
@@ -269,7 +269,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "b3b9b375ee68dd458c24f6272a727e7249803c47",
             download_sources = [
                 JLLArtifactSource(
@@ -297,7 +297,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "2f5ef045aa770869e75323f816c2a7181a11eeec",
             download_sources = [
                 JLLArtifactSource(
@@ -325,7 +325,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "7edd68aaa4ab089d3f2900a4adfd3cfd26a98cec",
             download_sources = [
                 JLLArtifactSource(
@@ -353,7 +353,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "c97215f2ba88d82cac379ca18762eb47e16a268e",
             download_sources = [
                 JLLArtifactSource(
@@ -381,7 +381,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "0da4851eeafb2356e1d9f514254106d9af1b7d98",
             download_sources = [
                 JLLArtifactSource(
@@ -409,7 +409,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "736acd96815529338337c23d236732a873b98f4e",
             download_sources = [
                 JLLArtifactSource(
@@ -437,7 +437,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "23c2a2dbcc29fa71ec4a59651b5c914cfeabd100",
             download_sources = [
                 JLLArtifactSource(
@@ -465,7 +465,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "libblastrampoline",
+            name = "default",
             treehash = "2349ba952d6207b74ff462d9cbe1e4c1c646e211",
             download_sources = [
                 JLLArtifactSource(

@@ -18,7 +18,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "LibGit2",
+            name = "default",
             treehash = "1fa3315b910ef2c762b6907f7cc57ba42184c8a8",
             download_sources = [
                 JLLArtifactSource(
@@ -57,7 +57,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "2b01a6fe8bb8261b29e08340dc1b56c39b7a3406",
             download_sources = [
                 JLLArtifactSource(
@@ -96,7 +96,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "LibGit2",
+            name = "default",
             treehash = "179b40208b0dd1fb1c0ef7a72d63c6a513be31e8",
             download_sources = [
                 JLLArtifactSource(
@@ -135,7 +135,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "fd7c8d9f766fd5cda1bd022ad0da16bc165cc498",
             download_sources = [
                 JLLArtifactSource(
@@ -174,7 +174,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "LibGit2",
+            name = "default",
             treehash = "cf8df2e522122a03cf6194985814f16a66138408",
             download_sources = [
                 JLLArtifactSource(
@@ -213,7 +213,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "7d021f510967bcdcd0b21716a1ab59726f553947",
             download_sources = [
                 JLLArtifactSource(
@@ -252,7 +252,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "LibGit2",
+            name = "default",
             treehash = "655e30be87bca34bae192c27a78216c3f4a4e88a",
             download_sources = [
                 JLLArtifactSource(
@@ -291,7 +291,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "7d33ed65bedb1422eeb41740d0ed6ae8160320c1",
             download_sources = [
                 JLLArtifactSource(
@@ -330,7 +330,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "LibGit2",
+            name = "default",
             treehash = "857a71c488bc4f6824c1fe70809c22fcb97944df",
             download_sources = [
                 JLLArtifactSource(
@@ -369,7 +369,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "LibGit2",
+            name = "default",
             treehash = "423365c60ab1553ba5aa6e8470b87a7d1a2e5011",
             download_sources = [
                 JLLArtifactSource(
@@ -408,7 +408,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "9f941e9721a1470d454f32a6d2515edbce7546f3",
             download_sources = [
                 JLLArtifactSource(
@@ -447,7 +447,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "LibGit2",
+            name = "default",
             treehash = "a1a89a3c680bef6990c7468ba91279dc0834d911",
             download_sources = [
                 JLLArtifactSource(
@@ -486,7 +486,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "LibGit2",
+            name = "default",
             treehash = "af66c88943df4020e0112f64e424bb5e5c418695",
             download_sources = [
                 JLLArtifactSource(
@@ -525,7 +525,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "LibGit2",
+            name = "default",
             treehash = "837a46e833548cc1e78a76e1a1a7d4d0ca0c15b1",
             download_sources = [
                 JLLArtifactSource(
@@ -564,7 +564,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "LibGit2",
+            name = "default",
             treehash = "815a38e2180ceb65c93ea42270944665220d7556",
             download_sources = [
                 JLLArtifactSource(
@@ -603,7 +603,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "LibGit2",
+            name = "default",
             treehash = "7113cef90f4df95849f8269906ba98dca30ffdde",
             download_sources = [
                 JLLArtifactSource(
@@ -642,7 +642,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "LibGit2",
+            name = "default",
             treehash = "8d263a68937e9543e7d7a321f2672e4d9f7e2c2c",
             download_sources = [
                 JLLArtifactSource(

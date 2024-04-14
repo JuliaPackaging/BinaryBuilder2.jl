@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = AnyPlatform(),
-            name = "MozillaCACerts",
+            name = "default",
             treehash = "b9426fe58f49fb59d2ec2b359b8638e9d2f3c26f",
             download_sources = [
                 JLLArtifactSource(

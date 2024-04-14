@@ -13,7 +13,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "MPFR",
+            name = "default",
             treehash = "a9e5305df78a7d0575d091e2bb2e013a7b70f3ad",
             download_sources = [
                 JLLArtifactSource(
@@ -42,7 +42,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "47f064ecc33f236db4c592254286e789f14cf3e5",
             download_sources = [
                 JLLArtifactSource(
@@ -71,7 +71,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "MPFR",
+            name = "default",
             treehash = "fc556967ee7a2ef8d4794d848647acde5d41b234",
             download_sources = [
                 JLLArtifactSource(
@@ -100,7 +100,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "67c2f93cab74f7680d7f1eaf8629c2001cc0ab36",
             download_sources = [
                 JLLArtifactSource(
@@ -129,7 +129,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "MPFR",
+            name = "default",
             treehash = "ad0a98ed528b465a5c5013f18e27caba38f2eb0a",
             download_sources = [
                 JLLArtifactSource(
@@ -158,7 +158,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "f8e115aad74210e4dff991918680367c9554fe71",
             download_sources = [
                 JLLArtifactSource(
@@ -187,7 +187,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "MPFR",
+            name = "default",
             treehash = "33a3d7d60b635feaf0070579d39695f8c37768f5",
             download_sources = [
                 JLLArtifactSource(
@@ -216,7 +216,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "9567b1aa1c6b36bd744cd4909c44a1b6e340a4d3",
             download_sources = [
                 JLLArtifactSource(
@@ -245,7 +245,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "MPFR",
+            name = "default",
             treehash = "87bbb044f7256bfda73754c06ac3295227943e59",
             download_sources = [
                 JLLArtifactSource(
@@ -274,7 +274,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "MPFR",
+            name = "default",
             treehash = "625d68f2f50a4e97413608e737252910dce45f72",
             download_sources = [
                 JLLArtifactSource(
@@ -303,7 +303,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "23b1bce0565ddaa718689e917e875c3260a72323",
             download_sources = [
                 JLLArtifactSource(
@@ -332,7 +332,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "MPFR",
+            name = "default",
             treehash = "8e85bb2fd10661c7c8ee2e5e1529c276d4f6674b",
             download_sources = [
                 JLLArtifactSource(
@@ -361,7 +361,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "MPFR",
+            name = "default",
             treehash = "4cf8caed8385dd82ced6c69cd05a6458046d3ec4",
             download_sources = [
                 JLLArtifactSource(
@@ -390,7 +390,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "MPFR",
+            name = "default",
             treehash = "532f9292502576ed48e70324a923ab88c3891336",
             download_sources = [
                 JLLArtifactSource(
@@ -419,7 +419,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "MPFR",
+            name = "default",
             treehash = "2825bf5d82553d935ab224441f0d8129a7508aa3",
             download_sources = [
                 JLLArtifactSource(
@@ -448,7 +448,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "MPFR",
+            name = "default",
             treehash = "3d16350d354772b951f71f75a0c5d941d0d0ec80",
             download_sources = [
                 JLLArtifactSource(
@@ -477,7 +477,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "MPFR",
+            name = "default",
             treehash = "fed2debf51bf67947940940f940f4a55cfe94744",
             download_sources = [
                 JLLArtifactSource(

@@ -13,7 +13,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "LibSSH2",
+            name = "default",
             treehash = "e2f243fe7eaa362996b95dc6a64cf8df1381c97a",
             download_sources = [
                 JLLArtifactSource(
@@ -46,7 +46,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "e8266798f3428b59e21cdb385545a2b15373f517",
             download_sources = [
                 JLLArtifactSource(
@@ -79,7 +79,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "67d35f9dea978ab01c235c03c82961bef58cd8c3",
             download_sources = [
                 JLLArtifactSource(
@@ -112,7 +112,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "fe5592c8057d05b89fb03e71a37febe1604442e9",
             download_sources = [
                 JLLArtifactSource(
@@ -145,7 +145,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "6a9a82a197f45c0466eb65c0272fea36fd6dd3ea",
             download_sources = [
                 JLLArtifactSource(
@@ -178,7 +178,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "6445d9cc1c3fb413dc233c075310fe670791e17c",
             download_sources = [
                 JLLArtifactSource(
@@ -211,7 +211,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "081a745d5cebabcb2adfa6c4d2f96e48f6512565",
             download_sources = [
                 JLLArtifactSource(
@@ -244,7 +244,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "1538366dc1ef9f1df1f1c553f18577d23f99d3ea",
             download_sources = [
                 JLLArtifactSource(
@@ -277,7 +277,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "75704c9368f8122d55ecf719591acd0201c4d186",
             download_sources = [
                 JLLArtifactSource(
@@ -310,7 +310,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "LibSSH2",
+            name = "default",
             treehash = "e9e14b2ddae42d2feb2cfff65162a740ecba4f14",
             download_sources = [
                 JLLArtifactSource(
@@ -343,7 +343,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "385951074415fefa85f6749d65821b361d355446",
             download_sources = [
                 JLLArtifactSource(
@@ -376,7 +376,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "LibSSH2",
+            name = "default",
             treehash = "24e17c1d1c5dbff028cfb594f96a8b6cfb1c798d",
             download_sources = [
                 JLLArtifactSource(
@@ -409,7 +409,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "b2ace9a02cfac998377c2e43287cd810076cb6f6",
             download_sources = [
                 JLLArtifactSource(
@@ -442,7 +442,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "abad310b25586783ff910a4bb4b7f85adf3e515f",
             download_sources = [
                 JLLArtifactSource(
@@ -475,7 +475,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "LibSSH2",
+            name = "default",
             treehash = "68010cc3dea1d1ca7a4a21090321fdd91a81c92c",
             download_sources = [
                 JLLArtifactSource(
@@ -508,7 +508,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "LibSSH2",
+            name = "default",
             treehash = "c6d541cbf8369fc143c3dcffe1f481a06c6cc37d",
             download_sources = [
                 JLLArtifactSource(
@@ -541,7 +541,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "LibSSH2",
+            name = "default",
             treehash = "c0fd843f776ce605d25f79c22aecad9df23b24df",
             download_sources = [
                 JLLArtifactSource(

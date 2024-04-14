@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "p7zip",
+            name = "default",
             treehash = "1dcc3281ed4311962a0989539cf87b3adfad9d7d",
             download_sources = [
                 JLLArtifactSource(
@@ -30,7 +30,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "a62f15ea9fecf083e359aeafd20d80afe07195bd",
             download_sources = [
                 JLLArtifactSource(
@@ -52,7 +52,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "p7zip",
+            name = "default",
             treehash = "16c98fad8c79cabdbd4390ea18f0c480f68df726",
             download_sources = [
                 JLLArtifactSource(
@@ -74,7 +74,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "b1b4485b3f633e4de39496c416279c972039ee40",
             download_sources = [
                 JLLArtifactSource(
@@ -96,7 +96,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "p7zip",
+            name = "default",
             treehash = "f249e27802158360f0f9851bbc40753d03e3621c",
             download_sources = [
                 JLLArtifactSource(
@@ -118,7 +118,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "289e527b85bdd00820418ad582baf213bc417d3e",
             download_sources = [
                 JLLArtifactSource(
@@ -140,7 +140,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "p7zip",
+            name = "default",
             treehash = "4d439f9dbf6cedfc50f2a201f1778bdcad8a3526",
             download_sources = [
                 JLLArtifactSource(
@@ -162,7 +162,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "439479eafe9957ca1a79be625bda27807ac8ab10",
             download_sources = [
                 JLLArtifactSource(
@@ -184,7 +184,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "p7zip",
+            name = "default",
             treehash = "f92692de550d3b9c0aa3698b328a2ead636a2b49",
             download_sources = [
                 JLLArtifactSource(
@@ -206,7 +206,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "p7zip",
+            name = "default",
             treehash = "7af5a8176f39cd2ba0fb8f8c0d92f54ba8ef6d19",
             download_sources = [
                 JLLArtifactSource(
@@ -228,7 +228,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "25e27d9ed9603692a03644a062166bc24e7c8328",
             download_sources = [
                 JLLArtifactSource(
@@ -250,7 +250,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "p7zip",
+            name = "default",
             treehash = "1fbfb151d58d4f845f29d1d3d844419c8a4a953e",
             download_sources = [
                 JLLArtifactSource(
@@ -272,7 +272,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "p7zip",
+            name = "default",
             treehash = "de27fd0a6e94c6ad71626d05187c0e2ce07fe891",
             download_sources = [
                 JLLArtifactSource(
@@ -294,7 +294,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "p7zip",
+            name = "default",
             treehash = "9836314e344e72ca3f389a3fc5713a2484f41205",
             download_sources = [
                 JLLArtifactSource(
@@ -316,7 +316,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "p7zip",
+            name = "default",
             treehash = "37ef55f1aceab33bfd3b8ef1202620e532e4f397",
             download_sources = [
                 JLLArtifactSource(
@@ -338,7 +338,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "p7zip",
+            name = "default",
             treehash = "1748418979265a0240356001c408c03e6bde5eaa",
             download_sources = [
                 JLLArtifactSource(
@@ -360,7 +360,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "p7zip",
+            name = "default",
             treehash = "b106d776cbf05287153a8ada4271194afc5d9fdf",
             download_sources = [
                 JLLArtifactSource(

@@ -120,10 +120,10 @@ macro generate_jll_from_toml()
     # precompilation cache to invalidate itself, but we don't have it yet, so
     # just choose a triplet and store it for validation in `__init__()` later.
     # Note that while most JLLs only have a single artifact built for multiple
-    # platforms, some JLLs can provide alternate artifact names (e.g. `XZ`
-    # vs. `XZ-debug`), you can switch between which one you want to download
+    # platforms, some JLLs can provide alternate artifact names (e.g. `default`
+    # vs. `debug`), you can switch between which one you want to download
     # by setting the `artifact_name` preference:
-    artifact_name = jll["name"]
+    artifact_name = "default"
     if VERSION >= v"1.6.0"
         artifact_name = load_preference(__module__, "artifact_name", artifact_name)
     end

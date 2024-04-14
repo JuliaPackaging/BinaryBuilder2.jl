@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "OpenLibm",
+            name = "default",
             treehash = "a130463c8a9be64b485b347a83695617c0de593c",
             download_sources = [
                 JLLArtifactSource(
@@ -32,7 +32,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "1c3dd51519cae5d65096141ef732fe6ed25e3c34",
             download_sources = [
                 JLLArtifactSource(
@@ -56,7 +56,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "28fc75dc6149f6a42d4ca09e53f049bbb4d0c477",
             download_sources = [
                 JLLArtifactSource(
@@ -80,7 +80,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "147adc0e10684539455a03d6fa290c63310eac61",
             download_sources = [
                 JLLArtifactSource(
@@ -104,7 +104,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "0648d6f95ffc284ce454128166ae7e8799d1a82e",
             download_sources = [
                 JLLArtifactSource(
@@ -128,7 +128,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "147adc0e10684539455a03d6fa290c63310eac61",
             download_sources = [
                 JLLArtifactSource(
@@ -152,7 +152,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "0648d6f95ffc284ce454128166ae7e8799d1a82e",
             download_sources = [
                 JLLArtifactSource(
@@ -176,7 +176,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "4f4023d9066cd44f8f9ae74d09cde369c7b550b1",
             download_sources = [
                 JLLArtifactSource(
@@ -200,7 +200,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "e8baa31f274063f27c9c041337f451c57fc040cc",
             download_sources = [
                 JLLArtifactSource(
@@ -224,7 +224,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "OpenLibm",
+            name = "default",
             treehash = "e0ba67b6ee020eb9974786389e783abd8e0d20e0",
             download_sources = [
                 JLLArtifactSource(
@@ -248,7 +248,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "69b80ae25bd7c9d8ab4292ea9d168b9a25ad48b6",
             download_sources = [
                 JLLArtifactSource(
@@ -272,7 +272,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "OpenLibm",
+            name = "default",
             treehash = "16dc90eb2af3caf72478f4225f7ee6c2e6b62de5",
             download_sources = [
                 JLLArtifactSource(
@@ -296,7 +296,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "d42a8f33483c3a7b209c551c9d8d65114ac70f8f",
             download_sources = [
                 JLLArtifactSource(
@@ -320,7 +320,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "5459f8b39d89497e94686422475e0ba06c92386b",
             download_sources = [
                 JLLArtifactSource(
@@ -344,7 +344,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "OpenLibm",
+            name = "default",
             treehash = "37b895bd2b9931b25280d4a17e9885a44de60cca",
             download_sources = [
                 JLLArtifactSource(
@@ -368,7 +368,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "OpenLibm",
+            name = "default",
             treehash = "faf87efd521a2f1ad42b3cd414e71cfd22f61afc",
             download_sources = [
                 JLLArtifactSource(
@@ -392,7 +392,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "OpenLibm",
+            name = "default",
             treehash = "12dbb974945a220bdb26953aed28bfe9718add03",
             download_sources = [
                 JLLArtifactSource(

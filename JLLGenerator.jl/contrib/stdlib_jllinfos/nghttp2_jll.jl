@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "nghttp2",
+            name = "default",
             treehash = "5bdf176d27a679d485fd66a415859ac7e838ae9a",
             download_sources = [
                 JLLArtifactSource(
@@ -32,7 +32,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "ee643801313cd1bf7f641f359584e1b11f1cd732",
             download_sources = [
                 JLLArtifactSource(
@@ -56,7 +56,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "nghttp2",
+            name = "default",
             treehash = "8b6ab2a01e3649c51b9cec010606e71a5d921be5",
             download_sources = [
                 JLLArtifactSource(
@@ -80,7 +80,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "c2559b9e4ac0363bd3ef40d0f67da51633bd2d88",
             download_sources = [
                 JLLArtifactSource(
@@ -104,7 +104,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "nghttp2",
+            name = "default",
             treehash = "b6a24c38296a077f11fc59a584450abe86cdd6af",
             download_sources = [
                 JLLArtifactSource(
@@ -128,7 +128,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "6d2477dff94d1c9637caf0db5418a4518376a88a",
             download_sources = [
                 JLLArtifactSource(
@@ -152,7 +152,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "nghttp2",
+            name = "default",
             treehash = "e207a079addd37872edd3f5adbbdd5b198f881b4",
             download_sources = [
                 JLLArtifactSource(
@@ -176,7 +176,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "11a67bb89e9baf1093e8949f8844eafa333891d6",
             download_sources = [
                 JLLArtifactSource(
@@ -200,7 +200,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "nghttp2",
+            name = "default",
             treehash = "6867390c22cd2b63fdc0f4c48bf0ec31207b389e",
             download_sources = [
                 JLLArtifactSource(
@@ -224,7 +224,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "nghttp2",
+            name = "default",
             treehash = "d4127a2ea695da2d7bdb1cc636956324a412c7f1",
             download_sources = [
                 JLLArtifactSource(
@@ -248,7 +248,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "e6747a03d561d8f669a6e3c8e52e0f1eb9ffa154",
             download_sources = [
                 JLLArtifactSource(
@@ -272,7 +272,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "nghttp2",
+            name = "default",
             treehash = "a3e87e54c611248fae619d45233f10bebd8c071a",
             download_sources = [
                 JLLArtifactSource(
@@ -296,7 +296,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "nghttp2",
+            name = "default",
             treehash = "5ac5cd90363a5fdedcd7321dd3b7f93ec39462d3",
             download_sources = [
                 JLLArtifactSource(
@@ -320,7 +320,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "nghttp2",
+            name = "default",
             treehash = "6cdb43dcb66f8a50d53a51cf64ba1a44242c8fda",
             download_sources = [
                 JLLArtifactSource(
@@ -344,7 +344,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "nghttp2",
+            name = "default",
             treehash = "f4135004438423aa9703155ead9feaea941cccd2",
             download_sources = [
                 JLLArtifactSource(
@@ -368,7 +368,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "nghttp2",
+            name = "default",
             treehash = "a68c4ec5569996dcf33de8e2c5d7d9c399902cc1",
             download_sources = [
                 JLLArtifactSource(
@@ -392,7 +392,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "nghttp2",
+            name = "default",
             treehash = "a576f703ca94346b43fae9985fefe15fe3949897",
             download_sources = [
                 JLLArtifactSource(

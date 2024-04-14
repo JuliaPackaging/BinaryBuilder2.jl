@@ -7,7 +7,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "GMP",
+            name = "default",
             treehash = "eb4e87c9b0a79957edcf050a5a9c13d6e99eb80d",
             download_sources = [
                 JLLArtifactSource(
@@ -38,7 +38,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "438763d0a0d11ca36b300e9324b99a83b725adf9",
             download_sources = [
                 JLLArtifactSource(
@@ -69,7 +69,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "b804693dba33bda298f5f890b9afd2600db2f546",
             download_sources = [
                 JLLArtifactSource(
@@ -100,7 +100,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "69310c54157613a7e35c8e6d4938d5600cbf3048",
             download_sources = [
                 JLLArtifactSource(
@@ -131,7 +131,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "3eee3abb987916d9c01ca5fbe64ab199f53ddb84",
             download_sources = [
                 JLLArtifactSource(
@@ -162,7 +162,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "5b3aa03ec084ff4dfbb487627747ef8e07db7db7",
             download_sources = [
                 JLLArtifactSource(
@@ -193,7 +193,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "846ff0fe875c1ed45b4aef5b97cbe2cf860daa3a",
             download_sources = [
                 JLLArtifactSource(
@@ -224,7 +224,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "96708d222bc7767b241604a35fa6358bc38c2938",
             download_sources = [
                 JLLArtifactSource(
@@ -255,7 +255,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "ca5e84c59416facfe091b21c9773aad771f7d27d",
             download_sources = [
                 JLLArtifactSource(
@@ -286,7 +286,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "d50ce369d4ccdb62f7a8b28141026e4481119cb4",
             download_sources = [
                 JLLArtifactSource(
@@ -317,7 +317,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "fa620d4b95fef06716ded7eb77525ce0420da3ab",
             download_sources = [
                 JLLArtifactSource(
@@ -348,7 +348,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "7977ae5c0f69de7f00f380c43c96c7e0881890f2",
             download_sources = [
                 JLLArtifactSource(
@@ -379,7 +379,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "4e6dc5c976cadcb5f20848e2b71e09da43d4506d",
             download_sources = [
                 JLLArtifactSource(
@@ -410,7 +410,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "5ff7794165d9cc3bfad4852581d1fea1d992f942",
             download_sources = [
                 JLLArtifactSource(
@@ -441,7 +441,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "5764e6ba028d2f7e71d620a9ab6b1452bd451769",
             download_sources = [
                 JLLArtifactSource(
@@ -472,7 +472,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "053386407a38904d54936c7c3b8a6cf8491897d5",
             download_sources = [
                 JLLArtifactSource(
@@ -503,7 +503,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "2ddf6cc79ec510c42671f8adcbf61139c34b84c2",
             download_sources = [
                 JLLArtifactSource(
@@ -534,7 +534,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "ace373985e36ec8a51a2e4b6f619e72c39b001a4",
             download_sources = [
                 JLLArtifactSource(
@@ -565,7 +565,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "windows"; cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "f255f36847608dd123fe2747f01143128b5cab0d",
             download_sources = [
                 JLLArtifactSource(
@@ -596,7 +596,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "286e61e5d87b6efe1efd030878cc6d0c138c27b0",
             download_sources = [
                 JLLArtifactSource(
@@ -627,7 +627,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "c5cc9a7333a41bf9565cb58decf34c5778a832b2",
             download_sources = [
                 JLLArtifactSource(
@@ -658,7 +658,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "GMP",
+            name = "default",
             treehash = "582081ef2cdfcbcec8bf7993fc25e110256424e4",
             download_sources = [
                 JLLArtifactSource(
@@ -689,7 +689,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "adce8608805da098504a2d74d1cb3fb2877b53d8",
             download_sources = [
                 JLLArtifactSource(
@@ -720,7 +720,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "a6912b17607ad3f04f3faaab3e3918181ffca515",
             download_sources = [
                 JLLArtifactSource(
@@ -751,7 +751,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; sanitize = "memory", libc = "glibc", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "25e21b2dd3faf6b48c812e4d06dc8ba52404be08",
             download_sources = [
                 JLLArtifactSource(
@@ -782,7 +782,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl", cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "ec6aa9d7df206de06280addabe495b32b11b0c24",
             download_sources = [
                 JLLArtifactSource(
@@ -813,7 +813,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl", cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "ca6965c5231c6d53948d281bc937aea24c88d626",
             download_sources = [
                 JLLArtifactSource(
@@ -844,7 +844,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "GMP",
+            name = "default",
             treehash = "4dca34de0b2a8e809113af39fc2f5f1ed5a4e134",
             download_sources = [
                 JLLArtifactSource(
@@ -875,7 +875,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx03"),
-            name = "GMP",
+            name = "default",
             treehash = "3f7ff36928786cc1c1b477972fe1494c7828e263",
             download_sources = [
                 JLLArtifactSource(
@@ -906,7 +906,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "windows"; cxxstring_abi = "cxx11"),
-            name = "GMP",
+            name = "default",
             treehash = "69f0675f7c45bae5a0190356ddf93c75fd56ee0a",
             download_sources = [
                 JLLArtifactSource(

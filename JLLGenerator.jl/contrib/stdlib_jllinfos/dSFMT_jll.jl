@@ -7,7 +7,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "dSFMT",
+            name = "default",
             treehash = "edf61885d6b11e64ffabe3826d163bd7d4523d22",
             download_sources = [
                 JLLArtifactSource(
@@ -30,7 +30,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "7336cebf442e4c41f8d7f51c3276e63a58c620f7",
             download_sources = [
                 JLLArtifactSource(
@@ -53,7 +53,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "dSFMT",
+            name = "default",
             treehash = "aa2d6168ccc4bd699ba6f8a47ad990b7559b4a0e",
             download_sources = [
                 JLLArtifactSource(
@@ -76,7 +76,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "0c6a8d227238dc38010dd76267fcd1e122999af2",
             download_sources = [
                 JLLArtifactSource(
@@ -99,7 +99,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "dSFMT",
+            name = "default",
             treehash = "8c7a50737bbab934cde1efa29fd0d01fa5cb6598",
             download_sources = [
                 JLLArtifactSource(
@@ -122,7 +122,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "9561002894a0c2c9bd3b6d3a7f8b2a41a6e5b930",
             download_sources = [
                 JLLArtifactSource(
@@ -145,7 +145,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "dSFMT",
+            name = "default",
             treehash = "d0a2ad0f6140582346c0b25bc7e22b74199f064c",
             download_sources = [
                 JLLArtifactSource(
@@ -168,7 +168,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "d1193f2f568de06aa4ec848088cfca1adfd5f18e",
             download_sources = [
                 JLLArtifactSource(
@@ -191,7 +191,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "dSFMT",
+            name = "default",
             treehash = "fe260cf16bff8871e78b4e6609ad99a0efe4edb7",
             download_sources = [
                 JLLArtifactSource(
@@ -214,7 +214,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "dSFMT",
+            name = "default",
             treehash = "c8027b75d3d27eb2a3a74535e2dd632934a5c66f",
             download_sources = [
                 JLLArtifactSource(
@@ -237,7 +237,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "d8fd2267bb50fd6b4602b4a8d89673ee22284888",
             download_sources = [
                 JLLArtifactSource(
@@ -260,7 +260,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "dSFMT",
+            name = "default",
             treehash = "ff50225db6bdc43bb6f61390628d6596b5a4269d",
             download_sources = [
                 JLLArtifactSource(
@@ -283,7 +283,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "dSFMT",
+            name = "default",
             treehash = "059b1cf362cca007c9c3b1251443c8569743f7f3",
             download_sources = [
                 JLLArtifactSource(
@@ -306,7 +306,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "dSFMT",
+            name = "default",
             treehash = "504b4bb6fa837d8208a8d070481e10fae4948da2",
             download_sources = [
                 JLLArtifactSource(
@@ -329,7 +329,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "dSFMT",
+            name = "default",
             treehash = "7b18209ca9b9d0150947ac5ba267ca7660a8c07d",
             download_sources = [
                 JLLArtifactSource(
@@ -352,7 +352,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "dSFMT",
+            name = "default",
             treehash = "45b4104a8d90268df7c1c2e651944e70d1a0bd7c",
             download_sources = [
                 JLLArtifactSource(
@@ -375,7 +375,7 @@ jll = JLLInfo(;
             deps = [],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "dSFMT",
+            name = "default",
             treehash = "12f3002eb0f008fe2995ed4b3665c3ffdebba7c7",
             download_sources = [
                 JLLArtifactSource(

@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "MbedTLS",
+            name = "default",
             treehash = "6b00cebabc9c70c58d08f0e2d3fa4d39420e8ea4",
             download_sources = [
                 JLLArtifactSource(
@@ -49,7 +49,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "b42b8d9c1c04291f2e1da12fa6f05e67659ef91d",
             download_sources = [
                 JLLArtifactSource(
@@ -90,7 +90,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "85c80c7fcb8165763af7a979c667d1d8a6f857ca",
             download_sources = [
                 JLLArtifactSource(
@@ -131,7 +131,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "cf1dffd8e8652c3e06f805df47e22a79e9fb2a89",
             download_sources = [
                 JLLArtifactSource(
@@ -172,7 +172,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "96c2e8bda3d2dd5b0fe181cf1a61a8018d1624e5",
             download_sources = [
                 JLLArtifactSource(
@@ -213,7 +213,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "0e64bfe8701450bf4773702437b0ab5dd0fee059",
             download_sources = [
                 JLLArtifactSource(
@@ -254,7 +254,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "05e2116e9c4e5bc081a663da7c97cbf4851b55e7",
             download_sources = [
                 JLLArtifactSource(
@@ -295,7 +295,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "8db2d7b2459270ff1a33b62f2031dd598e53a71d",
             download_sources = [
                 JLLArtifactSource(
@@ -336,7 +336,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "1df91c33d48b7cdc4d8b618417817e79c4be103f",
             download_sources = [
                 JLLArtifactSource(
@@ -377,7 +377,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "MbedTLS",
+            name = "default",
             treehash = "9d47941b1964c94479a8ff0da13eb7c3d21e0b9f",
             download_sources = [
                 JLLArtifactSource(
@@ -418,7 +418,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "aaa809f503b178fb474675c9c62e3274112dcec0",
             download_sources = [
                 JLLArtifactSource(
@@ -459,7 +459,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "MbedTLS",
+            name = "default",
             treehash = "dec22f7759af1138d31556acfac30be30e95131b",
             download_sources = [
                 JLLArtifactSource(
@@ -500,7 +500,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "0d38ec9dacb183ab809ef6ea8e5ada17e99cbbdf",
             download_sources = [
                 JLLArtifactSource(
@@ -541,7 +541,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "fc9e68415873ee933e485edb10e0eb451d726eb8",
             download_sources = [
                 JLLArtifactSource(
@@ -582,7 +582,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "MbedTLS",
+            name = "default",
             treehash = "48782ed0747248d75c8ed93ea0b0de24e30b007f",
             download_sources = [
                 JLLArtifactSource(
@@ -623,7 +623,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "MbedTLS",
+            name = "default",
             treehash = "aa2ccc261a2a19e24168e87a74bb08643d173d52",
             download_sources = [
                 JLLArtifactSource(
@@ -664,7 +664,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "MbedTLS",
+            name = "default",
             treehash = "90144a6ea975a3930e7a2a0aeb4b02652195689a",
             download_sources = [
                 JLLArtifactSource(
