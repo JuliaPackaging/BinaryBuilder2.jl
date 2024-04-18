@@ -5,7 +5,6 @@ version = "0.1.0"
 
 [deps]
 BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
-BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
@@ -21,7 +20,11 @@ BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 BinaryBuilderSourcesExt = "BinaryBuilderSources"
 
 [compat]
+BinaryBuilderPlatformExtensions = "0.1.0"
 julia = "1.9"
+MultiHashParsing = "0.1.0"
+Reexport = "1"
+StructEquality = "2"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
