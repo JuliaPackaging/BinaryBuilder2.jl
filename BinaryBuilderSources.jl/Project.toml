@@ -16,6 +16,8 @@ TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
 BinaryBuilderGitUtils = "0.1.0"
+Git = "1.3.1"
+Scratch = "1"
 JLLPrefixes = "0.3.5"
 julia = "1.8"
 MultiHashParsing = "0.1.0"
