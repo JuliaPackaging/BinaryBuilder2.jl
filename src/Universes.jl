@@ -61,8 +61,10 @@ struct Universe
         # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
         try
             for name in ("artifacts", "packages")
+                shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), name)
+                mkpath(shared_dir)
                 symlink(
-                    joinpath(BinaryBuilderSources.default_jll_source_depot(), name),
+                    shared_dir,
                     joinpath(depot_path, name);
                     dir_target = true,
                 )
