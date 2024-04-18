@@ -8,6 +8,21 @@ native_arch = arch(HostPlatform())
 
 @testset "BuildAPI" begin
 
+using BinaryBuilder2: next_jll_version
+@testset "next_jll_version" begin
+    versions = [
+        v"1.0.0",
+        v"1.1.0",
+        v"1.1.1",
+        v"1.2.0",
+    ]
+    @test next_jll_version(versions, v"0.9.0") == v"0.9.0"
+    @test next_jll_version(versions, v"1.1.0") == v"1.1.2"
+    @test next_jll_version(versions, v"1.2.0") == v"1.2.1"
+    @test next_jll_version(versions, v"1.3.0") == v"1.3.0"
+    @test next_jll_version(nothing, v"1.2.0") == v"1.2.0"
+end
+
 @testset "Failing build" begin
     # This build explicitly fails because it runs `false`
     meta = BuildMeta(; verbose=false)
@@ -116,7 +131,7 @@ end
     meta = BuildMeta(; verbose=false)
     build_config = BuildConfig(
         meta,
-        "zlib",
+        "Zlib",
         v"1.2.13",
         [
             ArchiveSource("https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.xz",
@@ -129,7 +144,6 @@ end
         ./configure --prefix=\$prefix
         make -j30
         make install
-        export FOO=foo
         """,
         Platform(native_arch, "linux"),
     )
@@ -151,10 +165,33 @@ end
     @test extract_result.status == :success
 
     # Test that it built correctly
-    install_prefix = Artifacts.artifact_path(extract_result.artifact)
-    @test isdir(install_prefix)
-    @test isfile(joinpath(install_prefix, "include", "zlib.h"))
-    @test isfile(joinpath(install_prefix, "lib", "libz.so.$(build_config.src_version)"))
+    in_universe(meta.universe) do env
+        install_prefix = Artifacts.artifact_path(extract_result.artifact)
+        @test isdir(install_prefix)
+        @test isfile(joinpath(install_prefix, "include", "zlib.h"))
+        @test isfile(joinpath(install_prefix, "lib", "libz.so.$(build_config.src_version)"))
+    end
+
+    package_config = PackageConfig(
+        extract_result,
+        version = v"99.99.99",
+    )
+    package_result = package!(package_config)
+
+    # Ensure it was registered, and that it's the only `v99.99.x` version in there.
+    of_the_ninetynine_versions_there_is_only_one = filter(BinaryBuilder2.get_package_versions(meta.universe, "Zlib_jll")) do v
+        return v.major == 99 && v.minor == 99
+    end
+    @test package_result.published_version == v"99.99.99"
+    @test length(of_the_ninetynine_versions_there_is_only_one) == 1
+
+    # Test that if we register it _again_, the patch number goes up by one:
+    package_result2 = package!(package_config)
+    ninetynine_versions = filter(BinaryBuilder2.get_package_versions(meta.universe, "Zlib_jll")) do v
+        return v.major == 99 && v.minor == 99
+    end
+    @test package_result2.published_version == v"99.99.100"
+    @test length(ninetynine_versions) == 2
 end
 
 end # testset "BuildAPI"

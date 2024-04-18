@@ -9,9 +9,6 @@ using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
         # but we'll name it `HelloWorldC2_jll` so that it is created as a new entry in the registry
         hwc_jll = include(joinpath(@__DIR__, "..", "JLLGenerator.jl", "contrib", "example_jllinfos", "HelloWorldC_jll.jl"))
         hwc_jll = @set hwc_jll.name = "HelloWorldC2"
-        hwc_jll = @set hwc_jll.artifacts = map(hwc_jll.artifacts) do art
-            @set art.name = "HelloWorldC2"
-        end
         register!(uni, hwc_jll)
         Pkg.instantiate(uni)
 
