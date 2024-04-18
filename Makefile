@@ -47,20 +47,22 @@ printsorted-$(1): $(foreach dep,$($(1)_DEPS),printsorted-$(dep))
 		echo "$(1)"; \
 	fi
 
-# Updating can happen in parallel
 update-$(1): $(1)/LICENSE
 	$(call run_with_log,$(1),import Pkg; Pkg.update(),update-$(1))
 
 resolve-$(1): $(1)/LICENSE
-	$(call run_with_log,$(1),import Pkg; Pkg.resolve(),resolve-$(1))
+	$(JULIA) --color=yes -e 'import Pkg; Pkg.activate("$(1)"); Pkg.resolve()'
 
-# Same with instantiation
 instantiate-$(1): $(1)/LICENSE
 	$(call run_with_log,$(1),import Pkg; Pkg.instantiate(),instantiate-$(1))
+
+redev-$(1): $(1)/LICENSE
+	$(call run_with_log,$(1),import Pkg; $(foreach dep,$($(1)_DEPS),try Pkg.rm("$(basename $(dep))"); catch; end; Pkg.develop(path="$(dep)"); ),redev-$(1))
 
 testall: test-$(1)
 updateall: update-$(1)
 resolveall: resolve-$(1)
+redevall: redev-$(1)
 instantiateall: instantiate-$(1)
 printsorted: printsorted-$(1)
 .PHONY: test-$(1) update-$(1) printsorted-$(1)
