@@ -11,6 +11,13 @@ using BinaryBuilderProducts, JLLGenerator
 import BinaryBuilderProducts: AbstractProduct, ExecutableProduct, FileProduct, LibraryProduct
 import JLLGenerator: AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct, JLLLibraryDep, AbstractProducts
 
+# I feel this should be in Base Julia
+macro extract_kwargs(kwargs, keys...)
+    quote
+        Dict(k => v for (k, v) in pairs($(esc(kwargs))) if k in [$(keys...)])
+    end
+end
+
 # First, adapters that go from `AbstractProduct` objects to `AbstractJLLProduct` objects:
 function JLLExecutableProduct(ep::ExecutableProduct, prefix::String; kwargs...)
     return JLLExecutableProduct(
@@ -19,7 +26,7 @@ function JLLExecutableProduct(ep::ExecutableProduct, prefix::String; kwargs...)
     )
 end
 function AbstractJLLProduct(ep::ExecutableProduct, prefix::String; kwargs...)
-    return JLLExecutableProduct(ep, prefix; kwargs...)
+    return JLLExecutableProduct(ep, prefix; @extract_kwargs(kwargs, :env)...)
 end
 
 function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
@@ -29,7 +36,7 @@ function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
     )
 end
 function AbstractJLLProduct(fp::FileProduct, prefix::String; kwargs...)
-    return JLLFileProduct(fp, prefix; kwargs...)
+    return JLLFileProduct(fp, prefix; @extract_kwargs(kwargs, :env, :verbose)...)
 end
 
 function JLLLibraryDep(lp::LibraryProduct, jll::Union{Symbol,Nothing} = nothing)
@@ -50,7 +57,7 @@ function JLLLibraryProduct(lp::LibraryProduct, prefix::String;
     )
 end
 function AbstractJLLProduct(lp::LibraryProduct, prefix::String; kwargs...)
-    return JLLLibraryProduct(lp, prefix; kwargs...)
+    return JLLLibraryProduct(lp, prefix; @extract_kwargs(kwargs, :env, :platform, :jll_maps)...)
 end
 
 function toposort_artifacts()
