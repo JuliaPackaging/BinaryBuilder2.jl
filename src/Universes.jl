@@ -76,23 +76,13 @@ struct Universe
         # Ensure the registries are up to date, with our commits replayed on top
         update_and_checkout_registries!(registries, depot_path; kwargs...)
 
-        # TODO: Once LazyJLLWrappers is released, don't do this anymore.
-        for name in ("LazyJLLWrappers", "JLLGenerator", "BinaryBuilderSources")
-            LocalRegistry.register(
-                joinpath(@__DIR__, "..", "$(name).jl");
-                registry=joinpath(depot_path, "registries", first(registries).name),
-                repo="https://github.com/JuliaPackaging/BinaryBuilder2.jl.git",
-                commit=true,
-                push=false,
-            )
-        end
+        # Ensure that this universe's environment uses our version of LazyJLLWrappers,
+        # since we may be testing things or have some local patch.
         uni = new(depot_path, registries)
-
-        # Ensure that this universe uses our version of LazyJLLWrappers
         Pkg.activate(environment_path(uni)) do
             Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)))
         end
-        
+
         return uni
     end
 end
