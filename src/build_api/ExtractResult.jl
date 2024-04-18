@@ -33,7 +33,7 @@ struct ExtractResult
     end
 end
 
-Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.artifact)
+Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
 
 """
     ExtractResultSource(result::ExtractResult)
@@ -46,10 +46,11 @@ a target/host dependency during the build of a larger JLL.
 If in a large multi-stage build you want to use some smaller JLL that is built
 as a part of the larger build, you should generally use
 `JLLSource(::PackageResult)` instead once the smaller piece has been packaged.
+This works because all packaged JLLs are registered into the same universe.
 """
 function ExtractResultSource(result::ExtractResult, target::String = "")
     return DirectorySource(
-        artifact_path(result.artifact);
+        artifact_path(result);
         target,
     )
 end

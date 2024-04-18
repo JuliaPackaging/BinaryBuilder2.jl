@@ -1,4 +1,5 @@
 using Pkg.Registry: RegistrySpec
+using Artifacts
 using JLLGenerator
 using Random, TOML
 using BinaryBuilderGitUtils
@@ -95,11 +96,18 @@ struct Universe
     end
 end
 
+Artifacts.artifact_path(u::Universe, hash::Base.SHA1) = joinpath(u.depot_path, "artifacts", bytes2hex(hash.bytes))
+
 raw"""
-    in_universe(f::Function, u::Universe)
+    in_universe(f::Function, u::Universe;
+                extra_depots::Vector{String} = String[],
+                append_bundled_depot_path::Bool = true)
 
 Opens the dimensional portal, transporting execution of `f(env)` into the provided
 universe, causing all `Pkg` operations to resolve with respect to that universe.
+Also adds the default bundled depots and any extra depots desired by the user as
+specified by `extra_depots` and `append_bundled_depot_path`.  This is most commonly
+used to allow artifacts and packages to be loaded from a shared cache depot.
 
              .,-:;//;:=,
          . :H@@@MM@M#H/.,+%;,
@@ -122,7 +130,7 @@ universe, causing all `Pkg` operations to resolve with respect to that universe.
          ,:+$+-,/H#MMMMMMM@- -,
                =++%%%%+/:-.
 """
-function in_universe(f::Function, u::Universe)
+function in_universe(f::Function, u::Universe; extra_depots::Vector{String} = String[], append_bundled_depot_path::Bool = true)
     # Save old `DEPOT_PATH`
     old_depot_path = copy(Base.DEPOT_PATH)
 
@@ -130,9 +138,20 @@ function in_universe(f::Function, u::Universe)
     empty!(Base.DEPOT_PATH)
     append!(Base.DEPOT_PATH, [
         abspath(u.depot_path),
-        abspath(Sys.BINDIR, "..", "local", "share", "julia"),
-        abspath(Sys.BINDIR, "..", "share", "julia"),
+        extra_depots...,
     ])
+    if append_bundled_depot_path
+        # On Julia v1.11+, this is simple because of https://github.com/JuliaLang/julia/commit/9443c761871c4db9c3213a1e01804286292c3f4d
+        if isdefined(Base, :append_bundled_depot_path)
+            Base.append_bundled_depot_path!(Base.DEPOT_PATH)
+        else
+            # On older Julias, we need to drop the default user depot.
+            temp_DEPOT_PATH = String[]
+            Base.append_default_depot_path!(temp_DEPOT_PATH)
+            pop!(temp_DEPOT_PATH)
+            append!(Base.DEPOT_PATH, temp_DEPOT_PATH)
+        end
+    end
 
     # Ensure that subprocesses use the correct depot path
     env = Dict("JULIA_DEPOT_PATH" => join(Base.DEPOT_PATH, ":"))
@@ -157,6 +176,23 @@ function registry_path(u::Universe, registry::RegistrySpec)
     return joinpath(u.depot_path, "registries", registry.name)
 end
 
+function registry_package_lookup(f::Function, registry_path::String, pkg_name::String)
+    reg_toml_path = joinpath(registry_path, "Registry.toml")
+    reg_data = Base.parsed_toml(reg_toml_path)
+    for (uuid, data) in reg_data["packages"]
+        if data["name"] == pkg_name
+            return f(joinpath(registry_path, data["path"]))
+        end
+    end
+    return nothing
+end
+
+function registry_package_lookup(f::Function, u::Universe, pkg_name::String)
+    registry_package_lookup(registry_path(u, first(u.registries)), pkg_name) do pkg_path
+        return f(pkg_path)
+    end
+end
+
 """
     get_package_repo(u::Universe, pkg_name::String)
 
@@ -164,17 +200,17 @@ Given a package name, return the repository url for that package by looking
 through the set of registries within `u`.
 """
 function get_package_repo(u::Universe, pkg_name::String)
-    for reg in u.registries
-        reg_toml_path = joinpath(registry_path(u, reg), "Registry.toml")
-        reg_data = Base.parsed_toml(reg_toml_path)
-        for (uuid, data) in reg_data["packages"]
-            if data["name"] == pkg_name
-                pkg_project_toml_path = joinpath(registry_path(u, reg), data["path"], "Package.toml")
-                return TOML.parsefile(pkg_project_toml_path)["repo"]
-            end
-        end
+    registry_package_lookup(u, pkg_name) do pkg_path
+        pkg_project_toml_path = joinpath(pkg_path, "Package.toml")
+        return TOML.parsefile(pkg_project_toml_path)["repo"]
     end
-    return nothing
+end
+
+function get_package_versions(u::Universe, pkg_name::String)
+    registry_package_lookup(u, pkg_name) do pkg_path
+        pkg_versions_toml_path = joinpath(pkg_path, "Versions.toml")
+        return parse.(VersionNumber, collect(keys(TOML.parsefile(pkg_versions_toml_path))))
+    end
 end
 
 """
@@ -198,6 +234,7 @@ function register!(u::Universe, jll::JLLInfo)
             init!(jll_repo_path)
         end
         jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
+        rm(jll_path; force=true, recursive=true)
         checkout!(jll_repo_path, jll_path)
 
         # Next, generate the JLL in-place and commit it

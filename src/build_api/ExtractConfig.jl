@@ -72,27 +72,29 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
 end
 
 function collect_library_products(config::ExtractConfig)
-    library_products = Dict(
-        config.build.name => [p for p in config.products if isa(p, LibraryProduct)]
-    )
+    library_products = [p for p in config.products if isa(p, LibraryProduct)]
 
-    # TODO: Collect library products for all dependencies as well
+    # TODO: Append library products for all dependencies as well
     return library_products
 end
 
 function extract!(config::ExtractConfig)
     local artifact_hash, run_status, run_exception
+    meta = config.build.config.meta
     @timeit config.to "extract" begin
-        artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
-            sandbox_config = SandboxConfig(config, artifact_dir)
-            run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
+        in_universe(meta.universe) do env
+            artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
+                sandbox_config = SandboxConfig(config, artifact_dir)
+                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
+            end
         end
     end
 
     # Run over the extraction result, ensure that all products can be located:
     unlocatable_products = AbstractProduct[]
+    extract_prefix = artifact_path(meta.universe, artifact_hash)
     for product in config.products
-        if locate(product, artifact_path(artifact_hash);
+        if locate(product, extract_prefix;
                   env=config.build.env) === nothing
             push!(unlocatable_products, product)
         end
@@ -104,10 +106,9 @@ function extract!(config::ExtractConfig)
     end
 
     # Compute dependency structure for all library products
-    libmap = library_products_map(config)
-    library_products = collect(Iterators.flatten(values(libmap)))
+    library_products = collect_library_products(config)
     if !isempty(library_products)
-        resolve_dependency_links!(library_products, artifact_path(artifact_hash), config.build.env)
+        resolve_dependency_links!(library_products, extract_prefix, config.build.env)
     end
 
     result = ExtractResult(
@@ -117,6 +118,6 @@ function extract!(config::ExtractConfig)
         artifact_hash,
         Dict{String,String}(),
     )
-    config.build.meta.extractions[config] = result
+    meta.extractions[config] = result
     return result
 end
