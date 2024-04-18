@@ -158,7 +158,11 @@ function is_system_library(libname, platform)
             "libc++.so.1",
             "libcxxrt.so.1",
         ]
-        return libname ∈ vcat(loaders, c_runtimes, cxx_runtimes)
+
+        csl_libs = [
+            "libgcc_s.so.1",
+        ]
+        return libname ∈ vcat(loaders, c_runtimes, cxx_runtimes, csl_libs)
     elseif os(platform) == "macos"
         ignore_libs = [
             "libbsm.0.dylib",
