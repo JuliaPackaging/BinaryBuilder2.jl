@@ -75,8 +75,7 @@ struct Universe
         update_and_checkout_registries!(registries, depot_path; kwargs...)
 
         # TODO: Once LazyJLLWrappers is released, don't do this anymore.
-        for name in ("LazyJLLWrappers", "JLLGenerator",
-                     "BinaryBuilderSources", "BinaryBuilderGitUtils", "TreeArchival")
+        for name in ("LazyJLLWrappers", "JLLGenerator", "BinaryBuilderSources")
             LocalRegistry.register(
                 joinpath(@__DIR__, "..", "$(name).jl");
                 registry=joinpath(depot_path, "registries", first(registries).name),
