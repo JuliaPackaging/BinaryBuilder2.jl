@@ -46,7 +46,6 @@ struct ExtractConfig
             build,
             String(script),
             products,
-            #audit_config,
             metadir,
             copy(build.config.to),
         )

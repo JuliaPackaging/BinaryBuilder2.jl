@@ -127,13 +127,12 @@ struct BuildConfig
         prefix = "/workspace/destdir/$(triplet(cross_platform.target))"
         host_prefix = "/workspace/destdir/$(triplet(cross_platform.host))"
         env = path_appending_merge(env, Dict(
+            # Things to work well with a shell
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
             "WORKSPACE" => "/workspace",
             "HISTFILE" => "/workspace/metadir/.bash_history",
-            "BB_PRINT_COMMANDS" => "true",
             "HOME" => "/workspace/metadir",
-            "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
 
             # Platform-targeting niceties
             "target" => "$(gcc_target_triplet(cross_platform.target))",
@@ -145,6 +144,7 @@ struct BuildConfig
             "includedir" => "$(prefix)/include",
 
             # The same things, repeated for `host`
+            "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
             "host" => "$(gcc_target_triplet(cross_platform.host))",
             "bb_full_host" => "$(triplet(cross_platform.host))",
             "host_prefix" => host_prefix,
@@ -152,6 +152,11 @@ struct BuildConfig
             "host_libdir" => "$(host_prefix)/lib",
             "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix)/bin" : "$(host_prefix)/lib",
             "host_includedir" => "$(host_prefix)/include",
+
+            # Misc. pieces of information
+            "BB_PRINT_COMMANDS" => "true",
+            "nproc" => "$(get(ENV, "BINARYBUILDER_NPROC", Sys.CPU_THREADS))",
+            "SRC_NAME" => src_name,
         ))
 
         return new(
@@ -221,13 +226,14 @@ function SandboxConfig(config::BuildConfig,
                        stdin = stdin,
                        stderr = stderr,
                        verbose::Bool = false,
+                       pwd = "/workspace/srcdir",
                        kwargs...)
     return SandboxConfig(
         mounts,
         env;
         hostname = "bb8",
-        pwd = "/workspace/srcdir",
         persist = true,
+        pwd,
         stdin,
         stdout,
         stderr,
