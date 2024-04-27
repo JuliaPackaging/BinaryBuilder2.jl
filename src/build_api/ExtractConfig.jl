@@ -58,8 +58,18 @@ function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir
 end
 
 function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
-    # Insert our new metadir
+    # We're going to alter the mounts of the build a bit for extraction.
     mounts = copy(config.build.mounts)
+
+    # First, we're going swap out any mounts for deployed sources in `${prefix}`
+    # This results in `${prefix}` containing only the files that were added by our build
+    for dest in keys(mounts)
+        if startswith(dest, "/workspace/destdir/")
+            mounts[dest] = MountInfo(mktempdir(), MountType.Overlayed)
+        end
+    end
+
+    # Insert our new metadir
     mounts["/workspace/metadir"] = MountInfo(config.metadir, MountType.Overlayed)
 
     # Insert our extraction dir, which is a ReadWrite mount,
