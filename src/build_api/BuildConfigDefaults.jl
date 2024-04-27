@@ -1,5 +1,9 @@
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet
 
+# Default to using a Linux host with the same host arch as our machine
+# This just makes qemu-user-static's job easier.
+default_host() = Platform(arch(HostPlatform()), "linux")
+
 function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[]; host_only::Bool = false)
     toolchains = AbstractToolchain[]
 

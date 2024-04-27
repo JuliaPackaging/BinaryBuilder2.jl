@@ -60,9 +60,7 @@ struct BuildConfig
                          host_dependencies::Vector{<:AbstractSource},
                          script::AbstractString,
                          target::AbstractPlatform;
-                         # Default to using a Linux host with the same host arch as our machine
-                         # This just makes qemu-user-static's job easier.
-                         host::AbstractPlatform = Platform(arch(HostPlatform()), "linux"),
+                         host::AbstractPlatform = default_host(),
                          toolchains::Vector{<:AbstractToolchain} = default_toolchains(CrossPlatform(host, target)),
                          allow_unsafe_flags::Bool = false,
                          lock_microarchitecture::Bool = true,
