@@ -33,9 +33,12 @@ struct ExtractConfig
         extract_script_path = joinpath(metadir, "extract_script.sh")
         open(extract_script_path, write=true) do io
             println(io, "#!/bin/bash")
+            println(io, "set -euo pipefail")
             println(io, "source /usr/local/share/bb/save_env_hook")
             println(io, "source /usr/local/share/bb/extraction_utils")
             println(io, script)
+            println(io, "auto_install_license")
+            println(io, "exit 0")
         end
         chmod(extract_script_path, 0o755)
 
