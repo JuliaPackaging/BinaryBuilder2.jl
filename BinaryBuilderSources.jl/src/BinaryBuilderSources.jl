@@ -43,8 +43,8 @@ Helper function to throw an `InvalidStateException` when you've tried to
 perform an operation upon an `AbstractSource` that requires you calling
 `prepare()` beforehand (such as `deploy()` or `content_hash()`).
 """
-function checkprepared!(caller::String, x::AbstractSource, args...)
-    if !verify(x, args...)
+function checkprepared!(caller::String, x::AbstractSource, args...; kwargs...)
+    if !verify(x, args...; kwargs...)
         throw(InvalidStateException(
             string("You must `prepare()` before you `", caller, "()` an object of type $(typeof(x)): $(x)"),
             :MustPrepareFirst,

@@ -85,10 +85,15 @@ on foreign platforms.
 """
 function locate(lp::LibraryProduct, prefix::String;
                 env::Dict{String,String} = Dict{String,String}(),
-                platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))    
+                platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")),
+                verbose::Bool = false)
     for path in lp.paths
         path = path_prefix_transformation(LibraryProduct, path, prefix, env)
         libname = basename(path)
+
+        if verbose
+            @info("locate()", path, readdir(dirname(path)))
+        end
 
         # Skip non-existant directories
         path_dir = dirname(path)
@@ -357,7 +362,7 @@ function resolve_dependency_links!(libs::Vector{LibraryProduct},
                     continue
                 end
 
-                throw(ArgumentError("Unable to resolve dependency '$(libname)'"))
+                throw(ArgumentError("Unable to resolve dependency '$(libname)/$(resolved)' for '$(lib_path)'"))
             end
         end
     end
