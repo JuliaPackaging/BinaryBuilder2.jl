@@ -5,6 +5,9 @@ if !isdefined(@__MODULE__, :TestingUtils)
 end
 
 native_arch = arch(HostPlatform())
+native_linux = Platform(native_arch, "linux")
+
+@warn("TODO: Write tests for DirectorySource patching")
 
 @testset "BuildAPI" begin
 
@@ -38,7 +41,7 @@ end
         false
         env_val=post
         """,
-        Platform(native_arch, "linux"),
+        native_linux,
     );
     failing_stderr = IOBuffer()
     failing_build_result = build!(bad_build_config; stderr=failing_stderr)
@@ -69,7 +72,7 @@ end
         mkdir -p ${shlibdir}
         cp build/*.so ${shlibdir}/
         """,
-        Platform(native_arch, "linux"),
+        native_linux,
     );
     libstring_build_result = build!(libstring_build_config);
     @test libstring_build_result.status == :success
@@ -108,7 +111,7 @@ end
         mkdir -p ${bindir}
         cp build/cxx_string_abi* ${bindir}/
         """,
-        Platform(native_arch, "linux"),
+        native_linux,
     );
     cxx_string_abi_build_result = build!(cxx_string_abi_build_config);
     @test cxx_string_abi_build_result.status == :success
@@ -145,7 +148,7 @@ end
         make -j30
         make install
         """,
-        Platform(native_arch, "linux"),
+        native_linux,
     )
     build_result = build!(build_config);
     @test build_result.status == :success
@@ -192,6 +195,21 @@ end
     end
     @test package_result2.published_version == v"99.99.100"
     @test length(ninetynine_versions) == 2
+end
+
+@testset "build_tarballs()" begin
+    include("build_recipes/Readline.jl")
+    include("build_recipes/Ncurses.jl")
+    meta = BuildMeta(; verbose=false)
+    @testset "Readline" begin
+        package_result = readline_build_tarballs(meta, [native_linux])
+        @test package_result.status == :success
+    end
+
+    @testset "Ncurses" begin
+        package_result = ncurses_build_tarballs(meta, [native_linux])
+        @test package_result.status == :success
+    end
 end
 
 end # testset "BuildAPI"
