@@ -174,7 +174,7 @@ end
 
     package_config = PackageConfig(
         extract_result,
-        version = v"99.99.99",
+        version_series = v"99.99.99",
     )
     package_result = package!(package_config)
 

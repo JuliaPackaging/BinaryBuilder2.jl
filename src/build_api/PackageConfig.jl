@@ -5,10 +5,12 @@ export PackageConfig, package!
 struct PackageConfig
     # The name of the generated JLL; if not specified, defaults to `$(src_name)_jll`.
     # Note that by default we add `_jll` at the end, but this is not enforced in code!
-    name::String
+    jll_name::String
 
-    # The JLL version that this will be published under.
-    version::VersionNumber
+    # The JLL version series that this will be published under.  It is fed to
+    # `next_jll_version()` to determine the actual version number, which is available
+    # from the `PackageResult`.
+    version_series::VersionNumber
 
     # A mapping of name to list of successful extractions.  Most builds only have a
     # single entry in this dictionary, but advanced builds may have a default variant,
@@ -16,8 +18,8 @@ struct PackageConfig
     named_extractions::Dict{String,Vector{ExtractResult}}
 
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
-                           name::Union{AbstractString,Nothing} = nothing,
-                           version::VersionNumber = v"1.0.0")
+                           jll_name::Union{AbstractString,Nothing} = nothing,
+                           version_series::VersionNumber = v"1.0.0")
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
         end
@@ -29,13 +31,13 @@ struct PackageConfig
         end
 
         # We allow overriding the name, but default to `src_name`
-        if name === nothing
-            name = first_extract.config.build.config.src_name
+        if jll_name === nothing
+            jll_name = first_extract.config.build.config.src_name
         end
-        if !Base.isidentifier(name)
-            throw(ArgumentError("Package name '$(name)' is not a valid identifier!"))
+        if !Base.isidentifier(jll_name)
+            throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
-        return new(name, version, extractions)
+        return new(jll_name, version_series, extractions)
     end
 end
 PackageConfig(results::Vector{ExtractResult}; kwargs...) = PackageConfig(Dict("default" => results); kwargs...)
@@ -120,8 +122,8 @@ function package!(config::PackageConfig)
         ([JLLArtifactInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
     )
     jll = JLLInfo(;
-        name = config.name,
-        version = next_jll_version(meta.universe, "$(config.name)_jll", config.version),
+        name = config.jll_name,
+        version = next_jll_version(meta.universe, "$(config.jll_name)_jll", config.version_series),
         artifacts,
         julia_compat = "1.7",
     )
