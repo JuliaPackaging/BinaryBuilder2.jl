@@ -28,7 +28,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -59,7 +59,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -90,7 +90,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -121,7 +121,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -152,7 +152,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -183,7 +183,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -214,7 +214,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -245,7 +245,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -276,7 +276,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -307,7 +307,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -338,7 +338,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -369,7 +369,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -400,7 +400,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

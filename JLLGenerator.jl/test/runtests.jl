@@ -229,7 +229,7 @@ end
                         :libz,
                         "bin\\libz.dll",
                         [JLLLibraryDep("Glibc_jll", "libc")],
-                        [:RTLD_LAZY, :RTLD_DEEPBIND],
+                        flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     ),
                 ],
             ),
@@ -259,25 +259,25 @@ end
                             :libgcc_s,
                             "lib/libgcc_s.1.1.dylib",
                             [],
-                            [:RTLD_LAZY, :RTLD_DEEPBIND],
+                            flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libquadmath,
                             "lib/libquadmath.1.dylib",
                             incoherent ? [JLLLibraryDep(nothing, :does_not_exist)] : [],
-                            [:RTLD_LAZY, :RTLD_DEEPBIND],
+                            flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libgfortran,
                             "lib/libgfortran.5.dylib",
                             [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libquadmath)],
-                            [:RTLD_LAZY, :RTLD_DEEPBIND],
+                            flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libstdcxx,
                             "lib/libstdc++.6.dylib",
                             [JLLLibraryDep(nothing, :libgcc_s)],
-                            [:RTLD_LAZY, :RTLD_DEEPBIND],
+                            flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                     ]
                 ),
@@ -322,9 +322,9 @@ end
                         JLLLibraryProduct(
                             :libblastrampoline,
                             "lib/libblastrampoline.5.4.0.dylib",
-                            [],
-                            [:RTLD_LAZY, :RTLD_DEEPBIND],
-                            incoherent ? :callback_does_not_exist : :libblastrampoline_on_load_callback,
+                            [];
+                            flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                            on_load_callback = incoherent ? :callback_does_not_exist : :libblastrampoline_on_load_callback,
                         ),
                     ],
                     callback_defs = Dict(

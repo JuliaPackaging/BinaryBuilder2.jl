@@ -20,7 +20,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -43,7 +43,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -66,7 +66,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -89,7 +89,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -112,7 +112,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -135,7 +135,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -158,7 +158,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -181,7 +181,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -204,7 +204,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -227,7 +227,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "bin\\libdSFMT.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -250,7 +250,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -273,7 +273,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -296,7 +296,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -319,7 +319,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -342,7 +342,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -365,7 +365,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "lib/libdSFMT.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -388,7 +388,7 @@ jll = JLLInfo(;
                     :libdSFMT,
                     "bin\\libdSFMT.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

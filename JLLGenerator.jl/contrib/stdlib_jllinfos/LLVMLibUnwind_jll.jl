@@ -26,7 +26,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.1.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -55,7 +55,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -84,7 +84,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -113,7 +113,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -142,7 +142,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -171,7 +171,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -200,7 +200,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -229,7 +229,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -258,7 +258,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -287,7 +287,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "bin\\libunwind.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -316,7 +316,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -345,7 +345,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.1.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -374,7 +374,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -403,7 +403,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -432,7 +432,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "lib/libunwind.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -461,7 +461,7 @@ jll = JLLInfo(;
                     :libunwind,
                     "bin\\libunwind.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

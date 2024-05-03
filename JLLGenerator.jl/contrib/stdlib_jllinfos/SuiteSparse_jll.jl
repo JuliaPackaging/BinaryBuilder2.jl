@@ -28,7 +28,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -36,7 +36,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -44,7 +44,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -52,7 +52,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -65,7 +65,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -73,7 +73,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -84,7 +84,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -92,7 +92,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -100,7 +100,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -112,13 +112,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -129,7 +129,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -160,7 +160,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -168,7 +168,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -176,7 +176,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -184,7 +184,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -197,7 +197,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -205,7 +205,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -216,7 +216,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -224,7 +224,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -232,7 +232,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -244,13 +244,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -261,7 +261,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -292,7 +292,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -300,7 +300,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -308,7 +308,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -316,7 +316,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -329,7 +329,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -337,7 +337,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -348,7 +348,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -356,7 +356,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -364,7 +364,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -376,13 +376,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -393,7 +393,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -424,7 +424,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -432,7 +432,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -440,7 +440,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -448,7 +448,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -461,7 +461,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -469,7 +469,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -480,7 +480,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -488,7 +488,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -496,7 +496,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -508,13 +508,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -525,7 +525,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -556,7 +556,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -564,7 +564,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -572,7 +572,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -580,7 +580,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -593,7 +593,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -601,7 +601,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -612,7 +612,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -620,7 +620,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -628,7 +628,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -640,13 +640,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -657,7 +657,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -688,7 +688,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -696,7 +696,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -704,7 +704,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -712,7 +712,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -725,7 +725,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -733,7 +733,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -744,7 +744,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -752,7 +752,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -760,7 +760,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -772,13 +772,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -789,7 +789,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -820,7 +820,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -828,7 +828,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -836,7 +836,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -844,7 +844,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -857,7 +857,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -865,7 +865,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -876,7 +876,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -884,7 +884,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -892,7 +892,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -904,13 +904,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -921,7 +921,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -952,7 +952,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -960,7 +960,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -968,7 +968,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -976,7 +976,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -989,7 +989,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -997,7 +997,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1008,7 +1008,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1016,7 +1016,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1024,7 +1024,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1036,13 +1036,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1053,7 +1053,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1084,7 +1084,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1092,7 +1092,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1100,7 +1100,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1108,7 +1108,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1121,7 +1121,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1129,7 +1129,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1140,7 +1140,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1148,7 +1148,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1156,7 +1156,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1168,13 +1168,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1185,7 +1185,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1216,7 +1216,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1224,7 +1224,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1232,7 +1232,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1240,7 +1240,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1253,7 +1253,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1261,7 +1261,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1272,7 +1272,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1280,7 +1280,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1288,7 +1288,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1300,13 +1300,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1317,7 +1317,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1348,7 +1348,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1356,7 +1356,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1364,7 +1364,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1372,7 +1372,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1385,7 +1385,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1393,7 +1393,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1404,7 +1404,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1412,7 +1412,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1420,7 +1420,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1432,13 +1432,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1449,7 +1449,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1480,7 +1480,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1488,7 +1488,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1496,7 +1496,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1504,7 +1504,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1517,7 +1517,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1525,7 +1525,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1536,7 +1536,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1544,7 +1544,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1552,7 +1552,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1564,13 +1564,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1581,7 +1581,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1612,7 +1612,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1620,7 +1620,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1628,7 +1628,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1636,7 +1636,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1649,7 +1649,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1657,7 +1657,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1668,7 +1668,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1676,7 +1676,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1684,7 +1684,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1696,13 +1696,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1713,7 +1713,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1744,7 +1744,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1752,7 +1752,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1760,7 +1760,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1768,7 +1768,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1781,7 +1781,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1789,7 +1789,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1800,7 +1800,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1808,7 +1808,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1816,7 +1816,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1828,13 +1828,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1845,7 +1845,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1876,7 +1876,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1884,7 +1884,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1892,7 +1892,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1900,7 +1900,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1913,7 +1913,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1921,7 +1921,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1932,7 +1932,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1940,7 +1940,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1948,7 +1948,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1960,13 +1960,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1977,7 +1977,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2008,7 +2008,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2016,7 +2016,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2024,7 +2024,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2032,7 +2032,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2045,7 +2045,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2053,7 +2053,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2064,7 +2064,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2072,7 +2072,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2080,7 +2080,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2092,13 +2092,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2109,7 +2109,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2140,7 +2140,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2148,7 +2148,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2156,7 +2156,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2164,7 +2164,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2177,7 +2177,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2185,7 +2185,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2196,7 +2196,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2204,7 +2204,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2212,7 +2212,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2224,13 +2224,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2241,7 +2241,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

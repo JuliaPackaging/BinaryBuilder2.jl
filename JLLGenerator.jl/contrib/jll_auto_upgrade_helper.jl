@@ -31,17 +31,26 @@ mktempdir() do dir
             platform = parse(Platform, basename(f)[1:end-3])
         end
 
+        wrapper_source = String(read(f))
+
+        soname_map = Dict{String,String}()
+        for match in eachmatch(r"@declare_library_product\((.+?), \"(.+?)\"\)"s, wrapper_source)
+            varname = match.captures[1]
+            soname = match.captures[2]
+            soname_map[varname] = soname
+        end
+
         library_products[platform] = []
-        for match in eachmatch(r"@init_library_product\((.+?)\)"s, String(read(f)))
+        for match in eachmatch(r"@init_library_product\((.+?)\)"s, wrapper_source)
             lines = split(match.captures[1], "\n")
             name = strip(lines[2][1:end-1])
             path = rstrip(lstrip(strip(lines[3][1:end-1]), '"'), '"')
             flags = Symbol.(strip.(split(strip(lines[4][1:end-1]), "|")))
-            push!(library_products[platform], (name, path, flags))
+            push!(library_products[platform], (name, path, flags, soname_map[name]))
         end
 
         executable_products[platform] = []
-        for match in eachmatch(r"@init_executable_product\((.+?)\)"s, String(read(f)))
+        for match in eachmatch(r"@init_executable_product\((.+?)\)"s, wrapper_source)
             lines = split(match.captures[1], "\n")
             name = strip(lines[2][1:end-1])
             path = rstrip(lstrip(strip(lines[3][1:end-1]), '"'), '"')
@@ -49,7 +58,7 @@ mktempdir() do dir
         end
 
         file_products[platform] = []
-        for match in eachmatch(r"@init_file_product\((.+?)\)"s, String(read(f)))
+        for match in eachmatch(r"@init_file_product\((.+?)\)"s, wrapper_source)
             lines = split(match.captures[1], "\n")
             name = strip(lines[2][1:end-1])
             path = rstrip(lstrip(strip(lines[3][1:end-1]), '"'), '"')
@@ -104,13 +113,14 @@ function print_artifact_info(entry, platform, version, name)
                 products = [
     """)
 
-    for (name, path, flags) in library_products[platform]
+    for (name, path, flags, soname) in library_products[platform]
         print("""
                         JLLLibraryProduct(
                             :$(name),
                             "$(path)",
-                            [<deps>],
-                            $(repr(flags)),
+                            [<deps>];
+                            flags = $(repr(flags)),
+                            soname = $(repr(soname)),
                         ),
         """)
     end

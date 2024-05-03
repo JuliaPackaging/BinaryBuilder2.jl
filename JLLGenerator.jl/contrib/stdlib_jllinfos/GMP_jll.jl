@@ -20,7 +20,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.10.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -28,7 +28,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -51,7 +51,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -59,7 +59,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -82,7 +82,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -90,7 +90,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -113,7 +113,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -121,7 +121,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -144,7 +144,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -152,7 +152,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -175,7 +175,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -183,7 +183,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -206,7 +206,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -214,7 +214,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -237,7 +237,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -245,7 +245,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -268,7 +268,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -276,7 +276,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -299,7 +299,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -307,7 +307,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -330,7 +330,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -338,7 +338,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -361,7 +361,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -369,7 +369,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -392,7 +392,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -400,7 +400,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -423,7 +423,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -431,7 +431,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -454,7 +454,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -462,7 +462,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -485,7 +485,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -493,7 +493,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -516,7 +516,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -524,7 +524,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -547,7 +547,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "bin\\libgmp-10.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -555,7 +555,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -578,7 +578,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "bin\\libgmp-10.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -586,7 +586,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -609,7 +609,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -617,7 +617,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -640,7 +640,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -648,7 +648,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -671,7 +671,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.10.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -679,7 +679,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -702,7 +702,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -710,7 +710,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -733,7 +733,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -741,7 +741,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -764,7 +764,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -772,7 +772,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -795,7 +795,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -803,7 +803,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -826,7 +826,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -834,7 +834,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -857,7 +857,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "lib/libgmp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -865,7 +865,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -888,7 +888,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "bin\\libgmp-10.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -896,7 +896,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -919,7 +919,7 @@ jll = JLLInfo(;
                     :libgmp,
                     "bin\\libgmp-10.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgmpxx,
@@ -927,7 +927,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgmp),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

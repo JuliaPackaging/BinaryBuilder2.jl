@@ -21,7 +21,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.14.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -45,7 +45,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -69,7 +69,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -93,7 +93,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -117,7 +117,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -141,7 +141,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -165,7 +165,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -189,7 +189,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -213,7 +213,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -237,7 +237,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "bin\\libnghttp2-14.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -261,7 +261,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -285,7 +285,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.14.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -309,7 +309,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -333,7 +333,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -357,7 +357,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -381,7 +381,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "lib/libnghttp2.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -405,7 +405,7 @@ jll = JLLInfo(;
                     :libnghttp2,
                     "bin\\libnghttp2-14.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

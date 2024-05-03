@@ -36,7 +36,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -75,7 +75,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -114,7 +114,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -153,7 +153,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -192,7 +192,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -231,7 +231,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -270,7 +270,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -309,7 +309,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -348,7 +348,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -387,7 +387,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -426,7 +426,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -465,7 +465,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -504,7 +504,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -543,7 +543,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -582,7 +582,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -621,7 +621,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -660,7 +660,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
                         JLLLibraryDep(:LibSSH2_jll, :libssh2),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

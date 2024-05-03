@@ -100,16 +100,18 @@ end
     varname::Symbol
     path::String
     deps::Vector{JLLLibraryDep}
+    soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
 
-    function JLLLibraryProduct(varname, path, deps,
+    function JLLLibraryProduct(varname, path, deps;
                                flags = rtld_symbols(default_rtld_flags),
+                               soname = basename(path),
                                on_load_callback = nothing)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, flags, on_load_callback)
+        return new(varname, path, deps, soname, flags, on_load_callback)
     end
 end
 
@@ -119,6 +121,7 @@ function generate_toml_dict(lp::JLLLibraryProduct)
         "name" => string(lp.varname),
         "path" => lp.path,
         "deps" => generate_toml_dict.(lp.deps),
+        "soname" => lp.soname,
         "flags" => string.(lp.flags),
     )
     if lp.on_load_callback !== nothing
@@ -134,8 +137,9 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     return JLLLibraryProduct(
         Symbol(d["name"]),
         d["path"],
-        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]],
-        Symbol.(d["flags"]),
+        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]];
+        soname = d["soname"],
+        flags = Symbol.(d["flags"]),
         on_load_callback,
     )
 end

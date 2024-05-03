@@ -18,7 +18,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.1.2.13.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -39,7 +39,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -60,7 +60,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -81,7 +81,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -102,7 +102,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -123,7 +123,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -144,7 +144,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -165,7 +165,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -186,7 +186,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -207,7 +207,7 @@ jll = JLLInfo(;
                     :libz,
                     "bin\\libz.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -228,7 +228,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -249,7 +249,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.1.2.13.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -270,7 +270,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -291,7 +291,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -312,7 +312,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -333,7 +333,7 @@ jll = JLLInfo(;
                     :libz,
                     "lib/libz.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -354,7 +354,7 @@ jll = JLLInfo(;
                     :libz,
                     "bin\\libz.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),

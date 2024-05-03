@@ -20,13 +20,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.1.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -35,19 +35,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -55,13 +55,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.6.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -84,7 +84,7 @@ jll = JLLInfo(;
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -93,19 +93,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -113,13 +113,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -142,13 +142,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -157,19 +157,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -177,13 +177,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -206,13 +206,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -221,19 +221,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -241,13 +241,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -270,7 +270,7 @@ jll = JLLInfo(;
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -279,13 +279,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -293,13 +293,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -322,13 +322,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -337,13 +337,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -351,13 +351,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -380,13 +380,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -395,13 +395,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -409,13 +409,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -438,13 +438,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -453,19 +453,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -473,13 +473,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -502,13 +502,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -517,19 +517,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -537,13 +537,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -566,13 +566,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -581,19 +581,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -601,13 +601,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -630,13 +630,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -645,13 +645,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -659,13 +659,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -688,13 +688,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -703,13 +703,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -717,13 +717,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -746,13 +746,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -761,13 +761,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -775,13 +775,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -804,13 +804,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -819,19 +819,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -839,13 +839,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -868,13 +868,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -883,19 +883,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -903,13 +903,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -932,13 +932,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -947,19 +947,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -967,13 +967,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -996,13 +996,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1011,13 +1011,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1025,13 +1025,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1054,13 +1054,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1069,13 +1069,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1083,13 +1083,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1112,13 +1112,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1127,13 +1127,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1141,13 +1141,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1170,13 +1170,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1185,19 +1185,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1205,13 +1205,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1234,13 +1234,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1249,19 +1249,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1269,13 +1269,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1298,13 +1298,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1313,19 +1313,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1333,13 +1333,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1362,13 +1362,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1377,13 +1377,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1391,13 +1391,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1420,13 +1420,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1435,13 +1435,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1449,13 +1449,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1478,13 +1478,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1493,13 +1493,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1507,13 +1507,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1536,7 +1536,7 @@ jll = JLLInfo(;
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1545,19 +1545,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1565,13 +1565,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
@@ -1610,13 +1610,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "bin\\libatomic-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1625,19 +1625,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1645,13 +1645,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
@@ -1690,13 +1690,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "bin\\libatomic-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1705,19 +1705,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1725,13 +1725,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
@@ -1770,13 +1770,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1785,19 +1785,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1805,13 +1805,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1834,13 +1834,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1849,19 +1849,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1869,13 +1869,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1898,13 +1898,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1913,19 +1913,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1933,13 +1933,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -1962,13 +1962,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.1.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -1977,19 +1977,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -1997,13 +1997,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.6.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2026,13 +2026,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.1.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2041,19 +2041,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2061,13 +2061,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.6.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2090,13 +2090,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.1.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2105,19 +2105,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.1.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.0.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2125,13 +2125,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.6.dylib",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2154,13 +2154,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2169,19 +2169,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2189,13 +2189,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2218,13 +2218,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2233,19 +2233,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2253,13 +2253,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2282,13 +2282,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2297,19 +2297,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2317,13 +2317,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2346,13 +2346,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2361,13 +2361,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2375,13 +2375,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2404,13 +2404,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2419,13 +2419,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2433,13 +2433,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2462,13 +2462,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so.1",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2477,13 +2477,13 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2491,13 +2491,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2520,13 +2520,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2535,19 +2535,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2555,13 +2555,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2584,13 +2584,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2599,19 +2599,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2619,13 +2619,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2648,13 +2648,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "lib/libatomic.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "lib/libgcc_s.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2663,19 +2663,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "lib/libgomp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "lib/libssp.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2683,13 +2683,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "lib/libquadmath.so",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ]
         ),
@@ -2712,7 +2712,7 @@ jll = JLLInfo(;
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2721,19 +2721,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2741,13 +2741,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
@@ -2786,13 +2786,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "bin\\libatomic-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2801,19 +2801,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2821,13 +2821,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
@@ -2866,13 +2866,13 @@ jll = JLLInfo(;
                     :libatomic,
                     "bin\\libatomic-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgfortran,
@@ -2881,19 +2881,19 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libgcc_s),
                         JLLLibraryDep(nothing, :libquadmath)
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libssp,
                     "bin\\libssp-0.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libstdcxx,
@@ -2901,13 +2901,13 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath.6.dll",
                     [],
-                    [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLFileProduct(
                     :libgcc_a,
