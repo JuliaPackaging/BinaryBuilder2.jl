@@ -124,6 +124,9 @@ end
     # Parse it back in and ensure it's identical
     @test jll == parse_toml_dict(d)
 
+    # Test that `select_platform()` works on the `jll` object itself
+    @test select_platform(jll, Platform("x86_64", "linux")).treehash == "214deacf44273474118c5fe83871fdfa8039b4ad"
+
     # Generate a JLL on-disk
     mktempdir() do dir
         generate_jll(dir, jll)

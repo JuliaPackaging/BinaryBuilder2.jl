@@ -462,6 +462,11 @@ function JLLInfo(;name, version, artifacts,
     return JLLInfo(name, version, artifacts, platform_augmentation_code, julia_compat)
 end
 
+function Base.BinaryPlatforms.select_platform(jll::JLLInfo, platform::AbstractPlatform = HostPlatform())
+    artifacts = Dict(jart.platform => jart for jart in jll.artifacts)
+    return Base.BinaryPlatforms.select_platform(artifacts, platform)
+end
+
 # For historical reasons, our UUIDs are generated with some rather strange constants
 function jll_specific_uuid5(namespace::UUID, key::String)
     data = [reinterpret(UInt8, [namespace.value]); codeunits(key)]
