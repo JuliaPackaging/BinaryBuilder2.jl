@@ -46,18 +46,17 @@ function JLLLibraryDep(lp::LibraryProduct, jll::Union{Symbol,Nothing} = nothing)
     )
 end
 
-function JLLLibraryProduct(lp::LibraryProduct, prefix::String;
-                           jll_maps::Dict{LibraryProduct,Symbol} = Dict{LibraryProduct,Symbol}(),
-                           kwargs...)
+function JLLLibraryProduct(lp::LibraryProduct, prefix::String; kwargs...)
     return JLLLibraryProduct(
         lp.varname,
         locate(lp, prefix; kwargs...),
-        [JLLLibraryDep(dep, get(jll_maps, dep, nothing)) for dep in lp.deps],
-        lp.dlopen_flags,
+        [];
+        flags = lp.dlopen_flags,
+        on_load_callback = lp.on_load_callback,
     )
 end
 function AbstractJLLProduct(lp::LibraryProduct, prefix::String; kwargs...)
-    return JLLLibraryProduct(lp, prefix; @extract_kwargs(kwargs, :env, :platform, :jll_maps)...)
+    return JLLLibraryProduct(lp, prefix; @extract_kwargs(kwargs, :env, :platform)...)
 end
 
 function toposort_artifacts()
