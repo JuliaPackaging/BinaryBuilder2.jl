@@ -42,10 +42,12 @@ const verbose = false
             "xz",
         ]
         for tool in host_tools
-            # Ensure the tool comes from us
-            @test startswith(readchomp(addenv(`sh -c "which $tool"`, env)), prefix)
-            # Ensure it's runnable
-            @test success(addenv(`$tool --version`, env))
+            @testset "$tool" begin
+                # Ensure the tool comes from us
+                @test startswith(readchomp(addenv(`sh -c "which $tool"`, env)), prefix)
+                # Ensure it's runnable
+                @test success(addenv(`$tool --version`, env))
+            end
         end
 
         # These tools require special treatment
