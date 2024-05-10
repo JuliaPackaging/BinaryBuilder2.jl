@@ -2,7 +2,7 @@
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "2937a4b94babf7c1eeceb78c31ec5ba6a0cf652f"
+project_hash = "90e97a76328f4beb99e643980fd5e5e790335de0"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -36,12 +36,6 @@ version = "0.1.0"
 deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "SHA", "Scratch", "TreeArchival"]
 path = "../BinaryBuilderSources.jl"
 uuid = "316c416d-4527-6863-7465-466137743047"
-version = "0.1.0"
-
-[[deps.BinaryBuilderToolchains]]
-deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "JLLPrefixes", "JLLWrappers", "NetworkOptions", "OrderedCollections", "Pkg", "Reexport", "Scratch"]
-path = "../BinaryBuilderToolchains.jl"
-uuid = "33566f4c-336c-3150-6d30-4374274e6143"
 version = "0.1.0"
 
 [[deps.Compat]]
@@ -184,7 +178,7 @@ version = "1.2.0"
 
 [[deps.ObjectFile]]
 deps = ["Reexport", "StructIO"]
-path = "/home/sabae/.julia/dev/ObjectFile"
+git-tree-sha1 = "195e0a19842f678dd3473ceafbe9d82dfacc583c"
 uuid = "d8793406-e978-5875-9003-1fc021f44a92"
 version = "0.4.1"
 

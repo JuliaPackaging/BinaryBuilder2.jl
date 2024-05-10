@@ -1,7 +1,7 @@
 module BinaryBuilderAuditor
 
 using Base.BinaryPlatforms
-export audit!
+export audit!, AuditResult
 
 include("Utils.jl")
 include("SystemLibraries.jl")

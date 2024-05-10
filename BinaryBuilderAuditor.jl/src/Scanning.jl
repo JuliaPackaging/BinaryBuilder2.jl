@@ -109,7 +109,15 @@ function refresh!(scan::ScanResult, rel_path::String)
     end
 end
 
-Base.relpath(scan::ScanResult, rel_path::AbstractString) = get(scan.symlinks, rel_path, rel_path)
+function Base.relpath(scan::ScanResult, rel_path::AbstractString)
+    while haskey(scan.symlinks, rel_path)
+        new_rel_path = scan.symlinks[rel_path]
+        if new_rel_path == rel_path
+            break
+        end
+    end
+    return rel_path
+end
 Base.abspath(scan::ScanResult, rel_path::AbstractString) = joinpath(scan.prefix, relpath(scan, rel_path))
 
 function patchelf_flags(p::AbstractPlatform)
