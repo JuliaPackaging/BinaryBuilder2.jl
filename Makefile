@@ -33,7 +33,7 @@ endif
 test-$(1): $(foreach dep,$($(1)_DEPS),test-$(dep)) $(1)/LICENSE
 	@if [ "$${BUILDKITE}" = "true" ]; then \
 		if [ "$(1)" = "." ]; then \
-			echo "+++ BinaryBuilder2"; \
+			echo "+++ BinaryBuilder2.jl"; \
 		else \
 			echo "--- $(1)"; \
 		fi; \
