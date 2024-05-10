@@ -1,7 +1,7 @@
 name = "JLLGenerator"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
