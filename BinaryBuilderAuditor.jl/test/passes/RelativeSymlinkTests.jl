@@ -16,7 +16,6 @@ using BinaryBuilderAuditor: absolute_to_relative_symlinks!
             cp(src_dir, dest_dir; force=true, follow_symlinks=false)
             scan = scan_files(dest_dir, HostPlatform(); prefix_alias=src_dir)
             @test "in_prefix_symlink" ∈ keys(scan.symlinks)
-            @show scan.symlinks
 
             absolute_to_relative_symlinks!(scan, src_dir; verbose=true)
 

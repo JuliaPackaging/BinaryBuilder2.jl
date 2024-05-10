@@ -115,6 +115,7 @@ function Base.relpath(scan::ScanResult, rel_path::AbstractString)
         if new_rel_path == rel_path
             break
         end
+        rel_path = new_rel_path
     end
     return rel_path
 end
