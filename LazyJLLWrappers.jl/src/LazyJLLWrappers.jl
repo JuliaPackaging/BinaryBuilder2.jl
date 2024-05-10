@@ -1,7 +1,5 @@
 module LazyJLLWrappers
 
-@warn("TODO: Remove JLLGenerator from the deps, it should be a test-only dependency")
-
 export LazyArtifactPath, @generate_jll_from_toml
 
 using Libdl
