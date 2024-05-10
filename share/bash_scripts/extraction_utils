@@ -7,13 +7,15 @@ extract() {
         for file in "${files[@]}"; do
             file="$(realpath "${file}")"
 
+            CP_FLAGS=( "-a" )
             if [[ "${BB_PRINT_COMMANDS}" == "true" ]]; then
-                echo "extracting: ${file##${prefix}/}" >&2
+                CP_FLAGS+=( "-v" )
+                #echo "extracting: ${file##${prefix}/}" >&2
             fi
 
             dest="${extract_dir}/${file##${prefix}/}"
             mkdir -p "$(dirname "${dest}")"
-            cp -a "${file}" "${dest}"
+            cp "${CP_FLAGS[@]}" "${file}" "${dest}"
         done
     done
 }
