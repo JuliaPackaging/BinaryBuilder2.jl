@@ -2,7 +2,7 @@
 
 julia_version = "1.10.2"
 manifest_format = "2.0"
-project_hash = "be1801f0d3bab7a874a6e3f143786b441120dd49"
+project_hash = "2da540321a10756a1d94ae487260446eded9eb97"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -25,6 +25,12 @@ version = "0.2.0"
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
+[[deps.BinaryBuilderAuditor]]
+deps = ["BinaryBuilderProducts", "JLLGenerator", "ObjectFile", "Patchelf_jll"]
+path = "BinaryBuilderAuditor.jl"
+uuid = "53524979-5234-6e31-4220-6120654b694c"
+version = "0.1.0"
+
 [[deps.BinaryBuilderGitUtils]]
 deps = ["Git", "Git_jll", "MultiHashParsing"]
 path = "BinaryBuilderGitUtils.jl"
@@ -38,7 +44,7 @@ uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
 [[deps.BinaryBuilderProducts]]
-deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl", "ObjectFile"]
+deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl"]
 path = "BinaryBuilderProducts.jl"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
@@ -67,6 +73,11 @@ version = "4.14.0"
     [deps.Compat.weakdeps]
     Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
     LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+
+[[deps.CompilerSupportLibraries_jll]]
+deps = ["Artifacts", "Libdl"]
+uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
+version = "1.1.0+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -149,7 +160,7 @@ deps = ["Artifacts", "Pkg"]
 uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 
 [[deps.LazyJLLWrappers]]
-deps = ["Artifacts", "JLLGenerator", "Libdl", "Pkg", "Preferences", "TOML"]
+deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML"]
 path = "LazyJLLWrappers.jl"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
 version = "1.0.0"
@@ -241,6 +252,12 @@ deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.42.0+1"
 
+[[deps.Patchelf_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "ad1cab3e8273c912f722f40779e20f3e29d58f1f"
+uuid = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
+version = "0.18.0+0"
+
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
@@ -287,11 +304,9 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-git-tree-sha1 = "4d9c7ae048bb0ce5c352dae229d4ea36ccf9066c"
-repo-rev = "sf/overlayed_mounts"
-repo-url = "https://github.com/staticfloat/Sandbox.jl.git"
+path = "/Users/sabae/.julia/dev/Sandbox"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
-version = "2.0.0"
+version = "2.0.1"
 
 [[deps.Scratch]]
 deps = ["Dates"]

@@ -1,4 +1,4 @@
-using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts
+using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor
 
 export ExtractConfig, extract!
 
@@ -83,21 +83,30 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-function collect_library_products(config::ExtractConfig)
-    library_products = [p for p in config.products if isa(p, LibraryProduct)]
-
-    # TODO: Append library products for all dependencies as well
-    return library_products
-end
-
 function extract!(config::ExtractConfig)
-    local artifact_hash, run_status, run_exception
-    meta = config.build.config.meta
+    local artifact_hash, run_status, run_exception, audit_result
+    build_config = config.build.config
+    meta = build_config.meta
     @timeit config.to "extract" begin
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
                 sandbox_config = SandboxConfig(config, artifact_dir)
                 run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
+
+                # Before the artifact is sealed, we run our audit passes, as they may alter the binaries
+                @timeit config.to "audit" begin
+                    prefix_alias = "/workspace/destdir/$(triplet(build_config.platform.target))"
+                    # Load JLLInfo structures for each dependency
+                    dep_jll_infos = JLLInfo[parse_toml_dict(d) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
+                    audit_result = audit!(
+                        artifact_dir,
+                        LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
+                        dep_jll_infos;
+                        prefix_alias,
+                        env = build_config.env,
+                        verbose = meta.verbose,
+                    )
+                end
             end
         end
     end
@@ -117,17 +126,12 @@ function extract!(config::ExtractConfig)
         error()
     end
 
-    # Compute dependency structure for all library products
-    library_products = collect_library_products(config)
-    if !isempty(library_products)
-        resolve_dependency_links!(library_products, extract_prefix, config.build.env)
-    end
-
     result = ExtractResult(
         config,
         run_status,
         run_exception,
         artifact_hash,
+        audit_result,
         Dict{String,String}(),
     )
     meta.extractions[config] = result

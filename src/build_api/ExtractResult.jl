@@ -15,6 +15,9 @@ struct ExtractResult
     # On a failed/skipped build, this may be the special all-zero artifact hash.
     artifact::Base.SHA1
 
+    # The audit result
+    audit_result::Union{Nothing,AuditResult}
+
     # Logs generated during this extraction (audit logs, mostly)
     logs::Dict{String,String}
 
@@ -22,12 +25,14 @@ struct ExtractResult
                            status::Symbol,
                            exception::Union{Nothing,Exception},
                            artifact::Base.SHA1,
+                           audit_result::AuditResult,
                            logs::Dict{<:AbstractString,<:AbstractString})
         return new(
             config,
             status,
             exception,
             artifact,
+            audit_result,
             Dict(String(k) => String(v) for (k,v) in logs),
         )
     end
@@ -60,7 +65,9 @@ function ExtractResult_skipped(config::ExtractConfig)
     return ExtractResult(
         config,
         :skipped,
+        nothing,
         Base.SHA1("0"^40),
+        nothing,
         Dict{String,String}(),
     )
 end

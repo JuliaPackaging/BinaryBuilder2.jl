@@ -99,8 +99,12 @@ function JLLGenerator.JLLArtifactInfo(name::String, result::ExtractResult)
     end
     build_config = result.config.build.config
 
-    # TODO: get all library products from each dependency
-    jll_maps = Dict{LibraryProduct,Symbol}()
+    # First, translate all non-library products to JLLProducts
+    products = [
+        AbstractJLLProduct(p, artifact_path(result)) for p in result.config.products if !isa(p, LibraryProduct)
+    ]
+    # Then, append the JLLLibraryProducts that were filled out by the auditor:
+    append!(products, result.audit_result.jll_lib_products)
 
     return JLLArtifactInfo(;
         src_version = build_config.src_version,
@@ -110,7 +114,7 @@ function JLLGenerator.JLLArtifactInfo(name::String, result::ExtractResult)
         platform = build_config.platform.target,
         name,
         treehash = SHA1Hash(result.artifact),
-        products = [AbstractJLLProduct(p, artifact_path(result); env=build_config.env, jll_maps) for p in result.config.products],
+        products,
         # TODO: Add links to our eventual deployment target
         download_sources = [],
     )
