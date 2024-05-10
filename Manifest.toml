@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.2"
+julia_version = "1.10.3"
 manifest_format = "2.0"
 project_hash = "2da540321a10756a1d94ae487260446eded9eb97"
 
@@ -56,16 +56,16 @@ uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
 
 [[deps.BinaryBuilderToolchains]]
-deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "JLLPrefixes", "JLLWrappers", "NetworkOptions", "OrderedCollections", "Pkg", "Reexport", "Scratch"]
+deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "JLLPrefixes", "NetworkOptions", "Pkg", "Reexport", "Scratch"]
 path = "BinaryBuilderToolchains.jl"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
 version = "0.1.0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
-git-tree-sha1 = "c955881e3c981181362ae4088b35995446298b80"
+git-tree-sha1 = "b1c55339b7c6c350ee89f2c1604299660525b248"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "4.14.0"
+version = "4.15.0"
 
     [deps.Compat.extensions]
     CompatLinearAlgebraExt = "LinearAlgebra"
@@ -77,7 +77,7 @@ version = "4.14.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.0+0"
+version = "1.1.1+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -95,9 +95,9 @@ version = "1.0.4"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "4558ab818dcceaab612d1bb8c19cee87eda2b83c"
+git-tree-sha1 = "1c6317308b9dc757616f0b5cb379db10494443a7"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
-version = "2.5.0+0"
+version = "2.6.2+0"
 
 [[deps.ExprTools]]
 git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
@@ -132,7 +132,7 @@ uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 deps = ["BinaryBuilderPlatformExtensions", "Libdl", "MultiHashParsing", "Pkg", "Reexport", "SHA", "StructEquality", "TOML"]
 path = "JLLGenerator.jl"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
-version = "0.1.0"
+version = "0.2.0"
 weakdeps = ["BinaryBuilderSources"]
 
     [deps.JLLGenerator.extensions]
