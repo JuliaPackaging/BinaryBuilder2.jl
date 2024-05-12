@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.3"
+julia_version = "1.10.2"
 manifest_format = "2.0"
 project_hash = "2da540321a10756a1d94ae487260446eded9eb97"
 
@@ -77,7 +77,7 @@ version = "4.15.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.1+0"
+version = "1.1.0+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -304,7 +304,7 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-path = "/Users/sabae/.julia/dev/Sandbox"
+git-tree-sha1 = "492330c04efc3962cfb4a2567ed3567c9d8e7e90"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
 version = "2.0.1"
 
