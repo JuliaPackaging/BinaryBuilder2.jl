@@ -459,3 +459,30 @@ end
         @test roundtrip_jll_through_toml(jll)[2] == jll
     end
 end
+
+using BinaryBuilderSources, Base.BinaryPlatforms, Pkg
+using BinaryBuilderSources: PkgSpec
+@testset "JLLSource TOML loading" begin
+    # Use special Readline_jll.jl because we do not yet have any JLLs built in the wild that have a `JLL.toml`.
+    jll = JLLSource(PkgSpec(;
+        name = "Readline_jll",
+        uuid = "05236dd9-4125-5232-aa7c-9ec0c9b2c25a",
+        tree_hash = Base.SHA1("a1083574ec4b58dbde579b72760001a1741cdae7"),
+        repo=Pkg.Types.GitRepo(
+            rev="5a3fde0fda4dadcaf444c54aad9651a3ef373027",
+            source="https://github.com/staticfloat/Readline_jll.jl",
+        ),
+    ), Platform("aarch64", "linux"))
+
+    mktempdir() do prefix
+        prepare(jll; depot=prefix)
+        data = parse_toml_dict(jll; depot=prefix)
+
+        @test data.name == "Readline"
+        @test length(data.artifacts) == 1
+        jart = only(data.artifacts)
+        @test jart.name == "default"
+        @test length(jart.products) == 2
+        @test jart.treehash == "sha1:b18bc5bdcff9c62785e46d19dcdce3717ce10335"
+    end
+end
