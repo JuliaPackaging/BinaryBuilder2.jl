@@ -45,6 +45,21 @@ apply_platform(s::AbstractSource, platform::AbstractPlatform) = s
 
 const ConvenienceSource = Union{AbstractSource,PlatformlessJLLSource}
 
+struct BuildError <: Exception
+    message::String
+    result::Union{BuildResult,ExtractResult,PackageResult}
+end
+
+function Base.showerror(io::IO, be::BuildError)
+    stage_name(::BuildResult) = "build"
+    stage_name(::ExtractResult) = "extract"
+    stage_name(::PackageResult) = "package"
+
+    println("BuildError ($(stage_name(be.result))): $(be.message)")
+end
+
+
+
 @warn("TODO: Write build_tarballs() adapter to split HostBuildDependencies, accept ARGS, and whatnot")
 function build_tarballs(src_name::String,
                         src_version::VersionNumber,
@@ -74,16 +89,34 @@ function build_tarballs(src_name::String,
             @extract_kwargs(kwargs, :host, :toolchains, :allow_unsafe_flags, :lock_microarchitecture)...,
         )
         build_result = build!(build_config; @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr)...)
+        if build_result.status != :success
+            if build_result.status == :failed
+                throw(BuildError("Build script failed", build_result))
+            elseif build_result.status == :errored
+                throw(BuildError("Unknown error", build_result))
+            end
+        end
         extract_config = ExtractConfig(
             build_result,
             extract_script,
             products;
             @extract_kwargs(kwargs, :metadir)...,
         )
-        push!(extract_results, extract!(extract_config))
+        extract_result = extract!(extract_config)
+        if extract_result.status != :success
+            if extract_result.status == :failed
+                throw(BuildError("Extract script failed", extract_result))
+            elseif extract_result.status == :errored
+                throw(BuildError("Unknown error", extract_result))
+            end
+        end
+        push!(extract_results, extract_result)
     end
     # Take those extractions, and group them together as a single package
     package_config = PackageConfig(extract_results; @extract_kwargs(kwargs, :jll_name, :version_series)...)
     package_result = package!(package_config)
+    if package_result.status != :success
+        throw(BuildError("Unknown error", package_result))
+    end
     return package_result
 end
