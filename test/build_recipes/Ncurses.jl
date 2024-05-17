@@ -33,6 +33,11 @@ function ncurses_build_tarballs(meta, platforms)
 
         # Remove duplicates that don't work on case-insensitive filesystems
         rm -rf ${prefix}/share/terminfo
+
+        # Install pc files and fool packages looking for non-wide-character ncurses
+        for lib in ncurses form panel menu; do
+            ln -vs "lib${lib}w.${dlext}" "${libdir}/lib${lib}.${dlext}"
+        done
         """,
         platforms,
         [
