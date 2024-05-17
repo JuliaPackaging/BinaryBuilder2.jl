@@ -85,7 +85,8 @@ end
 
 
 function extract!(config::ExtractConfig)
-    local artifact_hash, run_status, run_exception, audit_result
+    local artifact_hash, run_status, run_exception
+    audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
     @timeit config.to "extract" begin
@@ -94,19 +95,21 @@ function extract!(config::ExtractConfig)
                 sandbox_config = SandboxConfig(config, artifact_dir)
                 run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
 
-                # Before the artifact is sealed, we run our audit passes, as they may alter the binaries
-                @timeit config.to "audit" begin
-                    prefix_alias = "/workspace/destdir/$(triplet(build_config.platform.target))"
-                    # Load JLLInfo structures for each dependency
-                    dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
-                    audit_result = audit!(
-                        artifact_dir,
-                        LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
-                        dep_jll_infos;
-                        prefix_alias,
-                        env = build_config.env,
-                        verbose = meta.verbose,
-                    )
+                # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
+                if run_status == :success
+                    @timeit config.to "audit" begin
+                        prefix_alias = "/workspace/destdir/$(triplet(build_config.platform.target))"
+                        # Load JLLInfo structures for each dependency
+                        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
+                        audit_result = audit!(
+                            artifact_dir,
+                            LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
+                            dep_jll_infos;
+                            prefix_alias,
+                            env = build_config.env,
+                            verbose = meta.verbose,
+                        )
+                    end
                 end
             end
         end
@@ -122,8 +125,8 @@ function extract!(config::ExtractConfig)
         end
     end
 
-    if !isempty(unlocatable_products)
-        @error("Unable to locate $(length(unlocatable_products)) products:", unlocatable_products, platform=config.build.config.platform)
+    if !isempty(unlocatable_products) && run_status == :success
+        @error("Unable to locate $(length(unlocatable_products)) products:", unlocatable_products, platform=config.build.config.platform, run_status)
         error()
     end
 

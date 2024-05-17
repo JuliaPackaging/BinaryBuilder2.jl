@@ -1,4 +1,4 @@
-function readline_build_tarballs(meta, platforms)
+function readline_build_tarballs(meta, platforms; fail_build::Bool = false, fail_extract::Bool = false)
     return build_tarballs(
         "Readline",
         v"8.1",
@@ -11,7 +11,7 @@ function readline_build_tarballs(meta, platforms)
         # No target or host dependencies
         AbstractSource[],
         AbstractSource[],
-        raw"""
+        fail_build ? "false" : raw"""
         cd $WORKSPACE/srcdir/readline-*/
 
         export CPPFLAGS="-I${includedir}"
@@ -24,6 +24,7 @@ function readline_build_tarballs(meta, platforms)
             LibraryProduct(["libhistory", "libhistory8"], :libhistory),
             LibraryProduct(["libreadline", "libreadline8"], :libreadline),
         ];
+        extract_script = fail_extract ? "false" : "extract \${prefix}/*",
         meta,
     )
 end

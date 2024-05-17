@@ -25,7 +25,7 @@ struct ExtractResult
                            status::Symbol,
                            exception::Union{Nothing,Exception},
                            artifact::Base.SHA1,
-                           audit_result::AuditResult,
+                           audit_result::Union{AuditResult,Nothing},
                            logs::Dict{<:AbstractString,<:AbstractString})
         return new(
             config,

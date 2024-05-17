@@ -210,6 +210,11 @@ end
         package_result = ncurses_build_tarballs(meta, [native_linux])
         @test package_result.status == :success
     end
+
+    @testset "Failing build" begin
+        @test_throws BuildError readline_build_tarballs(meta, [native_linux]; fail_build=true)
+        @test_throws BuildError readline_build_tarballs(meta, [native_linux]; fail_extract=true)
+    end
 end
 
 end # testset "BuildAPI"

@@ -1,6 +1,6 @@
 using BinaryBuilderProducts: @extract_kwargs
 using BinaryBuilderSources: PkgSpec
-export build_tarballs
+export build_tarballs, BuildError
 
 """
     PlatformlessJLLSource
