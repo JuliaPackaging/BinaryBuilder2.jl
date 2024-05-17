@@ -87,7 +87,7 @@ struct Universe
                     dir_target = true,
                 )
             end
-        catch e
+        catch
             rethrow()
         end
 

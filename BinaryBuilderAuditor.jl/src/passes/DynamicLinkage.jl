@@ -14,7 +14,7 @@ function resolve_dynamic_links!(scan::ScanResult,
         for lib in libs
             if lib.soname ∈ keys(soname_map)
                 @error("Duplicate SONAMEs detected", lib.soname)
-                error("Duplicate SONAMEs detected")
+                error()
             end
             soname_map[lib.soname] = (jll_name, lib.varname)
         end
@@ -26,7 +26,7 @@ function resolve_dynamic_links!(scan::ScanResult,
         lib_located_path = locate(lib, scan.prefix; env, scan.platform)
         if lib_located_path === nothing
             @error("Unable to locate library", lib, scan.prefix)
-            error("Unable to locate library")
+            error()
         end
         scan.library_products[lib] = relpath(scan, lib_located_path)
         soname = get_soname(scan, lib)
@@ -71,7 +71,7 @@ function resolve_dynamic_links!(scan::ScanResult,
 
             if !haskey(soname_map, soname)
                 @error("Unable to map dependency", dep_soname=soname, lib_path=rel_path)
-                error("Unable to map dependency")
+                error()
             end
 
             # If this is not the real name (e.g. the user build `libfoo.so.1` without an
@@ -124,7 +124,7 @@ function update_linkage!(scan::ScanResult, rel_path::AbstractString,
     if !success(proc)
         println(String(take!(output)))
         @error("Unable to update linkage library", rel_path, old_soname, new_soname)
-        error("Unable to update linkage on library")
+        error()
     end
 
     # Ensure that our object handle gets refreshed
@@ -190,7 +190,7 @@ function rpaths_consistent!(scan::ScanResult,
         if !success(proc)
             println(String(take!(output)))
             @error("Unable to set RPATH on library", rel_path, rpath_str)
-            error("Unable to set RPATH on library")
+            error()
         end
     end
 end

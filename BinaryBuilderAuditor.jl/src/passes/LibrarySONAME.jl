@@ -40,7 +40,7 @@ function ensure_sonames!(scan::ScanResult; verbose::Bool = false)
             if !success(proc)
                 println(String(take!(output)))
                 @error("Unable to set SONAME on library", rel_path)
-                error("Unable to set SONAME on library")
+                error()
             end
 
             # Refresh our ObjectHandle, since the above manipulation
