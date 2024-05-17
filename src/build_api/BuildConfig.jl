@@ -142,6 +142,7 @@ struct BuildConfig
             "libdir" => "$(prefix)/lib",
             "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(prefix)/bin" : "$(prefix)/lib",
             "includedir" => "$(prefix)/include",
+            "dlext" => dlext(cross_platform.target)[2:end],
 
             # The same things, repeated for `host`
             "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",

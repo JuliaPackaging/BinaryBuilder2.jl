@@ -2,7 +2,7 @@ PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include ../common.mk
 
 CXXABI := $(PROJECT_DIR)/build/cxx_string_abi$(exeext)
-LIBSTR := $(PROJECT_DIR)/build/libstring$(dlext)
+LIBSTR := $(PROJECT_DIR)/build/libstring.$(dlext)
 
 all: $(CXXABI)
 

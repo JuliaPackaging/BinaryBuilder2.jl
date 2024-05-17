@@ -2,7 +2,7 @@ PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include ../common.mk
 
 DYNLINK := $(PROJECT_DIR)/build/dynamic_linking$(exeext)
-LIBFOO := $(PROJECT_DIR)/build/libfoo/libfoo$(dlext)
+LIBFOO := $(PROJECT_DIR)/build/libfoo/libfoo.$(dlext)
 
 all: $(DYNLINK)
 

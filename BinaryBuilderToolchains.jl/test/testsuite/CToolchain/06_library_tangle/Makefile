@@ -8,7 +8,7 @@ $(PROJECT_DIR)/build:
 
 define build_lib
 # $(1) is the name (e.g. `foo`), $(2) is the deps, e.g. `baz qux`
-lib$(1)_path := $(PROJECT_DIR)/build/lib$(1)$(dlext)
+lib$(1)_path := $(PROJECT_DIR)/build/lib$(1).$(dlext)
 lib$(1)_deps := $(patsubst %,$$(lib%_path),$(2))
 $$(lib$(1)_path): lib$(1).c | $$(lib$(1)_deps) $(PROJECT_DIR)/build
 	$$(CC) -shared -o $$@ $$(CPPFLAGS) $$(CFLAGS) -L./build $(patsubst %,-l%,$(2)) $$< -fPIC

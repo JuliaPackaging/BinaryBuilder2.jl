@@ -4,7 +4,7 @@ export USE_CCACHE
 
 # Inherit some things from the environment, setting dumb defaults otherwise
 target ?= x86_64-linux-gnu
-dlext ?= .so
+dlext ?= so
 exeext ?=
 CPPFLAGS ?=
 CFLAGS ?= -g -O2
