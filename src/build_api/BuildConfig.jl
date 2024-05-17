@@ -137,22 +137,22 @@ struct BuildConfig
             # Platform-targeting niceties
             "target" => "$(gcc_target_triplet(cross_platform.target))",
             "bb_full_target" => "$(triplet(cross_platform.target))",
-            "prefix" => prefix,
-            "bindir" => "$(prefix)/bin",
-            "libdir" => "$(prefix)/lib",
-            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(prefix)/bin" : "$(prefix)/lib",
-            "includedir" => "$(prefix)/include",
+            "prefix" => target_prefix_path,
+            "bindir" => "$(target_prefix_path)/bin",
+            "libdir" => "$(target_prefix_path)/lib",
+            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(target_prefix_path)/bin" : "$(target_prefix_path)/lib",
+            "includedir" => "$(target_prefix_path)/include",
             "dlext" => dlext(cross_platform.target)[2:end],
 
             # The same things, repeated for `host`
             "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
             "host" => "$(gcc_target_triplet(cross_platform.host))",
             "bb_full_host" => "$(triplet(cross_platform.host))",
-            "host_prefix" => host_prefix,
-            "host_bindir" => "$(host_prefix)/bin",
-            "host_libdir" => "$(host_prefix)/lib",
-            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix)/bin" : "$(host_prefix)/lib",
-            "host_includedir" => "$(host_prefix)/include",
+            "host_prefix" => host_prefix_path,
+            "host_bindir" => "$(host_prefix_path)/bin",
+            "host_libdir" => "$(host_prefix_path)/lib",
+            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix_path)/bin" : "$(host_prefix_path)/lib",
+            "host_includedir" => "$(host_prefix_path)/include",
 
             # Misc. pieces of information
             "BB_PRINT_COMMANDS" => "true",
