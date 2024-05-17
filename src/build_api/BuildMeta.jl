@@ -283,7 +283,7 @@ struct BuildMeta <: AbstractBuildMeta
         if universe_name === nothing
             universe = Universe()
         else
-            universe = Universe(joinpath(universes_dir(), universe_name))
+            universe = Universe(joinpath(universes_dir(), universe_name); persistent=true)
         end
 
         if deploy_target != "local" && (isempty(dirname(deploy_target)) || isempty(basename(deploy_target)))

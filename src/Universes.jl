@@ -67,6 +67,7 @@ struct Universe
     
     function Universe(depot_path::AbstractString = joinpath(universes_dir(), string(round(Int, time()), "-", randstring(4)));
                       registries::Vector{RegistrySpec} = Pkg.Registry.DEFAULT_REGISTRIES,
+                      persistent::Bool = false,
                       kwargs...)
         if isempty(registries)
             throw(ArgumentError("Must pass at least one registry to `Universe()`!"))
@@ -98,6 +99,13 @@ struct Universe
         uni = new(depot_path, registries)
         Pkg.activate(environment_path(uni)) do
             Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)))
+        end
+
+        # If we are not persistent, clean this universe up at the end of our run
+        if !persistent
+            atexit() do
+                rm(depot_path; force=true, recursive=true)
+            end
         end
 
         return uni
