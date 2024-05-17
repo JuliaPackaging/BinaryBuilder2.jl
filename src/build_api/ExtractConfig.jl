@@ -98,7 +98,7 @@ function extract!(config::ExtractConfig)
                 # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
                 if run_status == :success
                     @timeit config.to "audit" begin
-                        prefix_alias = "/workspace/destdir/$(triplet(build_config.platform.target))"
+                        prefix_alias = target_prefix(build_config.platform)
                         # Load JLLInfo structures for each dependency
                         dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
                         audit_result = audit!(

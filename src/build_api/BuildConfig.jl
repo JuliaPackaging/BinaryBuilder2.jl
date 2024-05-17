@@ -78,8 +78,8 @@ struct BuildConfig
 
         source_trees = Dict{String,Vector{AbstractSource}}(
             # Target dependencies
-            "/workspace/destdir/$(triplet(cross_platform.target))" => target_dependencies,
-            "/usr/local" => [
+            target_prefix(cross_platform) => target_dependencies,
+            host_prefix(cross_platform) => [
                 # Host dependencies (not including toolchains, those go in `/opt/$(host_triplet)`)
                 host_dependencies...;
                 # Also, our `BB` resources
@@ -177,7 +177,7 @@ struct BuildConfig
 end
 
 target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
-host_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.host))
+host_prefix(cross_platform::CrossPlatform) = "/usr/local" #string("/workspace/destdir/", triplet(cross_platform.host))
 target_prefix(config::BuildConfig) = target_prefix(config.platform)
 host_prefix(config::BuildConfig) = host_prefix(config.platform)
 
