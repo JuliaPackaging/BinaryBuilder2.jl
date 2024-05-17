@@ -89,7 +89,11 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
 end
 
 function default_jll_source_depot()
-    return joinpath(source_download_cache(), "jllsource_depot")
+    depot = joinpath(source_download_cache(), "jllsource_depot")
+    if !isdir(joinpath(depot, "registries"))
+        Pkg.Registry.download_registries(devnull, copy(Pkg.Registry.DEFAULT_REGISTRIES), depot)
+    end
+    return depot
 end
 
 """
@@ -119,7 +123,7 @@ function prepare(jlls::Vector{JLLSource};
             end
             jll.package.uuid = Pkg.Types.registered_uuid(registries, jll.package.name)
             if jll.package.uuid === nothing
-                throw(ArgumentError("Cannot specify a non-registered JLL without also specifying its UUID!"))
+                throw(ArgumentError("Cannot specify a non-registered JLL ($(jll.package.name)) without also specifying its UUID!"))
             end
         end
 
@@ -151,10 +155,18 @@ function prepare(jlls::Vector{JLLSource};
         for jll in platform_jlls
             pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
             # Update `jll.package` with things from `pkg`
-            jll.package.version = pkg.version
-            jll.package.path = pkg.path
-            jll.package.tree_hash = pkg.tree_hash
-            jll.package.repo = pkg.repo
+            if pkg.version != Pkg.Types.VersionSpec()
+                jll.package.version = pkg.version
+            end
+            if pkg.path !== nothing
+                jll.package.path = pkg.path
+            end
+            if pkg.tree_hash !== nothing
+                jll.package.tree_hash = pkg.tree_hash
+            end
+            if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
+                jll.package.repo = pkg.repo
+            end
             append!(jll.artifact_paths, art_paths[pkg])
         end
     end

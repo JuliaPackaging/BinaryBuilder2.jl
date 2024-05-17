@@ -394,6 +394,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 HostPlatform(),
             )
             @test length(deduplicate_jlls([zstd_any_dep, zstd_specific_dep])) == 1
+            @test startswith(source(zstd_specific_dep), "Zstd_jll@v")
 
             # Test that disjoint versions throw an error:
             zstd_impossible_dep = JLLSource(
