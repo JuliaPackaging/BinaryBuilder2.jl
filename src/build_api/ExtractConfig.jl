@@ -1,4 +1,4 @@
-using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor
+using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor, Pkg
 
 export ExtractConfig, extract!
 
@@ -82,6 +82,7 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     env["BB_WRAPPERS_VERBOSE"] = "true"
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
+
 
 function extract!(config::ExtractConfig)
     local artifact_hash, run_status, run_exception, audit_result

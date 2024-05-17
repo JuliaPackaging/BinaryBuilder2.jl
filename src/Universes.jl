@@ -5,6 +5,7 @@ using Random, TOML
 using BinaryBuilderGitUtils
 import LazyJLLWrappers
 import LocalRegistry
+using Scratch, Pkg, Dates
 
 export Universe, register!, in_universe
 
@@ -17,6 +18,13 @@ function update_and_checkout_registries!(registries::Vector{RegistrySpec},
     # For each registry, update it and then check it out into the given `depot_path`
     # if it does not already exist there.
     mkpath(joinpath(depot_path, "registries"))
+    registry_update_toml_path = joinpath(depot_path, "scratchspaces", string(Scratch.find_uuid(Pkg)), "registry_updates.toml")
+    if !isfile(registry_update_toml_path)
+        registry_update_log = Dict{String, Any}()
+    else
+        registry_update_log = TOML.parsefile(registry_update_toml_path)
+    end
+
     for reg in registries
         reg_checkout_path = joinpath(depot_path, "registries", reg.name)
         if force
@@ -34,6 +42,15 @@ function update_and_checkout_registries!(registries::Vector{RegistrySpec},
             head_commit = only(log(reg_clone_path; limit=1))
             checkout!(reg_clone_path, reg_checkout_path, head_commit)
         end
+        # We arbitrarily add a month onto here, making the optimistic assertion that we will
+        # never have a build that takes more than a month.
+        registry_update_log[string(reg.uuid)] = now() + Month(1)
+    end
+
+    # Tell Pkg not to try to update any of these registries, ever.  We'll always be the one to do so.
+    mkpath(dirname(registry_update_toml_path))
+    open(registry_update_toml_path; write=true) do io
+        TOML.print(io, registry_update_log)
     end
 end
 
@@ -121,7 +138,9 @@ used to allow artifacts and packages to be loaded from a shared cache depot.
          ,:+$+-,/H#MMMMMMM@- -,
                =++%%%%+/:-.
 """
-function in_universe(f::Function, u::Universe; extra_depots::Vector{String} = String[], append_bundled_depot_path::Bool = true)
+function in_universe(f::Function, u::Universe;
+                     extra_depots::Vector{String} = String[],
+                     append_bundled_depot_path::Bool = true)
     # Save old `DEPOT_PATH`
     old_depot_path = copy(Base.DEPOT_PATH)
 
