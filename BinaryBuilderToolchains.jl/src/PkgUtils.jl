@@ -60,16 +60,17 @@ function resolve_versions(pkgs::Vector{PackageSpec}; julia_version::Union{Nothin
 end
 
 """
-    update_pkgspec_versions!(pkgs::Vector{PackageSpec}, new_versions::Dict{String,PackageSpec})
+    update_pkgspec_versions_and_uuids!(pkgs::Vector{PackageSpec}, new_versions::Dict{String,PackageSpec})
 
-Allows updating (in place!) a set of `PackageSpec`s with new versions.  Used
-to update the internal `PackageSpec` objects of `JLLSource`s with new results
+Allows updating (in place!) a set of `PackageSpec`s with new versions and UUIDS.
+Used to update the internal `PackageSpec` objects of `JLLSource`s with new results
 from `resolve_pkg_versions()`.
 """
-function update_pkgspec_versions!(pkgs::Vector{PackageSpec}, new_versions::Dict{String,PackageSpec})
+function update_pkgspec_versions_and_uuids!(pkgs::Vector{PackageSpec}, new_versions::Dict{String,PackageSpec})
     for pkg in pkgs
         if haskey(new_versions, pkg.name)
             pkg.version = new_versions[pkg.name].version
+            pkg.uuid = new_versions[pkg.name].uuid
         end
     end
     return
@@ -93,7 +94,7 @@ function resolve_versions!(jlls::Vector{JLLSource}; julia_version::Union{Nothing
 
     # Apply them to the JLLSource objects.  This relies on the fact that we are
     # updating the `PackageSpec`'s `version` field in-place!
-    update_pkgspec_versions!(jll_pkgs, resolved_pkgs)
+    update_pkgspec_versions_and_uuids!(jll_pkgs, resolved_pkgs)
 end
 
 function filter_illegal_versionspecs!(pkgs::Vector{PackageSpec})

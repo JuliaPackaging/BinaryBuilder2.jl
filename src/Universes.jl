@@ -149,7 +149,9 @@ function in_universe(f::Function, u::Universe; extra_depots::Vector{String} = St
 
     try
         # Invoke the user function
-        f(env)
+        Pkg.activate(environment_path(u)) do
+            f(env)
+        end
     finally
         # No matter what happens, reset the DEPOT_PATH to what it should be.
         empty!(Base.DEPOT_PATH)
@@ -157,6 +159,7 @@ function in_universe(f::Function, u::Universe; extra_depots::Vector{String} = St
     end
 end
 
+depot_path(u::Universe) = u.depot_path
 function environment_path(u::Universe)
     env_path = joinpath(u.depot_path, "environments", "binarybuilder")
     mkpath(env_path)
@@ -210,48 +213,45 @@ end
 Given a `JLLInfo`, generate the JLL out into the `dev` folder of the given universe,
 """
 function register!(u::Universe, jll::JLLInfo)
-    in_universe(u) do env
-        # If there already happens to be a JLL with this name registered
-        # in one of the registries for this universe, clone it and check
-        # it out to `dev/$(jll.name)!`
-        jll_repo_url = get_package_repo(u, jll.name)
-        jll_repo_path = joinpath(source_download_cache(), "jll_clones", "$(jll.name)_jll")
-        rm(jll_repo_path; force=true, recursive=true)
-        if jll_repo_url !== nothing
-            clone!(jll_repo_url, jll_repo_path)
-        else
-            # If there does not already exists a JLL by this name, just
-            # create a new bare git repo.
-            init!(jll_repo_path)
-        end
-        jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
-        rm(jll_path; force=true, recursive=true)
-        checkout!(jll_repo_path, jll_path)
-
-        # Next, generate the JLL in-place and commit it
-        generate_jll(jll_path, jll)
-        commit!(jll_path, "$(jll.name) v$(jll.version)")
-
-        # Next, add that JLL to the universe's environment
-        Pkg.activate(environment_path(u)) do
-            Pkg.develop(;path=jll_path)
-        end
-        
-        # Finally, register it into the universe's registry
-        LocalRegistry.register(
-            jll_path;
-            registry=registry_path(u, first(u.registries)),
-            commit=true,
-            push=false,
-            repo=jll_repo_url,
-        )
+    # If there already happens to be a JLL with this name registered
+    # in one of the registries for this universe, clone it and check
+    # it out to `dev/$(jll.name)!`
+    jll_repo_url = get_package_repo(u, jll.name)
+    jll_repo_path = joinpath(source_download_cache(), "jll_clones", "$(jll.name)_jll")
+    rm(jll_repo_path; force=true, recursive=true)
+    if jll_repo_url !== nothing
+        clone!(jll_repo_url, jll_repo_path)
+    else
+        # If there does not already exists a JLL by this name, just
+        # create a new bare git repo.
+        init!(jll_repo_path)
     end
+    jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
+    rm(jll_path; force=true, recursive=true)
+    checkout!(jll_repo_path, jll_path)
+
+    # Next, generate the JLL in-place and commit it
+    generate_jll(jll_path, jll)
+    commit!(jll_path, "$(jll.name) v$(jll.version)")
+
+    in_universe(u) do env
+        # Next, add that JLL to the universe's environment
+        Pkg.develop(;path=jll_path)
+    end
+
+    # Finally, register it into the universe's registry
+    LocalRegistry.register(
+        jll_path;
+        registry=registry_path(u, first(u.registries)),
+        commit=true,
+        push=false,
+        repo=jll_repo_url,
+    )
 end
 
 import Pkg
 function Pkg.instantiate(u::Universe; kwargs...)
     in_universe(u) do env
-        Pkg.activate(u.depot_path)
         Pkg.instantiate(; kwargs...)
     end
 end

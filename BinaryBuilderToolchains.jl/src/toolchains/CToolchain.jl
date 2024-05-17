@@ -99,6 +99,7 @@ struct CToolchain <: AbstractToolchain
         append!(deps, [
             JLLSource(
                 "GCC_jll",
+                uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 platform;
                 repo=Pkg.Types.GitRepo(
                     rev="8d632ad5f2e2c419a4e67da14bf1609ab0291b24",
@@ -121,7 +122,7 @@ struct CToolchain <: AbstractToolchain
             ),
         ])
 
-        # Concretize the JLLSource's `PackageSpec`'s version now:
+        # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         resolve_versions!(deps; julia_version=nothing)
 
         return new(

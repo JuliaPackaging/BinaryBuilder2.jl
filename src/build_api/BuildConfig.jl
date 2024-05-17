@@ -124,8 +124,8 @@ struct BuildConfig
             source_trees[prefix] = [non_jlls..., jlls...]
         end
 
-        prefix = "/workspace/destdir/$(triplet(cross_platform.target))"
-        host_prefix = "/workspace/destdir/$(triplet(cross_platform.host))"
+        target_prefix_path = target_prefix(cross_platform)
+        host_prefix_path = host_prefix(cross_platform)
         env = path_appending_merge(env, Dict(
             # Things to work well with a shell
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
@@ -175,13 +175,27 @@ struct BuildConfig
     end
 end
 
+target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
+host_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.host))
+target_prefix(config::BuildConfig) = target_prefix(config.platform)
+host_prefix(config::BuildConfig) = host_prefix(config.platform)
+
 # Helper function to better control when we download all our deps
 # Ideally, this would be paralellized somehow.
 function prepare(config::BuildConfig; verbose::Bool = false)
     @timeit config.to "prepare" begin
+        universe = config.meta.universe
         for (prefix, deps) in config.source_trees
+            # We install different source trees in different environments.
             @timeit config.to prefix begin
-                prepare(deps; verbose, depot=config.meta.universe.depot_path)
+                mktempdir() do project_dir
+                    # The "target prefix" gets special treatment; we copy the "main" Universe's environment in,
+                    # because we want previous registrations within this universe to take effect.
+                    if prefix == target_prefix(config)
+                        cp(dirname(environment_path(universe)), project_dir; force=true)
+                    end
+                    prepare(deps; verbose, project_dir, depot=depot_path(universe))
+                end
             end
         end
     end

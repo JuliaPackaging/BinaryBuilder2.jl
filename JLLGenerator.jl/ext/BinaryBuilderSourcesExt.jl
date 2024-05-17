@@ -6,7 +6,12 @@ JLLGenerator.JLLSourceRecord(as::AbstractSource) = JLLSourceRecord(source(as), c
 
 # Define an adapter to go from a `JLLSource` to its TOML
 using BinaryBuilderSources.JLLPrefixes: with_depot_path
-Base.pkgdir(j::JLLSource) = Pkg.Operations.find_installed(j.package.name, j.package.uuid, j.package.tree_hash)
+function Base.pkgdir(j::JLLSource)
+    if j.package.path !== nothing
+        return j.package.path
+    end
+    return Pkg.Operations.find_installed(j.package.name, j.package.uuid, j.package.tree_hash)
+end
 function JLLGenerator.parse_toml_dict(j::JLLSource; depot::Union{Nothing,String} = nothing)
     local pkg_dir
     if depot === nothing

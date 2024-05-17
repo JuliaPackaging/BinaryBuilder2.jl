@@ -101,12 +101,28 @@ a previous invocation of `prepare()` will not be re-prepared, unless `force` is
 set to `true`.
 """
 function prepare(jlls::Vector{JLLSource};
+                 project_dir::String = mktempdir(),
                  depot::String = default_jll_source_depot(),
                  verbose::Bool = false,
                  force::Bool = false)
     # Split JLLs by platform:
     jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
+    registries = nothing
+
     for jll in jlls
+        # If this JLL does not yet have a UUID, resolve it by name with respect
+        # to the given depot.  Ideally the user would have filled this in, but
+        # we don't always get what we want.
+        if jll.package.uuid === nothing
+            if registries === nothing
+                registries = Pkg.Registry.reachable_registries(; depots=[depot])
+            end
+            jll.package.uuid = Pkg.Types.registered_uuid(registries, jll.package.name)
+            if jll.package.uuid === nothing
+                throw(ArgumentError("Cannot specify a non-registered JLL without also specifying its UUID!"))
+            end
+        end
+
         # If this JLL has been previously prepared, don't bother to prepare it
         # again, unless we've set `force` to re-prepare the source.
         if !isempty(jll.artifact_paths)
@@ -127,13 +143,18 @@ function prepare(jlls::Vector{JLLSource};
         # First, download everyone together, to give `JLLPrefixes` the
         # opportunity to parallelize downloads (we are not doing that
         # in `Pkg.add()` as of the time of this writing)
-        pkgs = [deepcopy(jll.package) for jll in platform_jlls]
-        collect_artifact_metas(pkgs; platform, verbose, pkg_depot=depot)
+        #pkgs = [deepcopy(jll.package) for jll in platform_jlls]
+        #collect_artifact_metas(pkgs; platform, verbose, project_dir, pkg_depot=depot)
 
         # Collect group of paths
-        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, pkg_depot=depot)
+        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, project_dir, pkg_depot=depot)
         for jll in platform_jlls
             pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
+            # Update `jll.package` with things from `pkg`
+            jll.package.version = pkg.version
+            jll.package.path = pkg.path
+            jll.package.tree_hash = pkg.tree_hash
+            jll.package.repo = pkg.repo
             append!(jll.artifact_paths, art_paths[pkg])
         end
     end

@@ -45,7 +45,10 @@ This toolchain contains a large number of useful host tools, such as
             "Perl_jll",
             "patch_jll",
 
-            # Networking tools
+            # Networking tools.  Note that since `CURL_jll` relies on `LibCURL_jll`
+            # which is a stdlib, if the user is building for a triplet that includes
+            # `julia_version` in its tags, that will (hilariously) impact the version
+            # of `curl` that is deployed as a host tool.
             "CURL_jll",
             "Git_jll",
             "rsync_jll",
@@ -76,7 +79,7 @@ This toolchain contains a large number of useful host tools, such as
             push!(deps, override)
         end
 
-        # Concretize the JLLSource's `PackageSpec`'s version now:
+        # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         jll_deps = JLLSource[d for d in deps if isa(d, JLLSource)]
         julia_version = nothing
         if haskey(tags(platform), "julia_version")

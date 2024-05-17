@@ -97,7 +97,7 @@ function extract!(config::ExtractConfig)
                 @timeit config.to "audit" begin
                     prefix_alias = "/workspace/destdir/$(triplet(build_config.platform.target))"
                     # Load JLLInfo structures for each dependency
-                    dep_jll_infos = JLLInfo[parse_toml_dict(d) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
+                    dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
                     audit_result = audit!(
                         artifact_dir,
                         LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],

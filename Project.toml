@@ -35,6 +35,7 @@ TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 UserNSSandbox_jll = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
 
 [compat]
+JLLPrefixes = "0.3.6"
 julia = "1.9"
 
 [extras]
