@@ -32,11 +32,11 @@ fi
 
 # On any kind of exit, save our environment out to our metadir
 trap "RET=\$?; \
-	trap - DEBUG INT TERM ERR EXIT; \
+	trap - DEBUG TERM ERR EXIT; \
     set +e +x; \
 	if [[ "\$RET" != 0 ]]; then \
     	echo Previous command \"'\${BASH_COMMAND}'\" exited with code \$RET >&2; \
 	fi; \
     save_env; \
     exit \$RET" \
-    EXIT INT TERM
+    TERM EXIT

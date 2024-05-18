@@ -21,16 +21,20 @@ const BUILD_HELP = (
                             during the build, which can help track down issues in your
                             build script.
 
-        --debug=<mode>      This causes a failed build to drop into an interactive shell
-                            for debugging purposes.  `<mode>` can be one of:
-                              - `error` drops you into the interactive shell only when
-                                there is an error during the build, this is the default
-                                when no mode is specified.
-                              - `begin` stops the build at the beginning before any
-                                command in the script is run.
-                              - `end` stops the build at the end of the build script,
-                                useful to inspect a successful build for which the
-                                auditor or some other packaging step would fail.
+        --debug=<mode>      This causes a build to drop into an interactive shell for
+                            debugging purposes.  `<mode>` is a comma-separated list of
+                            one or more of the following triggers:
+                              - `build-start`   -- just before the build script.
+                              - `build-error`   -- just after a failed build script.
+                              - `build-stop`    -- just after a build script.
+                              - `extract-start` -- just before the extraction script.
+                              - `extract-error` -- just after a failed extraction script.
+                              - `extract-stop`  -- just after an extraction script.
+                            In all cases, exiting the shell will continue the build, but
+                            in the case of an error, the build will then immediately end.
+                            If `*-stop` is already specified, specifying `*-debug` has no
+                            effect, as the debug shell will already be launched.
+                            The default `<mode>` value is `build-error,extract-error`.
 
         --universe=<name>   Register JLL wrapper code in the named universe.  Defaults
                             to creating a new arbitrarily-named universe.  Naming a
@@ -132,12 +136,9 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     parsed_kwargs[:verbose] = check_flag!(ARGS, "--verbose")
 
     # This sets whether we drop into a debug shell on failure or not
-    debug, debug_mode = extract_flag!(ARGS, "--debug", "error")
+    debug, debug_mode = extract_flag!(ARGS, "--debug", "build-error,extract-error")
     if debug
-        if debug_mode ∉ ("error", "begin", "end")
-            throw(ArgumentError("Invalid choice for `debug_mode`: \"$(debug_mode)\""))
-        end
-        parsed_kwargs[:debug] = debug_mode
+        parsed_kwargs[:debug] = Set(split(debug_mode, ","))
     end
 
     # Are we skipping building and just outputting JSON?
@@ -242,7 +243,7 @@ struct BuildMeta <: AbstractBuildMeta
     # An empty list does no overriding.
     target_list::Vector{Platform}
     verbose::Bool
-    debug::Union{Nothing,String}
+    debug_modes::Set{String}
 
     # The universe we register and deploy into
     universe::Universe
@@ -254,7 +255,6 @@ struct BuildMeta <: AbstractBuildMeta
     json_output::Union{Nothing,IO}
     deploy_target::String
     register::Bool
-    build_dir::String
     output_dir::String
 
     # Metadata about the version of BB used to build this thing
@@ -263,20 +263,24 @@ struct BuildMeta <: AbstractBuildMeta
     function BuildMeta(;target_list::Vector{Platform} = Platform[],
                         universe_name::Union{String,Nothing} = nothing,
                         verbose::Bool = false,
-                        debug::Union{Nothing,AbstractString} = nothing,
+                        debug_modes = Set{String}(),
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
                         dry_run::Vector{Symbol} = Symbol[],
                         deploy_target::AbstractString = "local",
                         register::Bool = false,
-                        build_dir::AbstractString = joinpath(pwd(), "build"),
                         output_dir::AbstractString = joinpath(pwd(), "products"),
                        )
         # Helper to convert SubStrings to Strings, but only if they're not `nothing`
         string_or_nothing(x::AbstractString) = String(x)
         string_or_nothing(::Nothing) = nothing
-        if debug !== nothing
-            if debug ∉ ("begin", "end", "error")
-                throw(ArgumentError("If `debug` is specified, it must be one of \"begin\", \"end\" or \"error\""))
+
+        if !isa(debug_modes, Set)
+            debug_modes = Set(debug_modes)
+        end
+        for mode in debug_modes
+            if mode ∉ Set(["build-start",   "build-error",   "build-stop",
+                           "extract-start", "extract-error", "extract-stop"])
+                throw(ArgumentError("Invalid debug mode`: \"$(mode)\""))
             end
         end
 
@@ -304,13 +308,12 @@ struct BuildMeta <: AbstractBuildMeta
             Dict{PackageConfig,PackageResult}(),
             target_list,
             verbose,
-            string_or_nothing(debug),
+            debug_modes,
             universe,
             Set{Symbol}(dry_run),
             json_output,
             string_or_nothing(deploy_target),
             register,
-            build_dir,
             output_dir,
             Dict("bb_version" => Base.pkgversion(@__MODULE__)),
         )

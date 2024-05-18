@@ -81,11 +81,13 @@ struct Universe
             for name in ("artifacts", "packages")
                 shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), name)
                 mkpath(shared_dir)
-                symlink(
-                    shared_dir,
-                    joinpath(depot_path, name);
-                    dir_target = true,
-                )
+                if !ispath(joinpath(depot_path, name))
+                    symlink(
+                        shared_dir,
+                        joinpath(depot_path, name);
+                        dir_target = true,
+                    )
+                end
             end
         catch
             rethrow()

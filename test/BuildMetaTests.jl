@@ -7,7 +7,7 @@ using Base.BinaryPlatforms
         # Ensure that we get very simple defaults for no args
         parsed_kwargs = parse_build_tarballs_args(String[])
         @test !parsed_kwargs[:verbose]
-        @test !haskey(parsed_kwargs, :debug)
+        @test !haskey(parsed_kwargs, :debug_modes)
         @test !haskey(parsed_kwargs, :json_output)
         @test parsed_kwargs[:deploy_target] == "local"
         @test !haskey(parsed_kwargs, :register_depot)
@@ -22,7 +22,7 @@ using Base.BinaryPlatforms
             "--register",
         ])
         @test parsed_kwargs[:verbose]
-        @test parsed_kwargs[:debug] == "error"
+        @test parsed_kwargs[:debug_modes] == Set(["build-error","extract-error"])
         @test parsed_kwargs[:json_output] == Base.stdout
         @test parsed_kwargs[:deploy_target] == "local"
         @test parsed_kwargs[:register_depot] == Pkg.depots1()
@@ -30,13 +30,13 @@ using Base.BinaryPlatforms
 
         # Next, supply arguments to them all
         parsed_kwargs = parse_build_tarballs_args(String[
-            "--debug=begin",
+            "--debug=build-start",
             "--meta-json=meta.json",
             "--deploy=JuliaBinaryWrappers/Foo_jll.jl",
             "--register=/tmp/bb_depot",
             "x86_64-apple-darwin14,aarch64-linux-musl,i686-linux-gnu-libgfortran3-cxx11",
         ])
-        @test parsed_kwargs[:debug] == "begin"
+        @test parsed_kwargs[:debug_modes] == Set(["build-start"])
         @test parsed_kwargs[:json_output] == "meta.json"
         @test parsed_kwargs[:deploy_target] == "JuliaBinaryWrappers/Foo_jll.jl"
         @test parsed_kwargs[:register_depot] == "/tmp/bb_depot"

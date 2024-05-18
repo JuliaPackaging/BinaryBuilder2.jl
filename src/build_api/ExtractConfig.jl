@@ -89,6 +89,12 @@ function extract!(config::ExtractConfig)
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
+
+    if "extract-start" ∈ meta.debug_modes
+        @warn("Launching debug shell")
+        runshell(config; verbose=meta.verbose)
+    end
+
     @timeit config.to "extract" begin
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
@@ -139,5 +145,9 @@ function extract!(config::ExtractConfig)
         Dict{String,String}(),
     )
     meta.extractions[config] = result
+    if "extract-stop" ∈ meta.debug_modes || ("extract-error" ∈ meta.debug_modes && run_status != :success)
+        @warn("Launching debug shell")
+        runshell(result; verbose=meta.verbose)
+    end
     return result
 end

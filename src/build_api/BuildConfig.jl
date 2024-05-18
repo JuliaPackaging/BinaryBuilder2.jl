@@ -90,17 +90,26 @@ struct BuildConfig
 
             # Metadata such as our build script
             "/workspace/metadir" => [GeneratedSource() do out_dir
+                # Generate a `.bashrc` that contains all sorts of `source` statements and whatnot
+                bashrc_path = joinpath(out_dir, ".bashrc")
+                open(bashrc_path; write=true) do io
+                    println(io, "#!/bin/bash")
+                    println(io, "source /usr/local/share/bb/hostcc_env")
+
+                    # Always keep this one last, since it starts saving bash history from that point on.
+                    println(io, "source /usr/local/share/bb/save_env_hook")
+                end
+                chmod(bashrc_path, 0o755)
+
                 script_path = joinpath(out_dir, "build_script.sh")
                 open(script_path, write=true) do io
                     println(io, "#!/bin/bash")
                     println(io, "set -euo pipefail")
-                    println(io, "source /usr/local/share/bb/save_env_hook")
+                    println(io, "source /workspace/metadir/.bashrc")
                     println(io, script)
                     println(io, "exit 0")
                 end
                 chmod(script_path, 0o755)
-                cp(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts", "save_env_hook"),
-                   joinpath(out_dir, ".bashrc"); force=true)
             end]
         )
         env = Dict{String,String}()
@@ -300,6 +309,11 @@ function build!(config::BuildConfig; deploy_root::String = mktempdir(builds_dir(
     )
     local run_status, run_exception
     exe = Sandbox.preferred_executor()()
+    if "build-start" ∈ config.meta.debug_modes
+        @warn("Launching debug shell")
+        runshell(config; verbose=config.meta.verbose)
+    end
+
     @timeit config.to "build" begin
         run_status, run_exception = run_trycatch(exe, sandbox_config, `/workspace/metadir/build_script.sh`)
     end
@@ -313,5 +327,10 @@ function build!(config::BuildConfig; deploy_root::String = mktempdir(builds_dir(
         Dict{String,String}(),
     )
     config.meta.builds[config] = result
+
+    if "build-stop" ∈ config.meta.debug_modes || ("build-error" ∈ config.meta.debug_modes && run_status != :success)
+        @warn("Launching debug shell")
+        runshell(result; verbose=config.meta.verbose)
+    end
     return result
 end
