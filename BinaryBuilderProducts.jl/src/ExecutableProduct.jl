@@ -11,13 +11,13 @@ struct ExecutableProduct <: AbstractProduct
     paths::Vector{String}
     varname::Symbol
 
-    function ExecutableProduct(paths, varname)
+    function ExecutableProduct(paths::Vector{<:AbstractString}, varname::Symbol)
         varname = Symbol(varname)
         check_varname(varname)
         return new(string.(paths), varname)
     end
 end
-ExecutableProduct(path::AbstractString, varname) = ExecutableProduct([path], varname)
+ExecutableProduct(path::AbstractString, varname::Symbol) = ExecutableProduct([path], varname)
 
 function default_product_dir(::Type{ExecutableProduct}, platform::AbstractPlatform)
     return "bin"
