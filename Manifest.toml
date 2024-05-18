@@ -2,7 +2,7 @@
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "a5f319eba57c8606b6420a35a8859334465cdb06"
+project_hash = "2b0f58042f39daeb9a6e440564447b8f02519e68"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -59,7 +59,7 @@ version = "0.1.0"
 deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "JLLPrefixes", "NetworkOptions", "Pkg", "Reexport", "Scratch"]
 path = "BinaryBuilderToolchains.jl"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
@@ -140,9 +140,9 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "492023282090ca55a619f5a194fcf223daa72079"
+git-tree-sha1 = "d9793240b4cfe804bddcaca5d993347e5507284a"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.3.6"
+version = "0.3.7"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
