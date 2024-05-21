@@ -99,7 +99,7 @@ struct Universe
         # Ensure that this universe's environment uses our version of LazyJLLWrappers,
         # since we may be testing things or have some local patch.
         uni = new(depot_path, registries)
-        Pkg.activate(environment_path(uni)) do
+        in_universe(uni) do env
             Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)))
         end
 
