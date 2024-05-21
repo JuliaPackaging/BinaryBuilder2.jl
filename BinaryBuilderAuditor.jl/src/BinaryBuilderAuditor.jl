@@ -40,7 +40,7 @@ function audit!(prefix::String,
     ensure_sonames!(scan)
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
-    get_library_products(jart::JLLArtifactInfo) = filter(x -> isa(x, LibraryProduct), jart.products)
+    get_library_products(jart::JLLArtifactInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
     dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}(Symbol(dep.name) => get_library_products(dep, platform) for dep in dependencies)
     jll_lib_products = resolve_dynamic_links!(
