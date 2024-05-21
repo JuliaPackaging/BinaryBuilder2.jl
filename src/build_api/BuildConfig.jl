@@ -73,6 +73,9 @@ struct BuildConfig
         )
 
         # Helper functions to determine where different types of toolchains end up
+        # We put the "host" toolchain in a separate location because there are cases where we want to
+        # compile from aarch64-linux-gnu -> aarch64-linux-gnu, but use e.g. different GCC versions.
+        # So it's easiest if we separate the host toolchian from any other potential triplet target.
         toolchain_prefix(toolchain::AbstractToolchain) = "/opt/$(gcc_target_triplet(platform(toolchain)))"
         toolchain_prefix(toolchain::HostToolsToolchain) = "/opt/host"
 
@@ -80,7 +83,7 @@ struct BuildConfig
             # Target dependencies
             target_prefix(cross_platform) => target_dependencies,
             host_prefix(cross_platform) => [
-                # Host dependencies (not including toolchains, those go in `/opt/$(host_triplet)`)
+                # Host dependencies (not including toolchains, those go in `/opt/host`)
                 host_dependencies...;
                 # Also, our `BB` resources
                 DirectorySource(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"); target="share/bb")
