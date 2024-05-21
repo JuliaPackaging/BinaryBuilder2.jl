@@ -106,7 +106,12 @@ struct BuildConfig
                     println(io, "#!/bin/bash")
                     println(io, "set -euo pipefail")
                     println(io, "source /workspace/metadir/.bashrc")
+                    # Save history on every DEBUG invocation
+                    println(io, "trap save_history DEBUG")
                     println(io, script)
+
+                    # Turn history saving off so that we don't see `exit 0`
+                    println(io, "trap - DEBUG")
                     println(io, "exit 0")
                 end
                 chmod(script_path, 0o755)
