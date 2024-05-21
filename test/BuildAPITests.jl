@@ -198,9 +198,14 @@ end
 end
 
 @testset "build_tarballs()" begin
+    include("build_recipes/Zlib.jl")
     include("build_recipes/Readline.jl")
     include("build_recipes/Ncurses.jl")
     meta = BuildMeta(; verbose=false)
+    @testset "Zlib" begin
+        package_result = zlib_build_tarballs(meta, [native_linux])
+        @test package_result.status == :success
+    end
     @testset "Readline" begin
         package_result = readline_build_tarballs(meta, [native_linux])
         @test package_result.status == :success
