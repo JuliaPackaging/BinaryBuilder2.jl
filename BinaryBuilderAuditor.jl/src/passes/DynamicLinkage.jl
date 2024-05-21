@@ -161,6 +161,9 @@ function rpaths_consistent!(scan::ScanResult,
             if is_system_library(soname, scan.platform)
                 continue
             end
+            if soname ∉ keys(soname_map)
+                throw(ArgumentError("Library $(soname) must be listed as a LibraryProduct!"))
+            end
             push!(dep_relpaths, relpath(dirname(soname_map[soname]), dirname(rel_path)))
         end
 
