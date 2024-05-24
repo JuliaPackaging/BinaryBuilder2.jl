@@ -51,7 +51,7 @@ end
 end
 
 @testset "Multi-stage build test" begin
-    meta = BuildMeta(; verbose=false)
+    meta = BuildMeta(; verbose=false, disable_cache=true)
     # First, build `libstring` from the BBToolchains testsuite
     cxx_string_abi_source =  DirectorySource(joinpath(
         pkgdir(BinaryBuilder2.BinaryBuilderToolchains),
@@ -150,7 +150,7 @@ end
         """,
         native_linux,
     )
-    build_result = build!(build_config);
+    build_result = build!(build_config; disable_cache=true);
     @test build_result.status == :success
 
     extract_script = raw"""
@@ -167,7 +167,7 @@ end
         extract_script,
         products,
     )
-    extract_result = extract!(extract_config)
+    extract_result = extract!(extract_config; disable_cache=true)
     @test extract_result.status == :success
 
     # Test that it built correctly

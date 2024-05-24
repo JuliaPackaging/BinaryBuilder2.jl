@@ -65,7 +65,7 @@ function extract_content_hash(extract_script::String, products::Vector{<:Abstrac
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
     end
 
-    return SHA1Hash(sha1(hash_buffer))
+    return SHA1Hash(sha1(take!(hash_buffer)))
 end
 function BinaryBuilderSources.content_hash(config::ExtractConfig)
     return extract_content_hash(config.script, config.products)
@@ -103,14 +103,14 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
 end
 
 
-function extract!(config::ExtractConfig)
+function extract!(config::ExtractConfig; disable_cache::Bool = false)
     local artifact_hash, run_status, run_exception
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
 
-    if build_cache_enabled(build_config.meta) && config.build.status == :cached
-        cached_artifact_hash, log, env = get(meta.build_cache, config)
+    if build_cache_enabled(build_config.meta) && !disable_cache
+        cached_artifact_hash, _, _ = get(meta.build_cache, config)
         if cached_artifact_hash !== nothing
             return ExtractResult_cached(config, Base.SHA1(cached_artifact_hash))
         end
@@ -170,7 +170,7 @@ function extract!(config::ExtractConfig)
         audit_result,
         Dict{String,String}(),
     )
-    if run_status == :success
+    if build_cache_enabled(meta) && run_status == :success
         put!(meta.build_cache, result)
     end
     meta.extractions[config] = result

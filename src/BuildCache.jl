@@ -28,13 +28,13 @@ function Base.put!(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash,
     bc.logs[build_hash] = log
     bc.envs[build_hash] = env
 end
-function Base.put!(bc::BuildCache, result::ExtractResult)
-    build_result = result.config.build
+function Base.put!(bc::BuildCache, extract_result::ExtractResult)
+    build_result = extract_result.config.build
     return put!(
         bc,
         content_hash(build_result.config),
-        content_hash(result.config),
-        SHA1Hash(result.artifact),
+        content_hash(extract_result.config),
+        SHA1Hash(extract_result.artifact),
         build_result.build_log,
         build_result.env,
     )
@@ -153,7 +153,14 @@ function load_cache(cache_dir::String = default_buildcache_dir())
             rethrow(e)
         end
     end
-    return BuildCache(cache_dir, cache, logs, envs)
+    bc = BuildCache(cache_dir, cache, logs, envs)
+    atexit() do
+        try
+            save_cache(bc)
+        catch
+        end
+    end
+    return bc
 end
 
 function prune!(bc::BuildCache, depots::Vector{String} = Base.DEPOT_PATH)

@@ -122,5 +122,6 @@ function build_tarballs(src_name::String,
     if package_result.status != :success
         throw(BuildError("Unknown error", package_result))
     end
+    save_cache(meta.build_cache)
     return package_result
 end

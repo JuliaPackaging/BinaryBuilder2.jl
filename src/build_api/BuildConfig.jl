@@ -226,7 +226,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
                 println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
             end
         end
-        config.content_hash[] = SHA1Hash(sha1(hash_buffer))
+        config.content_hash[] = SHA1Hash(sha1(take!(hash_buffer)))
     end
     return config.content_hash[]
 end
@@ -346,10 +346,12 @@ function build!(config::BuildConfig;
                 deploy_root::String = mktempdir(builds_dir()),
                 stdout::IO = stdout,
                 stderr::IO = stderr,
-                extract_arg_hints::Vector{<:Tuple} = Tuple[])
+                extract_arg_hints::Vector{<:Tuple} = Tuple[],
+                disable_cache::Bool = false)
     # Hit our build cache and see if we've already done this exact build.
-    if build_cache_enabled(config.meta) && !isempty(extract_arg_hints)
-        if all(haskey(config.meta.build_cache, content_hash(config), extract_content_hash(args...)) for args in extract_arg_hints)
+    if build_cache_enabled(config.meta) && !disable_cache && !isempty(extract_arg_hints)
+        build_hash = content_hash(config)
+        if all(haskey(config.meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
             return BuildResult_cached(config)
         end
     end
