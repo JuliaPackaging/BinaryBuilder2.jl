@@ -3,7 +3,7 @@ using TimerOutputs, Sandbox, BinaryBuilderToolchains
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
-using MultiHashParsing
+using MultiHashParsing, SHA
 
 export BuildConfig, build!
 
@@ -51,6 +51,9 @@ struct BuildConfig
 
     # We're going to store all sorts of timing information about our build in here
     to::TimerOutput
+
+    # Our content hash; we compute it once up-front because we may need to ask for it multiple times
+    content_hash::Ref{SHA1Hash}
 
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
@@ -173,7 +176,7 @@ struct BuildConfig
 
             # Misc. pieces of information
             "BB_PRINT_COMMANDS" => "true",
-            "nproc" => "$(get(ENV, "BINARYBUILDER_NPROC", Sys.CPU_THREADS))",
+            "nproc" => get(ENV, "BINARYBUILDER_NPROC", string(Sys.CPU_THREADS)),
             "SRC_NAME" => src_name,
         ))
 
@@ -189,8 +192,43 @@ struct BuildConfig
             string(script),
             cross_platform,
             TimerOutput(),
+            Ref{SHA1Hash}(),
         )
     end
+end
+
+function BinaryBuilderSources.content_hash(config::BuildConfig)
+    if !isassigned(config.content_hash)
+        # We will collect all information as a string (including hashes of dependencies)
+        # and then hash that whole thing to generate our content-hash.
+        hash_buffer = IOBuffer()
+
+        @timeit config.to "content_hash" begin
+            # Metadata about the build itslef,
+            println(hash_buffer, "[build_metadata]")
+            println(hash_buffer, "  platform = $(triplet(config.platform))")
+            println(hash_buffer, "  allow_unsafe_flags = $(config.allow_unsafe_flags)")
+            println(hash_buffer, "  lock_microarchitecture = $(config.lock_microarchitecture)")
+            println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
+
+            # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
+            println(hash_buffer, "[source_trees]")
+            for prefix in sort(collect(keys(config.source_trees)))
+                deps = config.source_trees[prefix]
+                println(hash_buffer, "  $(prefix) = $(content_hash(deps))")
+            end
+
+            # Next, the subset of the environment that includes all `BinaryBuilder*` packages
+            # and anything with the name `JLL` in it:
+            println(hash_buffer, "[environment]")
+            package_treehashes = bb_package_treehashes()
+            for pkg_name in sort(collect(keys(package_treehashes)))
+                println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
+            end
+        end
+        config.content_hash[] = SHA1Hash(sha1(hash_buffer))
+    end
+    return config.content_hash[]
 end
 
 target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
@@ -304,8 +342,17 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     return run_status, run_exception
 end
 
-function build!(config::BuildConfig; deploy_root::String = mktempdir(builds_dir()), stdout::IO = stdout, stderr::IO = stderr)
-    @warn("TODO: Check config tree hashes, don't build again if not necessary", maxlog=1)
+function build!(config::BuildConfig;
+                deploy_root::String = mktempdir(builds_dir()),
+                stdout::IO = stdout,
+                stderr::IO = stderr,
+                extract_arg_hints::Vector{<:Tuple} = Tuple[])
+    # Hit our build cache and see if we've already done this exact build.
+    if build_cache_enabled(config.meta) && !isempty(extract_arg_hints)
+        if all(haskey(config.meta.build_cache, content_hash(config), extract_content_hash(args...)) for args in extract_arg_hints)
+            return BuildResult_cached(config)
+        end
+    end
 
     mounts = deploy(config; verbose=config.meta.verbose, deploy_root)
     sandbox_config = SandboxConfig(
@@ -332,7 +379,8 @@ function build!(config::BuildConfig; deploy_root::String = mktempdir(builds_dir(
         run_exception,
         exe,
         mounts,
-        Dict{String,String}(),
+        # TOOD: Need to collect the output from `stdout` and `stderr` and store it here.
+        "",
     )
     config.meta.builds[config] = result
 

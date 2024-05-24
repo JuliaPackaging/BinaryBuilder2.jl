@@ -115,6 +115,8 @@ struct Universe
 end
 
 Artifacts.artifact_path(u::Universe, hash::Base.SHA1) = joinpath(u.depot_path, "artifacts", bytes2hex(hash.bytes))
+Artifacts.artifact_path(u::Universe, hash::SHA1Hash) = artifact_path(u, Base.SHA1(hash))
+Artifacts.artifact_path(hash::SHA1Hash) = artifact_path(Base.SHA1(hash))
 
 raw"""
     in_universe(f::Function, u::Universe;

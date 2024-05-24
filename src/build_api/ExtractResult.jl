@@ -13,7 +13,7 @@ struct ExtractResult
 
     # Treehash that represents the packaged output for the given config
     # On a failed/skipped build, this may be the special all-zero artifact hash.
-    artifact::Base.SHA1
+    artifact::SHA1Hash
 
     # The audit result
     audit_result::Union{Nothing,AuditResult}
@@ -24,18 +24,29 @@ struct ExtractResult
     function ExtractResult(config::ExtractConfig,
                            status::Symbol,
                            exception::Union{Nothing,Exception},
-                           artifact::Base.SHA1,
+                           artifact::Union{Base.SHA1,SHA1Hash},
                            audit_result::Union{AuditResult,Nothing},
                            logs::Dict{<:AbstractString,<:AbstractString})
         return new(
             config,
             status,
             exception,
-            artifact,
+            SHA1Hash(artifact),
             audit_result,
             Dict(String(k) => String(v) for (k,v) in logs),
         )
     end
+end
+
+function ExtractResult_cached(config::ExtractConfig, artifact::Base.SHA1)
+    return ExtractResult(
+        config,
+        :cached,
+        nothing,
+        artifact,
+        nothing,
+        Dict{String,String}(),
+    )
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
@@ -60,14 +71,3 @@ function ExtractResultSource(result::ExtractResult, target::String = "")
     )
 end
 
-
-function ExtractResult_skipped(config::ExtractConfig)
-    return ExtractResult(
-        config,
-        :skipped,
-        nothing,
-        Base.SHA1("0"^40),
-        nothing,
-        Dict{String,String}(),
-    )
-end

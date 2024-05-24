@@ -71,7 +71,7 @@ macro define_multi_hash(prefix, len, func)
             end
             return $T(tuple(data...))
         end
-        $T(data::String) = $T(hex2bytes(data))
+        $T(data::AbstractString) = $T(hex2bytes(data))
 
         # Create trivial identity constructors
         $T(hash::$T) = hash

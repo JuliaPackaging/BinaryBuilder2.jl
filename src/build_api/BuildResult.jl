@@ -11,65 +11,61 @@ mutable struct BuildResult
     # The config that this result was built from
     config::BuildConfig
 
-    # The overall status of the build.  One of [:successful, :failed, :errored, :skipped]
+    # The overall status of the build.  One of [:success, :failed, :errored, :cached, :skipped]
     status::Symbol
 
     # If `status` is `:errored`, this should contain the exception that was thrown during execution
     # This generally denotes a bug.
     exception::Union{Nothing,Exception}
 
-    # The set of mounts used to run the build.
-    exe::SandboxExecutor
+    # The executor and mounts used to run the build (also used to run the extraction)
+    exe::Union{Nothing,SandboxExecutor}
     mounts::Dict{String,MountInfo}
 
-    # Logs that are generated from build invocations and audit passes.
-    # Key name is an identifier for the operation, value is the log content.
-    # Example: ("audit-libfoo-relink_to_rpath").
-    logs::Dict{String,String}
+    # Log from the build
+    build_log::Union{Nothing,String}
 
     # The final environment of this build result.
     env::Dict{String,String}
 
-    # These are `@info`/`@warn`/`@error` messages that get emitted during the build/audit
-    # we may eventually want to make this more structured, e.g. organize them by audit
-    # pass and whatnot.  These messages are not written out to disk during packaging.
-    #msgs::Vector{Test.LogRecord}
-
-    ## TODO: merge `logs` and `msgs` with a better, more structured logging facility?
-
     function BuildResult(config::BuildConfig,
                          status::Symbol,
                          exception::Union{Nothing,Exception},
-                         exe::SandboxExecutor,
-                         mounts::Dict{<:String,MountInfo},
-                         logs::Dict{<:AbstractString,<:AbstractString})
-                         #msgs::Vector{Test.LogRecord})
+                         exe::Union{Nothing,SandboxExecutor},
+                         mounts::Dict{String,MountInfo},
+                         build_log::AbstractString,
+                         env::Dict{String,String} = parse_metadir_env(exe, config, mounts))
         obj = new(
             config,
             status,
             exception,
             exe,
-            Dict(String(k) => v for (k, v) in mounts),
-            Dict(String(k) => String(v) for (k, v) in logs),
-            parse_metadir_env(exe, config, mounts),
-            #msgs,
+            mounts,
+            String(build_log),
+            env,
         )
         # TODO: Provide a way to clean this up eagerly
-        atexit() do
-            Sandbox.cleanup(obj.exe)
+        if obj.exe !== nothing
+            atexit() do
+                Sandbox.cleanup(obj.exe)
+            end
         end
         return obj
     end
 end
 
-# Helper function for skipped builds
-function BuildResult_skipped(config::BuildConfig)
+function BuildResult_cached(config::BuildConfig)
+    build_hash = content_hash(config)
+    log = config.meta.build_cache.logs[build_hash]
+    env = config.meta.build_cache.envs[build_hash]
     return BuildResult(
         config,
-        :skipped,
+        :cached,
         nothing,
-        "/dev/null",
-        Dict{String,String}(),
+        nothing,
+        Dict{String,MountInfo}(),
+        log,
+        env,
     )
 end
 
@@ -120,8 +116,11 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
 end
 
 function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})
+    return parse_env_block(String(read(exe, config, mounts, "/workspace/metadir/env")))
+end
+
+function parse_env_block(env_string::AbstractString)
     env = Dict{String,String}()
-    env_string = String(read(exe, config, mounts, "/workspace/metadir/env"))
     for line in split(env_string, "\n")
         sep_idx = findfirst("=", line)
         if sep_idx !== nothing
@@ -129,6 +128,11 @@ function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Di
         end
     end
     return env
+end
+
+# The opposite of `parse_env_block`
+function serialize_env_block(env::Dict{String,String})
+    return join((string(key, "=", env[key]) for key in sort(collect(keys(env)))), "\n")
 end
 
 # TODO: construct helper to reconstruct BuildResult objects from S3-saved tarballs

@@ -21,13 +21,3 @@ struct PackageResult
         )
     end
 end
-
-# Note that this helper still takes in the `published_version`, as that is
-# potentially quite useful for static analysis to know.
-function PackageResult_skipped(config::PackageConfig, published_version::VersionNumber)
-    return PackageResult(
-        config,
-        :skipped,
-        published_version,
-    )
-end

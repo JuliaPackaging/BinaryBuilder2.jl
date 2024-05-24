@@ -74,6 +74,9 @@ const BUILD_HELP = (
         --output-dir=<dir>  Directory that holds packaged tarball outputs.  Defaults to
                             the value `"\$(pwd())/products"`.
 
+        --disable-cache     Disable usage of the build cache, forcing all builds to be
+                            run no matter if they were previously run and cached.
+
         --help              Print out this message.
 
     Examples:
@@ -193,6 +196,8 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:dry_run] = sort(collect(Set(dry_run_categories)))
     end
 
+    parsed_kwargs[:disable_cache] = check_flag!(ARGS, "--disable-cache")
+
     # Build/output directory locations
     output_dir, output_dir_path = extract_flag!(ARGS, "--output-dir")
     if output_dir
@@ -248,6 +253,10 @@ struct BuildMeta <: AbstractBuildMeta
     # The universe we register and deploy into
     universe::Universe
 
+    # Our build cache, allowing us to skip builds (unless it is disabled)
+    build_cache::BuildCache
+    build_cache_disabled::Bool
+
     # Most steps have a JSON representation that they can output, to allow us to
     # "trace" through a build and see what steps were run.  On Yggdrasil, we combine
     # this with the "dry run" mode, to allow us to generate a series of jobs.
@@ -257,14 +266,12 @@ struct BuildMeta <: AbstractBuildMeta
     register::Bool
     output_dir::String
 
-    # Metadata about the version of BB used to build this thing
-    bb_metadata::Dict
-
     function BuildMeta(;target_list::Vector{Platform} = Platform[],
                         universe_name::Union{String,Nothing} = nothing,
                         verbose::Bool = false,
                         debug_modes = Set{String}(),
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
+                        disable_cache::Bool = false,
                         dry_run::Vector{Symbol} = Symbol[],
                         deploy_target::AbstractString = "local",
                         register::Bool = false,
@@ -310,14 +317,30 @@ struct BuildMeta <: AbstractBuildMeta
             verbose,
             debug_modes,
             universe,
+            load_cache(),
+            disable_cache,
             Set{Symbol}(dry_run),
             json_output,
             string_or_nothing(deploy_target),
             register,
             output_dir,
-            Dict("bb_version" => Base.pkgversion(@__MODULE__)),
         )
     end
+end
+
+function build_cache_enabled(meta::BuildMeta)
+    # If the user has specifically requested we not use the cache, return `false`
+    if meta.build_cache_disabled
+        return false
+    end
+
+    # If the user has requested any of these debugging modes, we can't use the
+    # build cache, we have to run everything so that we can drop into the build environment.
+    if any(("build-start", "extract-start", "build-end", "extract-end") ∈ meta.debug_modes)
+        return false
+    end
+
+    return true
 end
 
 """

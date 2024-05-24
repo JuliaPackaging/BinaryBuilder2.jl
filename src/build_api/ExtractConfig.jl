@@ -52,6 +52,25 @@ struct ExtractConfig
     end
 end
 
+function extract_content_hash(extract_script::String, products::Vector{<:AbstractProduct})
+    # Similar to the `content_hash()` definition for `BuildConfig`, we construct
+    # a string in `hash_buffer` then hash it at the end for the final `content_hash()`.
+    hash_buffer = IOBuffer()
+
+    println(hash_buffer, "[extraction_metadata]")
+    println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(extract_script)))")
+    println(hash_buffer, "[products]")
+    library_products = LibraryProduct[p for p in products if isa(p, LibraryProduct)]
+    for product in sort(library_products; by = p->p.varname)
+        println(hash_buffer, "  $(product.varname) = $(product.paths)")
+    end
+
+    return SHA1Hash(sha1(hash_buffer))
+end
+function BinaryBuilderSources.content_hash(config::ExtractConfig)
+    return extract_content_hash(config.script, config.products)
+end
+
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir()), shell::Cmd = `/bin/bash`)
     sandbox_config = SandboxConfig(config, output_dir)
     run(config.build.exe, sandbox_config, shell)
@@ -89,6 +108,13 @@ function extract!(config::ExtractConfig)
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
+
+    if build_cache_enabled(build_config.meta) && config.build.status == :cached
+        cached_artifact_hash, log, env = get(meta.build_cache, config)
+        if cached_artifact_hash !== nothing
+            return ExtractResult_cached(config, Base.SHA1(cached_artifact_hash))
+        end
+    end
 
     if "extract-start" ∈ meta.debug_modes
         @warn("Launching debug shell")
@@ -144,6 +170,9 @@ function extract!(config::ExtractConfig)
         audit_result,
         Dict{String,String}(),
     )
+    if run_status == :success
+        put!(meta.build_cache, result)
+    end
     meta.extractions[config] = result
     if "extract-stop" ∈ meta.debug_modes || ("extract-error" ∈ meta.debug_modes && run_status != :success)
         @warn("Launching debug shell")

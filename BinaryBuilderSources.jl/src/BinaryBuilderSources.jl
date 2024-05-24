@@ -87,7 +87,7 @@ end
 verify(sources::Vector{<:AbstractSource}) = all(verify.(sources))
 function content_hash(sources::Vector{<:AbstractSource})
     content_hashes = content_hash.(sources)
-    entries = [(basename(h), hex2bytes(basename(h)), TreeArchival.mode_dir) for apath in jll.artifact_paths]
+    entries = [(bytes2hex(h), collect(h.data), TreeArchival.mode_dir) for h in content_hashes]
     return SHA1Hash(TreeArchival.tree_node_hash(SHA.SHA1_CTX, entries))
 end
 

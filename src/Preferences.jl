@@ -74,4 +74,3 @@ can be useful to have around for local testing, but are ultimately ephemeral.  T
 can be set through the `universes_dir` preference.
 """
 @define_storage_location universes_dir @get_scratch!("universes")
-

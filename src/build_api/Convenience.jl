@@ -88,7 +88,11 @@ function build_tarballs(src_name::String,
             platform;
             @extract_kwargs(kwargs, :host, :toolchains, :allow_unsafe_flags, :lock_microarchitecture)...,
         )
-        build_result = build!(build_config; @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr)...)
+        build_result = build!(
+            build_config;
+            extract_arg_hints = [(extract_script, products)],
+            @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr)...,
+        )
         if build_result.status != :success
             if build_result.status == :failed
                 throw(BuildError("Build script failed", build_result))

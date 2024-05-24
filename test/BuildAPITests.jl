@@ -153,16 +153,19 @@ end
     build_result = build!(build_config);
     @test build_result.status == :success
 
+    extract_script = raw"""
+    extract ${prefix}/lib/**.so*
+    extract ${prefix}/include/**
+    """
+    products = [
+        LibraryProduct("libz", :libz),
+        FileProduct("include/zlib.h", :zlib_h),
+    ]
+
     extract_config = ExtractConfig(
         build_result,
-        raw"""
-        extract ${prefix}/lib/**.so*
-        extract ${prefix}/include/**
-        """,
-        [
-            LibraryProduct("libz", :libz),
-            FileProduct("include/zlib.h", :zlib_h),
-        ],
+        extract_script,
+        products,
     )
     extract_result = extract!(extract_config)
     @test extract_result.status == :success
@@ -174,6 +177,12 @@ end
         @test isfile(joinpath(install_prefix, "include", "zlib.h"))
         @test isfile(joinpath(install_prefix, "lib", "libz.so.$(build_config.src_version)"))
     end
+
+    # Test that if we try to build it again, we get a cached version
+    cached_build_result = build!(build_config; extract_arg_hints=[(extract_script, products)])
+    @test cached_build_result.status == :cached
+    cached_extract_result = extract!(extract_config)
+    @test cached_extract_result.status == :cached
 
     package_config = PackageConfig(
         extract_result,
