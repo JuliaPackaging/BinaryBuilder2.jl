@@ -2,7 +2,7 @@
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "2b0f58042f39daeb9a6e440564447b8f02519e68"
+project_hash = "aae451507a35d3539e8c8ab73516d6323ba8f200"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -249,6 +249,14 @@ git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 version = "1.6.3"
 
+[[deps.OutputCollectors]]
+deps = ["StyledStrings"]
+git-tree-sha1 = "e3ba2c5c1c1b73b02758108d6fdaa36ef8605615"
+repo-rev = "master"
+repo-url = "https://github.com/JuliaPackaging/OutputCollectors.jl.git"
+uuid = "6c11c7d4-943b-4e2b-80de-f2cfc2930a8c"
+version = "1.0.0"
+
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
@@ -333,6 +341,12 @@ deps = ["Test"]
 git-tree-sha1 = "010dc73c7146869c042b49adcdb6bf528c12e859"
 uuid = "53d494c1-5632-5724-8f4c-31dff12d585f"
 version = "0.3.0"
+
+[[deps.StyledStrings]]
+deps = ["TOML"]
+git-tree-sha1 = "d108f10ee6a0f3955ed73b1ddf7dda09b7de6b21"
+uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
+version = "1.0.1"
 
 [[deps.TOML]]
 deps = ["Dates"]

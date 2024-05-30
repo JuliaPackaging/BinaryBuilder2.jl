@@ -19,11 +19,13 @@ mutable struct BuildResult
     exception::Union{Nothing,Exception}
 
     # The executor and mounts used to run the build (also used to run the extraction)
+    # These do not exist when we're restored from a cached build output.
     exe::Union{Nothing,SandboxExecutor}
     mounts::Dict{String,MountInfo}
 
     # Log from the build
-    build_log::Union{Nothing,String}
+    build_log::String
+    log_artifact::SHA1Hash
 
     # The final environment of this build result.
     env::Dict{String,String}
@@ -34,7 +36,8 @@ mutable struct BuildResult
                          exe::Union{Nothing,SandboxExecutor},
                          mounts::Dict{String,MountInfo},
                          build_log::AbstractString,
-                         env::Dict{String,String} = parse_metadir_env(exe, config, mounts))
+                         log_artifact::SHA1Hash,
+                         env::Dict{String,String})
         obj = new(
             config,
             status,
@@ -42,6 +45,7 @@ mutable struct BuildResult
             exe,
             mounts,
             String(build_log),
+            log_artifact,
             env,
         )
         # TODO: Provide a way to clean this up eagerly
@@ -56,15 +60,17 @@ end
 
 function BuildResult_cached(config::BuildConfig)
     build_hash = content_hash(config)
-    log = config.meta.build_cache.logs[build_hash]
+    log_artifact_hash = config.meta.build_cache.build_logs[build_hash]
     env = config.meta.build_cache.envs[build_hash]
+    build_log = joinpath(artifact_path(config.meta.universe, log_artifact_hash), "build.log")
     return BuildResult(
         config,
         :cached,
         nothing,
         nothing,
         Dict{String,MountInfo}(),
-        log,
+        String(read(build_log)),
+        log_artifact_hash,
         env,
     )
 end

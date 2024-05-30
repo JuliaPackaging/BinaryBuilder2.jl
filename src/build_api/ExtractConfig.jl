@@ -102,17 +102,16 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-
 function extract!(config::ExtractConfig; disable_cache::Bool = false)
-    local artifact_hash, run_status, run_exception
+    local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
 
     if build_cache_enabled(build_config.meta) && !disable_cache
-        cached_artifact_hash, _, _ = get(meta.build_cache, config)
-        if cached_artifact_hash !== nothing
-            return ExtractResult_cached(config, Base.SHA1(cached_artifact_hash))
+        artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
+        if artifact_hash !== nothing
+            return ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
         end
     end
 
@@ -121,10 +120,14 @@ function extract!(config::ExtractConfig; disable_cache::Bool = false)
         runshell(config; verbose=meta.verbose)
     end
 
+    extract_log_io = IOBuffer()
     @timeit config.to "extract" begin
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
-                sandbox_config = SandboxConfig(config, artifact_dir)
+                sandbox_config, collector = sandbox_and_collector(
+                    extract_log_io, config, artifact_dir;
+                    verbose=meta.verbose,
+                )
                 run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
 
                 # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
@@ -162,13 +165,27 @@ function extract!(config::ExtractConfig; disable_cache::Bool = false)
         error()
     end
 
+    # Wait for our output collector to finish, then take the IO output
+    wait(collector)
+    extract_log = String(take!(extract_log_io))
+
+    # Generate "log" artifact that will later be packaged up.
+    log_artifact_hash = in_universe(meta.universe) do env
+        Pkg.Artifacts.create_artifact() do artifact_dir
+            open(joinpath(artifact_dir, "extract.log"); write=true) do io
+                write(io, extract_log)
+            end
+        end
+    end
+
     result = ExtractResult(
         config,
         run_status,
         run_exception,
         artifact_hash,
+        log_artifact_hash,
         audit_result,
-        Dict{String,String}(),
+        extract_log,
     )
     if build_cache_enabled(meta) && run_status == :success
         put!(meta.build_cache, result)

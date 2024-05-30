@@ -3,7 +3,7 @@ using TimerOutputs, Sandbox, BinaryBuilderToolchains
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
-using MultiHashParsing, SHA
+using MultiHashParsing, SHA, OutputCollectors
 
 export BuildConfig, build!
 
@@ -314,6 +314,30 @@ function SandboxConfig(config::BuildConfig,
     )
 end
 
+function sandbox_and_collector(log_io::IO,
+                               args...;
+                               verbose::Bool = false,
+                               kwargs...)
+    pipes = Dict("stdout" => Pipe(), "stderr" => Pipe())
+    styles = Dict("stderr" => :red)
+    outputs = IO[log_io]
+    if verbose
+        push!(outputs, stdout)
+    end
+    collector = OutputCollector(
+        pipes,
+        outputs,
+        styles,
+    )
+    sandbox_config = SandboxConfig(
+        args...;
+        stdout=pipes["stdout"],
+        stderr=pipes["stderr"],
+        verbose,
+    )
+    return sandbox_config, collector
+end
+
 function runshell(config::BuildConfig; verbose::Bool = false, shell::Cmd = `/bin/bash`)
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
@@ -344,35 +368,52 @@ end
 
 function build!(config::BuildConfig;
                 deploy_root::String = mktempdir(builds_dir()),
-                stdout::IO = stdout,
-                stderr::IO = stderr,
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
                 disable_cache::Bool = false)
+    meta = config.meta
     # Hit our build cache and see if we've already done this exact build.
-    if build_cache_enabled(config.meta) && !disable_cache && !isempty(extract_arg_hints)
+    if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
         build_hash = content_hash(config)
-        if all(haskey(config.meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
+        if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
             return BuildResult_cached(config)
         end
     end
 
-    mounts = deploy(config; verbose=config.meta.verbose, deploy_root)
-    sandbox_config = SandboxConfig(
-        config, mounts;
-        # TODO: Spit these out into a logfile or something
-        stdout,
-        stderr,
-        verbose=config.meta.verbose,
+    # Write build script out into a logfile
+    build_log_io = IOBuffer()
+    mounts = deploy(config; verbose=meta.verbose, deploy_root)
+    sandbox_config, collector = sandbox_and_collector(
+        build_log_io, config, mounts;
+        verbose=meta.verbose,
     )
     local run_status, run_exception
     exe = Sandbox.preferred_executor()()
-    if "build-start" ∈ config.meta.debug_modes
+    if "build-start" ∈ meta.debug_modes
         @warn("Launching debug shell")
-        runshell(config; verbose=config.meta.verbose)
+        runshell(config; verbose=meta.verbose)
     end
 
     @timeit config.to "build" begin
         run_status, run_exception = run_trycatch(exe, sandbox_config, `/workspace/metadir/build_script.sh`)
+    end
+    wait(collector)
+    build_log = String(take!(build_log_io))
+
+    # Generate "log" artifact that will later be packaged up.
+    log_artifact_hash = in_universe(meta.universe) do env
+        Pkg.Artifacts.create_artifact() do artifact_dir
+            open(joinpath(artifact_dir, "build.log"); write=true) do io
+                write(io, build_log)
+            end
+        end
+    end
+    log_artifact_hash = SHA1Hash(log_artifact_hash)
+
+    # Parse out the environment from the build
+    if run_status != :errored
+        env = parse_metadir_env(exe, config, mounts)
+    else
+        env = Dict{String,String}()
     end
 
     result = BuildResult(
@@ -381,14 +422,15 @@ function build!(config::BuildConfig;
         run_exception,
         exe,
         mounts,
-        # TOOD: Need to collect the output from `stdout` and `stderr` and store it here.
-        "",
+        build_log,
+        log_artifact_hash,
+        env,
     )
-    config.meta.builds[config] = result
+    meta.builds[config] = result
 
-    if "build-stop" ∈ config.meta.debug_modes || ("build-error" ∈ config.meta.debug_modes && run_status != :success)
+    if "build-stop" ∈ meta.debug_modes || ("build-error" ∈ meta.debug_modes && run_status != :success)
         @warn("Launching debug shell")
-        runshell(result; verbose=config.meta.verbose)
+        runshell(result; verbose=meta.verbose)
     end
     return result
 end

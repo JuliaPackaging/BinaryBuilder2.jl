@@ -144,7 +144,7 @@ end
 # This allows us to make use of information such as dependencies.
 function AbstractProducts(infos::Vector{JLLInfo}, platform::AbstractPlatform)
     sym_name(info::JLLInfo) = Symbol(string(info.name, "_jll"))
-    artifacts = Dict{Symbol,JLLArtifactInfo}(
+    artifacts = Dict{Symbol,JLLBuildInfo}(
         sym_name(info) => select_platform(Dict(a.platform => a for a in info.artifacts), platform) for info in infos
     )
     # This is what we will eventually return

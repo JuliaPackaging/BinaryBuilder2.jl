@@ -37,58 +37,64 @@ end
     jll = JLLInfo(;
         name = "XZ",
         version = v"5.4.3+1",
-        artifacts = [
-            JLLArtifactInfo(;
+        builds = [
+            JLLBuildInfo(;
                 src_version = v"5.4.3",
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "linux"),
                 name = "default",
-                treehash = "214deacf44273474118c5fe83871fdfa8039b4ad",
-                download_sources = [
-                    JLLArtifactSource(
-                        "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.x86_64-linux-gnu.tar.gz",
-                        "70a053a45c76811bbb475aa43e0e0781c9e972d2fb57b67d35aa32a30de90336",
-                    ),
-                ],
+                artifact = JLLArtifactBinding(;
+                    treehash = "214deacf44273474118c5fe83871fdfa8039b4ad",
+                    download_sources = [
+                        JLLArtifactSource(
+                            "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.x86_64-linux-gnu.tar.gz",
+                            "70a053a45c76811bbb475aa43e0e0781c9e972d2fb57b67d35aa32a30de90336",
+                        ),
+                    ],
+                ),
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
                     JLLLibraryProduct(:liblzma, "lib/liblzma.so.5", liblzma_deps),
                 ]
             ),
-            JLLArtifactInfo(;
+            JLLBuildInfo(;
                 src_version = v"5.4.3",
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "windows"),
                 name = "default",
-                treehash = "4b8bb762c5118ee8ad81e67b981fe7d6a17fae77",
-                download_sources = [
-                    JLLArtifactSource(
-                        "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.x86_64-w64-mingw32.tar.gz",
-                        "3f05d8023b1776315c1761a67f87611859e9c8e9b2bd598592133d7d979f8e3e",
-                    ),
-                ],
+                artifact = JLLArtifactBinding(;
+                    treehash = "4b8bb762c5118ee8ad81e67b981fe7d6a17fae77",
+                    download_sources = [
+                        JLLArtifactSource(
+                            "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.x86_64-w64-mingw32.tar.gz",
+                            "3f05d8023b1776315c1761a67f87611859e9c8e9b2bd598592133d7d979f8e3e",
+                        ),
+                    ],
+                ),
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz.exe"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
                     JLLLibraryProduct(:liblzma, "bin/liblzma-5.dll", liblzma_deps),
                 ],
             ),
-            JLLArtifactInfo(;
+            JLLBuildInfo(;
                 src_version = v"5.4.3",
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("aarch64", "macos"),
                 name = "default",
-                treehash = "abb153d4516c6a0ee718ea8f8cde9466de07553c",
-                download_sources = [
-                    JLLArtifactSource(
-                        "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.aarch64-apple-darwin.tar.gz",
-                        "93b6890109b5dc9e6e022888cef5e8d3180a4ea0eae3ceab1ce6f247b5fbc66c",
-                    ),
-                ],
+                artifact = JLLArtifactBinding(;
+                    treehash = "abb153d4516c6a0ee718ea8f8cde9466de07553c",
+                    download_sources = [
+                        JLLArtifactSource(
+                            "https://github.com/JuliaBinaryWrappers/XZ_jll.jl/releases/download/XZ-v5.4.3%2B1/XZ.v5.4.3.aarch64-apple-darwin.tar.gz",
+                            "93b6890109b5dc9e6e022888cef5e8d3180a4ea0eae3ceab1ce6f247b5fbc66c",
+                        ),
+                    ],
+                ),
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
@@ -105,15 +111,15 @@ end
     # Do some very basic assertions on the contents of this TOML file
     @test d["name"] == "XZ"
     @test d["version"] == "5.4.3+1"
-    @test length(d["artifacts"]) == 3
+    @test length(d["builds"]) == 3
 
-    for aidx in 1:length(d["artifacts"])
-        @test only(d["artifacts"][aidx]["deps"])["name"] == "Glibc_jll"
-        @test only(d["artifacts"][aidx]["deps"])["compat"] == "*"
-        @test length(d["artifacts"][aidx]["products"]) == 3
-        @test length(d["artifacts"][aidx]["sources"]) == 1
+    for aidx in 1:length(d["builds"])
+        @test only(d["builds"][aidx]["deps"])["name"] == "Glibc_jll"
+        @test only(d["builds"][aidx]["deps"])["compat"] == "*"
+        @test length(d["builds"][aidx]["products"]) == 3
+        @test length(d["builds"][aidx]["sources"]) == 1
 
-        prods = d["artifacts"][aidx]["products"]
+        prods = d["builds"][aidx]["products"]
         for prod in prods
             if prod["type"] == "library"
                 @test only(prod["deps"]) == "Glibc_jll.libc"
@@ -125,7 +131,7 @@ end
     @test jll == parse_toml_dict(d)
 
     # Test that `select_platform()` works on the `jll` object itself
-    @test select_platform(jll, Platform("x86_64", "linux")).treehash == "214deacf44273474118c5fe83871fdfa8039b4ad"
+    @test select_platform(jll, Platform("x86_64", "linux")).artifact.treehash == "214deacf44273474118c5fe83871fdfa8039b4ad"
 
     # Generate a JLL on-disk
     mktempdir() do dir
@@ -156,8 +162,8 @@ end
         return JLLInfo(;
             name = "default",
             version = v"1.2.13+1",
-            artifacts = [
-                JLLArtifactInfo(;
+            builds = [
+                JLLBuildInfo(;
                     src_version = v"1.2.13+1",
                     deps = [
                         JLLPackageDependency(
@@ -168,11 +174,13 @@ end
                     ],
                     platform = Platform("aarch64", "linux"; libc = "glibc"),
                     name = "default",
-                    treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
-                    download_sources = [],
+                    artifact = JLLArtifactBinding(
+                        treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                        download_sources = [],
+                    ),
                     products = [],
                 ),
-                JLLArtifactInfo(;
+                JLLBuildInfo(;
                     src_version = v"1.2.13+1",
                     deps = [
                         JLLPackageDependency(
@@ -183,8 +191,10 @@ end
                     ],
                     platform = Platform("aarch64", "linux"; libc = "musl"),
                     name = "default",
-                    treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
-                    download_sources = [],
+                    artifact = JLLArtifactBinding(
+                        treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
+                        download_sources = [],
+                    ),
                     products = [],
                 ),
             ]
@@ -220,13 +230,15 @@ end
     @test_throws ArgumentError JLLInfo(;
         name = "Zlib",
         version = v"1.2.13+1",
-        artifacts = [
-            JLLArtifactInfo(;
+        builds = [
+            JLLBuildInfo(;
                 src_version = v"1.2.13+1",
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
                 name = "default",
-                treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
-                download_sources = [],
+                artifact = JLLArtifactBinding(
+                    treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                    download_sources = [],
+                ),
                 products = [
                     JLLLibraryProduct(
                         :libz,
@@ -245,18 +257,20 @@ end
         return JLLInfo(;
             name = "default",
             version = v"1.0.5+1",
-            artifacts = [
-                JLLArtifactInfo(;
+            builds = [
+                JLLBuildInfo(;
                     src_version = v"1.0.5+1",
                     platform = Platform("aarch64", "macos"; libgfortran_version = "5.0.0"),
                     name = "default",
-                    treehash = "f9547d56705c03a6e887a01aeb0f0b6b030b7060",
-                    download_sources = [
-                        JLLArtifactSource(
-                            "https://github.com/JuliaBinaryWrappers/CompilerSupportLibraries_jll.jl/releases/download/CompilerSupportLibraries-v1.0.5+1/CompilerSupportLibraries.v1.0.5.aarch64-apple-darwin-libgfortran5.tar.gz",
-                            "c7d0330a55d3b32fbe1b6f73c43e9b9d6649f23b6d9034efd5e107b1d537ab53",
-                        ),
-                    ],
+                    artifact = JLLArtifactBinding(;
+                        treehash = "f9547d56705c03a6e887a01aeb0f0b6b030b7060",
+                        download_sources = [
+                            JLLArtifactSource(
+                                "https://github.com/JuliaBinaryWrappers/CompilerSupportLibraries_jll.jl/releases/download/CompilerSupportLibraries-v1.0.5+1/CompilerSupportLibraries.v1.0.5.aarch64-apple-darwin-libgfortran5.tar.gz",
+                                "c7d0330a55d3b32fbe1b6f73c43e9b9d6649f23b6d9034efd5e107b1d537ab53",
+                            ),
+                        ],
+                    ),
                     products = [
                         JLLLibraryProduct(
                             :libgcc_s,
@@ -292,7 +306,7 @@ end
     jll = make_intra_jll_dependency(false)
     d, new_jll = roundtrip_jll_through_toml(jll)
 
-    products = only(d["artifacts"])["products"]
+    products = only(d["builds"])["products"]
     @test length([p for p in products if p["type"] == "library" && length(p["deps"]) > 0]) == 2
 
     # Also test that this roundtripped properly
@@ -307,20 +321,22 @@ end
         return jll = JLLInfo(;
             name = "default",
             version = v"5.8.0+1",
-            artifacts = [
-                JLLArtifactInfo(;
+            builds = [
+                JLLBuildInfo(;
                     src_version = v"5.8.0+1",
                     deps = [],
                     sources = [],
                     platform = Platform("aarch64", "macos"; ),
                     name = "default",
-                    treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
-                    download_sources = [
-                        JLLArtifactSource(
-                            "https://github.com/JuliaBinaryWrappers/libblastrampoline_jll.jl/releases/download/libblastrampoline-v5.8.0+1/libblastrampoline.v5.8.0.aarch64-apple-darwin.tar.gz",
-                            "2b241d3105f62bfae7ce56b4d7957a4a17272e743e2e23a57ccec1ee36140aac",
-                        ),
-                    ],
+                    artifact = JLLArtifactBinding(;
+                        treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
+                        download_sources = [
+                            JLLArtifactSource(
+                                "https://github.com/JuliaBinaryWrappers/libblastrampoline_jll.jl/releases/download/libblastrampoline-v5.8.0+1/libblastrampoline.v5.8.0.aarch64-apple-darwin.tar.gz",
+                                "2b241d3105f62bfae7ce56b4d7957a4a17272e743e2e23a57ccec1ee36140aac",
+                            ),
+                        ],
+                    ),
                     products = [
                         JLLLibraryProduct(
                             :libblastrampoline,
@@ -344,7 +360,7 @@ end
 
     jll = make_on_load_callback(false)
     d, new_jll = roundtrip_jll_through_toml(jll)
-    @test contains(only(d["artifacts"])["callback_defs"]["libblastrampoline_on_load_callback"], "this is our callback")
+    @test contains(only(d["builds"])["callback_defs"]["libblastrampoline_on_load_callback"], "this is our callback")
     @test jll == new_jll
 
     # Trying to declare a library product with a non-existant on-load callback fails
@@ -392,23 +408,27 @@ end
     old_zlib_jll = JLLInfo(;
         name = "Zlib",
         version = v"1.2.13+1",
-        artifacts = [
-            JLLArtifactInfo(;
+        builds = [
+            JLLBuildInfo(;
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
                 name = "default",
-                treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
-                download_sources = [],
+                artifact = JLLArtifactBinding(
+                    treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                    download_sources = [],
+                ),
                 products = zlib_products,
             ),
-            JLLArtifactInfo(;
+            JLLBuildInfo(;
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "musl"),
                 name = "default",
-                treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
-                download_sources = [],
+                artifact = JLLArtifactBinding(
+                    treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
+                    download_sources = [],
+                ),
                 products = zlib_products,
             ),
         ]
@@ -417,14 +437,16 @@ end
     new_zlib_jll = JLLInfo(;
         name = "Zlib",
         version = v"1.2.13+1",
-        artifacts = [
-            JLLArtifactInfo(;
+        builds = [
+            JLLBuildInfo(;
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
                 name = "default",
-                treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
-                download_sources = [],
+                artifact = JLLArtifactBinding(
+                    treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                    download_sources = [],
+                ),
                 products = zlib_products,
             ),
         ]
@@ -439,7 +461,7 @@ end
         @test isfile(joinpath(dir, "foo.txt"))
         @test isfile(joinpath(dir, ".git", "bar"))
         jll_dict = parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
-        @test length(jll_dict.artifacts) == 2
+        @test length(jll_dict.builds) == 2
 
         # Ensure that if we generate_jll() into the same location
         # we clear out extraneous files (but not `.git/*`) and
@@ -448,7 +470,7 @@ end
         jll_dict = parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
         @test !isfile(joinpath(dir, "foo.txt"))
         @test isfile(joinpath(dir, ".git", "bar"))
-        @test length(jll_dict.artifacts) == 1
+        @test length(jll_dict.builds) == 1
     end
 end
 
@@ -467,9 +489,9 @@ using BinaryBuilderSources: PkgSpec
     jll = JLLSource(PkgSpec(;
         name = "Readline_jll",
         uuid = "05236dd9-4125-5232-aa7c-9ec0c9b2c25a",
-        tree_hash = Base.SHA1("a1083574ec4b58dbde579b72760001a1741cdae7"),
+        tree_hash = Base.SHA1("e2833c2a7016be6387035ebc204945f24e1a1174"),
         repo=Pkg.Types.GitRepo(
-            rev="5a3fde0fda4dadcaf444c54aad9651a3ef373027",
+            rev="a4f3921fdde0151df1c5efb10728b03e2a696e84",
             source="https://github.com/staticfloat/Readline_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
@@ -479,10 +501,10 @@ using BinaryBuilderSources: PkgSpec
         data = parse_toml_dict(jll; depot=prefix)
 
         @test data.name == "Readline"
-        @test length(data.artifacts) == 1
-        jart = only(data.artifacts)
-        @test jart.name == "default"
-        @test length(jart.products) == 2
-        @test jart.treehash == "sha1:b18bc5bdcff9c62785e46d19dcdce3717ce10335"
+        @test length(data.builds) == 1
+        build = only(data.builds)
+        @test build.name == "default"
+        @test length(build.products) == 2
+        @test build.artifact.treehash == "sha1:b18bc5bdcff9c62785e46d19dcdce3717ce10335"
     end
 end

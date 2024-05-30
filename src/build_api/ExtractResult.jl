@@ -15,37 +15,44 @@ struct ExtractResult
     # On a failed/skipped build, this may be the special all-zero artifact hash.
     artifact::SHA1Hash
 
+    # Treehash that represents the packaged log files for the given config
+    log_artifact::SHA1Hash
+
     # The audit result
     audit_result::Union{Nothing,AuditResult}
 
     # Logs generated during this extraction (audit logs, mostly)
-    logs::Dict{String,String}
+    extract_log::String
 
     function ExtractResult(config::ExtractConfig,
                            status::Symbol,
                            exception::Union{Nothing,Exception},
                            artifact::Union{Base.SHA1,SHA1Hash},
+                           log_artifact::Union{Base.SHA1,SHA1Hash},
                            audit_result::Union{AuditResult,Nothing},
-                           logs::Dict{<:AbstractString,<:AbstractString})
+                           extract_log::String)
         return new(
             config,
             status,
             exception,
             SHA1Hash(artifact),
+            SHA1Hash(log_artifact),
             audit_result,
-            Dict(String(k) => String(v) for (k,v) in logs),
+            extract_log,
         )
     end
 end
 
-function ExtractResult_cached(config::ExtractConfig, artifact::Base.SHA1)
+function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash})
+    extract_log = joinpath(artifact_path(config.build.config.meta.universe, log_artifact), "extract.log")
     return ExtractResult(
         config,
         :cached,
         nothing,
         artifact,
+        log_artifact,
         nothing,
-        Dict{String,String}(),
+        String(read(extract_log)),
     )
 end
 

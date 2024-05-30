@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, Artifacts
+using Test, BinaryBuilder2
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include("TestingUtils.jl")
@@ -43,11 +43,10 @@ end
         """,
         native_linux,
     );
-    failing_stderr = IOBuffer()
-    failing_build_result = build!(bad_build_config; stderr=failing_stderr)
+    failing_build_result = build!(bad_build_config)
     @test failing_build_result.status == :failed
     @test failing_build_result.env["env_val"] == "pre"
-    @test occursin("Previous command 'false' exited with code 1", String(take!(failing_stderr)))
+    @test occursin("Previous command 'false' exited with code 1", failing_build_result.build_log)
 end
 
 @testset "Multi-stage build test" begin
@@ -172,7 +171,7 @@ end
 
     # Test that it built correctly
     in_universe(meta.universe) do env
-        install_prefix = Artifacts.artifact_path(extract_result.artifact)
+        install_prefix = BinaryBuilder2.artifact_path(extract_result.artifact)
         @test isdir(install_prefix)
         @test isfile(joinpath(install_prefix, "include", "zlib.h"))
         @test isfile(joinpath(install_prefix, "lib", "libz.so.$(build_config.src_version)"))
