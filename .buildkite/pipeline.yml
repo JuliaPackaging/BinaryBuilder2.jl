@@ -3,7 +3,7 @@ steps:
     command: |
       export ARCH JULIA_VERSION
       for ARCH in x86_64 aarch64; do
-        for JULIA_VERSION in 1 1.10 1.9; do
+        for JULIA_VERSION in nightly 1 1.10; do
           buildkite-agent pipeline upload .buildkite/run_bb_tests.yml
         done
       done
