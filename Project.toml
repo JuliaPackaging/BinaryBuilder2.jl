@@ -41,8 +41,8 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
-HistoricalStdlibVersions = "2.0.0"
-JLLPrefixes = "0.3.7"
+HistoricalStdlibVersions = "2"
+JLLPrefixes = "0.3.8"
 OutputCollectors = "1"
 RegistryTools = "2.2.3"
 julia = "1.9"

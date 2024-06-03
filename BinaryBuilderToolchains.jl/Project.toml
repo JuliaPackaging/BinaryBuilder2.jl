@@ -1,7 +1,7 @@
 name = "BinaryBuilderToolchains"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
-version = "0.1.1"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
+version = "0.1.1"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"

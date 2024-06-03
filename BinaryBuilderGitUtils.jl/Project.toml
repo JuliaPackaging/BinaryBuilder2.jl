@@ -11,7 +11,6 @@ MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
 [compat]
 Git = "1.3.1"
 Git_jll = ">= 2.36.1"
-MultiHashParsing = "0.1.0"
 julia = "1.6"
 
 [extras]

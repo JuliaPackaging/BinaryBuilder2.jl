@@ -2,7 +2,7 @@
 
 julia_version = "1.10.3"
 manifest_format = "2.0"
-project_hash = "d78782ab0b2f4087398bedf0887b74003288e07b"
+project_hash = "b26b46003da31646d3720b1ae77141543e974a08"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -13,6 +13,25 @@ uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[deps.BinaryBuilderPlatformExtensions]]
+deps = ["OrderedCollections", "Reexport"]
+path = "../BinaryBuilderPlatformExtensions.jl"
+uuid = "213f2928-4d72-6f46-7461-4c705f634367"
+version = "0.1.0"
+
+[[deps.Compat]]
+deps = ["TOML", "UUIDs"]
+git-tree-sha1 = "b1c55339b7c6c350ee89f2c1604299660525b248"
+uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
+version = "4.15.0"
+
+    [deps.Compat.extensions]
+    CompatLinearAlgebraExt = "LinearAlgebra"
+
+    [deps.Compat.weakdeps]
+    Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+    LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -29,6 +48,18 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+
+[[deps.JLLGenerator]]
+deps = ["BinaryBuilderPlatformExtensions", "Libdl", "MultiHashParsing", "Pkg", "Reexport", "SHA", "StructEquality", "TOML"]
+path = "../JLLGenerator.jl"
+uuid = "73536572-7074-4e69-5270-206c4c6a2061"
+version = "0.3.0"
+
+    [deps.JLLGenerator.extensions]
+    BinaryBuilderSourcesExt = "BinaryBuilderSources"
+
+    [deps.JLLGenerator.weakdeps]
+    BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -73,9 +104,20 @@ version = "2.28.2+1"
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
 version = "2023.1.10"
 
+[[deps.MultiHashParsing]]
+deps = ["SHA"]
+path = "../MultiHashParsing.jl"
+uuid = "73786568-6863-756d-6873-6168796e616d"
+version = "0.1.0"
+
 [[deps.NetworkOptions]]
 uuid = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 version = "1.2.0"
+
+[[deps.OrderedCollections]]
+git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
+uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+version = "1.6.3"
 
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
@@ -100,6 +142,11 @@ uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
+[[deps.Reexport]]
+git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
+uuid = "189a3867-3050-52da-a836-e630ba90ab69"
+version = "1.2.2"
+
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 version = "0.7.0"
@@ -109,6 +156,12 @@ uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
+
+[[deps.StructEquality]]
+deps = ["Compat"]
+git-tree-sha1 = "192a9f1de3cfef80ab1a4ba7b150bb0e11ceedcf"
+uuid = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
+version = "2.1.0"
 
 [[deps.TOML]]
 deps = ["Dates"]
