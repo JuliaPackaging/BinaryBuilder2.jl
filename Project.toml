@@ -1,7 +1,10 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
 version = "2.0.0"
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
+
+[workspace]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -14,6 +17,7 @@ BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
+HistoricalStdlibVersions = "6df8b67a-e8a0-4029-b4b7-ac196fe72102"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 LazyJLLWrappers = "21706172-204c-4d4f-5420-656854206f44"
@@ -27,6 +31,7 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+RegistryTools = "d1eb7eb1-105f-429d-abf5-b0f65cb9e2c4"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Sandbox = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
@@ -36,7 +41,10 @@ TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
+HistoricalStdlibVersions = "2.0.0"
 JLLPrefixes = "0.3.7"
+OutputCollectors = "1"
+RegistryTools = "2.2.3"
 julia = "1.9"
 
 [extras]

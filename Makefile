@@ -1,4 +1,4 @@
-PROJECTS := $(subst /,,$(dir $(wildcard */Manifest.toml))) .
+PROJECTS := $(subst /,,$(dir $(wildcard */Project.toml))) .
 JULIA ?= julia
 
 # I love string manipulation in Make.

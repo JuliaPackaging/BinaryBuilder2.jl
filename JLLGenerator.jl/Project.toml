@@ -13,6 +13,9 @@ SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 StructEquality = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
+[workspace]
+projects = ["contrib"]
+
 [weakdeps]
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 

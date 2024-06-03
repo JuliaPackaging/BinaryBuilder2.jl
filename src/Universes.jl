@@ -164,7 +164,7 @@ function in_universe(f::Function, u::Universe;
     ])
     if append_bundled_depot_path
         # On Julia v1.11+, this is simple because of https://github.com/JuliaLang/julia/commit/9443c761871c4db9c3213a1e01804286292c3f4d
-        if isdefined(Base, :append_bundled_depot_path)
+        if isdefined(Base, :append_bundled_depot_path!)
             Base.append_bundled_depot_path!(Base.DEPOT_PATH)
         else
             # On older Julias, we need to drop the default user depot.
