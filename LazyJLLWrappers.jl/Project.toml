@@ -1,7 +1,7 @@
 name = "LazyJLLWrappers"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
 authors = ["Elliot Saba"]
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -11,7 +11,7 @@ Preferences = "21216c6a-2e73-6563-6e65-726566657250"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
 [compat]
-JLLGenerator = "0.2"
+JLLGenerator = "0.3"
 Preferences = "1.2.1"
 julia = "1.0.0"
 
