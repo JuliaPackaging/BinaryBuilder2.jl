@@ -84,7 +84,7 @@ end
 
 function print_artifact_info(entry, platform, version, name)
     print("""
-            JLLArtifactInfo(;
+            JLLBuildInfo(;
                 src_version = v"$(version)",
                 deps = [
     """)
@@ -103,13 +103,15 @@ function print_artifact_info(entry, platform, version, name)
                 sources = [],
                 platform = $(repr(platform)),
                 name = "default",
-                treehash = "$(entry["git-tree-sha1"])",
-                download_sources = [
-                    JLLArtifactSource(
-                        "$(entry["download"][1]["url"])",
-                        "$(entry["download"][1]["sha256"])",
-                    ),
-                ],
+                artifact = JLLArtifactBinding(;
+                    treehash = "$(entry["git-tree-sha1"])",
+                    download_sources = [
+                        JLLArtifactSource(
+                            "$(entry["download"][1]["url"])",
+                            "$(entry["download"][1]["sha256"])",
+                        ),
+                    ],
+                ),
                 products = [
     """)
 
@@ -156,7 +158,7 @@ function print_jll_info()
     jll = JLLInfo(;
         name = "$(name)",
         version = v"$(version)",
-        artifacts = [
+        builds = [
     """)
 
     if !isa(artifacts_data[name], Vector)

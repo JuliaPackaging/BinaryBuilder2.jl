@@ -65,7 +65,7 @@ function extract_content_hash(extract_script::String, products::Vector{<:Abstrac
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
     end
 
-    return SHA1Hash(sha1(hash_buffer))
+    return SHA1Hash(sha1(take!(hash_buffer)))
 end
 function BinaryBuilderSources.content_hash(config::ExtractConfig)
     return extract_content_hash(config.script, config.products)
@@ -102,17 +102,16 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-
-function extract!(config::ExtractConfig)
-    local artifact_hash, run_status, run_exception
+function extract!(config::ExtractConfig; disable_cache::Bool = false)
+    local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
 
-    if build_cache_enabled(build_config.meta) && config.build.status == :cached
-        cached_artifact_hash, log, env = get(meta.build_cache, config)
-        if cached_artifact_hash !== nothing
-            return ExtractResult_cached(config, Base.SHA1(cached_artifact_hash))
+    if build_cache_enabled(build_config.meta) && !disable_cache
+        artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
+        if artifact_hash !== nothing
+            return ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
         end
     end
 
@@ -121,10 +120,14 @@ function extract!(config::ExtractConfig)
         runshell(config; verbose=meta.verbose)
     end
 
+    extract_log_io = IOBuffer()
     @timeit config.to "extract" begin
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
-                sandbox_config = SandboxConfig(config, artifact_dir)
+                sandbox_config, collector = sandbox_and_collector(
+                    extract_log_io, config, artifact_dir;
+                    verbose=meta.verbose,
+                )
                 run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
 
                 # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
@@ -162,15 +165,29 @@ function extract!(config::ExtractConfig)
         error()
     end
 
+    # Wait for our output collector to finish, then take the IO output
+    wait(collector)
+    extract_log = String(take!(extract_log_io))
+
+    # Generate "log" artifact that will later be packaged up.
+    log_artifact_hash = in_universe(meta.universe) do env
+        Pkg.Artifacts.create_artifact() do artifact_dir
+            open(joinpath(artifact_dir, "extract.log"); write=true) do io
+                write(io, extract_log)
+            end
+        end
+    end
+
     result = ExtractResult(
         config,
         run_status,
         run_exception,
         artifact_hash,
+        log_artifact_hash,
         audit_result,
-        Dict{String,String}(),
+        extract_log,
     )
-    if run_status == :success
+    if build_cache_enabled(meta) && run_status == :success
         put!(meta.build_cache, result)
     end
     meta.extractions[config] = result

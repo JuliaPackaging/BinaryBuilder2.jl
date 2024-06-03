@@ -4,13 +4,16 @@ using Pkg, MultiHashParsing, StructEquality, TOML, SHA, Reexport
 import Base: UUID
 @reexport using BinaryBuilderPlatformExtensions
 
-export JLLInfo, JLLArtifactInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
+export JLLInfo, JLLBuildInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
-       JLLPackageDependency, AbstractProducts,
+       JLLPackageDependency, JLLArtifactBinding, AbstractProducts,
        generate_jll, generate_toml_dict, parse_toml_dict
 
 include("RTLD_flags.jl")
 include("PkgCompatHacks.jl")
+
+# Helper function for creating empty typed arrays
+empty_convert(T, x) = isempty(x) ? T[] : x
 
 """
     AbstractJLLProduct
@@ -267,16 +270,47 @@ function parse_toml_dict(::Type{JLLPackageDependency}, d)
 end
 
 
+@struct_hash_equal struct JLLArtifactBinding
+    treehash::SHA1Hash
+    download_sources::Vector{JLLArtifactSource}
+
+    function JLLArtifactBinding(treehash, download_sources)
+        return new(SHA1Hash(treehash), empty_convert(JLLArtifactSource, download_sources))
+    end
+end
+
+function JLLArtifactBinding(;treehash, download_sources=[])
+    return JLLArtifactBinding(treehash, download_sources)
+end
+
+function generate_toml_dict(info::JLLArtifactBinding)
+    d = Dict(
+        "treehash" => string(info.treehash),
+        "download_sources" => generate_toml_dict.(info.download_sources),
+    )
+    return d
+end
+
+function parse_toml_dict(::Type{JLLArtifactBinding}, d::Dict)
+    return JLLArtifactBinding(;
+        treehash = MultiHash(d["treehash"]),
+        download_sources = [parse_toml_dict(JLLArtifactSource, p) for p in d["download_sources"]],
+    )
+end
+
+
+
+
 
 """
-    JLLArtifactInfo
+    JLLBuildInfo
 
 A structure representing all platform-specific information in a JLL.  This structure is
-essentially a fusion of the `BuildConfig` and `PackageConfig` structures in `BinaryBuilder2`, but
+essentially a distillation of the `BuildResult/ExtractResult` structures in `BinaryBuilder2`, but
 is distinct in order to maintain separation between the two packages, and to make it
 easier for non-BinaryBuilder2 users to make use of this package if needed.
 """
-@struct_hash_equal struct JLLArtifactInfo
+@struct_hash_equal struct JLLBuildInfo
     # Version of the upstream source that was built (doesn't have to even be a VersionNumber)
     # It's a little strange if this is different across platforms, but it's technically
     # allowable for projects such as p7zip where we install a completely different project's
@@ -286,10 +320,10 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # The platform this is built for
     platform::AbstractPlatform
 
-    # The name and treehash for this artifact, and then a list of download locations and tarball hashes
+    # The name and artifact bindings for this artifact
     name::String
-    treehash::SHA1Hash
-    download_sources::Vector{JLLArtifactSource}
+    artifact::JLLArtifactBinding
+    auxilliary_artifacts::Dict{String,JLLArtifactBinding}
 
     # List of products in cut-down JLL format
     products::Vector{<:AbstractJLLProduct}
@@ -310,8 +344,8 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # __init__ snippet definition as a string, or `nothing` if not needed.
     init_def::Union{Nothing,String}
 
-    function JLLArtifactInfo(src_version, platform, name, treehash, download_sources, products,
-                             deps, sources, lazy, callback_defs, init_def)
+    function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
+                          deps, sources, lazy, callback_defs, init_def)
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
             if isa(p, JLLLibraryProduct)
@@ -338,14 +372,12 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             end
         end
 
-        empty_convert(T, x) = isempty(x) ? T[] : x
-
         return new(
             string(src_version),
             platform,
             string(name),
-            MultiHash(treehash),
-            empty_convert(JLLArtifactSource, download_sources),
+            artifact,
+            Dict{String,JLLArtifactBinding}(String(name) => art for (name, art) in auxilliary_artifacts),
             empty_convert(AbstractJLLProduct, products),
             empty_convert(JLLPackageDependency, deps),
             empty_convert(JLLSourceRecord, sources),
@@ -356,22 +388,22 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     end
 end
 
-function JLLArtifactInfo(;src_version, platform, name, treehash, download_sources, products,
+function JLLBuildInfo(;src_version, platform, name, artifact, products,
                           deps = [], sources = [], lazy = false, callback_defs = Dict(),
-                          init_def = nothing)
-    return JLLArtifactInfo(src_version, platform, name, treehash, download_sources, products,
+                          init_def = nothing, auxilliary_artifacts = Dict())
+    return JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
                            deps, sources, lazy, callback_defs, init_def)
 end
 
-function generate_toml_dict(info::JLLArtifactInfo)
+function generate_toml_dict(info::JLLBuildInfo)
     d = Dict(
         "src_version" => info.src_version,
         "deps" => generate_toml_dict.(info.deps),
         "sources" => generate_toml_dict.(info.sources),
         "platform" => triplet(info.platform),
         "name" => string(info.name),
-        "treehash" => string(info.treehash),
-        "download_sources" => generate_toml_dict.(info.download_sources),
+        "artifact" => generate_toml_dict(info.artifact),
+        "auxilliary_artifacts" => Dict(string(name) => generate_toml_dict(art) for (name, art) in info.auxilliary_artifacts),
         "lazy" => string(info.lazy),
         "callback_defs" => Dict(string(k) => v for (k, v) in info.callback_defs),
         "products" => generate_toml_dict.(info.products),
@@ -382,15 +414,15 @@ function generate_toml_dict(info::JLLArtifactInfo)
     return d
 end
 
-function parse_toml_dict(::Type{JLLArtifactInfo}, d::Dict)
-    return JLLArtifactInfo(;
+function parse_toml_dict(::Type{JLLBuildInfo}, d::Dict)
+    return JLLBuildInfo(;
         src_version = d["src_version"],
         deps = [parse_toml_dict(JLLPackageDependency, p) for p in d["deps"]],
         sources = [parse_toml_dict(JLLSourceRecord, p) for p in d["sources"]],
         platform = parse(AbstractPlatform, d["platform"]),
         name = d["name"],
-        treehash = MultiHash(d["treehash"]),
-        download_sources = [parse_toml_dict(JLLArtifactSource, p) for p in d["download_sources"]],
+        artifact = parse_toml_dict(JLLArtifactBinding, d["artifact"]),
+        auxilliary_artifacts = Dict(name => parse_toml_dict(JLLArtifactBinding, art) for (name, art) in d["auxilliary_artifacts"]),
         lazy = parse(Bool, d["lazy"]),
         callback_defs = Dict{Symbol,String}(Symbol(k) => string(v) for (k,v) in d["callback_defs"]),
         init_def = get(d, "init_def", nothing),
@@ -412,7 +444,7 @@ function guess_julia_compat(artifacts)
         end
     end
 
-    # We require at least Julia 1.3+, for Pkg.Artifacts support, but we claim
+    # We require at least Julia 1.3+, for Pkg.builds support, but we claim
     # Julia 1.0+ by default so that empty JLLs can be installed on older versions.
     return "1.0"
 end
@@ -431,8 +463,8 @@ JLL is stored within, including sources
     version::VersionNumber
 
     # Each platform build can be completely different from the others, so all the other
-    # information is stored in `artifacts`
-    artifacts::Vector{JLLArtifactInfo}
+    # information is stored in `builds`
+    builds::Vector{JLLBuildInfo}
 
     # A snippet of Julia code that is used to add specific tags to the platform that will
     # be used to look up the correct artifact from `artifacts`.
@@ -456,15 +488,15 @@ JLL is stored within, including sources
         )
     end
 end
-function JLLInfo(;name, version, artifacts,
+function JLLInfo(;name, version, builds,
                   platform_augmentation_code = "",
-                  julia_compat = guess_julia_compat(artifacts))
-    return JLLInfo(name, version, artifacts, platform_augmentation_code, julia_compat)
+                  julia_compat = guess_julia_compat(builds))
+    return JLLInfo(name, version, builds, platform_augmentation_code, julia_compat)
 end
 
 function Base.BinaryPlatforms.select_platform(jll::JLLInfo, platform::AbstractPlatform = HostPlatform())
-    artifacts = Dict(jart.platform => jart for jart in jll.artifacts)
-    return Base.BinaryPlatforms.select_platform(artifacts, platform)
+    builds = Dict(jart.platform => jart for jart in jll.builds)
+    return Base.BinaryPlatforms.select_platform(builds, platform)
 end
 
 # For historical reasons, our UUIDs are generated with some rather strange constants
@@ -485,7 +517,7 @@ function generate_toml_dict(info::JLLInfo)
     return Dict(
         "name" => info.name,
         "version" => string(info.version),
-        "artifacts" => generate_toml_dict.(info.artifacts),
+        "builds" => generate_toml_dict.(info.builds),
         "julia_compat" => info.julia_compat,
         "platform_augmentation_code" => info.platform_augmentation_code,
     )
@@ -495,12 +527,31 @@ function parse_toml_dict(::Type{JLLInfo}, d::Dict)
     return JLLInfo(;
         name = d["name"],
         version = VersionNumber(d["version"]),
-        artifacts = [parse_toml_dict(JLLArtifactInfo, p) for p in d["artifacts"]],
+        builds = [parse_toml_dict(JLLBuildInfo, p) for p in d["builds"]],
         platform_augmentation_code = d["platform_augmentation_code"],
         julia_compat = d["julia_compat"],
     )
 end
 parse_toml_dict(d::Dict) = parse_toml_dict(JLLInfo, d)
+
+function bind_jll_artifact!(artifacts_toml_path::String, name::String, platform::AbstractPlatform,
+                            artifact::JLLArtifactBinding; lazy::Bool = false)
+    kwargs = Dict(
+        :download_info => [(s.url, bytes2hex(s.tarball_hash)) for s in artifact.download_sources],
+        :lazy =>lazy,
+    )
+
+    if !isa(platform, AnyPlatform)
+        kwargs[:platform] = platform
+    end
+
+    Pkg.Artifacts.bind_artifact!(
+        artifacts_toml_path,
+        name,
+        Base.SHA1(artifact.treehash);
+        kwargs...,
+    )
+end
 
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
@@ -522,22 +573,20 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
 
     # Generate `Artifacts.toml`
     artifacts_toml_path = joinpath(out_dir, "Artifacts.toml")
-    for (aidx, artifact) in enumerate(info.artifacts)
-        kwargs = Dict(
-            :download_info => [(s.url, bytes2hex(s.tarball_hash)) for s in artifact.download_sources],
-            :lazy => artifact.lazy,
-        )
+    for (bidx, build) in enumerate(info.builds)
+        # Bind the main artifact
+        bind_jll_artifact!(artifacts_toml_path, build.name, build.platform, build.artifact; lazy=build.lazy)
 
-        if !isa(artifact.platform, AnyPlatform)
-            kwargs[:platform] = artifact.platform
+        # Also bind any auxilliary artifacts (which are automatically lazy)
+        for (name, binding) in build.auxilliary_artifacts
+            bind_jll_artifact!(
+                artifacts_toml_path,
+                string(build.name, "-", name),
+                build.platform,
+                binding;
+                lazy=true,
+            )
         end
-
-        Pkg.Artifacts.bind_artifact!(
-            artifacts_toml_path,
-            artifact.name,
-            Base.SHA1(artifact.treehash);
-            kwargs...,
-        )
     end
 
     # Generate `README.md`
@@ -569,7 +618,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
         For more details about JLL packages and how to use them, see the `BinaryBuilder.jl` [documentation](https://docs.binarybuilder.org/stable/jll/).
         """)
     
-        source_versions = unique([jart.src_version for jart in info.artifacts])
+        source_versions = unique([jart.src_version for jart in info.builds])
         source_versions_str = length(source_versions) == 1 ?
                           "version v$(only(source_versions))" :
                           "versions $(string(source_versions))"
@@ -579,7 +628,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
         The binaries for `$(info.name)` have been built from upstream sources $(source_versions_str):
         """)
 
-        sources = unique(stack([jart.sources for jart in info.artifacts]))
+        sources = unique(stack([jart.sources for jart in info.builds]))
         for source in sources
             println(io, " - [$(source.url)]($(source.url)) (treehash: $(source.treehash))")
         end
@@ -589,14 +638,14 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
 
         `$(info.name)` is available for the following platforms:
         """)
-        for jart in info.artifacts
+        for jart in info.builds
             println(io, " - `$(jart.platform)`")
         end
 
         # In general, we'd need access to a registry lookup to turn our name/UUID pairs in `JLLInfo`
         # into a linkable URL, so we punt this off to the caller by only printing the name unless
         # the URL is listed in `dep_url_mapping` in the `build_metadata` dictionary.
-        deps = unique(stack([jart.deps for jart in info.artifacts]))
+        deps = unique(stack([jart.deps for jart in info.builds]))
         dep_url_mapping = get(build_metadata, "dep_url_mapping", Dict{String,String}())
         println(io, """
         # Dependencies
@@ -644,7 +693,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             project_dict["deps"]["Artifacts"] = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
         end
 
-        alldeps = unique(vcat((a.deps for a in info.artifacts)...))
+        alldeps = unique(vcat((a.deps for a in info.builds)...))
         
         # Check for dependencies specified multiple times with different versions,
         # collapsing them into a single version if possible:

@@ -172,10 +172,10 @@ function product_names(product)
     return var_name, path_var_name, lazy_path_var_name
 end
 
-function gen_lazy_artifact_path(jb::JLLBlocks, artifact, product)
+function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     # The hashes in this TOML are `MultiHashParsing` hashes,
     # but we only support `sha1` hashes:
-    treehash = artifact["treehash"]
+    treehash = build["artifact"]["treehash"]
     if !startswith(treehash, "sha1:")
         throw(ArgumentError("Treehash must start with `sha1:`: '$(treehash)'"))
     end
@@ -215,8 +215,8 @@ function gen_lazy_artifact_path(jb::JLLBlocks, artifact, product)
     return var_name, path_var_name, lazy_path_var_name
 end
 
-function init_footer(jb::JLLBlocks, artifact)
-    for product in artifact["products"]        
+function init_footer(jb::JLLBlocks, build)
+    for product in build["products"]
         var_name, path_var_name, lazy_path_var_name = product_names(product)
         if product["type"] == "executable"
             push!(jb.init_blocks, :(push!(PATH_list, $(path_var_name))))
@@ -227,7 +227,7 @@ function init_footer(jb::JLLBlocks, artifact)
     end
 
     # Append our dependencies' PATH and LIBPATH:
-    for dep in artifact["deps"]
+    for dep in build["deps"]
         push!(jb.init_blocks, quote
             append!(PATH_list, $(Symbol(dep)).PATH[])
             append!(LIBPATH_list, $(Symbol(dep)).LIBPATH[])

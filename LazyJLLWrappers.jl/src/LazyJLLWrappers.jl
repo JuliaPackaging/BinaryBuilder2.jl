@@ -131,14 +131,14 @@ macro generate_jll_from_toml()
     # __init__() time, so that we can check that the platform augmentation
     # hasn't changed its mind since the last time we precompiled this JLL.
     platform = get_augmented_platform(jb, jll)
-    artifact = select_artifact(jll["artifacts"], artifact_name, platform)
+    build = select_artifact(jll["builds"], artifact_name, platform)
 
     # Add top-level statements like exports, imports of other libraries,
     # declarations of globals, etc...
-    top_level_statements(jb, artifact, platform)
+    top_level_statements(jb, build, platform)
 
     # Sort our library products so that they are in dependency-order:
-    lib_products = [p for p in artifact["products"] if p["type"] == "library"]
+    lib_products = [p for p in build["products"] if p["type"] == "library"]
     function calc_depths(lib_products)
         depths = Dict()
         while length(depths) != length(lib_products)
@@ -167,7 +167,7 @@ macro generate_jll_from_toml()
 
     # Do all the library products first, since we have to sort them specifically.
     for product in lib_products
-        library_product_definition(jb, artifact, product)
+        library_product_definition(jb, build, product)
     end
 
     # Also, create our `eager_mode()` function body which will open all of our
@@ -176,25 +176,25 @@ macro generate_jll_from_toml()
     build_eager_mode(jb, lib_products)
     
     # Next all the other products
-    for product in artifact["products"]
+    for product in build["products"]
         if product["type"] == "library"
             continue
         elseif product["type"] == "executable"
-            executable_product_definition(jb, artifact, product)
+            executable_product_definition(jb, build, product)
         elseif product["type"] == "file"
-            file_product_definition(jb, artifact, product)
+            file_product_definition(jb, build, product)
         else
             throw(ArgumentError("Unknown product type '$(product["type"])'"))
         end
     end
 
     # If we have an `init_def`, insert that into our `init_blocks`
-    init_def = get(artifact, "init_def", nothing)
+    init_def = get(build, "init_def", nothing)
     if init_def !== nothing
         push!(jb.init_blocks, Meta.parse(init_def))
     end
 
-    init_footer(jb, artifact)
+    init_footer(jb, build)
     return synthesize(jb)
 end
 

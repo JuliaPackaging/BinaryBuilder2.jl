@@ -21,3 +21,7 @@ struct PackageResult
         )
     end
 end
+
+function jll_path(result::PackageResult)
+    return joinpath(meta.universe.depot_path, "dev", "$(result.config.jll_name)_jll")
+end

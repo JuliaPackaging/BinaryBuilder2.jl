@@ -93,7 +93,7 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
 end
 
 
-function JLLGenerator.JLLArtifactInfo(name::String, result::ExtractResult)
+function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
     if result.status != :success
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
@@ -106,29 +106,48 @@ function JLLGenerator.JLLArtifactInfo(name::String, result::ExtractResult)
     # Then, append the JLLLibraryProducts that were filled out by the auditor:
     append!(products, result.audit_result.jll_lib_products)
 
-    return JLLArtifactInfo(;
+    return JLLBuildInfo(;
         src_version = build_config.src_version,
         deps = [JLLPackageDependency(d.name) for d in build_config.pkg_deps],
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = [JLLSourceRecord(s) for s in build_config.source_trees["/workspace/srcdir"]],
         platform = build_config.platform.target,
         name,
-        treehash = SHA1Hash(result.artifact),
-        products,
         # TODO: Add links to our eventual deployment target
-        download_sources = [],
+        artifact = JLLArtifactBinding(
+            treehash = SHA1Hash(result.artifact),
+            download_sources = [],
+        ),
+        # Add our "auxilliary artifacts"
+        auxilliary_artifacts = Dict(
+            "build_log" => JLLArtifactBinding(;
+                treehash = result.config.build.log_artifact,
+                download_sources = []
+            ),
+            "extract_log" => JLLArtifactBinding(;
+                treehash = result.log_artifact,
+                download_sources = []
+            ),
+        ),
+        products,
+    )
+end
+
+function extract_log_JLLBuildInfo(name::String, result::ExtractResult)
+    return JLLBuildInfo(;
+        src_version
     )
 end
 
 function package!(config::PackageConfig)
     meta = AbstractBuildMeta(config)
-    artifacts = vcat(
-        ([JLLArtifactInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+    builds = vcat(
+        ([JLLBuildInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
     )
     jll = JLLInfo(;
         name = config.jll_name,
         version = next_jll_version(meta.universe, "$(config.jll_name)_jll", config.version_series),
-        artifacts,
+        builds,
         julia_compat = "1.7",
     )
 
