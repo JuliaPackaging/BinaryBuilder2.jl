@@ -10,6 +10,7 @@ ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Patchelf_jll = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
 
 [compat]
+BinaryBuilderProducts = "0.1"
 BinaryBuilderToolchains = "0.1.1"
 ObjectFile = "0.4"
 julia = "1.6"
