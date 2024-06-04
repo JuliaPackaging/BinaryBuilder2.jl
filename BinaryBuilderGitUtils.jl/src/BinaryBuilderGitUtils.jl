@@ -1,7 +1,7 @@
 module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing
-export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, remote_url, remote_url!, tags, tag!, log, log_between
+export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -67,7 +67,20 @@ function clone!(url::String, repo_path::String;
     end
 end
 
-function checkout!(repo_path::String, target::String, commit::HashOrString = only(log(repo_path; limit=1)); verbose::Bool = false)
+function head_branch(repo_path::String; remote::String = "origin")
+    lines = split(readchomp(git(["-C", repo_path, "remote", "show", remote])), "\n")
+    head_branch_match = only(filter(!isnothing, match.((r"\s+HEAD branch: ([^ ]+)",), lines)))
+    return head_branch_match.captures[1]
+end
+
+function head_branch_or_tip(repo_path::String; remote::String = "origin")
+    if remote ∉ remotes(repo_path)
+        return only(log(repo_path; limit=1))
+    end
+    return head_branch(repo_path; remote)
+end
+
+function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch_or_tip(repo_path); verbose::Bool = false)
     if !iscommit(repo_path, commit)
         fetch!(repo_path; verbose)
     end
@@ -86,7 +99,7 @@ function Base.push!(repo_path::String, remote::String = "origin"; tags::Bool = t
     run(git(["-C", repo_path, "push", "--tags", remote, quiet_args(verbose)...]))
 end
 
-function get_remotes(repo_path::String)
+function remotes(repo_path::String)
     return filter(!isempty, split(readchomp(git(["-C", repo_path, "remote"])), "\n"))
 end
 
@@ -95,8 +108,7 @@ function remote_url(repo_path::String, remote::String = "origin")
 end
 
 function remote_url!(repo_path::String, remote::String, url::String)
-    remotes = get_remotes(repo_path)
-    verb = remote ∈ remotes ? "set-url" : "add"
+    verb = remote ∈ remotes(repo_path) ? "set-url" : "add"
     run(git(["-C", repo_path, "remote", verb, remote, url]))
 end
 

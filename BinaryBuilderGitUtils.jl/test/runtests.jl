@@ -6,6 +6,7 @@ using BinaryBuilderGitUtils
         pkg_path = joinpath(dir, "Pkg-master")
         clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path)
         @test isdir(pkg_path)
+        @test head_branch(pkg_path) == "master"
 
         our_head = "bffd0633cb73a20aacb39c641591fa9035c434a3"
         head = only(log(pkg_path, our_head; limit=1))
@@ -84,6 +85,7 @@ end
         init!(bare_dir; initial_branch="main")
         working_dir = joinpath(dir, "working_dir")
         checkout!(bare_dir, working_dir, "main")
+        @test head_branch(working_dir) == "main"
         open(joinpath(working_dir, "foo.txt"), write=true) do io
             println(io, "foo!")
         end
