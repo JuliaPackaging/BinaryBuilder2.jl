@@ -7,14 +7,15 @@ using BinaryBuilderGitUtils
         clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path)
         @test isdir(pkg_path)
 
-        head = only(log(pkg_path; limit=1))
+        our_head = "bffd0633cb73a20aacb39c641591fa9035c434a3"
+        head = only(log(pkg_path, our_head; limit=1))
         @test iscommit(pkg_path, head)
 
         head_1 = only(log(pkg_path, "$(bytes2hex(head))~1"; limit=1))
         @test head_1 != head
         @test iscommit(pkg_path, head_1)
 
-        head_5 = first(log(pkg_path; limit=5, reverse=true))
+        head_5 = first(log(pkg_path, our_head; limit=5, reverse=true))
         @test head != head_5
         @test iscommit(pkg_path, head_5)
 
@@ -107,17 +108,22 @@ end
                     println(io, "foo2!")
                 end
                 update_hash = commit!(second_working_dir, "updated foo.txt")
+                tag!(second_working_dir, "v1.0.0")
+                @test tags(second_working_dir) == ["v1.0.0"]
+                @test first(log(second_working_dir, "v1.0.0")) == update_hash
                 push!(second_working_dir)
                 @test first(log(second_bare_clone)) == update_hash
                 @test first(log(bare_dir)) != update_hash
+                @test tags(second_bare_clone) == ["v1.0.0"]
+                @test isempty(tags(bare_dir))
 
                 open(joinpath(second_working_dir, "foo.txt"), write=true) do io
                     println(io, "foo3!")
                 end
                 final_hash = commit!(second_working_dir, "finalized foo.txt")
-                remote_url!(second_working_dir, "upstream", bare_dir)
-                @test remote_url(second_working_dir, "upstream") == bare_dir
-                push!(second_working_dir, "upstream")
+                remote_url!(second_working_dir, "upstream/blah", bare_dir)
+                @test remote_url(second_working_dir, "upstream/blah") == bare_dir
+                push!(second_working_dir, "upstream/blah")
                 @test first(log(second_bare_clone)) == update_hash
                 @test first(log(bare_dir)) == final_hash
             end
