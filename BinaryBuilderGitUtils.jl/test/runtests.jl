@@ -77,7 +77,7 @@ using BinaryBuilderGitUtils
     end
 end
 
-@testset "init()" begin
+@testset "init() and remotes" begin
     mktempdir() do dir
         bare_dir = joinpath(dir, "bare")
         init!(bare_dir; initial_branch="main")
@@ -90,9 +90,37 @@ end
         push!(working_dir)
         @test length(log(bare_dir)) == 2
 
-        mktempdir() do second_clone_dir
-            checkout!(bare_dir, second_clone_dir)
-            @test isfile(joinpath(second_clone_dir, "foo.txt"))
+        mktempdir() do second_working_dir
+            checkout!(bare_dir, second_working_dir)
+            @test isfile(joinpath(second_working_dir, "foo.txt"))
+        end
+
+        mktempdir() do second_bare_clone
+            rm(second_bare_clone)
+            clone!(bare_dir, second_bare_clone)
+
+            mktempdir() do second_working_dir
+                checkout!(second_bare_clone, second_working_dir, "main")
+                @test remote_url(second_working_dir) == second_bare_clone
+
+                open(joinpath(second_working_dir, "foo.txt"), write=true) do io
+                    println(io, "foo2!")
+                end
+                update_hash = commit!(second_working_dir, "updated foo.txt")
+                push!(second_working_dir)
+                @test first(log(second_bare_clone)) == update_hash
+                @test first(log(bare_dir)) != update_hash
+
+                open(joinpath(second_working_dir, "foo.txt"), write=true) do io
+                    println(io, "foo3!")
+                end
+                final_hash = commit!(second_working_dir, "finalized foo.txt")
+                remote_url!(second_working_dir, "upstream", bare_dir)
+                @test remote_url(second_working_dir, "upstream") == bare_dir
+                push!(second_working_dir, "upstream")
+                @test first(log(second_bare_clone)) == update_hash
+                @test first(log(bare_dir)) == final_hash
+            end
         end
     end
 end

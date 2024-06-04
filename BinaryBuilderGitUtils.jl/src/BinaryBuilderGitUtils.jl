@@ -1,7 +1,7 @@
 module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing
-export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, log, log_between
+export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, remote_url, remote_url!, log, log_between
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -82,7 +82,21 @@ function commit!(checkout_path::String, message::String; verbose::Bool = false)
 end
 
 function Base.push!(repo_path::String, remote::String = "origin"; verbose::Bool = false)
-    run(git(["-C", repo_path, "push", remote,  quiet_args(verbose)...]))
+    run(git(["-C", repo_path, "push", remote, quiet_args(verbose)...]))
+end
+
+function get_remotes(repo_path::String)
+    return split(readchomp(git(["-C", repo_path, "remote"])), "\n")
+end
+
+function remote_url(repo_path::String, remote::String = "origin")
+    return readchomp(git(["-C", repo_path, "remote", "get-url", remote]))
+end
+
+function remote_url!(repo_path::String, remote::String, url::String)
+    remotes = get_remotes(repo_path)
+    verb = remote ∈ remotes ? "set-url" : "add"
+    run(git(["-C", repo_path, "remote", verb, remote, url]))
 end
 
 function Base.log(repo_path::String, tip::HashOrString = "HEAD"; limit::Union{Int,Nothing} = nothing, reverse::Bool = false)
