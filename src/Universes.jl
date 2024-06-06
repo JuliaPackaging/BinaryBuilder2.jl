@@ -443,13 +443,14 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             if !gh_repo_exists(fork_org_repo)
                 gh_fork(jll_repo_url, u.deploy_org)
             end
-            clone!(fork_url, jll_bare_repo)
         end
+        clone!(fork_url, jll_bare_repo)
     else
-        if jll_repo_url !== nothing
-            clone!(jll_repo_url, jll_bare_repo)
-        else
+        if jll_repo_url === nothing
+            jll_repo_url = jll_bare_repo
             init!(jll_bare_repo)
+        else
+            clone!(jll_repo_url, jll_bare_repo)
         end
     end
 
