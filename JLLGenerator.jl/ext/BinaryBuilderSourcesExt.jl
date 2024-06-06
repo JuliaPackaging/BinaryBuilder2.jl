@@ -21,7 +21,11 @@ function JLLGenerator.parse_toml_dict(j::JLLSource; depot::Union{Nothing,String}
             pkg_dir = pkgdir(j)
         end
     end
-    return parse_toml_dict(TOML.parsefile(joinpath(pkg_dir, "JLL.toml")))
+    jll_toml_path = joinpath(pkg_dir, "JLL.toml")
+    if !isfile(jll_toml_path)
+        throw(ArgumentError("JLL $(j.package.name) v$(j.package.version) has no JLL.toml file!  Was it built by BB2?"))
+    end
+    return parse_toml_dict(TOML.parsefile(jll_toml_path))
 end
 
 end # module
