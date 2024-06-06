@@ -106,8 +106,8 @@ function branch(repo_path::String)
     readchomp(git(["-C", repo_path, "rev-parse", "--abbrev-ref", "HEAD"]))
 end
 
-function branch!(repo_path::String, branch::String)
-    run(git(["-C", repo_path, "checkout", "-B", branch]))
+function branch!(repo_path::String, branch::String; verbose::Bool = false)
+    run(git(["-C", repo_path, "checkout", "-B", branch, quiet_args(verbose)...]))
 end
 
 function commit!(checkout_path::String, message::String; verbose::Bool = false)

@@ -150,9 +150,9 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         end
     end
 
-    # There is no option to not deploy, so ignore the first return value
-    _, deploy_target = extract_flag!(ARGS, "--deploy", "local")
-    parsed_kwargs[:deploy_target] = deploy_target
+    # The organization we deploy to
+    _, deploy_org = extract_flag!(ARGS, "--deploy", nothing)
+    parsed_kwargs[:deploy_org] = deploy_org
 
     # Get the universe name
     _, universe_name = extract_flag!(ARGS, "--universe", nothing)
@@ -258,18 +258,17 @@ struct BuildMeta <: AbstractBuildMeta
     # this with the "dry run" mode, to allow us to generate a series of jobs.
     dry_run::Set{Symbol}
     json_output::Union{Nothing,IO}
-    deploy_target::String
     register::Bool
     output_dir::String
 
     function BuildMeta(;target_list::Vector{Platform} = Platform[],
-                        universe_name::Union{String,Nothing} = nothing,
+                        universe_name::Union{AbstractString,Nothing} = nothing,
+                        deploy_org::Union{AbstractString,Nothing} = nothing,
                         verbose::Bool = false,
                         debug_modes = Set{String}(),
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
                         disable_cache::Bool = false,
                         dry_run::Vector{Symbol} = Symbol[],
-                        deploy_target::AbstractString = "local",
                         register::Bool = false,
                         output_dir::AbstractString = joinpath(pwd(), "products"),
                        )
@@ -287,26 +286,13 @@ struct BuildMeta <: AbstractBuildMeta
             end
         end
 
-        if universe_name === nothing
-            universe = Universe()
-        else
-            universe = Universe(joinpath(universes_dir(), universe_name); persistent=true)
-        end
-
-        if deploy_target != "local"
-            # Authenticate to GitHub, then ensure that we are either deploying to our
-            # user, or an organization we are a part of
-            ensure_gh_authenticated()
-            if deploy_target != gh_user() && deploy_target ∉ gh_orgs()
-                throw(ArgumentError("deploy_target '$(deploy_target)' not a user/organization we have access to!"))
-            end
-        end
+        universe = Universe(something(universe_name, [])...; deploy_org, persistent=true)
 
         if isa(json_output, AbstractString)
             json_output = open(json_output, write=true)
         end
 
-        if register && deploy_target == "local"
+        if register && deploy_org === nothing
             throw(ArgumentError("Cannot register with a local deployment!"))
         end
 
@@ -322,7 +308,6 @@ struct BuildMeta <: AbstractBuildMeta
             disable_cache,
             Set{Symbol}(dry_run),
             json_output,
-            string_or_nothing(deploy_target),
             register,
             output_dir,
         )

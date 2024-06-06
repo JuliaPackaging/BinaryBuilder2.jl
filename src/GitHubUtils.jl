@@ -41,6 +41,18 @@ function gh_orgs()
     end
 end
 
+function gh_repo_exists(repo::String)
+    get!(gh_cache, "repo_exists_$(repo)") do
+        return success(pipeline(`$(gh()) api /repos/$(repo)`; stdout=devnull, stderr=devnull))
+    end
+end
+
+function gh_push_access(repo::String)
+    get!(gh_cache, "push_access_$(repo)") do
+        return success(pipeline(`$(gh()) api /repos/$(repo)/collaborators/$(gh_user())/permission`; stdout=devnull, stderr=devnull))
+    end
+end
+
 function gh_fork(source::String, target_org::String)
     # Fork `source` to the target organization (or our user)
     org_args = target_org != gh_user() ? ["--org", target_org] : []

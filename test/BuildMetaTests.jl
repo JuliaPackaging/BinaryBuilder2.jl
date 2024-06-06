@@ -9,7 +9,7 @@ using Base.BinaryPlatforms
         @test !parsed_kwargs[:verbose]
         @test !haskey(parsed_kwargs, :debug_modes)
         @test !haskey(parsed_kwargs, :json_output)
-        @test parsed_kwargs[:deploy_target] == "local"
+        @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :register_depot)
         @test !haskey(parsed_kwargs, :target_list)
 
@@ -24,7 +24,7 @@ using Base.BinaryPlatforms
         @test parsed_kwargs[:verbose]
         @test parsed_kwargs[:debug_modes] == Set(["build-error","extract-error"])
         @test parsed_kwargs[:json_output] == Base.stdout
-        @test parsed_kwargs[:deploy_target] == "local"
+        @test parsed_kwargs[:deploy_org] === nothing
         @test parsed_kwargs[:register_depot] == Pkg.depots1()
         @test !haskey(parsed_kwargs, :target_list)
 
@@ -61,7 +61,7 @@ using Base.BinaryPlatforms
         @test meta.debug === nothing
         @test isempty(meta.dry_run)
         @test meta.json_output === nothing
-        @test meta.deploy_target == "local"
+        @test meta.deploy_org === nothing
         @test meta.register_depot === nothing
 
         # Now, provide parameters for all sorts of stuff

@@ -155,7 +155,7 @@ function package!(config::PackageConfig)
     )
 
     # Register this JLL out into our universe
-    register_jll!(meta.universe, jll, meta.deploy_target)
+    register_jll!(meta.universe, jll)
 
     return PackageResult(
         config,

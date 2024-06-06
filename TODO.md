@@ -1,7 +1,4 @@
 High-priority list:
-- implement publish!() to push things up to actual github releases
-  - publish to branches
-  - publish General as well
 - Change away from "default"; maybe JLL.name-default?
   
 - Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
