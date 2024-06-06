@@ -16,7 +16,7 @@ struct PackageConfig
     named_extractions::Dict{String,Vector{ExtractResult}}
 
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
-                           jll_name::Union{AbstractString,Nothing} = nothing,
+                           jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = v"1.0.0")
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
@@ -28,10 +28,6 @@ struct PackageConfig
             throw(ArgumentError("Cannot package extractions from different BuildMeta objects!"))
         end
 
-        # We allow overriding the name, but default to `src_name`
-        if jll_name === nothing
-            jll_name = first_extract.config.build.config.src_name
-        end
         if !Base.isidentifier(jll_name)
             throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
@@ -43,11 +39,15 @@ struct PackageConfig
         return new(jll_name, version, extractions)
     end
 end
-PackageConfig(results::Vector{ExtractResult}; kwargs...) = PackageConfig(Dict("default" => results); kwargs...)
+PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
 PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
 AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
 AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = first(first(values(named_extractions))).config.build.config.meta
 
+# We allow overriding the name, but default to `build_config.src_name`.
+default_jll_name(result::ExtractResult) = result.config.build.config.src_name
+default_jll_name(results::Vector{ExtractResult}) = default_jll_name(first(results))
+default_jll_name(extractions::Dict{String,Vector{ExtractResult}}) = default_jll_name(first(values(extractions)))
 
 function Base.show(io::IO, config::PackageConfig)
     println(io, "PackageConfig($(config.name), $(config.version))")

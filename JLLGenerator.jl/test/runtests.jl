@@ -43,7 +43,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "linux"),
-                name = "default",
+                name = "XZ",
                 artifact = JLLArtifactBinding(;
                     treehash = "214deacf44273474118c5fe83871fdfa8039b4ad",
                     download_sources = [
@@ -64,7 +64,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("x86_64", "windows"),
-                name = "default",
+                name = "XZ",
                 artifact = JLLArtifactBinding(;
                     treehash = "4b8bb762c5118ee8ad81e67b981fe7d6a17fae77",
                     download_sources = [
@@ -85,7 +85,7 @@ end
                 deps = xz_deps,
                 sources = xz_sources,
                 platform = Platform("aarch64", "macos"),
-                name = "default",
+                name = "XZ",
                 artifact = JLLArtifactBinding(;
                     treehash = "abb153d4516c6a0ee718ea8f8cde9466de07553c",
                     download_sources = [
@@ -160,7 +160,7 @@ end
 @testset "Duplicate dependencies" begin
     function make_dual_deps_constraint(compat1, compat2)
         return JLLInfo(;
-            name = "default",
+            name = "Zlib",
             version = v"1.2.13+1",
             builds = [
                 JLLBuildInfo(;
@@ -173,7 +173,7 @@ end
                         ),
                     ],
                     platform = Platform("aarch64", "linux"; libc = "glibc"),
-                    name = "default",
+                    name = "Zlib",
                     artifact = JLLArtifactBinding(
                         treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                         download_sources = [],
@@ -190,7 +190,7 @@ end
                         ),
                     ],
                     platform = Platform("aarch64", "linux"; libc = "musl"),
-                    name = "default",
+                    name = "Zlib",
                     artifact = JLLArtifactBinding(
                         treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
                         download_sources = [],
@@ -234,7 +234,7 @@ end
             JLLBuildInfo(;
                 src_version = v"1.2.13+1",
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "default",
+                name = "Zlib",
                 artifact = JLLArtifactBinding(
                     treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                     download_sources = [],
@@ -255,13 +255,13 @@ end
 @testset "Intra-JLL library dependency" begin
     function make_intra_jll_dependency(incoherent)
         return JLLInfo(;
-            name = "default",
+            name = "CompilerSupportLibraries",
             version = v"1.0.5+1",
             builds = [
                 JLLBuildInfo(;
                     src_version = v"1.0.5+1",
                     platform = Platform("aarch64", "macos"; libgfortran_version = "5.0.0"),
-                    name = "default",
+                    name = "CompilerSupportLibraries",
                     artifact = JLLArtifactBinding(;
                         treehash = "f9547d56705c03a6e887a01aeb0f0b6b030b7060",
                         download_sources = [
@@ -319,7 +319,7 @@ end
 @testset "on-load callbacks" begin
     function make_on_load_callback(incoherent)
         return jll = JLLInfo(;
-            name = "default",
+            name = "libblastrampoline",
             version = v"5.8.0+1",
             builds = [
                 JLLBuildInfo(;
@@ -327,7 +327,7 @@ end
                     deps = [],
                     sources = [],
                     platform = Platform("aarch64", "macos"; ),
-                    name = "default",
+                    name = "libblastrampoline",
                     artifact = JLLArtifactBinding(;
                         treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
                         download_sources = [
@@ -413,7 +413,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "default",
+                name = "Zlib",
                 artifact = JLLArtifactBinding(
                     treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                     download_sources = [],
@@ -424,7 +424,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "musl"),
-                name = "default",
+                name = "Zlib",
                 artifact = JLLArtifactBinding(
                     treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
                     download_sources = [],
@@ -442,7 +442,7 @@ end
                 src_version = v"1.2.13+1",
                 deps = [],
                 platform = Platform("aarch64", "linux"; libc = "glibc"),
-                name = "default",
+                name = "Zlib",
                 artifact = JLLArtifactBinding(
                     treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                     download_sources = [],
@@ -485,14 +485,14 @@ end
 using BinaryBuilderSources, Base.BinaryPlatforms, Pkg
 using BinaryBuilderSources: PkgSpec
 @testset "JLLSource TOML loading" begin
-    # Use special Readline_jll.jl because we do not yet have any JLLs built in the wild that have a `JLL.toml`.
+    # Use special Ncurses_jll.jl because we do not yet have any JLLs built in the wild that have a `JLL.toml`.
     jll = JLLSource(PkgSpec(;
-        name = "Readline_jll",
-        uuid = "05236dd9-4125-5232-aa7c-9ec0c9b2c25a",
-        tree_hash = Base.SHA1("9761af7276a465289a8ae15505693802654600b7"),
+        name = "Ncurses_jll",
+        uuid = "68e3532b-a499-55ff-9963-d1c0c0748b3a",
+        tree_hash = Base.SHA1("13fc5ebe75b8e1f5953b5c086662939cfeba076c"),
         repo=Pkg.Types.GitRepo(
-            rev="27c481328ae90181566f812fe6403e336305ec60",
-            source="https://github.com/staticfloat/Readline_jll.jl",
+            rev="c2c7c9e33af25b53c2129dca99cda5f690358a6d",
+            source="https://github.com/staticfloat/Ncurses_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
 
@@ -500,11 +500,11 @@ using BinaryBuilderSources: PkgSpec
         prepare(jll; depot=prefix)
         data = parse_toml_dict(jll; depot=prefix)
 
-        @test data.name == "Readline"
+        @test data.name == "Ncurses"
         @test length(data.builds) == 1
         build = only(data.builds)
-        @test build.name == "default"
-        @test length(build.products) == 2
-        @test build.artifact.treehash == "sha1:86dbbae0fc03bf1d84afa1251408a42a6015e612"
+        @test build.name == "Ncurses"
+        @test length(build.products) == 4
+        @test build.artifact.treehash == "sha1:44b0cdedf51215e2f444a47c52abc5ac9507b6e4"
     end
 end

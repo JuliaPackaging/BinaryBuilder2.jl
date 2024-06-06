@@ -25,7 +25,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "526dce896ac072d350ffb42a52344708cae3c27e",
                 download_sources = [
@@ -78,7 +78,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "b18b9a5730acdf1a6c21e015c272b276ea8c0cc7",
                 download_sources = [
@@ -131,7 +131,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "8a9d394d12530b5ccb49c17511db28f3aaae40b5",
                 download_sources = [
@@ -184,7 +184,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "953e2f93ebc878ad8a88cae830fefb68fb8b690f",
                 download_sources = [
@@ -237,7 +237,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "f89d7d066628a23330c8de05e32b44e2c1dc7d11",
                 download_sources = [
@@ -290,7 +290,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "c2811457c8fc9e81e467708b34ff4515eccb8395",
                 download_sources = [
@@ -343,7 +343,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "1f666090cf2ca53aa7bf86801eb9c3ab9de289d8",
                 download_sources = [
@@ -396,7 +396,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "a90a3d50e868f09de1f6ec4e73bd17dd530b88fc",
                 download_sources = [
@@ -449,7 +449,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "69a3c5614eb68320b8b9aa7d1c188e744ef0b061",
                 download_sources = [
@@ -502,7 +502,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "471a7dd439235b7d9bac3d5540c70e2dbc049b97",
                 download_sources = [
@@ -555,7 +555,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "ec1f907eb14042b159d84e0c1a6963a169fe2a59",
                 download_sources = [
@@ -608,7 +608,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "9c72d8035eb6b79b864e167e30ddb827cf4f24f6",
                 download_sources = [
@@ -661,7 +661,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "842b011fd9789c15a0e0bc719a3f09f0e27dfb8f",
                 download_sources = [
@@ -714,7 +714,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "8ae93fbe12b583b9f7e47162524da045992916e2",
                 download_sources = [
@@ -767,7 +767,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "f3469d2c268ce5203bbe1c79f978f6869a777c43",
                 download_sources = [
@@ -820,7 +820,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "default",
+            name = "Ncurses",
             artifact = JLLArtifactBinding(;
                 treehash = "95ad300678b9c9750e9b6892091d70bf3274ca30",
                 download_sources = [

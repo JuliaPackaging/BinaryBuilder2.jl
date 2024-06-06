@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "14298736692555e66e2085582cce63b441cd1c7d",
                 download_sources = [
@@ -46,7 +46,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "31429d09cf15567a5ff6ca0b037bf47d9c75f8eb",
                 download_sources = [
@@ -84,7 +84,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "630ebee79c58b82af97590e0b1701a0ea467a9ac",
                 download_sources = [
@@ -122,7 +122,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "7062811416ada0ceb09b2ae838cb5c787345401c",
                 download_sources = [
@@ -160,7 +160,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "c3cc15c4a125d759e36d7ad805887acca0ef3f99",
                 download_sources = [
@@ -198,7 +198,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "d9ecb7965fb99d492e56d2ed66a8e10c194e1eb7",
                 download_sources = [
@@ -236,7 +236,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "2f7e2ad63d8a1e06b79492b2d13511bba3c7d0ad",
                 download_sources = [
@@ -274,7 +274,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "8b025325f774e72af4a979cb4d9a59dc269266d0",
                 download_sources = [
@@ -312,7 +312,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "18aae5804e2d3ad417caca3f7b23561fefef0eae",
                 download_sources = [
@@ -350,7 +350,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "83426ffc11dda49af0f10b9c203ec2faf9f74e5c",
                 download_sources = [
@@ -388,7 +388,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "60766178331382a43e86830ea09b025e4d7e0e4a",
                 download_sources = [
@@ -426,7 +426,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "1ca034aab6ed29e8ae96e6cbc35a416df707304d",
                 download_sources = [
@@ -464,7 +464,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "710cb767c2ea11a0e0b7750fb57771d5243b5c7d",
                 download_sources = [
@@ -502,7 +502,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "29e0a31f3348afa155f29dd3e324e37c688b8aa2",
                 download_sources = [
@@ -540,7 +540,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "647d1ea71de9c849e3565dc42757d7abf4f272e8",
                 download_sources = [
@@ -578,7 +578,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "e4deb1e0d7e569dd14270cf027941e994cd05121",
                 download_sources = [
@@ -616,7 +616,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "default",
+            name = "PCRE2",
             artifact = JLLArtifactBinding(;
                 treehash = "5430473e053ea273f9bf326983f47aace82e3093",
                 download_sources = [

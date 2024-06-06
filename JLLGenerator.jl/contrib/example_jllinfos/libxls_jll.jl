@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "ca0e731d11c697f06d61948cd9af297f2ecb6c0d",
                 download_sources = [
@@ -34,7 +34,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "ecf6799c4dbfcad10ca6f6655b6335c4ccbfb370",
                 download_sources = [
@@ -60,7 +60,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "555de5c17a0813b57f3ad5ab12dea8f3f63f1a90",
                 download_sources = [
@@ -86,7 +86,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "f1b8cd59ff0509c3618a319f14c93f56ebb1bd3b",
                 download_sources = [
@@ -112,7 +112,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "e5de098bf4020d8cd76cc023bb722f483f14660a",
                 download_sources = [
@@ -138,7 +138,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "8362e295bdba1aec088d591ce4484012721fc62f",
                 download_sources = [
@@ -164,7 +164,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "6edaa28fbd260338d738c82f230f1b4664379c53",
                 download_sources = [
@@ -190,7 +190,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "14869e668267499762a15b057547a4a52e6d039b",
                 download_sources = [
@@ -216,7 +216,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "0e16e7c0b90fd5c7cff75d55ae2a3070f8b409fb",
                 download_sources = [
@@ -242,7 +242,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "b47600e2aca1f117c89bad97d34a620bd6ee5e30",
                 download_sources = [
@@ -268,7 +268,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "567a073095e773e1a49016aa4e1aab6538f7e6ba",
                 download_sources = [
@@ -294,7 +294,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "a795cb1add116aee2fd76f8ca7cccaae188c11ae",
                 download_sources = [
@@ -320,7 +320,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "dd3c443db40273362a1f2811f34e422c3d9d3ae3",
                 download_sources = [
@@ -346,7 +346,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "251ea23d94e2436fea92e854addb6734f4f28561",
                 download_sources = [
@@ -372,7 +372,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "1c306f5bc10ff335763e20f1aeebc529742945a0",
                 download_sources = [
@@ -398,7 +398,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "default",
+            name = "libxls",
             artifact = JLLArtifactBinding(;
                 treehash = "d82ca131d7feae54dcd0b39d7536bd12fedc9042",
                 download_sources = [

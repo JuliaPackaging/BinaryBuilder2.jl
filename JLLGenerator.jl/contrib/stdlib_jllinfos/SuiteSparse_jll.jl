@@ -13,7 +13,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; ),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "8a12b0606590424b57db06f7b111abfb483fc366",
                 download_sources = [
@@ -147,7 +147,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "71b9a24526921e4b969d81bcfae2081cac269bc7",
                 download_sources = [
@@ -281,7 +281,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "ebc1d355856c9efde9b0cef5971f20ba9e87fd8a",
                 download_sources = [
@@ -415,7 +415,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "3c70b51e115f6610fcdaa686a7a3e2dfc2a4ac56",
                 download_sources = [
@@ -549,7 +549,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "384da13f523185583ef52b7001fa8b7a31a9845c",
                 download_sources = [
@@ -683,7 +683,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "6677c3d4c51e18ebdb50f4081fccbeb060fe1b43",
                 download_sources = [
@@ -817,7 +817,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "2995605c5d4ac886535be0b07fc0d8e63aa49ac8",
                 download_sources = [
@@ -951,7 +951,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "bc44cb09261ee7ce9a40e3769685724ebea00051",
                 download_sources = [
@@ -1085,7 +1085,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "693263287c7f3e233e965dc8aa5b1e63642ec9ac",
                 download_sources = [
@@ -1219,7 +1219,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; ),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "d807ad48e83734199c48c8292a4fd4ddcb322409",
                 download_sources = [
@@ -1353,7 +1353,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "3726451ab62e3f4ad5ad5e348f32f391806c884d",
                 download_sources = [
@@ -1487,7 +1487,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; ),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "a7f3e578d721fec758c2988adf91f7f1b765cbc9",
                 download_sources = [
@@ -1621,7 +1621,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "d4f6a49d4aa41c303cae0f5dfbd663bbb0463245",
                 download_sources = [
@@ -1755,7 +1755,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "23e0f02c0b7d2a7dba23f0ecf401aca264d3c15c",
                 download_sources = [
@@ -1889,7 +1889,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "24119a6212d43f4962c5c2d0a5eccf667ed5cd69",
                 download_sources = [
@@ -2023,7 +2023,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "fe4ced0a06144ab901913546358f7eb09e844e51",
                 download_sources = [
@@ -2157,7 +2157,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; ),
-            name = "default",
+            name = "SuiteSparse",
             artifact = JLLArtifactBinding(;
                 treehash = "d9305ffe3e6d14a5b8cf43204bfcf35d13929c79",
                 download_sources = [

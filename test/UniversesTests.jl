@@ -8,8 +8,11 @@ using BinaryBuilder2: register_jll!
         
         # Register a JLL into it; we'll use HelloWorldC_jll from JLLGenerator contrib directory,
         # but we'll name it `HelloWorldC2_jll` so that it is created as a new entry in the registry
-        hwc_jll = include(joinpath(@__DIR__, "..", "JLLGenerator.jl", "contrib", "example_jllinfos", "HelloWorldC_jll.jl"))
+        hwc_jll = include(joinpath(pkgdir(JLLGenerator), "contrib", "example_jllinfos", "HelloWorldC_jll.jl"))
         hwc_jll = @set hwc_jll.name = "HelloWorldC2"
+        hwc_jll = @set hwc_jll.builds = map(hwc_jll.builds) do build
+            build = @set build.name = "HelloWorldC2"
+        end
         register_jll!(uni, hwc_jll; skip_artifact_export=true)
         Pkg.instantiate(uni)
 

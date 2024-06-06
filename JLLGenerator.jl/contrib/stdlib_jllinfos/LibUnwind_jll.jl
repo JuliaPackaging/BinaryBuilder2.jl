@@ -13,7 +13,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "7bccd2ab421474277a5978c81cb73a90a7a71ca3",
                 download_sources = [
@@ -46,7 +46,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "54f7330814d267d3e58b78ee0af4973dd30ceadb",
                 download_sources = [
@@ -79,7 +79,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "c9a3ca68c98504d0b08dd14717fed19a34bd13b0",
                 download_sources = [
@@ -112,7 +112,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "f80fda871c960dfb83b1231bfd3d7c39cb21ea0c",
                 download_sources = [
@@ -145,7 +145,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "e2a1517082330b0357a4a192cd4b844740e4c9db",
                 download_sources = [
@@ -178,7 +178,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "6db8c9473279028a23a59715f9c81e9f96af0403",
                 download_sources = [
@@ -211,7 +211,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "fca03b9f31307428fe8f3c3752ae52a7c8f53d8c",
                 download_sources = [
@@ -244,7 +244,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "cb71fc8cf968e95d696c759cabb41ca8fc18221c",
                 download_sources = [
@@ -277,7 +277,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "ad20fc787f7438d705f5e705427e44856d422a7e",
                 download_sources = [
@@ -310,7 +310,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "ef6dd6c946402ed82ada48211d70a5d2c2653869",
                 download_sources = [
@@ -343,7 +343,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "93495ad4ec5fff6b1ae02343bab9d1fa8647f174",
                 download_sources = [
@@ -376,7 +376,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "1d93ec1aed750373ab131eaa94fa743707aee0d0",
                 download_sources = [
@@ -409,7 +409,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "LibUnwind",
             artifact = JLLArtifactBinding(;
                 treehash = "05c326aeaa21044f58574f6b4c3205afa8479fd1",
                 download_sources = [

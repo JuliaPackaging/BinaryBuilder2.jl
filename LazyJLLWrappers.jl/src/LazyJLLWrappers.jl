@@ -121,7 +121,7 @@ macro generate_jll_from_toml()
     # platforms, some JLLs can provide alternate artifact names (e.g. `default`
     # vs. `debug`), you can switch between which one you want to download
     # by setting the `artifact_name` preference:
-    artifact_name = "default"
+    artifact_name = jll["name"]
     if VERSION >= v"1.6.0"
         artifact_name = load_preference(__module__, "artifact_name", artifact_name)
     end

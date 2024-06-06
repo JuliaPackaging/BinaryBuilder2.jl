@@ -33,7 +33,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "macos"; libgfortran_version = "5.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "08bb912954265e65731f7d220386133a215ca1aa",
                 download_sources = [
@@ -65,7 +65,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "3.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "79d497b65820e0df62db0af5fe54a54a8066cb06",
                 download_sources = [
@@ -97,7 +97,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "4.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "48e9551fa711e9bcadc7ac309ea2c2effad9900e",
                 download_sources = [
@@ -129,7 +129,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "5.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "1298e6728305b4bed84f5ec6aa14378e2f7fb73e",
                 download_sources = [
@@ -161,7 +161,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "3.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "5d672c3fef0eac9165b89d224ab07dc6e259b757",
                 download_sources = [
@@ -193,7 +193,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "4.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "80c983af4b458bbcf2d2e0758e6b13aa0dadb314",
                 download_sources = [
@@ -225,7 +225,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("aarch64", "linux"; libgfortran_version = "5.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "51f27f4ad0dc1be799bcf2aa520646fd00335820",
                 download_sources = [
@@ -257,7 +257,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "3.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "734921d630dba4eeaba4ee1d66d19a90aea9895d",
                 download_sources = [
@@ -289,7 +289,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "4.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "3ec245929162506d599471c689ccacf54291ff6d",
                 download_sources = [
@@ -321,7 +321,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "5.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "20899f92b0198109d469e7796a6b625b7f0cd966",
                 download_sources = [
@@ -353,7 +353,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "3.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "6a42a2660643f0c590a4d0cda7f8bc4bfdfd0ccf",
                 download_sources = [
@@ -385,7 +385,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "4.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "9faec1d75fcda4c6b90abc68c4c92c63d8a2aed6",
                 download_sources = [
@@ -417,7 +417,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv6l", "linux"; libgfortran_version = "5.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "3aa0ce59e4cd25195510b4541243f4ab6d53fd11",
                 download_sources = [
@@ -449,7 +449,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "3.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "734921d630dba4eeaba4ee1d66d19a90aea9895d",
                 download_sources = [
@@ -481,7 +481,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "4.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "3ec245929162506d599471c689ccacf54291ff6d",
                 download_sources = [
@@ -513,7 +513,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "5.0.0", call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "20899f92b0198109d469e7796a6b625b7f0cd966",
                 download_sources = [
@@ -545,7 +545,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "3.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "6a42a2660643f0c590a4d0cda7f8bc4bfdfd0ccf",
                 download_sources = [
@@ -577,7 +577,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "4.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "9faec1d75fcda4c6b90abc68c4c92c63d8a2aed6",
                 download_sources = [
@@ -609,7 +609,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("armv7l", "linux"; libgfortran_version = "5.0.0", call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "3aa0ce59e4cd25195510b4541243f4ab6d53fd11",
                 download_sources = [
@@ -641,7 +641,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "3.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "6ccfe61e001e9e8670122ed3dd53ddedaee34a80",
                 download_sources = [
@@ -673,7 +673,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "4.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "ae73d3ab5b6936682cb3cb0de2c5d50ca179fae5",
                 download_sources = [
@@ -705,7 +705,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "5.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "f6a54add7606913840bec00b64ff603f1cc17faf",
                 download_sources = [
@@ -737,7 +737,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "3.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "bdb6990376ba7364973a88b2c43b5e188bed23c7",
                 download_sources = [
@@ -769,7 +769,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "4.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "712cfee4c29a2f867d2af1a08a81be10e8ad9f74",
                 download_sources = [
@@ -801,7 +801,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "linux"; libgfortran_version = "5.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "c518c0e87c036b2bcb192dda2e004314131364a5",
                 download_sources = [
@@ -833,7 +833,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; libgfortran_version = "3.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "bbc61a2e5f3298a8ce0c05e23e9797477d304949",
                 download_sources = [
@@ -865,7 +865,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; libgfortran_version = "4.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "ba460ada05eac6d5544b2a7d2ea06c65241ce45b",
                 download_sources = [
@@ -897,7 +897,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("i686", "windows"; libgfortran_version = "5.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "889ce291d838b51d3edf04583796525f1781b7a4",
                 download_sources = [
@@ -929,7 +929,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libgfortran_version = "3.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "1cfe4d0db216203e85c271ae61b9c325e9a77570",
                 download_sources = [
@@ -961,7 +961,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libgfortran_version = "4.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "3c33242559090f13482caa3e03fd18da72cc33f9",
                 download_sources = [
@@ -993,7 +993,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("powerpc64le", "linux"; libgfortran_version = "5.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "8866e41c2a8b1e02e4529c74edd8d0f5b9409d32",
                 download_sources = [
@@ -1025,7 +1025,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; libgfortran_version = "3.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "8dbce3eb85463819a1d393413668d055f99a5585",
                 download_sources = [
@@ -1057,7 +1057,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; libgfortran_version = "4.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "79b6db7b5c21fbe4601f1f2ae1c3eff18a516e5b",
                 download_sources = [
@@ -1089,7 +1089,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "macos"; libgfortran_version = "5.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "a5ed6a23544222351d4413b0a6080e16c0f792b7",
                 download_sources = [
@@ -1121,7 +1121,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "3.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "d51d1ba68dd99afb395ae0ee6d5334a64e0fda79",
                 download_sources = [
@@ -1153,7 +1153,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "4.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "10f9c071f0c6b6c0797961b21a6c957f1fa93d68",
                 download_sources = [
@@ -1185,7 +1185,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "5.0.0", libc = "glibc"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "0e3ffacf210dfeed0eb4bc9d7f7a1a99e8c4c284",
                 download_sources = [
@@ -1217,7 +1217,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "b3b43fae93bb19c932a4f98594e94a03610ae750",
                 download_sources = [
@@ -1249,7 +1249,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "3.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "45306bc695605d56b6b985981ae2be764b7fd2d5",
                 download_sources = [
@@ -1281,7 +1281,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "4.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "1f4aca94e9a94eb32df298473758b9ba9d6e4805",
                 download_sources = [
@@ -1313,7 +1313,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "linux"; libgfortran_version = "5.0.0", libc = "musl"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "fddad481425e9e42f168a86122c198106abef08b",
                 download_sources = [
@@ -1345,7 +1345,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; libgfortran_version = "3.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "dd8d2eccb47e51a659264b4198d613371c392c67",
                 download_sources = [
@@ -1377,7 +1377,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; libgfortran_version = "4.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "1ef2b5fa2a1094df68e6410fa44e1dd8f8e701e0",
                 download_sources = [
@@ -1409,7 +1409,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "freebsd"; libgfortran_version = "5.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "4011ada12d0e98a4ee64e12f3178e057e21cb0a0",
                 download_sources = [
@@ -1441,7 +1441,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; libgfortran_version = "3.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "77a5659dc279d1c004e10c025051ee93d1ba94b1",
                 download_sources = [
@@ -1473,7 +1473,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; libgfortran_version = "4.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "9934244b3b85c86d0a9ad94372a08509b7cd69b3",
                 download_sources = [
@@ -1505,7 +1505,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = Platform("x86_64", "windows"; libgfortran_version = "5.0.0"),
-            name = "default",
+            name = "OpenBLAS",
             artifact = JLLArtifactBinding(;
                 treehash = "9f38d0d35553b61f556fe1597555afc01cc555ce",
                 download_sources = [

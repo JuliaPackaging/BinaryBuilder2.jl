@@ -5,7 +5,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("aarch64", "macos"; ),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "825258bf554943dc116bd0699dad3ebd57004efc",
                 download_sources = [
@@ -28,7 +28,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("aarch64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                 download_sources = [
@@ -51,7 +51,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("aarch64", "linux"; libc = "musl"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "377fed6108dca72651d7cb705a0aee7ce28d4a5b",
                 download_sources = [
@@ -74,7 +74,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "35c69c6c920abe3002f30d4df499e3cd958aee09",
                 download_sources = [
@@ -97,7 +97,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("armv6l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "7019cf5e79d3147cb132d70e5e599c03ecedb8c4",
                 download_sources = [
@@ -120,7 +120,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "68112b5a8529eb286600242e0bb0b4660dc0f69e",
                 download_sources = [
@@ -143,7 +143,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("armv7l", "linux"; call_abi = "eabihf", libc = "musl"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "9d727d53f99aee4faed3c3447ef080c0a4584a7c",
                 download_sources = [
@@ -166,7 +166,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("i686", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "e2c7906256e3799bbbed63fd4b722c13d91acc77",
                 download_sources = [
@@ -189,7 +189,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("i686", "linux"; libc = "musl"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "36f4a2f291c7d540502d2c582df637a07860a2ae",
                 download_sources = [
@@ -212,7 +212,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("i686", "windows"; ),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "8c6b8a1d5c1031889f6cbcdd6325df407ad53822",
                 download_sources = [
@@ -235,7 +235,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("powerpc64le", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "10ba2029939134fccc5399818565bdff411ccaf5",
                 download_sources = [
@@ -258,7 +258,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "macos"; ),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "0d1569be418e930c068521e8a1a43b09640f5ad6",
                 download_sources = [
@@ -281,7 +281,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "linux"; libc = "glibc"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "66cb477c2221860067abc2197baece8d67be5bb6",
                 download_sources = [
@@ -304,7 +304,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "linux"; libc = "glibc", sanitize = "memory"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "b86177a36c8ba482120ab766b6670177dffd72f3",
                 download_sources = [
@@ -327,7 +327,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "linux"; libc = "musl"),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "d4212eaa51b38b228b3238013323a612428c2f81",
                 download_sources = [
@@ -350,7 +350,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "freebsd"; ),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "aae30f22ece1dd1f6979276b823e1464413adea7",
                 download_sources = [
@@ -373,7 +373,7 @@ jll = JLLInfo(;
         JLLBuildInfo(;
             src_version = v"1.2.13+1",
             platform = Platform("x86_64", "windows"; ),
-            name = "default",
+            name = "Zlib",
             artifact = JLLArtifactBinding(;
                 treehash = "33c83c4294a01e0aa19e68915605cf649b379c4b",
                 download_sources = [

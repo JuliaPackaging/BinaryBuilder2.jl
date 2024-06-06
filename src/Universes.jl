@@ -130,7 +130,7 @@ struct Universe
             string(name),
             depot_path,
             registries,
-            string(deploy_org),
+            deploy_org,
             string(registry_url),
         )
         prune!(uni)
@@ -312,18 +312,11 @@ In full generality, this will look something like the following:
 
     Readline-debug-build_log-v1.0.0-x86_64-linux-gnu.tar.gz
 """
-function exported_artifact_filename(jll_name::String,
-                                    build_name::String,
+function exported_artifact_filename(build_name::String,
                                     auxiliary_name::Union{Nothing,String},
                                     version::VersionNumber,
                                     platform::AbstractPlatform)
-    ret = jll_name
-
-    # If this is the default build, we just omit default for brevity
-    if build_name != "default"
-        ret = string(ret, "-", build_name)
-    end
-
+    ret = build_name
     if auxiliary_name !== nothing
         ret = string(ret, "-", auxiliary_name)
     end
@@ -358,7 +351,6 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
         # Archive the main artifact
         # This will expand to something like `/tmp/foo/readline-v1.0.0-x86_64-linux-gnu.tar.gz`
         exported_artifact_path = joinpath(output_dir, exported_artifact_filename(
-            jll.name,
             build.name,
             nothing,
             jll.version,
@@ -375,7 +367,6 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
         # Next, archive each auxilliary artifact as well
         for (aux_name, art) in build.auxilliary_artifacts
             exported_artifact_path = joinpath(output_dir, exported_artifact_filename(
-                jll.name,
                 build.name,
                 aux_name,
                 jll.version,

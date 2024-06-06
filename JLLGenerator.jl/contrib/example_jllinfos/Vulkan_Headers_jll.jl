@@ -8,7 +8,7 @@ jll = JLLInfo(;
             ],
             sources = [],
             platform = AnyPlatform(),
-            name = "default",
+            name = "Vulkan_Headers",
             artifact = JLLArtifactBinding(;
                 treehash = "8bfcdb8832078af6cc9667780f1d15e9897c18bf",
                 download_sources = [
