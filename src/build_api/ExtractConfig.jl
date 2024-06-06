@@ -118,6 +118,11 @@ function extract!(config::ExtractConfig;
     if build_cache_enabled(build_config.meta) && !disable_cache
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
         if artifact_hash !== nothing
+            if meta.verbose
+                extract_hash = content_hash(extract_config)
+                build_hash = content_hash(extract_config.build.config)
+                @info("Extraction cached", config, extract_hash, build_hash)
+            end
             return ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
         end
     end

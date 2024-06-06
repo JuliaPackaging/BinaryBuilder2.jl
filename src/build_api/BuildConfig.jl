@@ -385,6 +385,9 @@ function build!(config::BuildConfig;
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
         build_hash = content_hash(config)
         if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
+            if meta.verbose
+                @info("Build cached", config, build_hash=content_hash(config))
+            end
             return BuildResult_cached(config)
         end
     end
