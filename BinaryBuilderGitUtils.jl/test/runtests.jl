@@ -31,6 +31,7 @@ using BinaryBuilderGitUtils
         @test only(log(pkg_5_path; limit=1)) == head_5
 
         # Check out various branches
+        @test "v1.6.0" ∈ tags(pkg_path)
         r160_path = joinpath(dir, "Pkg-v1.6.0")
         r161_path = joinpath(dir, "Pkg-v1.6.1")
         checkout!(pkg_path, r160_path, "v1.6.0")
@@ -39,7 +40,13 @@ using BinaryBuilderGitUtils
         @test isfile(r161_path, "Project.toml")
 
         @test only(log(r160_path; limit=1)) == "sha1:05fa7f93f73afdabd251247d03144de9f7b36b50"
-        @test only(log(r161_path; limit=1)) == "sha1:c78a8be9af8aa0944b74f297791e10933f223aad" 
+        @test only(log(r161_path; limit=1)) == "sha1:c78a8be9af8aa0944b74f297791e10933f223aad"
+
+        # When we've checked out a tag, we don't have a branch name
+        @test branch(r160_path) == "HEAD"
+        branch!(r160_path, "new_branch")
+        @test branch(r160_path) == "new_branch"
+        @test only(log(r160_path; limit=1)) == "sha1:05fa7f93f73afdabd251247d03144de9f7b36b50"
 
         # `clone!()` with a bad commit fails, but `nothing` succeeds:
         @test_throws ArgumentError clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path; commit="0"^40)
