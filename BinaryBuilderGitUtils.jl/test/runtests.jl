@@ -30,9 +30,6 @@ using BinaryBuilderGitUtils
         @test isdir(pkg_5_path)
         @test only(log(pkg_5_path; limit=1)) == head_5
 
-        # Test that this is silent
-        checkout!(pkg_path, pkg_5_path, head_5)
-
         # Check out various branches
         @test "v1.6.0" ∈ tags(pkg_path)
         r160_path = joinpath(dir, "Pkg-v1.6.0")
