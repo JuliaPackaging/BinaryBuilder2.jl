@@ -286,7 +286,7 @@ struct BuildMeta <: AbstractBuildMeta
             end
         end
 
-        universe = Universe(something(universe_name, [])...; deploy_org, persistent=true)
+        universe = Universe(something([universe_name], [])...; deploy_org, persistent=true)
 
         if isa(json_output, AbstractString)
             json_output = open(json_output, write=true)
