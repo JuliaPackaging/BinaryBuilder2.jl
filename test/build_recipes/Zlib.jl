@@ -7,8 +7,8 @@ function zlib_build_tarballs(meta, platforms)
             GitSource("https://github.com/madler/zlib.git",
                       "51b7f2abdade71cd9bb0e7a373ef2610ec6f9daf"),
         ],
-        AbstractSource[],
-        AbstractSource[],
+        [],
+        [],
         raw"""
         cd $WORKSPACE/srcdir/zlib*
         ./configure --prefix=${prefix}

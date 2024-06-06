@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0-DEV"
 manifest_format = "2.0"
-project_hash = "f78e2ab4e9ae949afc11cc5c64854dee3d5e0540"
+project_hash = "b042561165dc9041e842f2052df74f400064b477"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -28,22 +28,22 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
 [[deps.BinaryBuilder2]]
-deps = ["Artifacts", "BinaryBuilderAuditor", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "Dates", "Downloads", "Git", "HistoricalStdlibVersions", "JLLGenerator", "JLLPrefixes", "LazyJLLWrappers", "Libdl", "LocalRegistry", "MultiHashParsing", "ObjectFile", "OrderedCollections", "OutputCollectors", "Pkg", "Preferences", "Random", "Reexport", "RegistryTools", "SHA", "Sandbox", "Scratch", "TOML", "Test", "TimerOutputs", "TreeArchival"]
+deps = ["Artifacts", "BinaryBuilderAuditor", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "Dates", "Downloads", "Git", "HistoricalStdlibVersions", "JLLGenerator", "JLLPrefixes", "LazyJLLWrappers", "Libdl", "LocalRegistry", "MultiHashParsing", "ObjectFile", "OrderedCollections", "OutputCollectors", "Pkg", "Preferences", "Random", "Reexport", "RegistryTools", "SHA", "Sandbox", "Scratch", "StyledStrings", "TOML", "Test", "TimerOutputs", "TreeArchival", "gh_cli_jll"]
 path = "."
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
 version = "2.0.0"
 
 [[deps.BinaryBuilderAuditor]]
-deps = ["BinaryBuilderProducts", "BinaryBuilderToolchains", "JLLGenerator", "ObjectFile", "Patchelf_jll"]
+deps = ["BinaryBuilderProducts", "JLLGenerator", "ObjectFile", "Patchelf_jll"]
 path = "BinaryBuilderAuditor.jl"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
 version = "0.1.0"
 
 [[deps.BinaryBuilderGitUtils]]
-deps = ["Git", "Git_jll", "MultiHashParsing"]
+deps = ["Git", "Git_jll", "MultiHashParsing", "gh_cli_jll"]
 path = "BinaryBuilderGitUtils.jl"
 uuid = "654d7472-7548-7361-4832-74694762694c"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.BinaryBuilderPlatformExtensions]]
 deps = ["OrderedCollections", "Reexport"]
@@ -182,7 +182,7 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 version = "1.11.0"
 
 [[deps.LazyJLLWrappers]]
-deps = ["Artifacts", "JLLGenerator", "Libdl", "Pkg", "Preferences", "TOML"]
+deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML"]
 path = "LazyJLLWrappers.jl"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
 version = "1.0.1"
@@ -432,6 +432,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e678132f07ddb5bfa46857f0d7620fb9be675d3b"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.5.6+0"
+
+[[deps.gh_cli_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "b54ff233a6a183ad366d29fa0e3ff9bb921692db"
+uuid = "5d31d589-30fb-542f-b82d-10325e863e38"
+version = "2.35.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]

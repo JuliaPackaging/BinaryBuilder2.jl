@@ -1,4 +1,5 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
+using BinaryBuilder2: register_jll!
 
 @testset "Universes" begin
     # Create a universe holding just `General`
@@ -9,7 +10,7 @@ using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
         # but we'll name it `HelloWorldC2_jll` so that it is created as a new entry in the registry
         hwc_jll = include(joinpath(@__DIR__, "..", "JLLGenerator.jl", "contrib", "example_jllinfos", "HelloWorldC_jll.jl"))
         hwc_jll = @set hwc_jll.name = "HelloWorldC2"
-        register!(uni, hwc_jll)
+        register_jll!(uni, hwc_jll, "local"; skip_artifact_export=true)
         Pkg.instantiate(uni)
 
         # Launch a Julia sub-process and ensure that we can load HelloWorldC_jll from the universe

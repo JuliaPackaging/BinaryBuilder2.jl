@@ -489,9 +489,9 @@ using BinaryBuilderSources: PkgSpec
     jll = JLLSource(PkgSpec(;
         name = "Readline_jll",
         uuid = "05236dd9-4125-5232-aa7c-9ec0c9b2c25a",
-        tree_hash = Base.SHA1("e2833c2a7016be6387035ebc204945f24e1a1174"),
+        tree_hash = Base.SHA1("9761af7276a465289a8ae15505693802654600b7"),
         repo=Pkg.Types.GitRepo(
-            rev="a4f3921fdde0151df1c5efb10728b03e2a696e84",
+            rev="27c481328ae90181566f812fe6403e336305ec60",
             source="https://github.com/staticfloat/Readline_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
@@ -505,6 +505,6 @@ using BinaryBuilderSources: PkgSpec
         build = only(data.builds)
         @test build.name == "default"
         @test length(build.products) == 2
-        @test build.artifact.treehash == "sha1:b18bc5bdcff9c62785e46d19dcdce3717ce10335"
+        @test build.artifact.treehash == "sha1:86dbbae0fc03bf1d84afa1251408a42a6015e612"
     end
 end

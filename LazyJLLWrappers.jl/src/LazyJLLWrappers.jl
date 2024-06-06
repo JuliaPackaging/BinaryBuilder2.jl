@@ -140,15 +140,26 @@ macro generate_jll_from_toml()
     # Sort our library products so that they are in dependency-order:
     lib_products = [p for p in build["products"] if p["type"] == "library"]
     function calc_depths(lib_products)
-        depths = Dict()
+        # We ignore external dependencies
+        ignored = Set{String}()
+        for lib in lib_products
+            for d in lib["deps"]
+                if occursin(".", d)
+                    push!(ignored, d)
+                end
+            end
+        end
+
+        depths = Dict{String,Int}()
         while length(depths) != length(lib_products)
             for p in lib_products
                 if !haskey(depths, p["name"])
-                    if all(haskey(depths, d) for d in p["deps"])
-                        if isempty(p["deps"])
+                    tracked_deps = filter(d -> d ∉ ignored, p["deps"])
+                    if all(haskey(depths, d) for d in tracked_deps)
+                        if isempty(tracked_deps)
                             depths[p["name"]] = 1
                         else
-                            depths[p["name"]] = maximum(depths[d] for d in p["deps"]) + 1
+                            depths[p["name"]] = maximum(depths[d] for d in tracked_deps) + 1
                         end
                     end
                 end

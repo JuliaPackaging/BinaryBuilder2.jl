@@ -64,10 +64,20 @@ end
 """
     download_cache_path(fas::FileArchiveSource, download_cache::String)
 
-Returns the full path to the file that will be written to in `prepare(as)`
+Returns the full path to the file that will be written to in `prepare(as)`.
+We store the cache as `\$(short_hash(fas.url))-\$(fas.hash)`, so that when
+users update a URL but forget to update the hash, they don't accidentally
+build with the old cached values.
 """
 function download_cache_path(fas::FileArchiveSource, download_cache::String = source_download_cache())
-    return joinpath(download_cache, bytes2hex(fas.hash))
+    return joinpath(
+        download_cache,
+        string(
+            bytes2hex(sha256(fas.url)[end-8:end]),
+            "-",
+            bytes2hex(fas.hash),
+        ),
+    )
 end
 
 function verify(fas::FileArchiveSource, download_cache::String = source_download_cache())

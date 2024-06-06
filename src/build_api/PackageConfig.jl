@@ -5,12 +5,10 @@ export PackageConfig, package!
 struct PackageConfig
     # The name of the generated JLL; if not specified, defaults to `$(src_name)_jll`.
     # Note that by default we add `_jll` at the end, but this is not enforced in code!
-    jll_name::String
+    name::String
 
-    # The JLL version series that this will be published under.  It is fed to
-    # `next_jll_version()` to determine the actual version number, which is available
-    # from the `PackageResult`.
-    version_series::VersionNumber
+    # The JLL version this package will be published under
+    version::VersionNumber
 
     # A mapping of name to list of successful extractions.  Most builds only have a
     # single entry in this dictionary, but advanced builds may have a default variant,
@@ -37,12 +35,23 @@ struct PackageConfig
         if !Base.isidentifier(jll_name)
             throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
-        return new(jll_name, version_series, extractions)
+
+        # Calculate the next version number immediately
+        meta = AbstractBuildMeta(extractions)
+        version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
+
+        return new(jll_name, version, extractions)
     end
 end
 PackageConfig(results::Vector{ExtractResult}; kwargs...) = PackageConfig(Dict("default" => results); kwargs...)
 PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
-AbstractBuildMeta(config::PackageConfig) = first(values(config.named_extractions))[1].config.build.config.meta
+AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
+AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = first(first(values(named_extractions))).config.build.config.meta
+
+
+function Base.show(io::IO, config::PackageConfig)
+    println(io, "PackageConfig($(config.name), $(config.version))")
+end
 
 """
     next_jll_version(universe::Universe, name::String, base::VersionNumber)
@@ -133,30 +142,23 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
     )
 end
 
-function extract_log_JLLBuildInfo(name::String, result::ExtractResult)
-    return JLLBuildInfo(;
-        src_version
-    )
-end
-
 function package!(config::PackageConfig)
     meta = AbstractBuildMeta(config)
     builds = vcat(
         ([JLLBuildInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
     )
     jll = JLLInfo(;
-        name = config.jll_name,
-        version = next_jll_version(meta.universe, "$(config.jll_name)_jll", config.version_series),
+        name = config.name,
+        version = config.version,
         builds,
         julia_compat = "1.7",
     )
 
     # Register this JLL out into our universe
-    register!(meta.universe, jll)
+    register_jll!(meta.universe, jll, meta.deploy_target)
 
     return PackageResult(
         config,
         :success,
-        jll.version,
     )
 end

@@ -16,7 +16,7 @@ function resolve_dynamic_links!(scan::ScanResult,
                 @error("Duplicate SONAMEs detected", lib.soname)
                 error()
             end
-            soname_map[lib.soname] = (jll_name, lib.varname)
+            soname_map[lib.soname] = (Symbol(string(jll_name, "_jll")), lib.varname)
         end
     end
 

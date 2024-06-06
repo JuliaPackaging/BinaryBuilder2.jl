@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.3"
+julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "5172747ce8ab9b3032bdbfd8f2a75043cb80cbe3"
+project_hash = "c1ee65e5af83737ee13bda11cd5bced3e0d8a958"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -26,16 +26,16 @@ version = "0.2.0"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
 [[deps.BinaryBuilderAuditor]]
-deps = ["BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "JLLGenerator", "MultiHashParsing", "ObjectFile", "Patchelf_jll", "TreeArchival"]
+deps = ["BinaryBuilderProducts", "JLLGenerator", "ObjectFile", "Patchelf_jll"]
 path = "BinaryBuilderAuditor.jl"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
 version = "0.1.0"
 
 [[deps.BinaryBuilderGitUtils]]
-deps = ["Git", "Git_jll", "MultiHashParsing"]
+deps = ["Git", "Git_jll", "MultiHashParsing", "gh_cli_jll"]
 path = "BinaryBuilderGitUtils.jl"
 uuid = "654d7472-7548-7361-4832-74694762694c"
-version = "0.1.0"
+version = "0.1.1"
 
 [[deps.BinaryBuilderPlatformExtensions]]
 deps = ["OrderedCollections", "Reexport"]
@@ -44,7 +44,7 @@ uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
 [[deps.BinaryBuilderProducts]]
-deps = ["BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "JLLGenerator", "Libdl", "MultiHashParsing", "TreeArchival"]
+deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl"]
 path = "BinaryBuilderProducts.jl"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
@@ -56,7 +56,7 @@ uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
 
 [[deps.BinaryBuilderToolchains]]
-deps = ["Artifacts", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "MultiHashParsing", "NetworkOptions", "Pkg", "Reexport", "Scratch", "TreeArchival"]
+deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "NetworkOptions", "Pkg", "Reexport", "Scratch"]
 path = "BinaryBuilderToolchains.jl"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
 version = "0.1.1"
@@ -406,6 +406,12 @@ deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "e678132f07ddb5bfa46857f0d7620fb9be675d3b"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.5.6+0"
+
+[[deps.gh_cli_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "b54ff233a6a183ad366d29fa0e3ff9bb921692db"
+uuid = "5d31d589-30fb-542f-b82d-10325e863e38"
+version = "2.35.0+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]

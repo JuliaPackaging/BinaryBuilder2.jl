@@ -62,7 +62,7 @@ function BuildResult_cached(config::BuildConfig)
     build_hash = content_hash(config)
     log_artifact_hash = config.meta.build_cache.build_logs[build_hash]
     env = config.meta.build_cache.envs[build_hash]
-    build_log = joinpath(artifact_path(config.meta.universe, log_artifact_hash), "build.log")
+    build_log = joinpath(artifact_path(config.meta.universe, log_artifact_hash), "$(config.src_name)-build.log")
     return BuildResult(
         config,
         :cached,
@@ -73,6 +73,12 @@ function BuildResult_cached(config::BuildConfig)
         log_artifact_hash,
         env,
     )
+end
+
+function Base.show(io::IO, result::BuildResult)
+    config = result.config
+    color = status_style(result.status)
+    println(io, styled"BuildResult($(config.src_name), $(config.src_version), $(config.platform)) ({$(color):$(result.status)})")
 end
 
 Sandbox.SandboxConfig(result::BuildResult; verbose::Bool = false) = SandboxConfig(result.config, result.mounts; verbose)

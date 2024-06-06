@@ -1,6 +1,7 @@
 module BinaryBuilderGitUtils
 
-using Git, MultiHashParsing
+using Git, MultiHashParsing, gh_cli_jll
+import Base.BinaryPlatforms: tags
 export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch
 
 # Easy converter of MultiHash objects to strings
@@ -14,6 +15,23 @@ iscommit(repo::String, commit::HashOrString) = success(git(["-C", repo, "cat-fil
 
 # Useful for splatting into an argument list
 quiet_args(verbose::Bool) = verbose ? String[] : String["--quiet"]
+force_args(force::Bool) = force ? String["--force"] : String[]
+
+const use_gh_auth::Ref{Bool} = Ref(false)
+gh_auth_args() = ["-c", "credential.https://github.com.helper=!gh auth git-credential"]
+function git_authed(args; kwargs...)
+    if use_gh_auth[]
+        args = vcat(gh_auth_args(), args)
+    end
+    cmd = git(args; kwargs...)
+    if use_gh_auth[]
+        # Push `gh` onto the front of the PATH, as of this writing it has no LIBPATH.
+        path_idx = findfirst(e -> startswith(e, "PATH="), cmd.env)
+        pathsep = Sys.iswindows() ? ";" : ":"
+        cmd.env[path_idx] = string("PATH=", gh_cli_jll.PATH[], pathsep, cmd.env[path_idx][6:end])
+    end
+    return cmd
+end
 
 function fetch!(repo_path::String; verbose::Bool = false)
     return run(git(["-C", repo_path, "fetch", "-a", quiet_args(verbose)...]))
@@ -67,20 +85,16 @@ function clone!(url::String, repo_path::String;
     end
 end
 
-function head_branch(repo_path::String; remote::String = "origin")
+function head_branch(repo_path::String; remote::String = "origin", default::String = "main")
+    if remote ∉ remotes(repo_path)
+        return default
+    end
     lines = split(readchomp(git(["-C", repo_path, "remote", "show", remote])), "\n")
     head_branch_match = only(filter(!isnothing, match.((r"\s+HEAD branch: ([^ ]+)",), lines)))
-    return head_branch_match.captures[1]
+    return String(head_branch_match.captures[1])
 end
 
-function head_branch_or_tip(repo_path::String; remote::String = "origin")
-    if remote ∉ remotes(repo_path)
-        return only(log(repo_path; limit=1))
-    end
-    return head_branch(repo_path; remote)
-end
-
-function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch_or_tip(repo_path); verbose::Bool = false)
+function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch(repo_path); verbose::Bool = false)
     if !iscommit(repo_path, commit)
         fetch!(repo_path; verbose)
     end
@@ -94,9 +108,9 @@ function commit!(checkout_path::String, message::String; verbose::Bool = false)
     return only(log(checkout_path; limit=1))
 end
 
-function Base.push!(repo_path::String, remote::String = "origin"; tags::Bool = true, verbose::Bool = false)
-    run(git(["-C", repo_path, "push", remote, quiet_args(verbose)...]))
-    run(git(["-C", repo_path, "push", "--tags", remote, quiet_args(verbose)...]))
+function Base.push!(repo_path::String, remote::String = "origin"; verbose::Bool = false, force::Bool = false)
+    run(git_authed(["-C", repo_path, "push", remote, force_args(force)..., quiet_args(verbose)...]))
+    run(git_authed(["-C", repo_path, "push", "--tags", remote, force_args(force)..., quiet_args(verbose)...]))
 end
 
 function remotes(repo_path::String)
@@ -116,8 +130,8 @@ function tags(repo_path::String)
     return filter(!isempty, split(readchomp(git(["-C", repo_path, "tag"])), "\n"))
 end
 
-function tag!(repo_path::String, name::String, target::HashOrString = "HEAD")
-    run(git(["-C", repo_path, "tag", name, target]))
+function tag!(repo_path::String, name::String, target::HashOrString = "HEAD"; force::Bool = false)
+    run(git(["-C", repo_path, "tag", force_args(force)..., name, target]))
 end
 
 function Base.log(repo_path::String, tip::HashOrString = "HEAD"; limit::Union{Int,Nothing} = nothing, reverse::Bool = false)

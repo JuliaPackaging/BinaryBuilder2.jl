@@ -1,4 +1,9 @@
 High-priority list:
+- implement publish!() to push things up to actual github releases
+  - publish to branches
+  - publish General as well
+- Change away from "default"; maybe JLL.name-default?
+  
 - Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
 - Build GCCBootstrap for all linuces
   - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BinaryBuilder2.
@@ -15,6 +20,8 @@ High-priority list:
 - Build GCC <-> Glibc baked header diff tarballs
   - Build easy "diff/core" packaging utility to analyze a set of outputs for
     shared content and create a `FooCore_jll` and `FooXYZ_jll` set of artifacts
+- Make universes more resilient to interruption, e.g.
+  - expected package `Zlib_jll [83775a58]` to exist at path `/home/sabae/.julia/scratchspaces/12aac903-9f7c-5d81-afc2-d9565ea332af/universes/GCCBoostrap/dev/Zlib_jll`
 - Integrate `Ccache_jll`
 - Fill out more JLL output metadata
   - Discussion here: https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/639
@@ -36,6 +43,7 @@ High-priority list:
   - This should be doable with separate `extract!()` steps, perhaps?
   - Integrate with `.pkg` hooks for `select_artifacts.jl` to get them at `Pkg.add()` time?
 - Do `strace` example, where we have statically-linked binaries so we don't need the `libc` tag.
+- Remove `src_version` from BuildConfig and JLLs?
 
 Features I'd like but I'm not prioritizing:
 - LRU cache of specific size for `downloads` folder

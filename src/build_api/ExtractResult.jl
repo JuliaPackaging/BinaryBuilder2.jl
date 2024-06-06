@@ -4,7 +4,7 @@ struct ExtractResult
     # Link back to the originating ExtractResult
     config::ExtractConfig
 
-    # The overall status of the build.  One of [:successful, :failed, :errored, :skipped]
+    # The overall status of the build.  One of [:successful, :failed, :errored, :cached, :skipped]
     status::Symbol
 
     # If `status` is `:errored`, this should contain the exception that was thrown during execution
@@ -44,7 +44,8 @@ struct ExtractResult
 end
 
 function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash})
-    extract_log = joinpath(artifact_path(config.build.config.meta.universe, log_artifact), "extract.log")
+    build_config = config.build.config
+    extract_log = joinpath(artifact_path(build_config.meta.universe, log_artifact), "$(build_config.src_name)-extract.log")
     return ExtractResult(
         config,
         :cached,
@@ -54,6 +55,12 @@ function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,S
         nothing,
         String(read(extract_log)),
     )
+end
+
+function Base.show(io::IO, result::ExtractResult)
+    build_config = result.config.build.config
+    color = status_style(result.status)
+    println(io, styled"ExtractResult($(build_config.src_name), $(build_config.src_version), $(build_config.platform)) ({$(color):$(result.status)})")
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)

@@ -94,7 +94,7 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
         @test jll_lib_products[1].varname == :libmult
         @test jll_lib_products[1].path == joinpath("lib", libmult_soname)
         @test length(jll_lib_products[1].deps) == 1
-        @test jll_lib_products[1].deps[1].mod == :LibPlus
+        @test jll_lib_products[1].deps[1].mod == :LibPlus_jll
         @test jll_lib_products[1].deps[1].varname == :libplus
     end
 end

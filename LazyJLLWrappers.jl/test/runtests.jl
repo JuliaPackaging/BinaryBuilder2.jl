@@ -124,7 +124,7 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
     end
 end
 
-
+# Test that `LazyLirary` support works on Julias new enough to use it
 if isdefined(Libdl, :LazyLibrary)
     @testset "Laziness" begin
         generate_and_load_jll(

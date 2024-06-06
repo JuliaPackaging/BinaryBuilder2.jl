@@ -76,22 +76,36 @@ redev-$(1): $(1)/LICENSE
 	fi
 
 testall: test-$(1)
-updateall: update-$(1)
-resolveall: resolve-$(1)
 instantiateall: instantiate-$(1)
 printsorted: printsorted-$(1)
 .PHONY: test-$(1) update-$(1) printsorted-$(1)
 
 # redevall only does this if running on Julia v1.11-
 ifneq ($(JULIA_v12_OR_HIGHER),true)
+updateall: update-$(1)
+resolveall: resolve-$(1)
 redevall: redev-$(1)
 endif
 endef
 $(foreach project,$(PROJECTS),$(eval $(call project_targets,$(project))))
 
+# Special rules for odd projects
+ifneq ($(JULIA_v12_OR_HIGHER),true)
+resolve-JLLGenerator.jl/contrib:
+	$(JULIA) --color=yes -e 'import Pkg; Pkg.activate("JLLGenerator.jl/contrib"); Pkg.resolve()'
+update-JLLGenerator.jl/contrib:
+	$(call run_with_log,JLLGenerator.jl/contrib,import Pkg; Pkg.update(),update-JLLGenerator.jl/contrib)
+updateall: update-JLLGenerator.jl/contrib
+resolveall: resolve-JLLGenerator.jl/contrib
+endif
+
 ifeq ($(JULIA_v12_OR_HIGHER),true)
+updateall:
+	$(call run_with_log,.,import Pkg; Pkg.update();,update-.)
 redevall:
 	$(call run_with_log,.,import Pkg; Pkg.develop([$(foreach dep,$(filter-out .,$(PROJECTS)), Pkg.PackageSpec(;path="$(dep)")$(comma))]);,redev-.)
+resolveall:
+	$(JULIA) --color=yes -e 'import Pkg; Pkg.activate("."); Pkg.resolve()'
 endif
 
 # Debugging ahoy

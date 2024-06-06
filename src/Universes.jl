@@ -5,9 +5,11 @@ using Random, TOML
 using BinaryBuilderGitUtils
 import LazyJLLWrappers
 import LocalRegistry
+import TreeArchival
 using Scratch, Pkg, Dates
+using gh_cli_jll
 
-export Universe, register!, in_universe
+export Universe, in_universe
 
 const updated_registries = Set{Base.UUID}()
 
@@ -99,8 +101,10 @@ struct Universe
         # Ensure that this universe's environment uses our version of LazyJLLWrappers,
         # since we may be testing things or have some local patch.
         uni = new(depot_path, registries)
+        prune!(uni)
         in_universe(uni) do env
-            Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)))
+            Pkg.resolve(;io=devnull)
+            Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)), io=devnull)
         end
 
         # If we are not persistent, clean this universe up at the end of our run
@@ -239,31 +243,184 @@ function get_package_versions(u::Universe, pkg_name::String)
 end
 
 """
-    register!(u::Universe, jll::JLLInfo)
+    prune!(u::Universe)
+
+Given a universe, look through its default 'binarybuilder' environment
+and remove any deps that no longer exist.  This helps when previous builds
+in a persistent universe have been canceled.
+"""
+function prune!(u::Universe)
+    env_path = joinpath(u.depot_path, "environments", "binarybuilder", "Project.toml")
+    if isfile(env_path)
+        proj = try
+            TOML.parsefile(env_path)
+        catch
+            nothing
+        end
+        if proj !== nothing && haskey(proj, "deps") && !isempty(proj["deps"])
+            filter!(proj["deps"]) do (dep_name, _)
+                # Special-case our insertion of LazyJLLWrappers from Universe()
+                if dep_name == "LazyJLLWrappers"
+                    return true
+                end
+                return isfile(joinpath(u.depot_path, "dev", dep_name, "JLL.toml"))
+            end
+            open(env_path, write=true) do io
+                TOML.print(io, proj)
+            end
+        end
+    end
+end
+
+function exported_artifact_filename(jll_name::String,
+                                    build_name::String,
+                                    auxiliary_name::Union{Nothing,String},
+                                    version::VersionNumber,
+                                    platform::AbstractPlatform)
+    ret = jll_name
+
+    # If this is the default build, we just omit default for brevity
+    if build_name != "default"
+        ret = string(ret, "-", build_name)
+    end
+
+    if auxiliary_name !== nothing
+        ret = string(ret, "-", auxiliary_name)
+    end
+
+    ret = string(ret, "-v", version, "-", triplet(platform))
+    return string(ret, ".tar.gz")
+end
+
+"""
+    export_artifacts!(u::Universe, jll::JLLInfo, deploy_target::String, output_dir::String)
+"""
+function export_artifacts!(uni::Universe, jll::JLLInfo, tag_name::String,
+                           deploy_target::String, output_dir::String;
+                           compressor::String="gzip")
+    function update_binding!(binding, filepath)
+        if deploy_target != "local"
+            tarball_hash = open(io -> SHA256Hash(sha256(io)), filepath)
+            filename = basename(filepath)
+            push!(binding.download_sources, JLLArtifactSource(
+                string("https://github.com/$(deploy_target)/$(jll.name)_jll.jl/releases/download/$(tag_name)/$(filename)"),
+                tarball_hash,
+            ))
+        end
+    end
+
+    for build in jll.builds
+        # Archive the main artifact
+        # This will expand to something like `/tmp/foo/readline-v1.0.0-x86_64-linux-gnu.tar.gz`
+        exported_artifact_path = joinpath(output_dir, exported_artifact_filename(
+            jll.name,
+            build.name,
+            nothing,
+            jll.version,
+            build.platform,
+        ))
+        TreeArchival.archive(
+            artifact_path(uni, build.artifact.treehash),
+            exported_artifact_path,
+            compressor,
+        )
+        # Update the binding
+        update_binding!(build.artifact, exported_artifact_path)
+        
+        # Next, archive each auxilliary artifact as well
+        for (aux_name, art) in build.auxilliary_artifacts
+            exported_artifact_path = joinpath(output_dir, exported_artifact_filename(
+                jll.name,
+                build.name,
+                aux_name,
+                jll.version,
+                build.platform,
+            ))
+
+            TreeArchival.archive(
+                artifact_path(uni, art.treehash),
+                exported_artifact_path,
+                compressor,
+            )
+            update_binding!(art, exported_artifact_path)
+        end
+    end
+end
+
+function deploy_jll(jll_path::String, deploy_target::String, jll_name::String,
+                    tag_name::String, binaries_dir::String)
+    # Early-exit if we're not actually deploying this up somewhere
+    if deploy_target == "local"
+        return
+    end
+
+    github_remote = "https://github.com/$(deploy_target)/$(jll_name)_jll.jl"
+    remote_url!(jll_path, deploy_target, github_remote)
+    push!(jll_path, deploy_target; force=true)
+
+    # Upload binaries to a github release attached to the tag we just pushed
+    create_cmd = `$(gh()) release create --repo $(deploy_target)/$(jll_name)_jll.jl $(tag_name) --title $(tag_name) --notes "" --verify-tag $(readdir(binaries_dir; join=true))`
+    if !success(create_cmd)
+        run(`$(gh()) release delete --yes --repo $(deploy_target)/$(jll_name)_jll.jl $(tag_name)`)
+        run(create_cmd)
+    end
+end
+
+"""
+    register_jll!(u::Universe, jll::JLLInfo, deploy_target::String)
 
 Given a `JLLInfo`, generate the JLL out into the `dev` folder of the given universe,
 """
-function register!(u::Universe, jll::JLLInfo)
-    # If there already happens to be a JLL with this name registered
-    # in one of the registries for this universe, clone it and check
-    # it out to `dev/$(jll.name)!`
-    jll_repo_url = get_package_repo(u, jll.name)
+function register_jll!(u::Universe, jll::JLLInfo, deploy_target::String; skip_artifact_export::Bool = false)
+    # There are three possible control flows here:
+    #  - The remote JLL repository already exists and we are deploying
+    #    -> Clone it, fork it on github and push back up to it
+    #  - The remote JLL repository already exists and we are not deploying
+    #    -> Clone it
+    #  - The remote JLL repository does not exist and we are deploying
+    #    -> Create a new repo, clone it, and push back up to it
+    #  - The remote JLL repository does not exit and we are not deploying
+    #    -> Create a local bare repo
+    jll_repo_url = get_package_repo(u, "$(jll.name)_jll")
     jll_repo_path = joinpath(source_download_cache(), "jll_clones", "$(jll.name)_jll")
     rm(jll_repo_path; force=true, recursive=true)
-    if jll_repo_url !== nothing
-        clone!(jll_repo_url, jll_repo_path)
+    if deploy_target != "local"
+        fork_url = "https://github.com/$(deploy_target)/$(jll.name)_jll.jl"
+        if jll_repo_url === nothing
+            jll_repo_url = fork_url
+            gh_create("$(deploy_target)/$(jll.name)_jll.jl")
+        else
+            gh_fork(jll_repo_url, deploy_target)
+            clone!(fork_url, jll_repo_path)
+        end
     else
-        # If there does not already exists a JLL by this name, just
-        # create a new bare git repo.
-        init!(jll_repo_path)
+        if jll_repo_url !== nothing
+            clone!(jll_repo_url, jll_repo_path)
+        else
+            init!(jll_repo_path)
+        end
     end
+
     jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
     rm(jll_path; force=true, recursive=true)
-    checkout!(jll_repo_path, jll_path)
+    checkout!(jll_repo_path, jll_path, head_branch(jll_repo_path))
+
+    export_dir = joinpath(u.depot_path, "tarballs", string(jll.name, "-v", jll.version))
+    rm(export_dir; force=true, recursive=true)
+    mkpath(export_dir)
+
+    # First, we have to archive each artifact into a tarball
+    # and update the JLLArtifactBinding with some download sources (if non-local deploy)
+    tag_name = "v$(jll.version)"
+    if !skip_artifact_export
+        export_artifacts!(u, jll, tag_name, deploy_target, export_dir)
+    end
 
     # Next, generate the JLL in-place and commit it
     generate_jll(jll_path, jll)
     commit!(jll_path, "$(jll.name) v$(jll.version)")
+    tag!(jll_path, tag_name; force=true)
+    deploy_jll(jll_path, deploy_target, jll.name, tag_name, export_dir)
 
     in_universe(u) do env
         # Next, add that JLL to the universe's environment

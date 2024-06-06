@@ -102,7 +102,7 @@ function print_artifact_info(entry, platform, version, name)
                 ],
                 sources = [],
                 platform = $(repr(platform)),
-                name = "default",
+                name = "$(name)",
                 artifact = JLLArtifactBinding(;
                     treehash = "$(entry["git-tree-sha1"])",
                     download_sources = [

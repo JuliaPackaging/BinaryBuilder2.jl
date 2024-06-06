@@ -1,10 +1,7 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-version = "2.0.0"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-
-[workspace]
-projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
+version = "2.0.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -35,10 +32,12 @@ RegistryTools = "d1eb7eb1-105f-429d-abf5-b0f65cb9e2c4"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Sandbox = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
+gh_cli_jll = "5d31d589-30fb-542f-b82d-10325e863e38"
 
 [compat]
 HistoricalStdlibVersions = "2"
@@ -53,3 +52,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Accessors", "Test"]
+
+[workspace]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]

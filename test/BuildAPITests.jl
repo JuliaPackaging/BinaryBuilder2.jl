@@ -33,9 +33,9 @@ end
         meta,
         "foo",
         v"1.0.0",
-        AbstractSource[],
-        AbstractSource[],
-        AbstractSource[],
+        [],
+        [],
+        [],
         raw"""
         env_val=pre
         false
@@ -63,8 +63,8 @@ end
         "libstring",
         v"1.0.0",
         [cxx_string_abi_source],
-        AbstractSource[],
-        AbstractSource[],
+        [],
+        [],
         raw"""
         cd 02_cxx_string_abi
         make libstring
@@ -96,7 +96,7 @@ end
         v"1.0.0",
         [cxx_string_abi_source],
         [ExtractResultSource(libstring_extract_result)],
-        AbstractSource[],
+        [],
         raw"""
         cd 02_cxx_string_abi
 
@@ -139,8 +139,8 @@ end
             ArchiveSource("https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.xz",
                           "sha256:d14c38e313afc35a9a8760dadf26042f51ea0f5d154b0630a31da0540107fb98")
         ],
-        AbstractSource[],
-        AbstractSource[],
+        [],
+        [],
         """
         cd zlib*
         ./configure --prefix=\$prefix
@@ -183,25 +183,32 @@ end
     cached_extract_result = extract!(extract_config)
     @test cached_extract_result.status == :cached
 
+    # PackageConfig() chooses a version number, let's check that it chooses the right one:
     package_config = PackageConfig(
         extract_result,
         version_series = v"99.99.99",
     )
+    @test package_config.version == v"99.99.99"
     package_result = package!(package_config)
+    @test package_result.status == :success
 
     # Ensure it was registered, and that it's the only `v99.99.x` version in there.
     of_the_ninetynine_versions_there_is_only_one = filter(BinaryBuilder2.get_package_versions(meta.universe, "Zlib_jll")) do v
         return v.major == 99 && v.minor == 99
     end
-    @test package_result.published_version == v"99.99.99"
     @test length(of_the_ninetynine_versions_there_is_only_one) == 1
 
+    # If we try to do this again, we get a newer version number
+    package_config = PackageConfig(
+        extract_result,
+        version_series = v"99.99.99",
+    )
+    @test package_config.version == v"99.99.100"
     # Test that if we register it _again_, the patch number goes up by one:
     package_result2 = package!(package_config)
     ninetynine_versions = filter(BinaryBuilder2.get_package_versions(meta.universe, "Zlib_jll")) do v
         return v.major == 99 && v.minor == 99
     end
-    @test package_result2.published_version == v"99.99.100"
     @test length(ninetynine_versions) == 2
 end
 
@@ -214,13 +221,12 @@ end
         package_result = zlib_build_tarballs(meta, [native_linux])
         @test package_result.status == :success
     end
-    @testset "Readline" begin
-        package_result = readline_build_tarballs(meta, [native_linux])
-        @test package_result.status == :success
-    end
-
     @testset "Ncurses" begin
         package_result = ncurses_build_tarballs(meta, [native_linux])
+        @test package_result.status == :success
+    end
+    @testset "Readline" begin
+        package_result = readline_build_tarballs(meta, [native_linux])
         @test package_result.status == :success
     end
 

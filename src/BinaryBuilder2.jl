@@ -10,6 +10,7 @@ using Reexport
 
 include("Preferences.jl")
 include("ContentReflection.jl")
+include("GitHubUtils.jl")
 include("Universes.jl")
 
 abstract type AbstractBuildMeta; end

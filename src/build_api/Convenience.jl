@@ -63,17 +63,24 @@ end
 @warn("TODO: Write build_tarballs() adapter to split HostBuildDependencies, accept ARGS, and whatnot")
 function build_tarballs(src_name::String,
                         src_version::VersionNumber,
-                        sources::Vector{<:AbstractSource},
-                        target_dependencies::Vector{<:ConvenienceSource},
-                        host_dependencies::Vector{<:ConvenienceSource},
+                        sources::Vector,
+                        target_dependencies::Vector,
+                        host_dependencies::Vector,
                         script::String,
-                        platforms::Vector{<:AbstractPlatform},
-                        products::Vector{<:AbstractProduct};
+                        platforms::Vector,
+                        products::Vector;
                         julia_compat::String = "1.6",
                         meta::AbstractBuildMeta = BuildMeta(;parse_build_tarballs_args(ARGS)...),
                         host::AbstractPlatform = default_host(),
                         extract_script::String = "extract \${prefix}/*",
                         kwargs...)
+    # Ensure that our vectors can be properly typed
+    sources = Vector{AbstractSource}(sources)
+    target_dependencies = Vector{ConvenienceSource}(target_dependencies)
+    host_dependencies = Vector{ConvenienceSource}(host_dependencies)
+    platforms = Vector{AbstractPlatform}(platforms)
+    products = Vector{AbstractProduct}(products)
+
     # First, build for all platforms
     extract_results = ExtractResult[]
     for platform in platforms
@@ -91,7 +98,7 @@ function build_tarballs(src_name::String,
         build_result = build!(
             build_config;
             extract_arg_hints = [(extract_script, products)],
-            @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr)...,
+            @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr, :debug_modes, :disable_cache)...,
         )
         if build_result.status != :success
             if build_result.status == :failed
@@ -106,7 +113,10 @@ function build_tarballs(src_name::String,
             products;
             @extract_kwargs(kwargs, :metadir)...,
         )
-        extract_result = extract!(extract_config)
+        extract_result = extract!(
+            extract_config;
+            @extract_kwargs(kwargs, :debug_modes, :disable_cache)...,
+        )
         if extract_result.status != :success
             if extract_result.status == :failed
                 throw(BuildError("Extract script failed", extract_result))

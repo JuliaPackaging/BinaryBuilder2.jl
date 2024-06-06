@@ -6,8 +6,9 @@ function ncurses_build_tarballs(meta, platforms)
             ArchiveSource("https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.4.tar.gz",
                           "6931283d9ac87c5073f30b6290c4c75f21632bb4fc3603ac8100812bed248159"),
         ],
-        [JLLSource("Readline_jll")],
-        AbstractSource[],
+        # No target or host dependencies
+        [],
+        [],
         raw"""
         cd $WORKSPACE/srcdir/ncurses-*/
 

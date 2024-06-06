@@ -7,21 +7,26 @@ struct PackageResult
     # Overall status of the packaging.  One of :successful, :failed or :skipped
     status::Symbol
 
-    # The version number this package result is getting published under
-    # (may disagree with `src_version`).
-    published_version::VersionNumber
-
     function PackageResult(config::PackageConfig,
-                           status::Symbol,
-                           published_version::VersionNumber)
+                           status::Symbol)
         return new(
             config,
             status,
-            published_version,
         )
     end
 end
 
-function jll_path(result::PackageResult)
-    return joinpath(meta.universe.depot_path, "dev", "$(result.config.jll_name)_jll")
+function Base.show(io::IO, result::PackageResult)
+    color = status_style(result.status)
+    println(io, styled"PackageResult($(result.config.name), $(result.config.version)) ({$(color):$(result.status)})")
+end
+
+function jll_dir(result::PackageResult)
+    meta = AbstractBuildMeta(result.config)
+    return joinpath(meta.universe.depot_path, "dev", "$(result.config.name)_jll")
+end
+
+function tarballs_dir(result::PackageResult)
+    meta = AbstractBuildMeta(result.config)
+    return joinpath(meta.universe.depot_path, "tarballs", string(result.config.name, "-", result.config.version))
 end

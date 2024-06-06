@@ -1,3 +1,4 @@
+using StyledStrings
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet
 
 # Default to using a Linux host with the same host arch as our machine
@@ -41,4 +42,14 @@ function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:Abstrac
 
     push!(toolchains, HostToolsToolchain(platform.host, host_deps))
     return toolchains
+end
+
+function status_style(status::Symbol)
+    return Dict{Symbol,Symbol}(
+        :success => :green,
+        :failed => :red,
+        :errored => :red,
+        :cached => :green,
+        :skipped => :blue,
+    )[status]
 end

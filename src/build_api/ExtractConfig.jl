@@ -52,6 +52,11 @@ struct ExtractConfig
     end
 end
 
+function Base.show(io::IO, config::ExtractConfig)
+    build_config = config.build.config
+    println(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(build_config.platform))")
+end
+
 function extract_content_hash(extract_script::String, products::Vector{<:AbstractProduct})
     # Similar to the `content_hash()` definition for `BuildConfig`, we construct
     # a string in `hash_buffer` then hash it at the end for the final `content_hash()`.
@@ -102,7 +107,9 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-function extract!(config::ExtractConfig; disable_cache::Bool = false)
+function extract!(config::ExtractConfig;
+                  disable_cache::Bool = false,
+                  debug_modes = config.build.config.meta.debug_modes)
     local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
     build_config = config.build.config
@@ -115,7 +122,7 @@ function extract!(config::ExtractConfig; disable_cache::Bool = false)
         end
     end
 
-    if "extract-start" ∈ meta.debug_modes
+    if "extract-start" ∈ debug_modes
         @warn("Launching debug shell")
         runshell(config; verbose=meta.verbose)
     end
@@ -172,7 +179,7 @@ function extract!(config::ExtractConfig; disable_cache::Bool = false)
     # Generate "log" artifact that will later be packaged up.
     log_artifact_hash = in_universe(meta.universe) do env
         Pkg.Artifacts.create_artifact() do artifact_dir
-            open(joinpath(artifact_dir, "extract.log"); write=true) do io
+            open(joinpath(artifact_dir, "$(build_config.src_name)-extract.log"); write=true) do io
                 write(io, extract_log)
             end
         end
@@ -191,7 +198,7 @@ function extract!(config::ExtractConfig; disable_cache::Bool = false)
         put!(meta.build_cache, result)
     end
     meta.extractions[config] = result
-    if "extract-stop" ∈ meta.debug_modes || ("extract-error" ∈ meta.debug_modes && run_status != :success)
+    if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
         @warn("Launching debug shell")
         runshell(result; verbose=meta.verbose)
     end

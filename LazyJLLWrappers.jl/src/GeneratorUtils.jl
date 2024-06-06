@@ -82,10 +82,10 @@ end
 
 function top_level_statements(jb::JLLBlocks, artifact, platform)
     if VERSION >= v"1.6.0"
-        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Artifacts))
+        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Artifacts, Base.BinaryPlatforms))
     elseif VERSION >= v"1.3.0-rc4"
         # Use slower Pkg-based artifacts
-        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Pkg.Artifacts))
+        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Pkg.Artifacts, Base.BinaryPlatforms))
     else
         error("Unable to use $(src_name)_jll on Julia versions older than 1.3!")
     end
@@ -116,7 +116,7 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
     push!(jb.top_level_blocks, emit_typed_global(:LIBPATH_list, Vector{String}, String[]; isconst=true))
 
     # Add our platform object, so that we can introspect the result of platform augmentation
-    push!(jb.top_level_blocks, emit_typed_global(:platform, typeof(platform), platform; isconst=true))
+    push!(jb.top_level_blocks, emit_typed_global(:platform, typeof(platform), Meta.parse(repr(platform)); isconst=true))
 end
 
 """
@@ -229,8 +229,8 @@ function init_footer(jb::JLLBlocks, build)
     # Append our dependencies' PATH and LIBPATH:
     for dep in build["deps"]
         push!(jb.init_blocks, quote
-            append!(PATH_list, $(Symbol(dep)).PATH[])
-            append!(LIBPATH_list, $(Symbol(dep)).LIBPATH[])
+            append!(PATH_list, $(Symbol(dep["name"])).PATH_list)
+            append!(LIBPATH_list, $(Symbol(dep["name"])).LIBPATH_list)
         end)
     end
 

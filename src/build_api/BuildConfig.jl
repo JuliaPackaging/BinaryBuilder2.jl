@@ -58,17 +58,21 @@ struct BuildConfig
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
                          src_version::Union{VersionNumber, String},
-                         sources::Vector{<:AbstractSource},
-                         target_dependencies::Vector{<:AbstractSource},
-                         host_dependencies::Vector{<:AbstractSource},
+                         sources::Vector,
+                         target_dependencies::Vector,
+                         host_dependencies::Vector,
                          script::AbstractString,
                          target::AbstractPlatform;
                          host::AbstractPlatform = default_host(),
-                         toolchains::Vector{<:AbstractToolchain} = default_toolchains(CrossPlatform(host, target)),
+                         toolchains::Vector = default_toolchains(CrossPlatform(host, target)),
                          allow_unsafe_flags::Bool = false,
                          lock_microarchitecture::Bool = true,
                          kwargs...,
                          )
+        sources = Vector{AbstractSource}(sources)
+        target_dependencies = Vector{AbstractSource}(target_dependencies)
+        host_dependencies = Vector{AbstractSource}(host_dependencies)
+        toolchains = Vector{AbstractToolchain}(toolchains)
         # We're building for this cross_platform
         cross_platform = CrossPlatform(
             host,
@@ -100,7 +104,7 @@ struct BuildConfig
                 bashrc_path = joinpath(out_dir, ".bashrc")
                 open(bashrc_path; write=true) do io
                     println(io, "#!/bin/bash")
-                    println(io, "source /usr/local/share/bb/hostcc_env")
+                    println(io, "export PATH=\${PATH}:/usr/local/share/bb/bin")
 
                     # Always keep this one last, since it starts saving bash history from that point on.
                     println(io, "source /usr/local/share/bb/save_env_hook")
@@ -112,6 +116,7 @@ struct BuildConfig
                     println(io, "#!/bin/bash")
                     println(io, "set -euo pipefail")
                     println(io, "source /workspace/metadir/.bashrc")
+
                     # Save history on every DEBUG invocation
                     println(io, "trap save_history DEBUG")
                     println(io, script)
@@ -195,6 +200,10 @@ struct BuildConfig
             Ref{SHA1Hash}(),
         )
     end
+end
+
+function Base.show(io::IO, config::BuildConfig)
+    println(io, "BuildConfig($(config.src_name), $(config.src_version), $(config.platform))")
 end
 
 function BinaryBuilderSources.content_hash(config::BuildConfig)
@@ -369,7 +378,8 @@ end
 function build!(config::BuildConfig;
                 deploy_root::String = mktempdir(builds_dir()),
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
-                disable_cache::Bool = false)
+                disable_cache::Bool = false,
+                debug_modes = config.meta.debug_modes)
     meta = config.meta
     # Hit our build cache and see if we've already done this exact build.
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
@@ -388,7 +398,7 @@ function build!(config::BuildConfig;
     )
     local run_status, run_exception
     exe = Sandbox.preferred_executor()()
-    if "build-start" ∈ meta.debug_modes
+    if "build-start" ∈ debug_modes
         @warn("Launching debug shell")
         runshell(config; verbose=meta.verbose)
     end
@@ -402,7 +412,7 @@ function build!(config::BuildConfig;
     # Generate "log" artifact that will later be packaged up.
     log_artifact_hash = in_universe(meta.universe) do env
         Pkg.Artifacts.create_artifact() do artifact_dir
-            open(joinpath(artifact_dir, "build.log"); write=true) do io
+            open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
                 write(io, build_log)
             end
         end
@@ -428,7 +438,7 @@ function build!(config::BuildConfig;
     )
     meta.builds[config] = result
 
-    if "build-stop" ∈ meta.debug_modes || ("build-error" ∈ meta.debug_modes && run_status != :success)
+    if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
         @warn("Launching debug shell")
         runshell(result; verbose=meta.verbose)
     end
