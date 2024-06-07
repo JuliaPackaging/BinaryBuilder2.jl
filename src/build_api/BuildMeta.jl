@@ -272,10 +272,6 @@ struct BuildMeta <: AbstractBuildMeta
                         register::Bool = false,
                         output_dir::AbstractString = joinpath(pwd(), "products"),
                        )
-        # Helper to convert SubStrings to Strings, but only if they're not `nothing`
-        string_or_nothing(x::AbstractString) = String(x)
-        string_or_nothing(::Nothing) = nothing
-
         if !isa(debug_modes, Set)
             debug_modes = Set(debug_modes)
         end

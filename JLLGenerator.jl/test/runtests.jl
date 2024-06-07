@@ -489,9 +489,9 @@ using BinaryBuilderSources: PkgSpec
     jll = JLLSource(PkgSpec(;
         name = "Ncurses_jll",
         uuid = "68e3532b-a499-55ff-9963-d1c0c0748b3a",
-        tree_hash = Base.SHA1("13fc5ebe75b8e1f5953b5c086662939cfeba076c"),
+        tree_hash = Base.SHA1("4e723769ce39a7f9cba8eca2a83671358d292fe7"),
         repo=Pkg.Types.GitRepo(
-            rev="c2c7c9e33af25b53c2129dca99cda5f690358a6d",
+            rev="5ec0cc763fa91207e0c2327790360c2dd74ecc3d",
             source="https://github.com/staticfloat/Ncurses_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
@@ -505,6 +505,6 @@ using BinaryBuilderSources: PkgSpec
         build = only(data.builds)
         @test build.name == "Ncurses"
         @test length(build.products) == 4
-        @test build.artifact.treehash == "sha1:44b0cdedf51215e2f444a47c52abc5ac9507b6e4"
+        @test build.artifact.treehash == "sha1:baa68ef9a67b35dc73d5aba4bda83d7f0b9767ef"
     end
 end

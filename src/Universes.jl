@@ -67,7 +67,7 @@ The Universe configuration also controls how and where built packages are
 deployed, e.g. to which registry and which 
 """
 struct Universe
-    name::String
+    name::Union{Nothing,String}
     depot_path::String
     registries::Vector{RegistrySpec}
 
@@ -81,7 +81,7 @@ struct Universe
     # but `registry_url = "https://github.com/JuliaRegistries/General"`.
     registry_url::Union{Nothing,String}
 
-    function Universe(name::AbstractString = string(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"), "-", randstring(4));
+    function Universe(name::Union{Nothing,AbstractString} = nothing;
                       depot_dir::AbstractString = universes_dir(),
                       deploy_org::Union{Nothing,AbstractString} = nothing,
                       registries::Vector{RegistrySpec} = Pkg.Registry.DEFAULT_REGISTRIES,
@@ -91,19 +91,22 @@ struct Universe
         if isempty(registries)
             throw(ArgumentError("Must pass at least one registry to `Universe()`!"))
         end
-        depot_path = joinpath(depot_dir, name)
+        depot_path = joinpath(
+            depot_dir,
+            something(name, string(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"), "-", randstring(4))),
+        )
         mkpath(depot_path)
         depot_path = abspath(depot_path)
 
         # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
         try
-            for name in ("artifacts", "packages")
-                shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), name)
+            for dir_name in ("artifacts", "packages")
+                shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), dir_name)
                 mkpath(shared_dir)
-                if !ispath(joinpath(depot_path, name))
+                if !ispath(joinpath(depot_path, dir_name))
                     symlink(
                         shared_dir,
-                        joinpath(depot_path, name);
+                        joinpath(depot_path, dir_name);
                         dir_target = true,
                     )
                 end
@@ -127,7 +130,7 @@ struct Universe
         # Ensure that this universe's environment uses our version of LazyJLLWrappers,
         # since we may be testing things or have some local patch.
         uni = new(
-            string(name),
+            name === nothing ? nothing : string(name),
             depot_path,
             registries,
             deploy_org,
@@ -461,11 +464,17 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     mkpath(export_dir)
 
     checkout!(jll_bare_repo, jll_path, head_branch(jll_bare_repo))
-    branch!(jll_path, "bb2/$(u.name)")
+    if u.name !== nothing
+        branch!(jll_path, "bb2/$(u.name)")
+    end
 
     # First, we have to archive each artifact into a tarball
     # and update the JLLArtifactBinding with some download sources (if non-local deploy)
-    tag_name = "v$(jll.version)"
+    if u.name !== nothing
+        tag_name = "v$(jll.version)-$(u.name)"
+    else
+        tag_name = "v$(jll.version)"
+    end
     if !skip_artifact_export
         export_artifacts!(u, jll, tag_name, export_dir)
     end
