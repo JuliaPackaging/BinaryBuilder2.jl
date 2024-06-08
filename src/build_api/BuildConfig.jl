@@ -53,7 +53,7 @@ struct BuildConfig
     to::TimerOutput
 
     # Our content hash; we compute it once up-front because we may need to ask for it multiple times
-    content_hash::Ref{SHA1Hash}
+    content_hash::Ref{Union{Nothing,SHA1Hash}}
 
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
@@ -197,7 +197,7 @@ struct BuildConfig
             string(script),
             cross_platform,
             TimerOutput(),
-            Ref{SHA1Hash}(),
+            Ref{Union{SHA1Hash,Nothing}}(nothing),
         )
     end
 end
@@ -207,7 +207,7 @@ function Base.show(io::IO, config::BuildConfig)
 end
 
 function BinaryBuilderSources.content_hash(config::BuildConfig)
-    if !isassigned(config.content_hash)
+    if config.content_hash[] === nothing
         # We will collect all information as a string (including hashes of dependencies)
         # and then hash that whole thing to generate our content-hash.
         hash_buffer = IOBuffer()
@@ -235,9 +235,10 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
                 println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
             end
         end
-        config.content_hash[] = SHA1Hash(sha1(take!(hash_buffer)))
+        buffer_data = take!(hash_buffer)
+        config.content_hash[] = SHA1Hash(sha1(buffer_data))
     end
-    return config.content_hash[]
+    return config.content_hash[]::SHA1Hash
 end
 
 target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
@@ -254,9 +255,9 @@ function prepare(config::BuildConfig; verbose::Bool = false)
             # We install different source trees in different environments.
             @timeit config.to prefix begin
                 mktempdir() do project_dir
-                    # The "target prefix" gets special treatment; we copy the "main" Universe's environment in,
+                    # The target and host prefixes get special treatment; we copy the "main" Universe's environment in,
                     # because we want previous registrations within this universe to take effect.
-                    if prefix == target_prefix(config)
+                    if prefix == target_prefix(config) || prefix == host_prefix(config)
                         cp(dirname(environment_path(universe)), project_dir; force=true)
                     end
                     prepare(deps; verbose, project_dir, depot=depot_path(universe))
@@ -383,6 +384,7 @@ function build!(config::BuildConfig;
     meta = config.meta
     # Hit our build cache and see if we've already done this exact build.
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
+        prepare(config; verbose=meta.verbose)
         build_hash = content_hash(config)
         if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
             if meta.verbose

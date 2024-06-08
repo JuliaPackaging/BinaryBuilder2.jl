@@ -416,6 +416,61 @@ function deploy_jll(jll_path::String, deploy_org::Union{Nothing,String}, jll_nam
     end
 end
 
+function init_jll_repo(u::Universe, jll_name::String)
+    # There are four possible control flows here:
+    #  - The remote JLL repository already exists and we are deploying
+    #    -> Clone it, fork it on github and push back up to it
+    #  - The remote JLL repository already exists and we are not deploying
+    #    -> Clone it
+    #  - The remote JLL repository does not exist and we are deploying
+    #    -> Create a new repo, clone it, and push back up to it
+    #  - The remote JLL repository does not exist and we are not deploying
+    #    -> Create a local bare repo
+    jll_repo_url = get_package_repo(u, "$(jll_name)_jll")
+    jll_bare_repo = joinpath(source_download_cache(), "jll_clones", "$(jll_name)_jll")
+
+    # This is the case if this was previously registered within this
+    # universe when it did not exist previously.  In this case, just early-exit
+    if jll_repo_url == jll_bare_repo
+        if isdir(jll_bare_repo)
+            @debug("Previously-generated unregistered JLL", jll_repo_url)
+            return jll_repo_url, jll_bare_repo
+        else
+            # This means something got deleted from the universe
+            jll_repo_url = nothing
+        end
+    end
+
+    rm(jll_bare_repo; force=true, recursive=true)
+    if u.deploy_org !== nothing
+        fork_org_repo = "$(u.deploy_org)/$(jll_name)_jll.jl"
+        fork_url = "https://github.com/$(fork_org_repo)"
+        if jll_repo_url === nothing
+            jll_repo_url = fork_url
+            @debug("Creating and cloning JLL fork", fork_url)
+            gh_create(fork_org_repo)
+        else
+            if !gh_repo_exists(fork_org_repo)
+                @debug("Forking and cloning JLL", fork_url)
+                gh_fork(jll_repo_url, u.deploy_org)
+            else
+                @debug("Cloning existing JLL fork", fork_url)
+            end
+        end
+        clone!(fork_url, jll_bare_repo)
+    else
+        if jll_repo_url === nothing
+            jll_repo_url = jll_bare_repo
+            @debug("Initializing JLL repo", jll_bare_repo)
+            init!(jll_bare_repo)
+        else
+            @debug("Cloning existing JLL repo", jll_repo_url)
+            clone!(jll_repo_url, jll_bare_repo)
+        end
+    end
+    return jll_repo_url, jll_bare_repo
+end
+
 """
     register_jll!(u::Universe, jll::JLLInfo)
 
@@ -424,38 +479,8 @@ upload the JLL and its binaries to the universe's `deploy_org`, and push up the
 registry changes as well.
 """
 function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = false)
-    # There are four possible control flows here:
-    #  - The remote JLL repository already exists and we are deploying
-    #    -> Clone it, fork it on github and push back up to it
-    #  - The remote JLL repository already exists and we are not deploying
-    #    -> Clone it
-    #  - The remote JLL repository does not exist and we are deploying
-    #    -> Create a new repo, clone it, and push back up to it
-    #  - The remote JLL repository does not exit and we are not deploying
-    #    -> Create a local bare repo
-    jll_repo_url = get_package_repo(u, "$(jll.name)_jll")
-    jll_bare_repo = joinpath(source_download_cache(), "jll_clones", "$(jll.name)_jll")
-    rm(jll_bare_repo; force=true, recursive=true)
-    if u.deploy_org !== nothing
-        fork_org_repo = "$(u.deploy_org)/$(jll.name)_jll.jl"
-        fork_url = "https://github.com/$(fork_org_repo)"
-        if jll_repo_url === nothing
-            jll_repo_url = fork_url
-            gh_create(fork_org_repo)
-        else
-            if !gh_repo_exists(fork_org_repo)
-                gh_fork(jll_repo_url, u.deploy_org)
-            end
-        end
-        clone!(fork_url, jll_bare_repo)
-    else
-        if jll_repo_url === nothing
-            jll_repo_url = jll_bare_repo
-            init!(jll_bare_repo)
-        else
-            clone!(jll_repo_url, jll_bare_repo)
-        end
-    end
+    # Clone/fork/init ourselves a git repo
+    jll_repo_url, jll_bare_repo = init_jll_repo(u, jll.name)
 
     jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
     export_dir = joinpath(u.depot_path, "tarballs", string(jll.name, "-v", jll.version))
