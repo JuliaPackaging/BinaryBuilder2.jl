@@ -25,7 +25,7 @@ function save_history() {
 # so that this file can be sourced upon entering a debug shell.
 function save_env() {
 	set +x
-	set > /workspace/metadir/env
+	printenv > /workspace/metadir/env
 	# Ignore read-only variables
 	for l in BASHOPTS BASH_VERSINFO UID EUID PPID SHELLOPTS; do
 		grep -v "^$l=" /workspace/metadir/env > /workspace/metadir/env2

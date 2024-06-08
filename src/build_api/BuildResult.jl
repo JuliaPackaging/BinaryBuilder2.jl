@@ -81,10 +81,10 @@ function Base.show(io::IO, result::BuildResult)
     println(io, styled"BuildResult($(config.src_name), $(config.src_version), $(config.platform)) ({$(color):$(result.status)})")
 end
 
-Sandbox.SandboxConfig(result::BuildResult; verbose::Bool = false) = SandboxConfig(result.config, result.mounts; verbose)
+Sandbox.SandboxConfig(result::BuildResult; kwargs...) = SandboxConfig(result.config, result.mounts; kwargs...)
 
 function runshell(result::BuildResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
-    run(result.exe, SandboxConfig(result; verbose), shell)
+    run(result.exe, SandboxConfig(result; verbose, result.env), shell)
 end
 
 function find_mount_for_path(mounts::Dict{String,MountInfo}, path::String)

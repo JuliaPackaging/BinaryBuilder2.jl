@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-# Start wtih things that are always true
+# Start with things that are always true
 cat <<-EOF
 CT_CONFIG_VERSION=4
 

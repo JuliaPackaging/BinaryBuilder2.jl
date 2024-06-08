@@ -352,7 +352,7 @@ function runshell(config::BuildConfig; verbose::Bool = false, shell::Cmd = `/bin
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
     with_executor() do exe
-        run(exe, sandbox_config, setenv(shell, config.env))
+        run(exe, sandbox_config, shell)
     end
 end
 
