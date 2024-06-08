@@ -168,7 +168,7 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML"]
 path = "LazyJLLWrappers.jl"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
-version = "1.0.1"
+version = "1.0.2"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]

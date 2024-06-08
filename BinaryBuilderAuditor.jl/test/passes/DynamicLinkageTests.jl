@@ -39,16 +39,19 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
         @test isfile(joinpath(libmult_path))
 
         # First, ensure we have SONAMEs, as those are important
-        scan = scan_files(prefix, HostPlatform())
+        scan = scan_files(
+            prefix,
+            HostPlatform(),
+            [
+                LibraryProduct("libplus", :libplus),
+                LibraryProduct("libmult", :libmult),
+            ],
+        )
         ensure_sonames!(scan; verbose=true)
 
         # First, resolve dynamic links when these are two librares in the same build:
         jll_lib_products = resolve_dynamic_links!(
             scan,
-            [
-                LibraryProduct("libplus", :libplus),
-                LibraryProduct("libmult", :libmult),
-            ],
             Dict{Symbol,Vector{JLLLibraryProduct}}(),
         )
 
@@ -72,14 +75,15 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
             symlink(libplus_soname, joinpath(prefix, "lib", "libplus$(dlext(platform))"))
             run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib -lplus`, env))
         end
-        scan = scan_files(prefix, HostPlatform())
+        scan = scan_files(
+            prefix,
+            HostPlatform(),
+            [LibraryProduct("libmult", :libmult)],
+        )
         ensure_sonames!(scan; verbose=true)
 
         jll_lib_products = resolve_dynamic_links!(
             scan,
-            [
-                LibraryProduct("libmult", :libmult),
-            ],
             Dict{Symbol,Vector{JLLLibraryProduct}}(
                 :LibPlus => [
                     JLLLibraryProduct(
@@ -113,14 +117,10 @@ end
             run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib/plus -lplus`, env))
         end
 
-        scan = scan_files(prefix, HostPlatform())
+        scan = scan_files(prefix, HostPlatform(), [LibraryProduct("lib/plus/libplus", :libplus)])
         ensure_sonames!(scan; verbose=true)
         jll_lib_products = resolve_dynamic_links!(
             scan,
-            [
-                LibraryProduct("lib/plus/libplus", :libplus),
-                LibraryProduct("libmult", :libmult),
-            ],
             Dict{Symbol,Vector{JLLLibraryProduct}}(),
         )
         rpaths_consistent!(scan, Dict{Symbol,Vector{JLLLibraryProduct}}())

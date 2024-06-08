@@ -1,4 +1,4 @@
-using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms
+using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms, BinaryBuilderProducts
 
 @testset "Scanning" begin
     # Download XZ_jll and scan its prefix
@@ -6,7 +6,11 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms
     xz_path = only(only(values(paths)))
 
     # Ensure we find at least these files
-    scan = scan_files(xz_path, HostPlatform())
+    scan = scan_files(
+        xz_path,
+        HostPlatform(),
+        [LibraryProduct("liblzma", :liblzma)],
+    )
     @test "bin/xz" ∈ keys(scan.files)
     @test isfile(scan.files["bin/xz"])
     @test "include/lzma.h" ∈ keys(scan.files)
@@ -28,4 +32,11 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms
     end
     @test length(liblzma_objects) == 1
     @test islibrary(scan.binary_objects[only(liblzma_objects)])
+
+    # Test that our symlink resolver knows about `lib/liblzma.so -> lib/liblzma.so.X`
+    @test haskey(scan.binary_objects, relpath(scan, "lib/liblzma.so"))
+
+    # Test soname_forwards knows about the symlink as well
+    liblzma_soname = scan.soname_forwards["liblzma.so"]
+    @test haskey(scan.binary_objects, scan.soname_locator[liblzma_soname])
 end

@@ -1,88 +1,66 @@
 using BinaryBuilderProducts, JLLGenerator
 
 function resolve_dynamic_links!(scan::ScanResult,
-                                library_products::Vector{LibraryProduct},
                                 dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}},
-                                env::Dict{String,String} = Dict{String,String}(
-                                    "prefix" => scan.prefix,
-                                    "bb_full_target" => triplet(scan.platform),
-                                ),
                                 verbose::Bool = false)
-    # Invert `dep_libs` to be mapping SONAME -> (jll_name, lib_varname)
-    soname_map = Dict{String,Tuple{Union{Symbol,Nothing},Symbol}}()
+    # We need to generate a graph showing which libraries are needed by the
+    # `library_products` in our `scan`.
+    dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
     for (jll_name, libs) in dep_libs
         for lib in libs
-            if lib.soname ∈ keys(soname_map)
-                @error("Duplicate SONAMEs detected", lib.soname)
-                error()
-            end
-            soname_map[lib.soname] = (Symbol(string(jll_name, "_jll")), lib.varname)
-        end
-    end
-
-    # Add in the libraries in the current JLL, but with `jll_name` set to `nothing`
-    # Also, avoid needing to call `locate()` multiple times
-    for lib in library_products
-        lib_located_path = locate(lib, scan.prefix; env, scan.platform)
-        if lib_located_path === nothing
-            @error("Unable to locate library", lib, scan.prefix)
-            error()
-        end
-        scan.library_products[lib] = relpath(scan, lib_located_path)
-        soname = get_soname(scan, lib)
-        soname_map[soname] = (nothing, lib.varname)
-    end
-
-    # Ensure that symlinks of `libfoo.so` -> `libfoo.so.1` also work,
-    # since that's common to see within a single JLL, as the linking
-    # would be done _before_ our `ensure_sonames!()` has a chance to run.
-    # We'll fix this up at the end of this function
-    soname_forwards = Dict{String,String}()
-    for (rel_path, link_target) in scan.symlinks
-        for (lib, lib_rel_path) in scan.library_products
-            if link_target == lib_rel_path
-                soname = basename(rel_path)
-                soname_map[soname] = (nothing, lib.varname)
-                soname_forwards[soname] = get_soname(scan, lib)
-            end
+            dep_soname_map[lib.soname] = (Symbol(string(jll_name, "_jll")), lib.varname)
         end
     end
 
     # Iterate over our own library products, get list of dependencies,
     # resolve each dep to its matching value in `soname_map`
-    stale_linkages = []
     jll_lib_products = JLLLibraryProduct[]
-    for lib in library_products
-        rel_path = scan.library_products[lib]
+    for (rel_path, lib) in scan.library_products
         oh = scan.binary_objects[rel_path]
         lib_soname = get_soname(oh)
 
         # Resolve each dependency to one of the `LibraryLink` objects
         # we created above, use that to construct a `JLLLibraryDep`
         jll_deps = JLLLibraryDep[]
-
-        for soname in [path(dl) for dl in DynamicLinks(oh)]
+        for lib_dep_soname in [path(dl) for dl in DynamicLinks(oh)]
             # Skip system libraries that we don't want to track, because
             # we don't redistribute them.
-            if is_system_library(soname, scan.platform)
-                @debug("Skipping system library", dep_soname=soname, lib_path=rel_path)
+            if is_system_library(lib_dep_soname, scan.platform)
+                @debug("Skipping system library", lib_dep_soname, lib_path=rel_path)
                 continue
             end
 
-            if !haskey(soname_map, soname)
-                @error("Unable to map dependency", dep_soname=soname, lib_path=rel_path)
-                error()
-            end
+            # First, is this a library from a dependency?
+            local jll_name, lib_varname
+            if haskey(dep_soname_map, lib_dep_soname)
+                jll_name, lib_varname = dep_soname_map[lib_dep_soname]
 
-            # If this is not the real name (e.g. the user build `libfoo.so.1` without an
-            # embedded SONAME, provided a symlink `libfoo.so -> libfoo.so.1`, and then
-            # compiled `libbar.so` to link against `libfoo.so`) then we need to update
-            # its linkage:
-            if soname ∈ keys(soname_forwards)
-                update_linkage!(scan, rel_path, soname, soname_forwards[soname]; verbose)
-                soname = soname_forwards[soname]
+            # If not, does it come from our current JLL?
+            else
+                # If this is not the real name (e.g. the user build `libfoo.so.1` without an
+                # embedded SONAME, provided a symlink `libfoo.so -> libfoo.so.1`, and then
+                # compiled `libbar.so` to link against `libfoo.so`) then we need to update
+                # its linkage:
+                if haskey(scan.soname_forwards, lib_dep_soname)
+                    update_linkage!(scan, rel_path, lib_dep_soname => scan.soname_forwards[lib_dep_soname]; verbose)
+                    lib_dep_soname = scan.soname_forwards[lib_dep_soname]
+                end
+
+                if !haskey(scan.soname_locator, lib_dep_soname)
+                    @error("Unable to map dependency", lib_dep_soname, lib_path=rel_path)
+                    error()
+                end
+                dep_lib_relpath = scan.soname_locator[lib_dep_soname]
+
+                if !haskey(scan.library_products, dep_lib_relpath)
+                    @show scan.library_products
+                    @error("Dependency on library that is not listed as a LibraryProduct!", rel_path, lib_dep_soname)
+                    error()
+                end
+
+                jll_name = nothing
+                lib_varname = scan.library_products[dep_lib_relpath].varname
             end
-            jll_name, lib_varname = soname_map[soname]
             push!(jll_deps, JLLLibraryDep(jll_name, lib_varname))
         end
 
@@ -103,7 +81,7 @@ function resolve_dynamic_links!(scan::ScanResult,
 end
 
 function update_linkage!(scan::ScanResult, rel_path::AbstractString,
-                         old_soname::AbstractString, new_soname::AbstractString;
+                         (old_soname, new_soname)::Pair{<:AbstractString,<:AbstractString};
                          verbose::Bool = false)
     if Sys.iswindows(scan.platform)
         return
@@ -123,7 +101,7 @@ function update_linkage!(scan::ScanResult, rel_path::AbstractString,
     proc, output = capture_output(cmd)
     if !success(proc)
         println(String(take!(output)))
-        @error("Unable to update linkage library", rel_path, old_soname, new_soname)
+        @error("Unable to update linkage", rel_path, old_soname, new_soname)
         error()
     end
 
@@ -139,15 +117,11 @@ function rpaths_consistent!(scan::ScanResult,
         return
     end
 
-    # Build mapping from SONAME to relative path
-    soname_map = Dict{String,String}()
-    for (_, rel_path) in scan.library_products
-        soname = get_soname(scan.binary_objects[rel_path])
-        soname_map[soname] = rel_path
-    end
+    # Augment `scan.soname_locator` with information from `dep_libs`:
+    soname_locator = copy(scan.soname_locator)
     for (_, libs) in dep_libs
         for lib in libs
-            soname_map[lib.soname] = lib.path
+            soname_locator[lib.soname] = lib.path
         end
     end
 
@@ -161,10 +135,14 @@ function rpaths_consistent!(scan::ScanResult,
             if is_system_library(soname, scan.platform)
                 continue
             end
-            if soname ∉ keys(soname_map)
-                throw(ArgumentError("Library $(soname) must be listed as a LibraryProduct!"))
+            # Map through symlink forwards
+            soname = get(scan.soname_forwards, soname, soname)
+
+            if soname ∉ keys(soname_locator)
+                @error("Unable to resolve dependency", lib_path=rel_path, soname)
+                error()
             end
-            push!(dep_relpaths, relpath(dirname(soname_map[soname]), dirname(rel_path)))
+            push!(dep_relpaths, relpath(dirname(soname_locator[soname]), dirname(rel_path)))
         end
 
         # Read RPATHs of this binary object

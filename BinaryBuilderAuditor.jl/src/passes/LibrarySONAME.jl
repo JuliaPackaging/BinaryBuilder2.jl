@@ -9,44 +9,42 @@ ensure that dependencies are matched up properly when loading, since we rely
 upon the dynamic linker's SONAME short-circuit when loading transitive library
 dependencies. To enforce this, we ensure that every non-Windows target has a
 reasonable SONAME in all of its libraries.
+
+This function also has a side-effect of filling out `scan.soname_locator`, which
+allows mapping from library SONAME to `rel_path`, which is very useful for
+resolving dynamic linkage.
 """
 function ensure_sonames!(scan::ScanResult; verbose::Bool = false)
-    # Windows doesn't do SONAMEs
+    # Windows doesn't do SONAMEs, it just always uses the basename of the DLL.
     if Sys.iswindows(scan.platform)
         return
     end
 
-    for (rel_path, oh) in scan.binary_objects
-        if !islibrary(oh)
-            continue
+    # `scan_files()` already found the libraries with missing SONAMEs,
+    # so here all we need to do is update the binaries
+    for rel_path in scan.missing_sonames
+        soname = basename(rel_path)
+        if verbose
+            @info("Adding SONAME to library", rel_path, soname)
         end
 
-        soname = get_soname(oh)
-        if soname === nothing
-            abs_path = abspath(scan, rel_path)
-            soname = basename(rel_path)
-
-            if verbose
-                @info("Adding SONAME to library", rel_path, soname)
-            end
-
-            if Sys.isapple(scan.platform)
-                cmd = `-id $(soname) $(abs_path)`
-            elseif Sys.islinux(scan.platform) || Sys.isbsd(scan.platform)
-                cmd = `$(patchelf()) $(patchelf_flags(scan.platform)) --set-soname $(soname) $(abs_path)`
-            end
-
-            proc, output = capture_output(cmd)
-            if !success(proc)
-                println(String(take!(output)))
-                @error("Unable to set SONAME on library", rel_path)
-                error()
-            end
-
-            # Refresh our ObjectHandle, since the above manipulation
-            # may have completely re-arranged things.
-            refresh!(scan, rel_path)
+        abs_path = abspath(scan, rel_path)
+        if Sys.isapple(scan.platform)
+            cmd = `-id $(soname) $(abs_path)`
+        elseif Sys.islinux(scan.platform) || Sys.isbsd(scan.platform)
+            cmd = `$(patchelf()) $(patchelf_flags(scan.platform)) --set-soname $(soname) $(abs_path)`
         end
+
+        proc, output = capture_output(cmd)
+        if !success(proc)
+            println(String(take!(output)))
+            @error("Unable to set SONAME on library", rel_path)
+            error()
+        end
+
+        # Refresh our ObjectHandle, since the above manipulation
+        # may have completely re-arranged things.
+        refresh!(scan, rel_path)
     end
 end
 
@@ -75,6 +73,7 @@ function get_soname(oh::MachOHandle)
     # Return the Dylib ID
     return dylib_name(lcs[id_idx])
 end
+get_soname(oh::COFFHandle) = nothing
 
 function get_soname(scan::ScanResult, lib::LibraryProduct)
     lib_path = relpath(scan, scan.library_products[lib])

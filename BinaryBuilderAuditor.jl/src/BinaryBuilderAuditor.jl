@@ -31,7 +31,12 @@ function audit!(prefix::String,
                 ),
                 verbose::Bool = false)
     # First, scan the prefix:
-    scan = scan_files(prefix, platform)
+    scan = scan_files(
+        prefix,
+        platform,
+        library_products,
+        env,
+    )
 
     # First pass; symlink translation
     absolute_to_relative_symlinks!(scan, prefix_alias; verbose)
@@ -43,13 +48,7 @@ function audit!(prefix::String,
     get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
     dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}(Symbol(dep.name) => get_library_products(dep, platform) for dep in dependencies)
-    jll_lib_products = resolve_dynamic_links!(
-        scan,
-        library_products,
-        dep_libs,
-        env,
-        verbose,
-    )
+    jll_lib_products = resolve_dynamic_links!(scan, dep_libs, verbose)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     rpaths_consistent!(scan, dep_libs; verbose)
