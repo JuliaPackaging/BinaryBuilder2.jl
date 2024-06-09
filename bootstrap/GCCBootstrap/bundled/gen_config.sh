@@ -21,6 +21,7 @@ CT_EXPERIMENTAL=y
 
 # Explicitly claim the '--build' triplet, so there's no confusion
 CT_BUILD="${MACHTYPE}"
+CT_BUILD_PREFIX="${MACHTYPE}-"
 
 # Tell ct-ng to not remove our prefix... this really confused me, as the
 # build would finish, but the resultant artifact was empty, because it

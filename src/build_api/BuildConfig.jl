@@ -105,6 +105,7 @@ struct BuildConfig
                 open(bashrc_path; write=true) do io
                     println(io, "#!/bin/bash")
                     println(io, "export PATH=\${PATH}:/usr/local/share/bb/bin")
+                    println(io, "source /usr/local/share/bb/shell_customization")
 
                     # Always keep this one last, since it starts saving bash history from that point on.
                     println(io, "source /usr/local/share/bb/save_env_hook")
