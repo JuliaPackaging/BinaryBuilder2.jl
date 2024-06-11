@@ -13,6 +13,7 @@ environment.  `GeneratedSource` is implemented as a wrapper around
 struct GeneratedSource <: AbstractSource
     generator::Function
     ds::DirectorySource
+    prepared::Ref{Bool}
 end
 
 function GeneratedSource(generator::Function; target::String = "", output_dir::String = mktempdir())
@@ -22,6 +23,7 @@ function GeneratedSource(generator::Function; target::String = "", output_dir::S
         # We have to tell `DirectorySource` to trust that we'll create
         # `output_dir` just in time.
         DirectorySource(output_dir; target, allow_missing_dir=true),
+        Ref{Bool}(false),
     )
 end
 
@@ -30,10 +32,14 @@ verify(gs::GeneratedSource) = isdir(gs.ds.source)
 
 function retarget(gs::GeneratedSource, new_target::String)
     noabspath!(new_target)
-    return GeneratedSource(gs.generator, retarget(gs.ds, new_target))
+    return GeneratedSource(gs.generator, retarget(gs.ds, new_target), Ref{Bool}(false))
 end
 
 function prepare(gs::GeneratedSource; verbose::Bool = false)
+    if gs.prepared[]
+        return
+    end
+
     # Run the generator on the source
     mkpath(gs.ds.source)
     gs.generator(gs.ds.source)
@@ -41,6 +47,7 @@ function prepare(gs::GeneratedSource; verbose::Bool = false)
     # As of the time of this writing, `DirectorySource` has no `prepare()` function,
     # but let's be forward-thinking in case we end up adding something here.
     prepare(gs.ds; verbose)
+    gs.prepared[] = true
 end
 
 # Deployment for us is just deploying our wrapped `DirectorySource`
