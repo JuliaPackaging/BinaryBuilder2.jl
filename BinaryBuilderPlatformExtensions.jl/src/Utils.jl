@@ -19,6 +19,9 @@ gcc_platform(p::AnyPlatform) = p
 Return the kind of triplet that gcc would give for the given platform.  For a
 `CrossPlatform`, applies to the `target`.
 """
-gcc_target_triplet(target::AbstractPlatform) = triplet(gcc_platform(target))
+function gcc_target_triplet(target::AbstractPlatform)
+    triplet_str = triplet(gcc_platform(target))
+    return replace(triplet_str, r"^armv7l-" => "arm-")
+end
 gcc_target_triplet(platform::CrossPlatform) = gcc_target_triplet(platform.target)
 
