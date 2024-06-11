@@ -14,8 +14,8 @@ export Universe, in_universe
 const updated_registries = Set{Base.UUID}()
 
 function update_and_checkout_registries!(registries::Vector{RegistrySpec},
-                                         depot_path::String,
-                                         branch_name::String;
+                                         depot_path::String;
+                                         branch_name::Union{Nothing,String} = nothing,
                                          cache_dir::String = joinpath(source_download_cache(), "registry_clones"),
                                          force::Bool = false)
     # For each registry, update it and then check it out into the given `depot_path`
@@ -44,7 +44,9 @@ function update_and_checkout_registries!(registries::Vector{RegistrySpec},
             end
             head_commit = only(log(reg_clone_path; limit=1))
             checkout!(reg_clone_path, reg_checkout_path, head_commit)
-            branch!(reg_checkout_path, branch_name)
+            if branch_name !== nothing
+                branch!(reg_checkout_path, branch_name)
+            end
         end
         # We arbitrarily add a month onto here, making the optimistic assertion that we will
         # never have a build that takes more than a month.
@@ -116,7 +118,12 @@ struct Universe
         end
 
         # Ensure the registries are up to date, with our commits replayed on top
-        update_and_checkout_registries!(registries, depot_path, "bb2/$(name)"; kwargs...)
+        update_and_checkout_registries!(
+            registries,
+            depot_path;
+            branch_name = name === nothing ? nothing : "bb2/$(name)",
+            kwargs...,
+        )
 
         if deploy_org !== nothing
             # Authenticate to GitHub, then ensure that we are either deploying to our
@@ -430,15 +437,9 @@ function init_jll_repo(u::Universe, jll_name::String)
     jll_bare_repo = joinpath(source_download_cache(), "jll_clones", "$(jll_name)_jll")
 
     # This is the case if this was previously registered within this
-    # universe when it did not exist previously.  In this case, just early-exit
+    # universe when it did not exist previously.  In this case, nuke it.
     if jll_repo_url == jll_bare_repo
-        if isdir(jll_bare_repo)
-            @debug("Previously-generated unregistered JLL", jll_repo_url)
-            return jll_repo_url, jll_bare_repo
-        else
-            # This means something got deleted from the universe
-            jll_repo_url = nothing
-        end
+        jll_repo_url = nothing
     end
 
     rm(jll_bare_repo; force=true, recursive=true)
@@ -453,6 +454,7 @@ function init_jll_repo(u::Universe, jll_name::String)
             if !gh_repo_exists(fork_org_repo)
                 @debug("Forking and cloning JLL", fork_url)
                 gh_fork(jll_repo_url, u.deploy_org)
+                sleep(1)
             else
                 @debug("Cloning existing JLL fork", fork_url)
             end
