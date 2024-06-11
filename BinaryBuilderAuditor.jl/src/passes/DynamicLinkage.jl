@@ -130,6 +130,9 @@ function rpaths_consistent!(scan::ScanResult,
     # present in the RPATHs of that binary object
     for (rel_path, oh) in scan.binary_objects
         dep_relpaths = Set{String}()
+        if !isdynamic(oh)
+            continue
+        end
         for soname in [path(dl) for dl in DynamicLinks(oh)]
             # Don't try to insert RPATHs for system libraries
             if is_system_library(soname, scan.platform)
