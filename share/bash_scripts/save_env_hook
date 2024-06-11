@@ -25,12 +25,12 @@ function save_history() {
 # so that this file can be sourced upon entering a debug shell.
 function save_env() {
 	set +x
-	printenv > /workspace/metadir/env
 	# Ignore read-only variables
-	for l in BASHOPTS BASH_VERSINFO UID EUID PPID SHELLOPTS; do
-		grep -v "^$l=" /workspace/metadir/env > /workspace/metadir/env2
-		mv /workspace/metadir/env2 /workspace/metadir/env
+	GREP_CMD="^GREP_CMD="
+	for GREP_VAR_NAME in BASH_ARGC BASH_ARGV BASH_CMDS BASH_COMMAND BASH_LINENO BASH_SOURCE BASHOPTS BASH_VERSINFO UID EUID PPID SHELLOPTS POSIXLY_CORRECT GREP_VAR_NAME _; do
+		GREP_CMD="${GREP_CMD}|^${GREP_VAR_NAME}="
 	done
+	set -o posix; set | grep -E -v "${GREP_CMD}" > /workspace/metadir/env; set +o posix
 	echo "cd $(pwd)" >> /workspace/metadir/env
 }
 
