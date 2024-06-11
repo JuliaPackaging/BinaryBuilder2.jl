@@ -105,7 +105,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     sources = AbstractSource[]
 
     push!(sources, GeneratedSource(;target="etc/certs") do out_dir
-        cp(ca_roots_path(), joinpath(out_dir, basename(ca_roots_path())); force=true)
+        cp(ca_roots_path(), out_dir; force=true, follow_symlinks=true)
     end)
 
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
@@ -134,7 +134,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
                 # Fix relocatability issues
                 println(io, """
                 export GIT_EXEC_PATH=\"$(toolchain_prefix)/libexec/git-core\"
-                export GIT_SSL_CAINFO=\"$(toolchain_prefix)/etc/certs/$(basename(ca_roots_path()))\"
+                export GIT_SSL_CAPATH=\"$(toolchain_prefix)/etc/certs\"
                 export GIT_TEMPLATE_DIR=\"$(toolchain_prefix)/share/git-core/templates\"
                 """)
             end
@@ -197,7 +197,7 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
     env["M4"] = joinpath(deployed_prefix, "bin", "m4")
 
     # Use the bundled CA root file
-    env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", basename(ca_roots_path()))
+    env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")
     return env
 end
 
