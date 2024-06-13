@@ -448,8 +448,11 @@ function init_jll_repo(u::Universe, jll_name::String)
         fork_url = "https://github.com/$(fork_org_repo)"
         if jll_repo_url === nothing
             jll_repo_url = fork_url
-            @debug("Creating and cloning JLL fork", fork_url)
-            gh_create(fork_org_repo)
+            if !gh_repo_exists(fork_org_repo)
+                @debug("Creating and cloning JLL fork", fork_url)
+                gh_create(fork_org_repo)
+                sleep(1)
+            end
         else
             if !gh_repo_exists(fork_org_repo)
                 @debug("Forking and cloning JLL", fork_url)
