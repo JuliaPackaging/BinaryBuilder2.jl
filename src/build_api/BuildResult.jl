@@ -48,13 +48,17 @@ mutable struct BuildResult
             log_artifact,
             env,
         )
-        # TODO: Provide a way to clean this up eagerly
-        if obj.exe !== nothing
-            atexit() do
-                Sandbox.cleanup(obj.exe)
-            end
+        # Make sure that this is cleaned up _before_ we're in a finalizer.
+        atexit() do
+            Sandbox.cleanup(obj)
         end
         return obj
+    end
+end
+
+function Sandbox.cleanup(result::BuildResult)
+    if result.exe !== nothing
+        Sandbox.cleanup(result.exe)
     end
 end
 

@@ -5,7 +5,7 @@ using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
 using MultiHashParsing, SHA, OutputCollectors
 
-export BuildConfig, build!
+export BuildConfig, build!, cleanup
 
 """
     BuildConfig

@@ -125,6 +125,9 @@ function build_tarballs(src_name::String,
             end
         end
         push!(extract_results, extract_result)
+
+        # In the background, cleanup the previous build result
+        Threads.@spawn cleanup(build_result)
     end
     # Take those extractions, and group them together as a single package
     package_config = PackageConfig(extract_results; @extract_kwargs(kwargs, :jll_name, :version_series)...)
