@@ -103,7 +103,7 @@ end
 
 
 function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
-    if result.status != :success
+    if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
     build_config = result.config.build.config

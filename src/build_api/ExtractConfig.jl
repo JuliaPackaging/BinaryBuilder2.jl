@@ -18,7 +18,6 @@ struct ExtractConfig
 
     # TODO: Add an `AuditConfig` field
     #audit::AuditConfig
-    metadir::String
 
     # Timing
     to::TimerOutput
@@ -26,32 +25,12 @@ struct ExtractConfig
     function ExtractConfig(build::BuildResult,
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
-                           metadir = mktempdir(builds_dir()),
                            platform::AbstractPlatform = build.config.platform.target,
                            audit_config = nothing)
-        # We want to copy the metadir from the BuildConfig and add our own
-        # extraction script.  We copy here so that bash history and whatnot is preserved,
-        # but unique for this extraction config.
-        rm(metadir)
-        cp(build.mounts["/workspace/metadir"].host_path, metadir)
-
-        extract_script_path = joinpath(metadir, "extract_script.sh")
-        open(extract_script_path, write=true) do io
-            println(io, "#!/bin/bash")
-            println(io, "set -euo pipefail")
-            println(io, "source /usr/local/share/bb/save_env_hook")
-            println(io, "source /usr/local/share/bb/extraction_utils")
-            println(io, script)
-            println(io, "auto_install_license")
-            println(io, "exit 0")
-        end
-        chmod(extract_script_path, 0o755)
-
         return new(
             build,
             String(script),
             products,
-            metadir,
             platform,
             copy(build.config.to),
         )
@@ -99,8 +78,27 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
         end
     end
 
-    # Insert our new metadir
-    mounts["/workspace/metadir"] = MountInfo(config.metadir, MountType.Overlayed)
+    # Insert a new metadir
+    metadir = mktempdir()
+    # We want to copy the metadir from the BuildConfig and add our own
+    # extraction script.  We copy here so that bash history and whatnot is preserved,
+    # but unique for this extraction config.
+    rm(metadir)
+    cp(mounts["/workspace/metadir"].host_path, metadir)
+
+    extract_script_path = joinpath(metadir, "extract_script.sh")
+    open(extract_script_path, write=true) do io
+        println(io, "#!/bin/bash")
+        println(io, "set -euo pipefail")
+        println(io, "source /usr/local/share/bb/save_env_hook")
+        println(io, "source /usr/local/share/bb/extraction_utils")
+        println(io, config.script)
+        println(io, "auto_install_license")
+        println(io, "exit 0")
+    end
+    chmod(extract_script_path, 0o755)
+
+    mounts["/workspace/metadir"] = MountInfo(metadir, MountType.Overlayed)
 
     # Insert our extraction dir, which is a ReadWrite mount,
     # allowing us to pull the result back out from the overlay nest.
@@ -111,6 +109,25 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     env["extract_dir"] = "/workspace/extract"
     env["BB_WRAPPERS_VERBOSE"] = "true"
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
+end
+
+function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; kwargs...)
+    build_config = config.build.config
+    meta = build_config.meta
+    @timeit config.to "audit" begin
+        prefix_alias = target_prefix(build_config.platform)
+        # Load JLLInfo structures for each dependency
+        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
+        return audit!(
+            artifact_dir,
+            LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
+            dep_jll_infos;
+            prefix_alias,
+            env = build_config.env,
+            verbose = meta.verbose,
+            kwargs...
+        )
+    end
 end
 
 function extract!(config::ExtractConfig;
@@ -125,8 +142,8 @@ function extract!(config::ExtractConfig;
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
         if artifact_hash !== nothing
             if meta.verbose
-                extract_hash = content_hash(extract_config)
-                build_hash = content_hash(extract_config.build.config)
+                extract_hash = content_hash(config)
+                build_hash = content_hash(config.build.config)
                 @info("Extraction cached", config, extract_hash, build_hash)
             end
             return ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
@@ -150,19 +167,7 @@ function extract!(config::ExtractConfig;
 
                 # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
                 if run_status == :success
-                    @timeit config.to "audit" begin
-                        prefix_alias = target_prefix(build_config.platform)
-                        # Load JLLInfo structures for each dependency
-                        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
-                        audit_result = audit!(
-                            artifact_dir,
-                            LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
-                            dep_jll_infos;
-                            prefix_alias,
-                            env = build_config.env,
-                            verbose = meta.verbose,
-                        )
-                    end
+                    audit_result = audit!(config, artifact_dir)
                 end
             end
         end

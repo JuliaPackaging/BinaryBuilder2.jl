@@ -19,7 +19,7 @@ struct ExtractResult
     log_artifact::SHA1Hash
 
     # The audit result
-    audit_result::Union{Nothing,AuditResult}
+    audit_result::AuditResult
 
     # Logs generated during this extraction (audit logs, mostly)
     extract_log::String
@@ -29,7 +29,7 @@ struct ExtractResult
                            exception::Union{Nothing,Exception},
                            artifact::Union{Base.SHA1,SHA1Hash},
                            log_artifact::Union{Base.SHA1,SHA1Hash},
-                           audit_result::Union{AuditResult,Nothing},
+                           audit_result::AuditResult,
                            extract_log::String)
         return new(
             config,
@@ -46,13 +46,14 @@ end
 function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash})
     build_config = config.build.config
     extract_log = joinpath(artifact_path(build_config.meta.universe, log_artifact), "$(build_config.src_name)-extract.log")
+    audit_result = audit!(config, artifact_path(build_config.meta.universe, artifact); readonly=true)
     return ExtractResult(
         config,
         :cached,
         nothing,
         artifact,
         log_artifact,
-        nothing,
+        audit_result,
         String(read(extract_log)),
     )
 end
