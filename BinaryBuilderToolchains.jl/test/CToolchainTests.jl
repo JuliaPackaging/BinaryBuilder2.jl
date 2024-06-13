@@ -11,47 +11,57 @@ function capture_output(cmd)
     return p, output
 end
 
+function toolchain_tests(prefix, env, platform)
+    testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
+    cd(testsuite_path) do
+        # Run our entire test suite first
+        p = run(ignorestatus(setenv(`make -s cleancheck-all`, env)))
+        # If this fails, run it again, but with `make` not set to silent
+        if !success(p)
+            run(setenv(`make cleancheck-all`, env))
+        end
+        @test success(p)
+
+        # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
+        # `cxxstring_abi` defines showing in the build log:
+        @test haskey(platform.target, "cxxstring_abi")
+        cxxstring_abi_define = string(
+            "-D_GLIBCXX_USE_CXX11_ABI=",
+            platform.target["cxxstring_abi"] == "cxx11" ? "1" : "0",
+        )
+
+        # Turn on verbose wrappers, and ensure we're using `g++` on all platforms
+        debug_env = copy(env)
+        debug_env["BB_WRAPPERS_VERBOSE"] = "true"
+        debug_env["CXX"] = "g++"
+        p, debug_out = capture_output(setenv(`make cleancheck-02_cxx_string_abi`, debug_env))
+        @test success(p)
+        @test occursin(cxxstring_abi_define, debug_out)
+    end
+
+    # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
+    for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
+        @test success(setenv(`$(wrapper) --version`))
+    end
+end
+
 
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
-    testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
     @test toolchain.vendor ∈ (:gcc, :clang)
     @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
 
     # Download the toolchain, make sure it runs
     with_toolchains([toolchain]) do prefix, env
-        cd(testsuite_path) do
-            # Run our entire test suite first
-            p = run(ignorestatus(setenv(`make -s cleancheck-all`, env)))
-            # If this fails, run it again, but with `make` not set to silent
-            if !success(p)
-                run(setenv(`make cleancheck-all`, env))
-            end
-            @test success(p)
+        toolchain_tests(prefix, env, platform)
+    end
 
-            # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
-            # `cxxstring_abi` defines showing in the build log:
-            @test haskey(platform.target, "cxxstring_abi")
-            cxxstring_abi_define = string(
-                "-D_GLIBCXX_USE_CXX11_ABI=",
-                platform.target["cxxstring_abi"] == "cxx11" ? "1" : "0",
-            )
-
-            # Turn on verbose wrappers, and ensure we're using `g++` on all platforms
-            debug_env = copy(env)
-            debug_env["BB_WRAPPERS_VERBOSE"] = "true"
-            debug_env["CXX"] = "g++"
-            p, debug_out = capture_output(setenv(`make cleancheck-02_cxx_string_abi`, debug_env))
-            @test success(p)
-            @test occursin(cxxstring_abi_define, debug_out)
-        end
-
-        # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
-        for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
-            @test success(setenv(`$(wrapper) --version`))
-        end
+    # Do the same, but with `GCCBootstrap`
+    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true, vendor = :gcc_bootstrap)
+    with_toolchains([toolchain]) do prefix, env
+        toolchain_tests(prefix, env, platform)
     end
 
     # Time for an advanced test: let's ensure that when deploying two CToolchains,
