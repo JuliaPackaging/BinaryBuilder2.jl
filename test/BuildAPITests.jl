@@ -57,7 +57,7 @@ end
         "test",
         "testsuite",
         "CToolchain"
-    ));
+    ))
     libstring_build_config = BuildConfig(
         meta,
         "libstring",
@@ -70,24 +70,38 @@ end
         make libstring
         mkdir -p ${shlibdir}
         cp build/*.so ${shlibdir}/
+        mkdir -p ${includedir}
+        cp libstring.h ${includedir}/
         """,
         native_linux,
-    );
+    )
     libstring_build_result = build!(libstring_build_config);
     @test libstring_build_result.status == :success
 
     # Extract it:
+    libstring_extract_script =  raw"extract ${shlibdir}/**.so*"
+    libstring_products = [LibraryProduct("libstring", :libstring)]
+
     libstring_extract_config = ExtractConfig(
         libstring_build_result,
-        raw"""
-        extract ${prefix}/lib/**.so*
-        """,
-        [
-            LibraryProduct("libstring", :libstring),
-        ],
-    );
+        libstring_extract_script,
+        libstring_products,
+    )
     libstring_extract_result = extract!(libstring_extract_config)
     @test libstring_extract_result.status == :success
+
+    # Also extract an `AnyPlatform` header artifact.
+    libstring_h_extract_script = raw"extract ${includedir}"
+    libstring_h_products = [FileProduct(raw"${includedir}/libstring.h", :libstring_h)]
+    libstring_h_extract_config = ExtractConfig(
+        libstring_build_result,
+        libstring_h_extract_script,
+        libstring_h_products;
+        # Override the platform since this is just a header file
+        platform = AnyPlatform()
+    )
+    libstring_h_extract_result = extract!(libstring_h_extract_config)
+    @test libstring_h_extract_result.status == :success
 
     # Feed it in as a dependency to a build of `cxx_string_abi`
     cxx_string_abi_build_config = BuildConfig(
@@ -109,21 +123,20 @@ end
         [[ "${orig_mtime}" == "$(stat -c %Y libstring*)" ]]
         mkdir -p ${bindir}
         cp build/cxx_string_abi* ${bindir}/
+        touch build/
         """,
         native_linux,
-    );
+    )
     cxx_string_abi_build_result = build!(cxx_string_abi_build_config);
     @test cxx_string_abi_build_result.status == :success
 
+    # Test that running the extraction a second time still works
+    # and does not cause a cache hit, because we disabled that.
     libstring_extract_config = ExtractConfig(
         libstring_build_result,
-        raw"""
-        extract ${prefix}/lib/**.so*
-        """,
-        [
-            LibraryProduct("libstring", :libstring),
-        ],
-    );
+        libstring_extract_script,
+        libstring_products,
+    )
     libstring_extract_result = extract!(libstring_extract_config)
     @test libstring_extract_result.status == :success
 end
