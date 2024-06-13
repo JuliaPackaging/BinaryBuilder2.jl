@@ -12,6 +12,10 @@ struct ExtractConfig
     # The products that this package will ensure are available
     products::Vector{<:AbstractProduct}
 
+    # In most cases, the platform of the extraction is the platform of the build config,
+    # but occasionally we want to do things like build compilers.
+    platform::AbstractPlatform
+
     # TODO: Add an `AuditConfig` field
     #audit::AuditConfig
     metadir::String
@@ -23,6 +27,7 @@ struct ExtractConfig
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
                            metadir = mktempdir(builds_dir()),
+                           platform::AbstractPlatform = build.config.platform.target,
                            audit_config = nothing)
         # We want to copy the metadir from the BuildConfig and add our own
         # extraction script.  We copy here so that bash history and whatnot is preserved,
@@ -47,6 +52,7 @@ struct ExtractConfig
             String(script),
             products,
             metadir,
+            platform,
             copy(build.config.to),
         )
     end

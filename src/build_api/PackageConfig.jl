@@ -120,7 +120,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
         deps = [JLLPackageDependency(d.name) for d in build_config.pkg_deps],
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = [JLLSourceRecord(s) for s in build_config.source_trees["/workspace/srcdir"]],
-        platform = build_config.platform.target,
+        platform = result.config.platform,
         name,
         # TODO: Add links to our eventual deployment target
         artifact = JLLArtifactBinding(

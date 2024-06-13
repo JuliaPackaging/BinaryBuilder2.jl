@@ -84,6 +84,9 @@ function build_tarballs(src_name::String,
     # First, build for all platforms
     extract_results = ExtractResult[]
     for platform in platforms
+        host_if_crossplatform(cp::CrossPlatform) = cp.host
+        host_if_crossplatform(p::AbstractPlatform) = p
+
         build_config = BuildConfig(
             meta,
             src_name,
@@ -92,7 +95,7 @@ function build_tarballs(src_name::String,
             apply_platform.(target_dependencies, (platform,)),
             apply_platform.(host_dependencies, (host,)),
             script,
-            platform;
+            host_if_crossplatform(platform);
             @extract_kwargs(kwargs, :host, :toolchains, :allow_unsafe_flags, :lock_microarchitecture)...,
         )
         build_result = build!(
@@ -111,6 +114,7 @@ function build_tarballs(src_name::String,
             build_result,
             extract_script,
             products;
+            platform,
             @extract_kwargs(kwargs, :metadir)...,
         )
         extract_result = extract!(
