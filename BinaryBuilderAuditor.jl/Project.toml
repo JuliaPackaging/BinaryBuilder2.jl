@@ -20,6 +20,7 @@ julia = "1.6"
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [targets]
-test = ["BinaryBuilderToolchains", "JLLPrefixes", "Test"]
+test = ["BinaryBuilderToolchains", "JLLPrefixes", "Test", "TreeArchival"]

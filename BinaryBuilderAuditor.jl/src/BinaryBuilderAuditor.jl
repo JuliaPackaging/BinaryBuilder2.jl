@@ -29,7 +29,8 @@ function audit!(prefix::String,
                     "prefix" => prefix,
                     "bb_full_target" => triplet(platform),
                 ),
-                verbose::Bool = false)
+                verbose::Bool = false,
+                readonly::Bool = false)
     # First, scan the prefix:
     scan = scan_files(
         prefix,
@@ -39,10 +40,14 @@ function audit!(prefix::String,
     )
 
     # First pass; symlink translation
-    absolute_to_relative_symlinks!(scan, prefix_alias; verbose)
+    if !readonly
+        absolute_to_relative_symlinks!(scan, prefix_alias; verbose)
+    end
 
     # Ensure that all libraries have SONAMEs
-    ensure_sonames!(scan)
+    if !readonly
+        ensure_sonames!(scan)
+    end
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
     get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
@@ -51,7 +56,9 @@ function audit!(prefix::String,
     jll_lib_products = resolve_dynamic_links!(scan, dep_libs, verbose)
 
     # Ensure that all libraries and executables have the correct RPATH setup
-    rpaths_consistent!(scan, dep_libs; verbose)
+    if !readonly
+        rpaths_consistent!(scan, dep_libs; verbose)
+    end
 
     return AuditResult(
         scan,

@@ -1,4 +1,4 @@
-using Test, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains
+using Test, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival
 
 include("ScanningTests.jl")
 include("passes/RelativeSymlinkTests.jl")
@@ -35,6 +35,13 @@ include("passes/DynamicLinkageTests.jl")
         ]
         result = audit!(prefix, library_products, JLLInfo[]; verbose=true)
         @test readlink(joinpath(prefix, "lib", "libplus$(dlext(platform))")) == libplus_soname
+        @test length(result.jll_lib_products) == 2
+
+        # Run audit a second time with `readonly=true`, ensure that the treehash does not change
+        pre_treehash = treehash(prefix)
+        result = audit!(prefix, library_products, JLLInfo[])
+        post_treehash = treehash(prefix)
+        @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 2
     end
 end
