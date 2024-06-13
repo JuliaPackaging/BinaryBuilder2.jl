@@ -54,7 +54,7 @@ end
 
 function Base.show(io::IO, config::ExtractConfig)
     build_config = config.build.config
-    println(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(build_config.platform))")
+    print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(build_config.platform))")
 end
 
 function extract_content_hash(extract_script::String, products::Vector{<:AbstractProduct})

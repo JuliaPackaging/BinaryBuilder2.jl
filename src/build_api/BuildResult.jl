@@ -82,7 +82,7 @@ end
 function Base.show(io::IO, result::BuildResult)
     config = result.config
     color = status_style(result.status)
-    println(io, styled"BuildResult($(config.src_name), $(config.src_version), $(config.platform)) ({$(color):$(result.status)})")
+    print(io, styled"BuildResult($(config.src_name), $(config.src_version), $(config.platform)) ({$(color):$(result.status)})")
 end
 
 Sandbox.SandboxConfig(result::BuildResult; kwargs...) = SandboxConfig(result.config, result.mounts; kwargs...)

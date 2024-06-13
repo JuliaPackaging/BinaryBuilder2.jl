@@ -204,7 +204,7 @@ struct BuildConfig
 end
 
 function Base.show(io::IO, config::BuildConfig)
-    println(io, "BuildConfig($(config.src_name), $(config.src_version), $(config.platform))")
+    print(io, "BuildConfig($(config.src_name), $(config.src_version), $(config.platform))")
 end
 
 function BinaryBuilderSources.content_hash(config::BuildConfig)

@@ -60,7 +60,7 @@ end
 function Base.show(io::IO, result::ExtractResult)
     build_config = result.config.build.config
     color = status_style(result.status)
-    println(io, styled"ExtractResult($(build_config.src_name), $(build_config.src_version), $(build_config.platform)) ({$(color):$(result.status)})")
+    print(io, styled"ExtractResult($(build_config.src_name), $(build_config.src_version), $(build_config.platform)) ({$(color):$(result.status)})")
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)

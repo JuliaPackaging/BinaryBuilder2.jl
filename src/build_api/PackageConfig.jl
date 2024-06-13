@@ -50,7 +50,7 @@ default_jll_name(results::Vector{ExtractResult}) = default_jll_name(first(result
 default_jll_name(extractions::Dict{String,Vector{ExtractResult}}) = default_jll_name(first(values(extractions)))
 
 function Base.show(io::IO, config::PackageConfig)
-    println(io, "PackageConfig($(config.name), $(config.version))")
+    print(io, "PackageConfig($(config.name), $(config.version))")
 end
 
 """

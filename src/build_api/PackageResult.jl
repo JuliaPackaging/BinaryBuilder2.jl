@@ -18,7 +18,7 @@ end
 
 function Base.show(io::IO, result::PackageResult)
     color = status_style(result.status)
-    println(io, styled"PackageResult($(result.config.name), $(result.config.version)) ({$(color):$(result.status)})")
+    print(io, styled"PackageResult($(result.config.name), $(result.config.version)) ({$(color):$(result.status)})")
 end
 
 function jll_dir(result::PackageResult)
