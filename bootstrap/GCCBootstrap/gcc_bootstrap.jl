@@ -116,5 +116,6 @@ function gcc_bootstrap_build_tarballs(meta, platforms)
         ],
         meta,
         host,
+        version_series=v"9.4",
     )
 end
