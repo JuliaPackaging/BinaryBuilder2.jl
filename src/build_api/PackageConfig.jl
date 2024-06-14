@@ -17,7 +17,7 @@ struct PackageConfig
 
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
                            jll_name::AbstractString = default_jll_name(extractions),
-                           version_series::VersionNumber = v"1.0.0")
+                           version_series::VersionNumber = default_jll_version_series(extractions))
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
         end
@@ -48,6 +48,23 @@ AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = first
 default_jll_name(result::ExtractResult) = result.config.build.config.src_name
 default_jll_name(results::Vector{ExtractResult}) = default_jll_name(first(results))
 default_jll_name(extractions::Dict{String,Vector{ExtractResult}}) = default_jll_name(first(values(extractions)))
+
+# We allow overriding the version series, but default to `src_version`, if available.
+function default_jll_version_series(result::ExtractResult)
+    src_version = result.config.build.config.src_version
+    try
+        src_version = parse(VersionNumber, src_version)
+    catch
+        throw(ArgumentError("Cannot parse '$(src_version)' as a VersionNumber, must manually specify `version_series`"))
+    end
+    return VersionNumber(
+        src_version.major,
+        src_version.minor,
+        0,
+    )
+end
+default_jll_version_series(results::Vector{ExtractResult}) = default_jll_version_series(first(results))
+default_jll_version_series(extractions::Dict{String,Vector{ExtractResult}}) = default_jll_version_series(first(values(extractions)))
 
 function Base.show(io::IO, config::PackageConfig)
     print(io, "PackageConfig($(config.name), $(config.version))")
