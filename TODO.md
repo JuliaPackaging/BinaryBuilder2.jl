@@ -1,12 +1,10 @@
 High-priority list:
-- Change away from "default"; maybe JLL.name-default?
-  
+
+
+
 - Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
 - Build GCCBootstrap for all linuces
   - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BinaryBuilder2.
-- Build caching infrastructure
-  - Hash all inputs, if the inputs are the same, look up cached output artifact and just use that if it's still around.
-  - Make this flexible enough to work with backends other than local paths, e.g. S3-based caching for Yggdrasil.
 - Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
   - Build Clang via GCCBoostrap
   - Look into this: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
@@ -43,6 +41,7 @@ High-priority list:
 - Remove `src_version` from BuildConfig and JLLs?
 
 Features I'd like but I'm not prioritizing:
+- Create testing github org and deploy to it during CI tests.
 - LRU cache of specific size for `downloads` folder
 - Progress bars for _everything_
   - JLL downloads
@@ -51,3 +50,13 @@ Features I'd like but I'm not prioritizing:
 - Automatic apk/apt caching server for Yggdrasil
   - Perhaps it'd be better to just have a transparent SQUID proxy to cache _every_ large HTTP request?
   - Could be another good buildkite plugin
+
+
+
+Cool things to show off in JuliaCon talk
+ - Universes
+   - multiple builds in the same univers
+   - activating the environment and loading it locally
+ - meta.builds/meta.extractions
+ - runshell(build_config)
+ - Using environment variables in product paths
