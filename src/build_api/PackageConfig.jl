@@ -110,7 +110,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
 
     # First, translate all non-library products to JLLProducts
     products = AbstractJLLProduct[
-        AbstractJLLProduct(p, artifact_path(result); env=build_config.env) for p in result.config.products if !isa(p, LibraryProduct)
+        AbstractJLLProduct(p, artifact_path(result); env=result.config.build.env, platform=host_if_crossplatform(result.config.platform)) for p in result.config.products if !isa(p, LibraryProduct)
     ]
     # Then, append the JLLLibraryProducts that were filled out by the auditor:
     append!(products, result.audit_result.jll_lib_products)

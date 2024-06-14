@@ -1,5 +1,5 @@
 using Base.BinaryPlatforms
-export CrossPlatform
+export CrossPlatform, host_if_crossplatform, target_if_crossplatform
 
 """
     CrossPlatform(host::Platform, target::Platform)
@@ -128,3 +128,9 @@ function Base.BinaryPlatforms.platforms_match(cp::CrossPlatform, p::Platform)
     platforms_match(cp.target, p)
 end
 Base.BinaryPlatforms.platforms_match(p::Platform, cp::CrossPlatform) = platforms_match(cp, p)
+
+
+target_if_crossplatform(cp::CrossPlatform) = cp.target
+target_if_crossplatform(p::AbstractPlatform) = p
+host_if_crossplatform(cp::CrossPlatform) = cp.host
+host_if_crossplatform(p::AbstractPlatform) = p
