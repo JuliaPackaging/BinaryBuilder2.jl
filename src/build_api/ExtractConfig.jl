@@ -219,7 +219,7 @@ function extract!(config::ExtractConfig;
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
         @warn("Launching debug shell")
-        runshell(result; verbose=meta.verbose)
+        runshell(result)
     end
     return result
 end
