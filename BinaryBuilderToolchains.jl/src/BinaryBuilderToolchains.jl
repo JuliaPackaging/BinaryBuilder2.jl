@@ -5,7 +5,7 @@ using Pkg.Types: VersionSpec
 # These are so useful to anyone who's using us, just reexport them.
 @reexport using BinaryBuilderPlatformExtensions
 
-export AbstractToolchain, toolchain_sources, toolchain_env, platform
+export AbstractToolchain, toolchain_sources, toolchain_env, platform, supported_platforms
 
 """
     AbstractToolchain
@@ -29,6 +29,9 @@ All toolchains must define the following methods:
     - returns the platform this toolchain was constructed for.  Could be
       a `CrossPlatform` (in the case of CToolchain) or a plain `Platform`
       (in the case of HostToolsToolchain).
+* supported_platforms(::Type{toolchain})
+    - returns a list of platforms (with no tags) that this toolchain
+      supports targeting.
 """
 abstract type AbstractToolchain; end
 

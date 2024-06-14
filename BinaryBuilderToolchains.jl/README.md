@@ -9,5 +9,5 @@ One way to gain access to the toolchains is by using the `runshell()` method:
 ```
 using BinaryBuilderToolchains, Base.BinaryPlatforms
 platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-runshell([CToolchain(platform), HostToolsToolchain(platform)])
+runshell([CToolchain(platform; default_ctoolchain=true), HostToolsToolchain(platform)])
 ```

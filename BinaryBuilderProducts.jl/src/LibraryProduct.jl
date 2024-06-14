@@ -84,19 +84,17 @@ on foreign platforms.
 """
 function locate(lp::LibraryProduct, prefix::String;
                 env::Dict{String,String} = Dict{String,String}(),
-                platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")),
-                verbose::Bool = false)
+                platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))
+    @debug("Locating LibraryProduct", lp)
     for path in lp.paths
         path = path_prefix_transformation(LibraryProduct, path, prefix, env)
         libname = basename(path)
-
-        if verbose
-            @info("locate()", path, readdir(dirname(path)))
-        end
+        @debug("Trying", path, libname)
 
         # Skip non-existant directories
         path_dir = dirname(path)
         if !isdir(path_dir)
+            @debug("Skipping non-existant directory", path_dir)
             continue
         end
 
@@ -109,6 +107,7 @@ function locate(lp::LibraryProduct, prefix::String;
             end
 
             parsed_libname, parsed_version = parse_dl_name_version(f, os(platform))
+            @debug("Trying", f, parsed_libname)
             if parsed_libname == libname
                 return prefix_remove(joinpath(path_dir, f), prefix)
             end

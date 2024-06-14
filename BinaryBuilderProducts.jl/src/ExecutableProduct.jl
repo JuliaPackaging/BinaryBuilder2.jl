@@ -1,5 +1,3 @@
-using Base.BinaryPlatforms
-
 """
     ExecutableProduct(names::Vector{String}, varname::Symbol; dir_path = nothing)
 
@@ -35,8 +33,9 @@ On Windows platforms, it will check that the file ends with ".exe", (adding it
 on automatically, if it is not already present).
 """
 function locate(ep::ExecutableProduct, prefix::String;
-                env::Dict{String,String} = Dict{String,String}())
-    platform = parse(Platform, env_checked_get(env, "bb_full_target"))
+                env::Dict{String,String} = Dict{String,String}(),
+                platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))
+    @debug("Locating ExecutableProduct", ep)
     for path in ep.paths
         path = path_prefix_transformation(ExecutableProduct, path, prefix, env)
 
@@ -46,6 +45,7 @@ function locate(ep::ExecutableProduct, prefix::String;
             path = string(path, ".exe")
         end
 
+        @debug("Trying", path, isfile(path), Sys.isexecutable(path))
         if isfile(path)
             # If the file is not executable, fail out
             if !Sys.isexecutable(path)

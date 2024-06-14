@@ -648,3 +648,16 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 end
+
+
+
+function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
+    # Maybe make this inspect the supported platforms GCC_jll or something like that?
+    return [
+        Platform("x86_64", "linux"),
+        Platform("i686", "linux"),
+        Platform("aarch64", "linux"),
+        Platform("armv7l", "linux"),
+        Platform("ppc64le", "linux"),
+    ]
+end

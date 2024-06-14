@@ -1,5 +1,6 @@
 using StyledStrings
 using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet
+export supported_platforms
 
 # Default to using a Linux host with the same host arch as our machine
 # This just makes qemu-user-static's job easier.
@@ -52,4 +53,14 @@ function status_style(status::Symbol)
         :cached => :green,
         :skipped => :blue,
     )[status]
+end
+
+function BinaryBuilderToolchains.supported_platforms(toolchain_types::Vector = [CToolchain]; experimental::Bool = false)
+    toolchain_types = Vector{Type}(toolchain_types)
+
+    # Drop host toolchain, we don't care about that.
+    filter!(t -> t != HostToolsToolchain, toolchain_types)
+
+    platform_sets = supported_platforms.(toolchain_types; experimental)
+    return intersect(platform_sets...)
 end

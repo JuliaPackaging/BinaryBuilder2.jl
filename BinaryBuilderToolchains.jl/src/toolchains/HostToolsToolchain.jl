@@ -60,6 +60,7 @@ This toolchain contains a large number of useful host tools, such as
             "unzip_jll",
             "Zstd_jll",
             "XZ_jll",
+            "Zlib_jll"
         ]
 
         deps = AbstractSource[]
@@ -203,4 +204,11 @@ end
 
 function platform(toolchain::HostToolsToolchain)
     return toolchain.platform
+end
+
+function supported_platforms(::Type{HostToolsToolchain}; experimental::Bool = false)
+    return [
+        Platform("x86_64", "linux"),
+        Platform("aarch64", "linux"),
+    ]
 end

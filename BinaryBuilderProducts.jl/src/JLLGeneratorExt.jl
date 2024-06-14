@@ -26,7 +26,7 @@ function JLLExecutableProduct(ep::ExecutableProduct, prefix::String; kwargs...)
     )
 end
 function AbstractJLLProduct(ep::ExecutableProduct, prefix::String; kwargs...)
-    return JLLExecutableProduct(ep, prefix; @extract_kwargs(kwargs, :env)...)
+    return JLLExecutableProduct(ep, prefix; kwargs...)
 end
 
 function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
@@ -36,7 +36,7 @@ function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
     )
 end
 function AbstractJLLProduct(fp::FileProduct, prefix::String; kwargs...)
-    return JLLFileProduct(fp, prefix; @extract_kwargs(kwargs, :env, :verbose)...)
+    return JLLFileProduct(fp, prefix; kwargs...)
 end
 
 function JLLLibraryDep(lp::LibraryProduct, jll::Union{Symbol,Nothing} = nothing)

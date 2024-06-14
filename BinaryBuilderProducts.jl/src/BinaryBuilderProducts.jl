@@ -1,4 +1,5 @@
 module BinaryBuilderProducts
+using Base.BinaryPlatforms
 
 export ExecutableProduct, FileProduct, FrameworkProduct, LibraryProduct, AbstractProduct, locate
 
