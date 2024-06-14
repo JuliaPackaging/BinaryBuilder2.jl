@@ -137,6 +137,7 @@ function extract!(config::ExtractConfig;
     audit_result = nothing
     build_config = config.build.config
     meta = build_config.meta
+    meta.extractions[config] = nothing
 
     if build_cache_enabled(build_config.meta) && !disable_cache
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
@@ -146,7 +147,9 @@ function extract!(config::ExtractConfig;
                 build_hash = content_hash(config.build.config)
                 @info("Extraction cached", config, extract_hash, build_hash)
             end
-            return ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
+            result = ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
+            meta.extractions[config] = result
+            return result
         end
     end
 

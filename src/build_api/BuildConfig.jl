@@ -385,6 +385,8 @@ function build!(config::BuildConfig;
                 disable_cache::Bool = false,
                 debug_modes = config.meta.debug_modes)
     meta = config.meta
+    meta.builds[config] = nothing
+
     # Hit our build cache and see if we've already done this exact build.
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
         prepare(config; verbose=meta.verbose)
@@ -393,7 +395,9 @@ function build!(config::BuildConfig;
             if meta.verbose
                 @info("Build cached", config, build_hash=content_hash(config))
             end
-            return BuildResult_cached(config)
+            result = BuildResult_cached(config)
+            meta.builds[config] = result
+            return result
         end
     end
 
