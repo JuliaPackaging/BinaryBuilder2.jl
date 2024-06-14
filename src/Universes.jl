@@ -144,10 +144,7 @@ struct Universe
             string(registry_url),
         )
         prune!(uni)
-        in_universe(uni) do env
-            Pkg.resolve(;io=devnull)
-            Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)), io=devnull)
-        end
+        dev_bb2_packages(uni)
 
         # If we are not persistent, clean this universe up at the end of our run
         if !persistent
@@ -312,6 +309,43 @@ function prune!(u::Universe)
             end
         end
     end
+end
+
+function update_and_checkout_registries!(u::Universe; kwargs...)
+    return update_and_checkout_registries!(
+        u.registries,
+        u.depot_path;
+        branch_name = u.name === nothing ? nothing : "bb2/$(u.name)",
+        kwargs...,
+    )
+end
+
+function dev_bb2_packages(uni::Universe)
+    in_universe(uni) do env
+        Pkg.resolve(;io=devnull)
+        # Add our version of LazyJLLWrappers, just in case someone wants to
+        # load a JLL that they built locally, and they're depending on some
+        # features that they've added to LazyJLLWrappers.
+        Pkg.develop(;path=joinpath(Base.pkgdir(LazyJLLWrappers)), io=devnull)
+    end
+end
+
+
+"""
+    reset_timeline!(u::Universe)
+
+Reset a universe back to its pristine state.  Removes all previous registrations
+and clears the environment of the dev'ed JLLs.
+"""
+function reset_timeline!(u::Universe)
+    # Reset registry
+    update_and_checkout_registries!(u; force=true)
+
+    # Clear environment
+    rm(joinpath(u.depot_path, "environments", "binarybuilder"); force=true, recursive=true)
+
+    # Re-dev any BB2 packages we need
+    dev_bb2_packages(u)
 end
 
 """
