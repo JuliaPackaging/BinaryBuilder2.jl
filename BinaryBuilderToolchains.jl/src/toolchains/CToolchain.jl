@@ -659,5 +659,7 @@ function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
         Platform("aarch64", "linux"),
         Platform("armv7l", "linux"),
         Platform("ppc64le", "linux"),
+        Platform("x86_64", "windows"),
+        Platform("i686", "windows"),
     ]
 end
