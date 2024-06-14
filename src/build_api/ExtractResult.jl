@@ -18,8 +18,8 @@ struct ExtractResult
     # Treehash that represents the packaged log files for the given config
     log_artifact::SHA1Hash
 
-    # The audit result
-    audit_result::AuditResult
+    # The audit result.  It can be nothing if the build itself failed.
+    audit_result::Union{Nothing,AuditResult}
 
     # Logs generated during this extraction (audit logs, mostly)
     extract_log::String
@@ -29,7 +29,7 @@ struct ExtractResult
                            exception::Union{Nothing,Exception},
                            artifact::Union{Base.SHA1,SHA1Hash},
                            log_artifact::Union{Base.SHA1,SHA1Hash},
-                           audit_result::AuditResult,
+                           audit_result::Union{Nothing,AuditResult},
                            extract_log::String)
         return new(
             config,
