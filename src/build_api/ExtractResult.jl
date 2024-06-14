@@ -65,6 +65,11 @@ function Base.show(io::IO, result::ExtractResult)
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
+Sandbox.SandboxConfig(result::ExtractResult; kwargs...) = SandboxConfig(result.config, artifact_path(result); env=result.config.build.env)
+function runshell(result::ExtractResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
+    run(result.config.build.exe, SandboxConfig(result; verbose), shell)
+end
+
 
 """
     ExtractResultSource(result::ExtractResult)

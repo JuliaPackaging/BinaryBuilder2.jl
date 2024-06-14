@@ -139,6 +139,19 @@ end
     )
     libstring_extract_result = extract!(libstring_extract_config)
     @test libstring_extract_result.status == :success
+
+    # Test that running an extraction that fails to find one of its products
+    # attempts to show us the nice debugging messages:
+    libstring_bad_products = [LibraryProduct("libstring2", :libstring)]
+    libstring_bad_extract_config = ExtractConfig(
+        libstring_build_result,
+        libstring_extract_script,
+        libstring_bad_products,
+    )
+    @test_logs((:error, r"Running again with debugging enabled, then erroring out!"),
+               (:debug, r"Locating LibraryProduct"), match_mode=:any, begin
+        extract!(libstring_bad_extract_config)
+    end)
 end
 
 @testset "native zlib build test" begin

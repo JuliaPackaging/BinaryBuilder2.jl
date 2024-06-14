@@ -130,6 +130,20 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
     end
 end
 
+function count_unlocatable_products(config::ExtractConfig, prefix)
+    num_unlocatable = 0
+    build_config = config.build.config
+    meta = build_config.meta
+    for product in config.products
+        if locate(product, prefix;
+                  env=config.build.env,
+                  platform=host_if_crossplatform(config.platform)) === nothing
+            num_unlocatable += 1
+        end
+    end
+    return num_unlocatable
+end
+
 function extract!(config::ExtractConfig;
                   disable_cache::Bool = false,
                   debug_modes = config.build.config.meta.debug_modes)
@@ -168,27 +182,30 @@ function extract!(config::ExtractConfig;
                 )
                 run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
 
-                # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
+                # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success
+                    num_unlocatable_products = count_unlocatable_products(config, artifact_dir)
+                    if num_unlocatable_products > 0
+                        @error("""
+                        Unable to locate $(num_unlocatable_products) products!
+                        Running again with debugging enabled, then erroring out!
+                        """, platform=config.build.config.platform, run_status)
+
+                        withenv("JULIA_DEBUG" => "all") do
+                            count_unlocatable_products(config, artifact_dir)
+                        end
+
+                        run_status = :errored
+                        run_exception = ArgumentError("Unable to locate all products")
+                    end
+                end
+
+                if run_status == :success
+                    # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
                     audit_result = audit!(config, artifact_dir)
                 end
             end
         end
-    end
-
-    # Run over the extraction result, ensure that all products can be located:
-    unlocatable_products = AbstractProduct[]
-    extract_prefix = artifact_path(meta.universe, artifact_hash)
-    for product in config.products
-        if locate(product, extract_prefix;
-                  env=config.build.env) === nothing
-            push!(unlocatable_products, product)
-        end
-    end
-
-    if !isempty(unlocatable_products) && run_status == :success
-        @error("Unable to locate $(length(unlocatable_products)) products:", unlocatable_products, platform=config.build.config.platform, run_status)
-        error()
     end
 
     # Wait for our output collector to finish, then take the IO output
