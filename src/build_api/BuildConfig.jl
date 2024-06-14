@@ -256,11 +256,13 @@ function prepare(config::BuildConfig; verbose::Bool = false)
             # We install different source trees in different environments.
             @timeit config.to prefix begin
                 mktempdir() do project_dir
-                    # The target and host prefixes get special treatment; we copy the "main" Universe's environment in,
-                    # because we want previous registrations within this universe to take effect.
-                    if prefix == target_prefix(config) || prefix == host_prefix(config)
-                        cp(dirname(environment_path(universe)), project_dir; force=true)
-                    end
+                    # We have some special magic to work here; oftentimes, when we perform
+                    # multiple builds within the same universe, we do so because we want to
+                    # make use of a previous build in a new one.  To effect this, we copy
+                    # our universe's environment in to all of our source trees, so that
+                    # if we build, e.g. `Zlib_jll`, we use that `Zlib_jll` for everything
+                    # in the rest of the build.
+                    cp(dirname(environment_path(universe)), project_dir; force=true)
                     prepare(deps; verbose, project_dir, depot=depot_path(universe))
                 end
             end
