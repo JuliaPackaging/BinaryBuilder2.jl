@@ -1,3 +1,4 @@
+import Pkg
 
 function gcc_bootstrap_build_tarballs(meta, platforms)
     products = []
@@ -19,7 +20,7 @@ function gcc_bootstrap_build_tarballs(meta, platforms)
         else
             tool_name = string(varname)
         end
-        push!(products, ExecutableProduct("\${bindir}/\${target}-$(tool_name)", varname))
+        push!(products, ExecutableProduct("\${bindir}/\${GCC_TARGET}-$(tool_name)", varname))
     end
 
     return build_tarballs(
@@ -63,7 +64,16 @@ function gcc_bootstrap_build_tarballs(meta, platforms)
         ],
         [],
         [
-            JLLSource("CrosstoolNG_jll", host),
+            # This is not fully registered yet
+            JLLSource(
+                "CrosstoolNG_jll",
+                host;
+                uuid=Base.UUID("86569e53-7a4c-551c-9ab0-bc1131c15cd4"),
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/GCCBoostrap-$(triplet(host))",
+                    source="https://github.com/staticfloat/CrosstoolNG_jll.jl"
+                )
+            ),
         ],
         raw"""
         cd ${WORKSPACE}/srcdir/
@@ -101,6 +111,10 @@ function gcc_bootstrap_build_tarballs(meta, platforms)
             done
             mv "${NF}_ipv6/ip6t_HL.h" "${NF}_ipv6/ip6t_HL_.h"
         fi
+
+        # Get GCC's target tuple
+        GCC_TARGET=$(basename $(compgen -G ${bindir}/*-gcc))
+        GCC_TARGET=${GCC_TARGET%*-gcc}
         """,
         platforms,
         products;
@@ -116,6 +130,5 @@ function gcc_bootstrap_build_tarballs(meta, platforms)
         ],
         meta,
         host,
-        version_series=v"9.4",
     )
 end
