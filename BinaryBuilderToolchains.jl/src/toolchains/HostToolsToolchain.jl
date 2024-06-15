@@ -106,7 +106,12 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     sources = AbstractSource[]
 
     push!(sources, GeneratedSource(;target="etc/certs") do out_dir
-        cp(ca_roots_path(), out_dir; force=true, follow_symlinks=true)
+        src = ca_roots_path()
+        if isdir(src)
+            cp(src, out_dir; force=true, follow_symlinks=true)
+        else
+            cp(src, joinpath(out_dir, basename(src)); force=true, follow_symlinks=true)
+        end
     end)
 
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
