@@ -1,9 +1,14 @@
 steps:
   - label: ":rocket: Launch test jobs"
     command: |
-      export ARCH JULIA_VERSION
+      export ARCH JULIA_VERSION SOFT_FAIL
       for ARCH in x86_64 aarch64; do
         for JULIA_VERSION in nightly 1 1.10; do
+          if [[ "\${JULIA_VERSION}" == "nightly" ]]; then
+            SOFT_FAIL="true"
+          else
+            SOFT_FAIL="false"
+          fi
           buildkite-agent pipeline upload .buildkite/run_bb_tests.yml
         done
       done

@@ -14,3 +14,4 @@ steps:
       os: "linux"
       sandbox_capable: "true"
       arch: "${ARCH?}"
+    soft_fail: "${SOFT_FAIL}"
