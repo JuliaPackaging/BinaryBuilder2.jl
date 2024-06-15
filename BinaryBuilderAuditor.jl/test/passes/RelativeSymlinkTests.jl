@@ -21,7 +21,7 @@ using BinaryBuilderAuditor: absolute_to_relative_symlinks!
 
             @test readlink(joinpath(dest_dir, "in_prefix_symlink")) == "target"
             @test readlink(joinpath(dest_dir, "relative_symlink")) == "target"
-            @test readlink(joinpath(dest_dir, "out_of_prefix_symlink")) == "/tmp"
+            @test readlink(joinpath(dest_dir, "out_of_prefix_symlink")) == tempdir()
         end
     end
 end

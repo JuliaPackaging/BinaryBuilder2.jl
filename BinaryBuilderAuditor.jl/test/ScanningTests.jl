@@ -15,8 +15,9 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms,
     @test isfile(scan.files["bin/xz"])
     @test "include/lzma.h" ∈ keys(scan.files)
     @test isfile(scan.files["include/lzma.h"])
-    @test "lib/liblzma.so" ∈ keys(scan.files)
-    @test islink(scan.files["lib/liblzma.so"])
+    liblzma_relpath = "lib/liblzma$(dlext(HostPlatform()))"
+    @test liblzma_relpath ∈ keys(scan.files)
+    @test islink(scan.files[liblzma_relpath])
 
     # Ensure we have `bin/xz` as a binary object.
     # We skip symlinks here to avoid processing the same
@@ -34,9 +35,9 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms,
     @test islibrary(scan.binary_objects[only(liblzma_objects)])
 
     # Test that our symlink resolver knows about `lib/liblzma.so -> lib/liblzma.so.X`
-    @test haskey(scan.binary_objects, relpath(scan, "lib/liblzma.so"))
+    @test haskey(scan.binary_objects, relpath(scan, liblzma_relpath))
 
     # Test soname_forwards knows about the symlink as well
-    liblzma_soname = scan.soname_forwards["liblzma.so"]
+    liblzma_soname = scan.soname_forwards[basename(liblzma_relpath)]
     @test haskey(scan.binary_objects, scan.soname_locator[liblzma_soname])
 end
