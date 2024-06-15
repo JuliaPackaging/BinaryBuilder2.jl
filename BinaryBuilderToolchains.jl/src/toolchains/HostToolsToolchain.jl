@@ -60,7 +60,11 @@ This toolchain contains a large number of useful host tools, such as
             "unzip_jll",
             "Zstd_jll",
             "XZ_jll",
-            "Zlib_jll"
+            "Zlib_jll",
+
+            # Misc. tools
+            "strace_jll",
+            "libtree_jll",
         ]
 
         deps = AbstractSource[]
