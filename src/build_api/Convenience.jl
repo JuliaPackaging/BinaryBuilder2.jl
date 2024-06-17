@@ -60,19 +60,18 @@ end
 
 
 
-@warn("TODO: Write build_tarballs() adapter to split HostBuildDependencies, accept ARGS, and whatnot")
 function build_tarballs(src_name::String,
                         src_version::VersionNumber,
                         sources::Vector,
                         target_dependencies::Vector,
                         host_dependencies::Vector,
                         script::String,
-                        platforms::Vector,
                         products::Vector;
-                        julia_compat::String = "1.6",
                         meta::AbstractBuildMeta = BuildMeta(;parse_build_tarballs_args(ARGS)...),
+                        platforms::Vector = supported_platforms(),
                         host::AbstractPlatform = default_host(),
                         extract_script::String = "extract \${prefix}/*",
+                        ignore_meta_target_list::Bool = false,
                         kwargs...)
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
@@ -80,6 +79,15 @@ function build_tarballs(src_name::String,
     host_dependencies = Vector{ConvenienceSource}(host_dependencies)
     platforms = Vector{AbstractPlatform}(platforms)
     products = Vector{AbstractProduct}(products)
+
+    # By default, we always take the `meta.target_list` as the most
+    # important, as the user should be able to override the platform list
+    # if one is specified on the command-line.
+    if !ignore_meta_target_list
+        if !isempty(meta.target_list)
+            platforms = meta.target_list
+        end
+    end
 
     # First, build for all platforms
     extract_results = ExtractResult[]
@@ -133,7 +141,7 @@ function build_tarballs(src_name::String,
     # Take those extractions, and group them together as a single package
     package_config = PackageConfig(
         extract_results;
-        @extract_kwargs(kwargs, :jll_name, :version_series)...,
+        @extract_kwargs(kwargs, :jll_name, :version_series, :julia_compat)...,
     )
     package_result = package!(package_config)
     if package_result.status != :success
@@ -141,4 +149,25 @@ function build_tarballs(src_name::String,
     end
     save_cache(meta.build_cache)
     return package_result
+end
+
+# For those that like to use keyword arguments to name everything
+function build_tarballs(;src_name::String,
+                         src_version::VersionNumber,
+                         sources::Vector,
+                         script::String,
+                         products::Vector,
+                         target_dependencies::Vector = [],
+                         host_dependencies::Vector = [],
+                         kwargs...)
+    return build_tarballs(
+        src_name,
+        src_version,
+        sources,
+        target_dependencies,
+        host_dependencies,
+        script,
+        products;
+        kwargs...
+    )
 end

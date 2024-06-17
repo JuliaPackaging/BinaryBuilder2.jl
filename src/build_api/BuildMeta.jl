@@ -30,11 +30,17 @@ const BUILD_HELP = (
                               - `extract-start` -- just before the extraction script.
                               - `extract-error` -- just after a failed extraction script.
                               - `extract-stop`  -- just after an extraction script.
+
+                            Additionally, the following shorthands are available:
+                              - `start` -- equivalent to `build-start,extract-start`
+                              - `error` -- equivalent to `build-error,extract-error`
+                              - `stop`  -- equivalent to `build-stop,extract-stop`
+
                             In all cases, exiting the shell will continue the build, but
                             in the case of an error, the build will then immediately end.
                             If `*-stop` is already specified, specifying `*-debug` has no
                             effect, as the debug shell will already be launched.
-                            The default `<mode>` value is `build-error,extract-error`.
+                            The default `<mode>` value is `error`.
 
         --universe=<name>   Register JLL wrapper code in the named universe.  Defaults
                             to creating a new arbitrarily-named universe.  Naming a
@@ -134,10 +140,25 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     # --verbose; simple boolean
     parsed_kwargs[:verbose] = check_flag!(ARGS, "--verbose")
 
-    # This sets whether we drop into a debug shell on failure or not
-    debug, debug_mode = extract_flag!(ARGS, "--debug", "build-error,extract-error")
+    # This sets whether we drop into a debug shell at various points in the build
+    debug, debug_mode = extract_flag!(ARGS, "--debug", "error")
     if debug
-        parsed_kwargs[:debug] = Set(split(debug_mode, ","))
+        debug_modes = Set(split(debug_mode, ","))
+        # Map some shorthands to their expanded forms
+        shorthands = Dict(
+            "start" => ["build-start", "extract-start"],
+            "error" => ["build-error", "extract-error"],
+            "stop" => ["build-stop", "extract-stop"],
+        )
+        for (shorthand, equivalences) in shorthands
+            if shorthand ∈ debug_modes
+                delete!(debug_modes, shorthand)
+                for equivalence in equivalences
+                    push!(debug_modes, equivalence)
+                end
+            end
+        end
+        parsed_kwargs[:debug_modes] = debug_modes
     end
 
     # Are we skipping building and just outputting JSON?
@@ -240,8 +261,8 @@ struct BuildMeta <: AbstractBuildMeta
     packages::Dict{PackageConfig,Union{Nothing,PackageResult}}
 
     ## Options that get toggled by the user through `ARGS`; see `BUILD_HELP`
-    # `target_list` overrides a build recipe's built-in target specification.
-    # An empty list does no overriding.
+    # `target_list` provides a default set of platforms to build for,
+    # it defaults to `supported_platforms()`.
     target_list::Vector{Platform}
     verbose::Bool
     debug_modes::Set{String}

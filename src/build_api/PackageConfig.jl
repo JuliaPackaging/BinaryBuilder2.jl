@@ -15,9 +15,13 @@ struct PackageConfig
     # a debug variant, etc...
     named_extractions::Dict{String,Vector{ExtractResult}}
 
+    # Julia compat specification for this JLL
+    julia_compat::String
+
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
                            jll_name::AbstractString = default_jll_name(extractions),
-                           version_series::VersionNumber = default_jll_version_series(extractions))
+                           version_series::VersionNumber = default_jll_version_series(extractions),
+                           julia_compat::AbstractString = "1.6")
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
         end
@@ -36,7 +40,7 @@ struct PackageConfig
         meta = AbstractBuildMeta(extractions)
         version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
 
-        return new(jll_name, version, extractions)
+        return new(jll_name, version, extractions, string(julia_compat))
     end
 end
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
@@ -168,7 +172,7 @@ function package!(config::PackageConfig)
         name = config.name,
         version = config.version,
         builds,
-        julia_compat = "1.7",
+        julia_compat = config.julia_compat,
     )
 
     # Register this JLL out into our universe
