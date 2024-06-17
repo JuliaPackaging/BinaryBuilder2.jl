@@ -1,7 +1,10 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
 version = "2.0.0"
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
+
+[workspace]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -52,6 +55,3 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Accessors", "Test"]
-
-[workspace]
-projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
