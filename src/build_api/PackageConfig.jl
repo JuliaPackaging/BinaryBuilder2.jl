@@ -46,7 +46,7 @@ end
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
 PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
 AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
-AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = first(first(values(named_extractions))).config.build.config.meta
+AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = AbstractBuildMeta(first(first(values(named_extractions))))
 
 # We allow overriding the name, but default to `build_config.src_name`.
 default_jll_name(result::ExtractResult) = result.config.build.config.src_name
@@ -165,6 +165,19 @@ end
 
 function package!(config::PackageConfig)
     meta = AbstractBuildMeta(config)
+    meta.packagings[config] = nothing
+
+    if :package ∈ meta.dry_run
+        result = PackageResult_skipped(config)
+        meta.packagings[config] = result
+        return result
+    end
+    for (_, extractions) in config.named_extractions
+        for extraction in extractions
+            @assert extraction.status != :skipped
+        end
+    end
+
     builds = vcat(
         ([JLLBuildInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
     )
@@ -178,8 +191,10 @@ function package!(config::PackageConfig)
     # Register this JLL out into our universe
     register_jll!(meta.universe, jll)
 
-    return PackageResult(
+    result = PackageResult(
         config,
         :success,
     )
+    meta.packagings[config] = result
+    return result
 end

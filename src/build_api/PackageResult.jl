@@ -15,6 +15,14 @@ struct PackageResult
         )
     end
 end
+AbstractBuildMeta(result::PackageResult) = AbstractBuildMeta(result.config)
+
+function PackageResult_skipped(config::PackageConfig)
+    return PackageResult(
+        config,
+        :skipped,
+    )
+end
 
 function Base.show(io::IO, result::PackageResult)
     color = status_style(result.status)

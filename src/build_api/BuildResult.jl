@@ -55,6 +55,7 @@ mutable struct BuildResult
         return obj
     end
 end
+AbstractBuildMeta(result::BuildResult) = AbstractBuildMeta(result.config)
 
 function Sandbox.cleanup(result::BuildResult)
     if result.exe !== nothing
@@ -76,6 +77,19 @@ function BuildResult_cached(config::BuildConfig)
         String(read(build_log)),
         log_artifact_hash,
         env,
+    )
+end
+
+function BuildResult_skipped(config::BuildConfig)
+    return BuildResult(
+        config,
+        :skipped,
+        nothing,
+        nothing,
+        Dict{String,MountInfo}(),
+        "",
+        SHA1Hash(sha1("")),
+        Dict{String,String}(),
     )
 end
 
@@ -132,7 +146,7 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
 end
 
 function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})
-    return parse_env_block(String(read(exe, config, mounts, "/workspace/metadir/env")))
+    return parse_env_block(String(read(exe, config, mounts, "$(metadir_prefix(config))/env")))
 end
 
 function parse_env_block(env_string::AbstractString)
@@ -150,5 +164,3 @@ end
 function serialize_env_block(env::Dict{String,String})
     return join((string(key, "=", env[key]) for key in sort(collect(keys(env)))), "\n")
 end
-
-# TODO: construct helper to reconstruct BuildResult objects from S3-saved tarballs

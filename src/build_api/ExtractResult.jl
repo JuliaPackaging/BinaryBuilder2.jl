@@ -13,10 +13,10 @@ struct ExtractResult
 
     # Treehash that represents the packaged output for the given config
     # On a failed/skipped build, this may be the special all-zero artifact hash.
-    artifact::SHA1Hash
+    artifact::Union{Nothing,SHA1Hash}
 
     # Treehash that represents the packaged log files for the given config
-    log_artifact::SHA1Hash
+    log_artifact::Union{Nothing,SHA1Hash}
 
     # The audit result.  It can be nothing if the build itself failed.
     audit_result::Union{Nothing,AuditResult}
@@ -27,21 +27,22 @@ struct ExtractResult
     function ExtractResult(config::ExtractConfig,
                            status::Symbol,
                            exception::Union{Nothing,Exception},
-                           artifact::Union{Base.SHA1,SHA1Hash},
-                           log_artifact::Union{Base.SHA1,SHA1Hash},
+                           artifact::Union{Base.SHA1,SHA1Hash,Nothing},
+                           log_artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            audit_result::Union{Nothing,AuditResult},
                            extract_log::String)
         return new(
             config,
             status,
             exception,
-            SHA1Hash(artifact),
-            SHA1Hash(log_artifact),
+            artifact !== nothing ? SHA1Hash(artifact) : nothing,
+            log_artifact !== nothing ? SHA1Hash(log_artifact) : nothing,
             audit_result,
             extract_log,
         )
     end
 end
+AbstractBuildMeta(result::ExtractResult) = AbstractBuildMeta(result.config)
 
 function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash})
     build_config = config.build.config
@@ -55,6 +56,18 @@ function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,S
         log_artifact,
         audit_result,
         String(read(extract_log)),
+    )
+end
+
+function ExtractResult_skipped(config::ExtractConfig)
+    return ExtractResult(
+        config,
+        :skipped,
+        nothing,
+        nothing,
+        nothing,
+        nothing,
+        "",
     )
 end
 

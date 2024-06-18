@@ -38,6 +38,7 @@ struct BuildConfig
     # `/workspace/srcdir` for sources, `/workspace/destdir/$(triplet)` for dependencies, etc...)
     source_trees::Dict{String,Vector{<:AbstractSource}}
     env::Dict{String,String}
+    toolchains::Vector{<:AbstractToolchain}
 
     # Flags that influence the build environment and the generated compiler wrappers
     allow_unsafe_flags::Bool
@@ -46,7 +47,8 @@ struct BuildConfig
     # Bash script that will perform the actual build itself
     script::String
 
-    # The cross-platform we're using for this build
+    # The cross-platform we're using for this build, the `host` is the host of the
+    # actual sandbox itself, the `target` is the toolchains we're embedding.
     platform::CrossPlatform
 
     # We're going to store all sorts of timing information about our build in here
@@ -89,26 +91,27 @@ struct BuildConfig
         source_trees = Dict{String,Vector{AbstractSource}}(
             # Target dependencies
             target_prefix(cross_platform) => target_dependencies,
-            host_prefix(cross_platform) => [
-                # Host dependencies (not including toolchains, those go in `/opt/host`)
-                host_dependencies...;
-                # Also, our `BB` resources
-                DirectorySource(joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"); target="share/bb")
-            ],
+            # Host dependencies (not including toolchains, those go in `/opt/host`)
+            host_prefix(cross_platform) => host_dependencies,
             # The actual sources we're gonna build
-            "/workspace/srcdir" => sources,
+            source_prefix(cross_platform) => sources,
+
+            # BB shell scripts
+            scripts_prefix(cross_platform) => [DirectorySource(
+                joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts")
+            )],
 
             # Metadata such as our build script
-            "/workspace/metadir" => [GeneratedSource() do out_dir
+            metadir_prefix(cross_platform) => [GeneratedSource() do out_dir
                 # Generate a `.bashrc` that contains all sorts of `source` statements and whatnot
                 bashrc_path = joinpath(out_dir, ".bashrc")
                 open(bashrc_path; write=true) do io
                     println(io, "#!/bin/bash")
-                    println(io, "export PATH=\${PATH}:/usr/local/share/bb/bin")
-                    println(io, "source /usr/local/share/bb/shell_customization")
+                    println(io, "export PATH=\${PATH}:$(scripts_prefix(cross_platform))/bin")
+                    println(io, "source $(scripts_prefix(cross_platform))/shell_customization")
 
                     # Always keep this one last, since it starts saving bash history from that point on.
-                    println(io, "source /usr/local/share/bb/save_env_hook")
+                    println(io, "source $(scripts_prefix(cross_platform))/save_env_hook")
                 end
                 chmod(bashrc_path, 0o755)
 
@@ -116,7 +119,7 @@ struct BuildConfig
                 open(script_path, write=true) do io
                     println(io, "#!/bin/bash")
                     println(io, "set -euo pipefail")
-                    println(io, "source /workspace/metadir/.bashrc")
+                    println(io, "source $(metadir_prefix(cross_platform))/.bashrc")
 
                     # Save history on every DEBUG invocation
                     println(io, "trap save_history DEBUG")
@@ -157,8 +160,8 @@ struct BuildConfig
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
             "WORKSPACE" => "/workspace",
-            "HISTFILE" => "/workspace/metadir/.bash_history",
-            "HOME" => "/workspace/metadir",
+            "HISTFILE" => "$(metadir_prefix(cross_platform))/.bash_history",
+            "HOME" => metadir_prefix(cross_platform),
 
             # Platform-targeting niceties
             "target" => "$(gcc_target_triplet(cross_platform.target))",
@@ -193,6 +196,7 @@ struct BuildConfig
             [d.package for d in target_dependencies if isa(d, JLLSource)],
             source_trees,
             env,
+            toolchains,
             allow_unsafe_flags,
             lock_microarchitecture,
             string(script),
@@ -202,6 +206,7 @@ struct BuildConfig
         )
     end
 end
+AbstractBuildMeta(config::BuildConfig) = config.meta
 
 function Base.show(io::IO, config::BuildConfig)
     print(io, "BuildConfig($(config.src_name), $(config.src_version), $(config.platform))")
@@ -244,8 +249,14 @@ end
 
 target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
 host_prefix(cross_platform::CrossPlatform) = "/usr/local" #string("/workspace/destdir/", triplet(cross_platform.host))
+source_prefix(cross_platform::CrossPlatform) = "/workspace/srcdir"
+scripts_prefix(cross_platform::CrossPlatform) = "/workspace/scripts"
+metadir_prefix(cross_platform::CrossPlatform) = "/workspace/metadir"
 target_prefix(config::BuildConfig) = target_prefix(config.platform)
 host_prefix(config::BuildConfig) = host_prefix(config.platform)
+source_prefix(config::BuildConfig) = source_prefix(config.platform)
+scripts_prefix(config::BuildConfig) = scripts_prefix(config.platform)
+metadir_prefix(config::BuildConfig) = metadir_prefix(config.platform)
 
 # Helper function to better control when we download all our deps
 # Ideally, this would be paralellized somehow.
@@ -383,16 +394,27 @@ function build!(config::BuildConfig;
                 deploy_root::String = mktempdir(builds_dir()),
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
                 disable_cache::Bool = false,
-                debug_modes = config.meta.debug_modes)
-    meta = config.meta
+                debug_modes = AbstractBuildMeta(config).debug_modes,
+                verbose::Bool = AbstractBuildMeta(config).verbose)
+    meta = AbstractBuildMeta(config)
     meta.builds[config] = nothing
+
+    # If we're asking for a dry run, skip out
+    if :build ∈ meta.dry_run
+        if verbose
+            @info("Dry-run build", config)
+        end
+        result = BuildResult_skipped(config)
+        meta.builds[config] = result
+        return result
+    end
 
     # Hit our build cache and see if we've already done this exact build.
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
-        prepare(config; verbose=meta.verbose)
+        prepare(config; verbose)
         build_hash = content_hash(config)
         if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
-            if meta.verbose
+            if verbose
                 @info("Build cached", config, build_hash=content_hash(config))
             end
             result = BuildResult_cached(config)
@@ -403,20 +425,20 @@ function build!(config::BuildConfig;
 
     # Write build script out into a logfile
     build_log_io = IOBuffer()
-    mounts = deploy(config; verbose=meta.verbose, deploy_root)
+    mounts = deploy(config; verbose, deploy_root)
     sandbox_config, collector = sandbox_and_collector(
         build_log_io, config, mounts;
-        verbose=meta.verbose,
+        verbose,
     )
     local run_status, run_exception
     exe = Sandbox.preferred_executor()()
     if "build-start" ∈ debug_modes
         @warn("Launching debug shell")
-        runshell(config; verbose=meta.verbose)
+        runshell(config; verbose)
     end
 
     @timeit config.to "build" begin
-        run_status, run_exception = run_trycatch(exe, sandbox_config, `/workspace/metadir/build_script.sh`)
+        run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix(config))/build_script.sh`)
     end
     wait(collector)
     build_log = String(take!(build_log_io))
@@ -452,7 +474,7 @@ function build!(config::BuildConfig;
 
     if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
         @warn("Launching debug shell")
-        runshell(result; verbose=meta.verbose)
+        runshell(result; verbose)
     end
     return result
 end

@@ -36,9 +36,11 @@ struct ExtractConfig
         )
     end
 end
+AbstractBuildMeta(config::ExtractConfig) = AbstractBuildMeta(config.build)
+BuildConfig(config::ExtractConfig) = config.build.config
 
 function Base.show(io::IO, config::ExtractConfig)
-    build_config = config.build.config
+    build_config = BuildConfig(config)
     print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(build_config.platform))")
 end
 
@@ -84,21 +86,21 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     # extraction script.  We copy here so that bash history and whatnot is preserved,
     # but unique for this extraction config.
     rm(metadir)
-    cp(mounts["/workspace/metadir"].host_path, metadir)
+    cp(mounts[metadir_prefix(config.build.config)].host_path, metadir)
 
     extract_script_path = joinpath(metadir, "extract_script.sh")
     open(extract_script_path, write=true) do io
         println(io, "#!/bin/bash")
         println(io, "set -euo pipefail")
-        println(io, "source /usr/local/share/bb/save_env_hook")
-        println(io, "source /usr/local/share/bb/extraction_utils")
+        println(io, "source $(scripts_prefix(config.build.config))/save_env_hook")
+        println(io, "source $(scripts_prefix(config.build.config))/extraction_utils")
         println(io, config.script)
         println(io, "auto_install_license")
         println(io, "exit 0")
     end
     chmod(extract_script_path, 0o755)
 
-    mounts["/workspace/metadir"] = MountInfo(metadir, MountType.Overlayed)
+    mounts[metadir_prefix(config.build.config)] = MountInfo(metadir, MountType.Overlayed)
 
     # Insert our extraction dir, which is a ReadWrite mount,
     # allowing us to pull the result back out from the overlay nest.
@@ -111,9 +113,9 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
-function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; kwargs...)
+function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; verbose::Bool = AbstractBuildMeta(config).verbose, kwargs...)
     build_config = config.build.config
-    meta = build_config.meta
+    meta = AbstractBuildMeta(config)
     @timeit config.to "audit" begin
         prefix_alias = target_prefix(build_config.platform)
         # Load JLLInfo structures for each dependency
@@ -124,7 +126,6 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
             dep_jll_infos;
             prefix_alias,
             env = build_config.env,
-            verbose = meta.verbose,
             kwargs...
         )
     end
@@ -132,8 +133,6 @@ end
 
 function count_unlocatable_products(config::ExtractConfig, prefix)
     num_unlocatable = 0
-    build_config = config.build.config
-    meta = build_config.meta
     for product in config.products
         if locate(product, prefix;
                   env=config.build.env,
@@ -146,17 +145,30 @@ end
 
 function extract!(config::ExtractConfig;
                   disable_cache::Bool = false,
-                  debug_modes = config.build.config.meta.debug_modes)
+                  debug_modes = config.build.config.meta.debug_modes,
+                  verbose::Bool = AbstractBuildMeta(config).verbose)
     local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
-    build_config = config.build.config
-    meta = build_config.meta
+    build_config = BuildConfig(config)
+    meta = AbstractBuildMeta(config)
     meta.extractions[config] = nothing
 
-    if build_cache_enabled(build_config.meta) && !disable_cache
+    # If we're asking for a dry run, skip out
+    if :extract ∈ meta.dry_run
+        if verbose
+            @info("Dry-run extraction", config)
+        end
+        result = ExtractResult_skipped(config)
+        meta.extractions[config] = result
+        return result
+    end
+    @assert config.build.status != :skipped
+
+    # Hit our build cache and see if we've already done this exact extraction.
+    if build_cache_enabled(meta) && !disable_cache
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
         if artifact_hash !== nothing
-            if meta.verbose
+            if verbose
                 extract_hash = content_hash(config)
                 build_hash = content_hash(config.build.config)
                 @info("Extraction cached", config, extract_hash, build_hash)
@@ -169,18 +181,15 @@ function extract!(config::ExtractConfig;
 
     if "extract-start" ∈ debug_modes
         @warn("Launching debug shell")
-        runshell(config; verbose=meta.verbose)
+        runshell(config; verbose)
     end
 
     extract_log_io = IOBuffer()
     @timeit config.to "extract" begin
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
-                sandbox_config, collector = sandbox_and_collector(
-                    extract_log_io, config, artifact_dir;
-                    verbose=meta.verbose,
-                )
-                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `/workspace/metadir/extract_script.sh`)
+                sandbox_config, collector = sandbox_and_collector(extract_log_io, config, artifact_dir; verbose)
+                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix(build_config))/extract_script.sh`)
 
                 # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success

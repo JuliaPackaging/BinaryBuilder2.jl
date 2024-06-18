@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2
+using Test, BinaryBuilder2, Random
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include("TestingUtils.jl")
@@ -75,7 +75,7 @@ end
         """,
         native_linux,
     )
-    libstring_build_result = build!(libstring_build_config);
+    libstring_build_result = build!(libstring_build_config)
     @test libstring_build_result.status == :success
 
     # Extract it:
@@ -239,26 +239,53 @@ end
 end
 
 @testset "build_tarballs()" begin
-    include("build_recipes/Zlib.jl")
-    include("build_recipes/Readline.jl")
-    include("build_recipes/Ncurses.jl")
-    meta = BuildMeta(; verbose=false)
+    # Create a meta with a universe that we will then inspect as other
+    # builds register things into it.
+    universe_name = "BB2_tests-$(randstring(4))"
+    bootstrap_dir = joinpath(dirname(@__DIR__), "bootstrap")
+    build_ARGS = ["--universe=$(universe_name)"]
+
     @testset "Zlib" begin
-        package_result = zlib_build_tarballs(meta, [native_linux])
+        # Test a `--dry-run` first!
+        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"); ARGS=[build_ARGS..., "--dry-run"])
+        meta = BinaryBuilder2.AbstractBuildMeta(packagings)
+        @test only(values(meta.builds)).status == :skipped
+        @test only(values(meta.extractions)).status == :skipped
+        @test only(values(meta.packagings)).status == :skipped
+        @test only(keys(meta.builds)).src_name == "Zlib"
+
+        # Test that we can take that dry run output and get everything we need for a `build_tarballs()` invocation
+        build_args = extract_build_tarballs(packagings)
+        package_result = build_tarballs(;build_args...)
         @test package_result.status == :success
+
+        # Next, test some failing builds
+        fail_build_args = copy(build_args)
+        fail_build_args[:script] = "false"
+        @test_throws BuildError build_tarballs(;fail_build_args...)
+        fail_extract_args = copy(build_args)
+        fail_extract_args[:extract_script] = "false"
+        @test_throws BuildError build_tarballs(;fail_extract_args...)
     end
     @testset "Ncurses" begin
-        package_result = ncurses_build_tarballs(meta, [native_linux])
+        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Ncurses", "build_tarballs.jl"); ARGS=build_ARGS)
+        package_result = only(values(packagings))
         @test package_result.status == :success
     end
     @testset "Readline" begin
-        package_result = readline_build_tarballs(meta, [native_linux])
+        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Readline", "build_tarballs.jl"); ARGS=build_ARGS)
+        package_result = only(values(packagings))
         @test package_result.status == :success
     end
 
-    @testset "Failing build" begin
-        @test_throws BuildError readline_build_tarballs(meta, [native_linux]; fail_build=true)
-        @test_throws BuildError readline_build_tarballs(meta, [native_linux]; fail_extract=true)
+    # Test that we can see these builds in our universe:
+    uni = Universe(universe_name; persistent=false)
+    in_universe(uni) do env
+        ctx = Pkg.Types.Context()
+        jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
+        jll_pkg_entries = collect(values(filter(((uuid, pkg_entry),) -> pkg_entry.name ∈ jll_names, ctx.env.manifest.deps)))
+        @test length(jll_pkg_entries) == 3
+        @test all(startswith(entry.path, uni.depot_path) for entry in jll_pkg_entries)
     end
 end
 

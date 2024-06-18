@@ -258,7 +258,7 @@ struct BuildMeta <: AbstractBuildMeta
 
     # Contains a list of JLL packages; when you run `package!()` with arguments, it
     # records the pieces that were generated here.
-    packages::Dict{PackageConfig,Union{Nothing,PackageResult}}
+    packagings::Dict{PackageConfig,Union{Nothing,PackageResult}}
 
     ## Options that get toggled by the user through `ARGS`; see `BUILD_HELP`
     # `target_list` provides a default set of platforms to build for,
@@ -330,6 +330,7 @@ struct BuildMeta <: AbstractBuildMeta
         )
     end
 end
+AbstractBuildMeta(meta::BuildMeta) = meta
 
 function build_cache_enabled(meta::BuildMeta)
     # If the user has specifically requested we not use the cache, return `false`
