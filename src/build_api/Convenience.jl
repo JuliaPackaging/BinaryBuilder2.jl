@@ -77,6 +77,17 @@ function with_default_meta(f::Function, meta::AbstractBuildMeta)
     end
 end
 
+function throw_BuildError(message, result)
+    # If we're being run in an interactive context, and there's no `meta` in `Main`,
+    # save the `meta` of this result out to `Main` as well, as sometimes getting the
+    # `result` from the exception can be tricky.
+    if isinteractive() && !isdefined(Main, :meta)
+        @warn("build_tarballs() errored out; `meta` exported for use in the REPL")
+        Main.meta = AbstractBuildMeta(result)
+    end
+    throw(BuildError(message, result))
+end
+
 
 function build_tarballs(src_name::String,
                         src_version::Union{String,VersionNumber},
@@ -132,13 +143,13 @@ function build_tarballs(src_name::String,
         )
         if build_result.status != :success
             if build_result.status == :failed
-                throw(BuildError("Build script failed", build_result))
+                throw_BuildError("Build script failed", build_result)
             elseif build_result.status == :errored
-                throw(BuildError("Unknown error", build_result))
+                throw_BuildError("Unknown error", build_result)
             elseif build_result.status == :skipped
                 # do nothing, it's just a skipped build
             else
-                throw(BuildError("Unexpected BuildResult status", build_result))
+                throw_BuildError("Unexpected BuildResult status", build_result)
             end
         end
         extract_config = ExtractConfig(
@@ -154,13 +165,13 @@ function build_tarballs(src_name::String,
         )
         if extract_result.status != :success
             if extract_result.status == :failed
-                throw(BuildError("Extract script failed", extract_result))
+                throw_BuildError("Extract script failed", extract_result)
             elseif extract_result.status == :errored
-                throw(BuildError("Unknown error", extract_result))
+                throw_BuildError("Unknown error", extract_result)
             elseif extract_result.status == :skipped
                 # do nothing
             else
-                throw(BuildError("Unexpected ExtractResult status", extract_result))
+                throw_BuildError("Unexpected ExtractResult status", extract_result)
             end
         end
         push!(extract_results, extract_result)
@@ -175,7 +186,7 @@ function build_tarballs(src_name::String,
     )
     package_result = package!(package_config)
     if package_result.status ∉ (:success, :skipped)
-        throw(BuildError("Unknown error", package_result))
+        throw_BuildError("Unknown error", package_result)
     end
     save_cache(meta.build_cache)
     return package_result

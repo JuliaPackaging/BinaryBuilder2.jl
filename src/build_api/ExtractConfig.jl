@@ -125,7 +125,8 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
             LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
             dep_jll_infos;
             prefix_alias,
-            env = build_config.env,
+            env = config.build.env,
+            platform = host_if_crossplatform(config.platform),
             kwargs...
         )
     end
@@ -211,7 +212,14 @@ function extract!(config::ExtractConfig;
 
                 if run_status == :success
                     # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
-                    audit_result = audit!(config, artifact_dir)
+                    try
+                        audit_result = audit!(config, artifact_dir)
+                    catch exception
+                        display(exception)
+                        @warn("Audit failed", exception)
+                        run_status = :errored
+                        run_exception = exception
+                    end
                 end
             end
         end
@@ -244,7 +252,7 @@ function extract!(config::ExtractConfig;
     end
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
-        @warn("Launching debug shell")
+        @warn("Launching debug shell", run_status)
         runshell(result)
     end
     return result
