@@ -126,7 +126,7 @@ function prepare(fas::FileArchiveSource; verbose::Bool = false)
 
         # Ensure the directory that should hold this source exists, otherwise `download()` fails
         mkpath(dirname(download_target))
-        Downloads.download(fas.url, download_target; verbose)
+        Downloads.download(fas.url, download_target)
 
         # If we still don't verify properly, throw an error
         if !verify(fas, download_cache)
