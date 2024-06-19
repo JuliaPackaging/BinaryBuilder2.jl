@@ -90,6 +90,8 @@ function build_tarballs(src_name::String,
                         host::AbstractPlatform = default_host(),
                         extract_script::String = "extract \${prefix}/*",
                         ignore_meta_target_list::Bool = false,
+                        toolchain_builder::Function = default_toolchains,
+                        toolchain_kwargs::Dict{Symbol,<:Any} = Dict{Symbol,Any}(),
                         kwargs...)
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
@@ -119,7 +121,9 @@ function build_tarballs(src_name::String,
             apply_platform.(host_dependencies, (host,)),
             script,
             target_if_crossplatform(platform);
-            @extract_kwargs(kwargs, :host, :toolchains, :allow_unsafe_flags, :lock_microarchitecture)...,
+            host,
+            toolchains = toolchain_builder(CrossPlatform(host, target_if_crossplatform(platform)); toolchain_kwargs...),
+            @extract_kwargs(kwargs, :allow_unsafe_flags, :lock_microarchitecture)...,
         )
         build_result = build!(
             build_config;

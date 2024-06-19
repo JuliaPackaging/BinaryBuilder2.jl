@@ -6,7 +6,7 @@ export supported_platforms
 # This just makes qemu-user-static's job easier.
 default_host() = Platform(arch(HostPlatform()), "linux")
 
-function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[]; host_only::Bool = false)
+function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:AbstractSource} = AbstractSource[]; host_only::Bool = false, bootstrap::Bool = false)
     toolchains = AbstractToolchain[]
 
     function extra_flags(platform, prefix)
@@ -27,6 +27,7 @@ function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:Abstrac
     if !host_only
         push!(toolchains, CToolchain(
             platform;
+            vendor = bootstrap ? :bootstrap : :auto,
             default_ctoolchain = true,
             extra_flags(platform.target, "/workspace/destdir/$(triplet(platform.target))")...,
         ))
@@ -36,6 +37,7 @@ function default_toolchains(platform::CrossPlatform, host_deps::Vector{<:Abstrac
     # different wrappers with different default flags.
     push!(toolchains, CToolchain(
         CrossPlatform(platform.host, platform.host);
+        vendor = bootstrap ? :bootstrap : :auto,
         host_ctoolchain = true,
         default_ctoolchain = host_only,
         extra_flags(platform.host, "/usr/local")...,
