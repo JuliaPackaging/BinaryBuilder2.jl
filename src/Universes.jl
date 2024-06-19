@@ -339,6 +339,34 @@ function dev_bb2_packages(uni::Universe)
 end
 
 
+function contains_jll(u::Universe, name::String)
+    if !endswith(name, "_jll")
+        name = "$(name)_jll"
+    end
+    in_universe(u) do env
+        ctx = Pkg.Types.Context()
+        pkg_entries = collect(values(filter(((uuid, pkg_entry),) -> pkg_entry.name == name, ctx.env.manifest.deps)))
+        if isempty(pkg_entries)
+            return false
+        end
+        pkg_entry = only(pkg_entries)
+        return startswith(pkg_entry.path, u.depot_path)
+    end
+end
+
+function registered_jlls(u::Universe)
+    in_universe(u) do env
+        ctx = Pkg.Types.Context()
+        return map(pkg_entry -> pkg_entry.name,
+            values(filter(ctx.env.manifest.deps) do (uuid, pkg_entry)
+                return pkg_entry.path !== nothing &&
+                       endswith(pkg_entry.name, "_jll") &&
+                       startswith(pkg_entry.path, joinpath(u.depot_path, "dev"))
+            end)
+        )
+    end
+end
+
 """
     reset_timeline!(u::Universe)
 
