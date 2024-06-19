@@ -82,6 +82,41 @@ using BinaryBuilderGitUtils
             project_toml_path = joinpath(pkg_checkout, "Project.toml")
             @test isfile(project_toml_path)
             @test endswith(String(read(project_toml_path)), "foo\n")
+
+            # Next, check out a new branch, but to an older commit
+        end
+
+        # Attempt failing rebase
+        mktempdir() do pkg_checkout
+            checkout!(pkg_path, pkg_checkout, head_5)
+            project_toml_path = joinpath(pkg_checkout, "Project.toml")
+
+            # Make a change that modifies `Project.toml`, and will thus conflict with `master`
+            open(project_toml_path, write=true) do io
+                seekend(io)
+                println(io, "bar")
+            end
+            commit!(pkg_checkout, "Appended `bar` to Project.toml")
+
+            # Attempt to rebase and fail
+            @test !success(rebase!(pkg_checkout, "master"))
+        end
+
+        # Attempt successful rebase
+        mktempdir() do pkg_checkout
+            checkout!(pkg_path, pkg_checkout, head_5)
+            license_md = joinpath(pkg_checkout, "LICENSE.md")
+            open(license_md, write=true) do io
+                seekend(io)
+                println(io, "bar")
+            end
+            commit!(pkg_checkout, "Appended `bar` to LICENSE.md")
+
+            # Rebase
+            @test success(rebase!(pkg_checkout, "master"))
+
+            # Ensure that our log history shows the correct rebased commits
+            @test last(log(pkg_checkout; limit=2)) == new_commit_hash
         end
     end
 end

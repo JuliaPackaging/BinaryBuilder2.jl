@@ -2,7 +2,7 @@ module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing, gh_cli_jll
 import Base.BinaryPlatforms: tags
-export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch, branch, branch!
+export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, rebase!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch, branch, branch!
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -85,13 +85,16 @@ function clone!(url::String, repo_path::String;
     end
 end
 
-function head_branch(repo_path::String; remote::String = "origin", default::String = "main")
-    if remote ∉ remotes(repo_path)
+function head_branch(repo_path::String; default::String="main")
+    try
+        head_branch = readchomp(git(["-C", repo_path, "symbolic-ref", "HEAD"]))
+        if startswith(head_branch, "refs/heads/")
+            head_branch = head_branch[length("refs/heads/")+1:end]
+        end
+        return string(head_branch)
+    catch
         return default
     end
-    lines = split(readchomp(git(["-C", repo_path, "remote", "show", remote])), "\n")
-    head_branch_match = only(filter(!isnothing, match.((r"\s+HEAD branch: ([^ ]+)",), lines)))
-    return String(head_branch_match.captures[1])
 end
 
 function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch(repo_path); verbose::Bool = false)
@@ -121,6 +124,23 @@ function Base.push!(repo_path::String, remote::String = "origin"; verbose::Bool 
     run(git_authed(["-C", repo_path, "push", "--tags", remote, force_args(force)..., quiet_args(verbose)...]))
 end
 
+function rebase!(checkout_path::String, target::HashOrString, verbose::Bool = false, atomic::Bool = true)
+    cmd = git(["-C", checkout_path, "rebase", to_commit_str(target), quiet_args(verbose)...])
+    if atomic
+        cmd = ignorestatus(cmd)
+    end
+    # Someday, we may get a git that is smart enoguh that we can provide something
+    # like `advice.resolveConflict=false` to avoid the `pipeline` here.
+    if !verbose
+        cmd = pipeline(cmd; stdout=devnull, stderr=devnull)
+    end
+    rebase_proc = run(cmd)
+    if atomic && !success(rebase_proc)
+        run(git(["-C", checkout_path, "rebase", "--abort"]))
+    end
+    return rebase_proc
+end
+
 function remotes(repo_path::String)
     return filter(!isempty, split(readchomp(git(["-C", repo_path, "remote"])), "\n"))
 end
@@ -139,7 +159,7 @@ function tags(repo_path::String)
 end
 
 function tag!(repo_path::String, name::String, target::HashOrString = "HEAD"; force::Bool = false)
-    run(git(["-C", repo_path, "tag", force_args(force)..., name, target]))
+    run(git(["-C", repo_path, "tag", force_args(force)..., name, to_commit_str(target)]))
 end
 
 function Base.log(repo_path::String, tip::HashOrString = "HEAD"; limit::Union{Int,Nothing} = nothing, reverse::Bool = false)
