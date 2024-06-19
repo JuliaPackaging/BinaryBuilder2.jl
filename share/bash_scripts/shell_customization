@@ -1,3 +1,6 @@
 #!/bin/bash
 
 alias ll='ls -la'
+
+# Grep should generally color things
+export GREP_OPTIONS='--color=auto'
