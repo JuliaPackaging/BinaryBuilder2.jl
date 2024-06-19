@@ -38,7 +38,7 @@ struct CToolchain <: AbstractToolchain
                         glibc_version = :oldest,
                         extra_cflags = String[],
                         extra_ldflags = String[])
-        if vendor ∉ (:auto, :gcc, :clang, :gcc_bootstrap)
+        if vendor ∉ (:auto, :gcc, :clang, :bootstrap)
             throw(ArgumentError("Unknown C toolchain vendor '$(vendor)'"))
         end
 
@@ -47,6 +47,13 @@ struct CToolchain <: AbstractToolchain
                 vendor = :clang
             else
                 vendor = :gcc
+            end
+        end
+        if vendor == :bootstrap
+            if os(platform.target) ∈ ("macos", "freebsd")
+                vendor = :clang_bootstrap
+            else
+                vendor = :gcc_bootstrap
             end
         end
 

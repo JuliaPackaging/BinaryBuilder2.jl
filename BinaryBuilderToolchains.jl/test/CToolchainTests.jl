@@ -59,7 +59,7 @@ end
     end
 
     # Do the same, but with `GCCBootstrap`
-    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true, vendor = :gcc_bootstrap)
+    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true, vendor = :bootstrap)
     with_toolchains([toolchain]) do prefix, env
         toolchain_tests(prefix, env, platform)
     end
