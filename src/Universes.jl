@@ -34,18 +34,26 @@ function update_and_checkout_registries!(registries::Vector{RegistrySpec},
             rm(reg_checkout_path; recursive=true, force=true)
         end
 
-        # If the registry is not checked out locally, update our clone, then check it out
+        reg_clone_path = joinpath(cache_dir, reg.name)
+        # Only hit the network if we haven't updated this registry this session
+        if force || reg.uuid ∉ updated_registries
+            clone!(reg.url, reg_clone_path)
+            push!(updated_registries, reg.uuid)
+        end
+
+        # If the registry is not checked out locally, check it out
+        head_commit = only(log(reg_clone_path; limit=1))
         if !isdir(reg_checkout_path)
-            reg_clone_path = joinpath(cache_dir, reg.name)
-            # Only hit the network if we haven't updated this registry this session
-            if force || reg.uuid ∉ updated_registries
-                clone!(reg.url, reg_clone_path)
-                push!(updated_registries, reg.uuid)
-            end
-            head_commit = only(log(reg_clone_path; limit=1))
             checkout!(reg_clone_path, reg_checkout_path, head_commit)
             if branch_name !== nothing
                 branch!(reg_checkout_path, branch_name)
+            end
+
+        # If it is checked out, do a rebase on top of that head commit
+        # so our jazz is on top.  If it fails, warn the user
+        else
+            if !success(rebase!(reg_checkout_path, head_commit))
+                @warn("Attempted to rebase registry, but ran into merge conflicts, you may not have the latest versions of everything!  Use `BinaryBuilder2.reset_timeline!(universe)` to reset!", reg.name)
             end
         end
         # We arbitrarily add a month onto here, making the optimistic assertion that we will
