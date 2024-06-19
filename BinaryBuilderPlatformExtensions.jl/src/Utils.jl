@@ -21,7 +21,12 @@ Return the kind of triplet that gcc would give for the given platform.  For a
 """
 function gcc_target_triplet(target::AbstractPlatform)
     triplet_str = triplet(gcc_platform(target))
-    return replace(triplet_str, r"^armv7l-" => "arm-")
+
+    # GCC doesn't disambiguate the arm microarchitectures like we do.
+    # In fact, we could probably get away with a single `arm-linux-eabihf`
+    # compiler shard, and just pass the appropriate compiler flags for these
+    # targets, but that's far down the list of priorities.
+    return replace(triplet_str, r"^armv(6|7)l-" => "arm-")
 end
 gcc_target_triplet(platform::CrossPlatform) = gcc_target_triplet(platform.target)
 

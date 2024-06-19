@@ -47,7 +47,7 @@ Usually either 32 or 64.
 function nbits(p::AbstractPlatform)
     if arch(p) ∈ ("x86_64", "aarch64", "powerpc64le")
         return 64
-    elseif arch(p) ∈ ("i686", "armv7l")
+    elseif arch(p) ∈ ("i686", "armv7l", "armv6l")
         return 32
     else
         error("Unknown number of bits for architecture of platform $(triplet(p))")
