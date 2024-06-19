@@ -6,11 +6,11 @@ export HostToolsToolchain
 
 This toolchain contains a large number of useful host tools, such as 
 """
-@kwdef struct HostToolsToolchain <: AbstractToolchain
-    platform::Platform = BBHostPlatform()
+struct HostToolsToolchain <: AbstractToolchain
+    platform::Platform
     deps::Vector{AbstractSource}
 
-    function HostToolsToolchain(platform, overrides=AbstractSource[])
+    function HostToolsToolchain(platform = BBHostPlatform(), overrides=AbstractSource[])
         peel_host(p::Platform) = p
         peel_host(p::CrossPlatform) = p.host
         platform = peel_host(platform)
@@ -34,14 +34,17 @@ This toolchain contains a large number of useful host tools, such as
             "flex_jll",
             "gawk_jll",
             "GNUMake_jll",
-            "Libtool_jll",
+            # We explcitly ask for a certain version here, because anything earlier
+            # may try to use `/bin/sh` instead of `/bin/bash`, which doesn't work.
+            # X-ref: https://github.com/JuliaPackaging/Yggdrasil/pull/8923
+            PackageSpec(;name="Libtool_jll", version=v"2.4.7+1"),
             "M4_jll",
 
             # We used to version Patchelf with date-based versions, but then
             # we switched to actual upstream version numbers; Pkg chooses the
             # date-based versions because they're higher, so we have to explicitly
             # choose the correct version number here
-            PackageSpec(name ="Patchelf_jll", version=v"0.17.2+0"),
+            PackageSpec(;name="Patchelf_jll", version=v"0.17.2+0"),
             "Perl_jll",
             "patch_jll",
 
