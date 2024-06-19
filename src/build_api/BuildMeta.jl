@@ -130,6 +130,9 @@ Parse the arguments passed in to a `build_tarballs.jl` into a dictionary that ca
 splatted into `BuildMeta()`.
 """
 function parse_build_tarballs_args(ARGS::Vector{String})
+    # Don't mutate the original!
+    ARGS = copy(ARGS)
+
     parsed_kwargs = Dict{Symbol,Any}()
 
     if check_flag!(ARGS, "--help")
@@ -353,5 +356,12 @@ end
 Convenience constructor that calls `parse_build_tarballs_args()` on `ARGS`.
 """
 BuildMeta(ARGS::Vector{String}) = BuildMeta(;parse_build_tarballs_args(ARGS)...)
+
+function get_package_result(meta::BuildMeta, name::String)
+    if endswith(name, "_jll")
+        name = name[1:end-4]
+    end
+    return meta.packagings[only(filter(config -> config.name == name, keys(meta.packagings)))]
+end
 
 # TODO: Add serialization tools for all of these structures

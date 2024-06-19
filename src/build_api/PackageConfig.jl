@@ -3,8 +3,7 @@ using BinaryBuilderProducts, JLLGenerator, MultiHashParsing
 export PackageConfig, package!
 
 struct PackageConfig
-    # The name of the generated JLL; if not specified, defaults to `$(src_name)_jll`.
-    # Note that by default we add `_jll` at the end, but this is not enforced in code!
+    # The name of the generated JLL; if not specified, defaults to `$(src_name)`. (no `_jll` at the end!)
     name::String
 
     # The JLL version this package will be published under

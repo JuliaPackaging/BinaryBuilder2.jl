@@ -59,6 +59,24 @@ function Base.showerror(io::IO, be::BuildError)
 end
 
 
+const _default_meta = Ref{Union{Nothing,AbstractBuildMeta}}(nothing)
+function get_default_meta()
+    if _default_meta[] === nothing
+        return BuildMeta(;parse_build_tarballs_args(ARGS)...)
+    end
+    return _default_meta[]
+end
+
+function with_default_meta(f::Function, meta::AbstractBuildMeta)
+    old_default_meta = _default_meta[]
+    try
+        _default_meta[] = meta
+        f()
+    finally
+        _default_meta[] = old_default_meta
+    end
+end
+
 
 function build_tarballs(src_name::String,
                         src_version::Union{String,VersionNumber},
@@ -67,7 +85,7 @@ function build_tarballs(src_name::String,
                         host_dependencies::Vector,
                         script::String,
                         products::Vector;
-                        meta::AbstractBuildMeta = BuildMeta(;parse_build_tarballs_args(ARGS)...),
+                        meta::AbstractBuildMeta = get_default_meta(),
                         platforms::Vector = supported_platforms(),
                         host::AbstractPlatform = default_host(),
                         extract_script::String = "extract \${prefix}/*",
@@ -180,18 +198,6 @@ function build_tarballs(;src_name::String,
     )
 end
 
-function with_ARGS(f::Function, new_ARGS::Vector{String})
-    old_ARGS = copy(ARGS)
-    try
-        empty!(ARGS)
-        append!(ARGS, new_ARGS)
-        f()
-    finally
-        empty!(ARGS)
-        append!(ARGS, old_ARGS)
-    end
-end
-
 """
     run_build_tarballs(build_tarballs_path::String; ARGS::Vector{String} = ARGS)
 
@@ -205,17 +211,21 @@ The `ARGS` keyword argument allows overriding the parameters sent to the
 skip all builds and simply return the "shape" of the computation within the
 `build_tarballs.jl` script.
 """
-function run_build_tarballs(build_tarballs_path::AbstractString; ARGS::Vector{String} = ARGS)
-    with_ARGS(ARGS) do
-        mod = Module()
-        obj = Core.include(mod, build_tarballs_path)
-        if isa(obj, PackageResult)
-            return AbstractBuildMeta(obj).packagings
+function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString; dry_run::Bool = false)
+    # If `dry_run` is set, we need to toggle `dry_run` in `meta`, but only
+    # for the duration of this call:
+    old_dry_run = copy(meta.dry_run)
+    if dry_run
+        empty!(meta.dry_run)
+        push!.((meta.dry_run,), (:build, :extract, :package))
+    end
+    try
+        with_default_meta(meta) do
+            Core.include(Module(), build_tarballs_path)
         end
-        if !isdefined(mod, :meta)
-            throw(ArgumentError("Script $(build_tarballs_path) does not return `PackageResult`, and cannot find `meta`!"))
-        end
-        return mod.meta.packagings
+    finally
+        empty!(meta.dry_run)
+        push!.((meta.dry_run,), old_dry_run)
     end
 end
 

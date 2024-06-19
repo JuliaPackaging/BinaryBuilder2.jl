@@ -238,24 +238,25 @@ end
     @test length(ninetynine_versions) == 2
 end
 
+using BinaryBuilder2: get_package_result
 @testset "build_tarballs()" begin
     # Create a meta with a universe that we will then inspect as other
     # builds register things into it.
     universe_name = "BB2_tests-$(randstring(4))"
+    meta = BuildMeta(;universe_name)
     bootstrap_dir = joinpath(dirname(@__DIR__), "bootstrap")
-    build_ARGS = ["--universe=$(universe_name)"]
 
     @testset "Zlib" begin
         # Test a `--dry-run` first!
-        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"); ARGS=[build_ARGS..., "--dry-run"])
-        meta = BinaryBuilder2.AbstractBuildMeta(packagings)
+        package_result = run_build_tarballs(meta, joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"); dry_run=true)
+        @test package_result.status == :skipped
         @test only(values(meta.builds)).status == :skipped
         @test only(values(meta.extractions)).status == :skipped
         @test only(values(meta.packagings)).status == :skipped
         @test only(keys(meta.builds)).src_name == "Zlib"
 
         # Test that we can take that dry run output and get everything we need for a `build_tarballs()` invocation
-        build_args = extract_build_tarballs(packagings)
+        build_args = extract_build_tarballs(get_package_result(meta, "Zlib"))
         package_result = build_tarballs(;build_args...)
         @test package_result.status == :success
 
@@ -268,25 +269,18 @@ end
         @test_throws BuildError build_tarballs(;fail_extract_args...)
     end
     @testset "Ncurses" begin
-        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Ncurses", "build_tarballs.jl"); ARGS=build_ARGS)
-        package_result = only(values(packagings))
-        @test package_result.status == :success
+        run_build_tarballs(meta, joinpath(bootstrap_dir, "Ncurses", "build_tarballs.jl"))
+        @test get_package_result(meta, "Ncurses").status == :success
     end
     @testset "Readline" begin
-        packagings = run_build_tarballs(joinpath(bootstrap_dir, "Readline", "build_tarballs.jl"); ARGS=build_ARGS)
-        package_result = only(values(packagings))
-        @test package_result.status == :success
+        run_build_tarballs(meta, joinpath(bootstrap_dir, "Readline", "build_tarballs.jl"))
+        @test get_package_result(meta, "Readline").status == :success
     end
 
     # Test that we can see these builds in our universe:
     uni = Universe(universe_name; persistent=false)
-    in_universe(uni) do env
-        ctx = Pkg.Types.Context()
-        jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
-        jll_pkg_entries = collect(values(filter(((uuid, pkg_entry),) -> pkg_entry.name ∈ jll_names, ctx.env.manifest.deps)))
-        @test length(jll_pkg_entries) == 3
-        @test all(startswith(entry.path, uni.depot_path) for entry in jll_pkg_entries)
-    end
+    jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
+    @test all(BinaryBuilder2.contains_jll.((uni,), jll_names))
 end
 
 end # testset "BuildAPI"
