@@ -107,35 +107,83 @@ function compress_cmd(output_path::String, compressor::String;
     end
 end
 
+function copy_tree(src::AbstractString, dest::AbstractString)
+    for (root, dirs, files) in walkdir(src)
+        # Create all directories
+        for d in dirs
+            dest_dir = joinpath(dest, relpath(root, src), d)
+            if ispath(dest_dir) && !isdir(realpath(dest_dir))
+                # We can't create a directory if the destination exists and
+                # is not a directory or a symlink to a directory.
+                throw(ArgumentError("Directory $(d) is not an artifact in $(dest)"))
+            end
+            mkpath(dest_dir)
+        end
+
+        # Copy all files
+        for f in files
+            src_file = joinpath(root, f)
+            dest_file = joinpath(dest, relpath(root, src), f)
+            cp(src_file, dest_file; force=true)
+        end
+    end
+end
+
 """
     unarchive(source_path::String, output_dir::String;
               compressor = detect_compressor(source_path),
-              stderr_out = stderr)
+              stderr_out = stderr,
+              overwrite::Bool = false)
 
 Read from `source_path`, automatically determine the compression type by inspecting the first
 few bytes, then write the unarchived result to `output_dir`.
 
 If the compression type cannot be auto-determined, throws an error.
+
+If `overwrite` is set to `true`, does not require `output_dir`
+to be empty/missing.
 """
 function unarchive(source_path::String, output_dir::String;
                    compressor = detect_compressor(source_path),
-                   stderr_out=stderr)
+                   stderr_out=stderr,
+                   overwrite::Bool = false)
     # Sub out to a JLL process to do the actual decompression
     mkpath(output_dir)
-    if compressor ∈ ("gzip", "bzip2", "7z", "xz", "zstd")
-        Tar.extract(
-            decompress_cmd(source_path; compressor),
-            output_dir,
-        )
-    elseif compressor ∈ ("tar",)
-        return Tar.extract(source_path, output_dir)
-    elseif compressor ∈ ("zip",)
+
+    output_dir_empty = isempty(readdir(output_dir))
+    if !overwrite && !output_dir_empty
+        throw(ArgumentError("output_dir ($(output_dir)) is not empty, must set `overwrite=true`!"))
+    end
+
+    # .zip files get special treatment, no `Tar.jl` involvement at all
+    if compressor ∈ ("zip",)
         decompressor_cmd = pipeline(
             `$(p7zip_jll.p7zip()) x $(source_path) -o$(output_dir) -bso0`; stderr=stderr_out
         )
         success(run(decompressor_cmd))
+        return nothing
+    end
+
+    # If we're dealing with a compressed tarball, create a decompression layer
+    if compressor ∈ ("gzip", "bzip2", "7z", "xz", "zstd")
+        extract_source = decompress_cmd(source_path; compressor)
+    elseif compressor ∈ ("tar",)
+        extract_source = source_path
     else
         throw(ArgumentError("Called unarchive() on an unknown file type, autodetected as '$(compressor)'!"))
+    end
+
+    # `Tar.jl` does not support unpacking to a directory that is not empty, so
+    # for these `Tar.jl`-powered unpackings, if `overwrite` is set to `true`,
+    # we unpack to a temporary directory, then copy everything over.  :(
+    if !output_dir_empty
+        mktempdir(output_dir) do temp_dir
+            Tar.extract(extract_source, temp_dir)
+            copy_tree(temp_dir, output_dir)
+        end
+    else
+        # If the directory is not empty, we can just extract into it directly.
+        Tar.extract(extract_source, output_dir)
     end
     return nothing
 end

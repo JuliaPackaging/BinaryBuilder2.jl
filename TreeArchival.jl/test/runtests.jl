@@ -208,5 +208,36 @@ end
                 end
             end
         end
+
+        # Create a second, disjoint set of files
+        mktempdir() do src_dir2
+            open(joinpath(src_dir2, "general"), write=true) do io
+                println(io, "kenobi")
+            end
+            mkpath(joinpath(src_dir2, "sub"))
+            open(joinpath(src_dir2, "sub", "zero"); write=true) do io
+                println(io, "getting hotter!")
+            end
+
+            # Test that we can unpack two `.tar.gz`'s over eachother
+            mktempdir() do archive_dir
+                archive_path = joinpath(archive_dir, "archive1.tar.gz")
+                archive(src_dir, archive_path, "gzip")
+
+                archive_path2 = joinpath(archive_dir, "archive2.tar.gz")
+                archive(src_dir2, archive_path2, "gzip")
+
+                mktempdir() do out_dir
+                    unarchive(archive_path, out_dir)
+                    @test_throws ArgumentError unarchive(archive_path2, out_dir)
+                    unarchive(archive_path2, out_dir; overwrite=true)
+
+                    @test isfile(joinpath(out_dir, "hello"))
+                    @test isfile(joinpath(out_dir, "general"))
+                    @test isfile(joinpath(out_dir, "sub", "zero"))
+                    @test readchomp(joinpath(out_dir, "sub", "zero")) == "getting hotter!"
+                end
+            end
+        end
     end
 end
