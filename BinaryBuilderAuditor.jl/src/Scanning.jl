@@ -104,7 +104,7 @@ function scan_files(prefix::String, platform::AbstractPlatform,
             continue
         end
 
-        # If somethign doesn't have an SONAME, we default to `basename(rel_path)`
+        # If something doesn't have an SONAME, we default to `basename(rel_path)`
         # This will be fixed by `ensure_sonames!()`.
         soname = get_soname(oh)
         if soname === nothing

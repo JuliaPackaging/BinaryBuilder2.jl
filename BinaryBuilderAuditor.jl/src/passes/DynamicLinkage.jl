@@ -18,6 +18,9 @@ function resolve_dynamic_links!(scan::ScanResult,
     for (rel_path, lib) in scan.library_products
         oh = scan.binary_objects[rel_path]
         lib_soname = get_soname(oh)
+        if lib_soname === nothing && Sys.iswindows(scan.platform)
+            lib_soname = basename(rel_path)
+        end
 
         # Resolve each dependency to one of the `LibraryLink` objects
         # we created above, use that to construct a `JLLLibraryDep`

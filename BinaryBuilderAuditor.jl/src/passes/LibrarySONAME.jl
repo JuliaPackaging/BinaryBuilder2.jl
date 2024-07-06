@@ -66,7 +66,6 @@ function get_soname(oh::MachOHandle)
     lcs = MachOLoadCmds(oh)
     id_idx = findfirst(lc -> typeof(lc) <: MachOIdDylibCmd, lcs)
     if id_idx === nothing
-        # If all else fails, just return the filename.
         return nothing
     end
 
