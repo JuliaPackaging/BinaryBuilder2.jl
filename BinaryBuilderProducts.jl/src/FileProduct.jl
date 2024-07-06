@@ -27,7 +27,7 @@ function locate(fp::FileProduct, prefix::String;
                 platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))
     @debug("Locating FileProduct", fp)
     for path in fp.paths
-        path = path_prefix_transformation(ExecutableProduct, path, prefix, env)
+        path = path_prefix_transformation(FileProduct, path, prefix, env)
         @debug("Trying", path, isfile(path))
         if ispath(path)
             return prefix_remove(path, prefix)
