@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "7ab3a7f225188927213251fc63686cbeebc514a8"
+project_hash = "29fa06e00643be14e2289af623afa7c192f2af8b"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -10,6 +10,12 @@ version = "1.1.1"
 
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
+
+[[deps.Attr_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "5fd54e3b6af15fbe2d0116891b36da11800fb0b7"
+uuid = "1fd713ca-387f-5abc-8002-d8b8b1623b73"
+version = "2.5.2+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -23,6 +29,12 @@ version = "1.5.0"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[deps.Libiconv_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "f9557a255370125b405568f9767d6d195822a175"
+uuid = "94ce4f54-9a6c-5748-9c1c-f9c7231a4531"
+version = "1.17.0+0"
 
 [[deps.Preferences]]
 deps = ["TOML"]
@@ -47,6 +59,12 @@ version = "1.0.3"
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 version = "1.10.0"
+
+[[deps.Tar_jll]]
+deps = ["Artifacts", "Attr_jll", "JLLWrappers", "Libdl", "Libiconv_jll"]
+git-tree-sha1 = "85e7d0ef5248971fbd824f29c52ab6168b895dfd"
+uuid = "9b64493d-8859-5bf3-93d7-7c32dd38186f"
+version = "1.35.0+0"
 
 [[deps.Unicode]]
 uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"

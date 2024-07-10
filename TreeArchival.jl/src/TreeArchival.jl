@@ -1,6 +1,6 @@
 module TreeArchival
 
-using p7zip_jll, Zstd_jll, Tar
+using p7zip_jll, Zstd_jll, Tar, Tar_jll
 export archive, unarchive, treehash
 
 # This tracks the offset and magic bytes for each compression type we support
@@ -55,10 +55,12 @@ function decompress_cmd(source_path::String;
             `$(Zstd_jll.zstd()) -d $(source_path) -c`;
             stderr=stderr_out,
         )
-    elseif compressor ∈ ("zip", "tar")
+    elseif compressor ∈ ("tar",)
+        return `cat $(source_path)`
+    elseif compressor ∈ ("zip",)
         throw(ArgumentError("Cannot decompress() a $(compressor) file; use unarchive()!"))
     else
-        throw(ArgumentError("Called decompress() on an unknown file type, autodetected as '$(compressor)'!"))
+        throw(ArgumentError("Called decompress() on an unknown file type '$(compressor)'!"))
     end
 end
 
@@ -107,28 +109,6 @@ function compress_cmd(output_path::String, compressor::String;
     end
 end
 
-function copy_tree(src::AbstractString, dest::AbstractString)
-    for (root, dirs, files) in walkdir(src)
-        # Create all directories
-        for d in dirs
-            dest_dir = joinpath(dest, relpath(root, src), d)
-            if ispath(dest_dir) && !isdir(realpath(dest_dir))
-                # We can't create a directory if the destination exists and
-                # is not a directory or a symlink to a directory.
-                throw(ArgumentError("Directory $(d) is not an artifact in $(dest)"))
-            end
-            mkpath(dest_dir)
-        end
-
-        # Copy all files
-        for f in files
-            src_file = joinpath(root, f)
-            dest_file = joinpath(dest, relpath(root, src), f)
-            cp(src_file, dest_file; force=true)
-        end
-    end
-end
-
 """
     unarchive(source_path::String, output_dir::String;
               compressor = detect_compressor(source_path),
@@ -155,12 +135,12 @@ function unarchive(source_path::String, output_dir::String;
         throw(ArgumentError("output_dir ($(output_dir)) is not empty, must set `overwrite=true`!"))
     end
 
-    # .zip files get special treatment, no `Tar.jl` involvement at all
+    # .zip files get special treatment
     if compressor ∈ ("zip",)
         decompressor_cmd = pipeline(
             `$(p7zip_jll.p7zip()) x $(source_path) -o$(output_dir) -bso0`; stderr=stderr_out
         )
-        success(run(decompressor_cmd))
+        run(decompressor_cmd)
         return nothing
     end
 
@@ -173,18 +153,10 @@ function unarchive(source_path::String, output_dir::String;
         throw(ArgumentError("Called unarchive() on an unknown file type, autodetected as '$(compressor)'!"))
     end
 
-    # `Tar.jl` does not support unpacking to a directory that is not empty, so
-    # for these `Tar.jl`-powered unpackings, if `overwrite` is set to `true`,
-    # we unpack to a temporary directory, then copy everything over.  :(
-    if !output_dir_empty
-        mktempdir(output_dir) do temp_dir
-            Tar.extract(extract_source, temp_dir)
-            copy_tree(temp_dir, output_dir)
-        end
-    else
-        # If the directory is not empty, we can just extract into it directly.
-        Tar.extract(extract_source, output_dir)
-    end
+    run(pipeline(
+        extract_source,
+        pipeline(`$(Tar_jll.tar()) -C $(output_dir) -x`; stderr=stderr_out),
+    ))
     return nothing
 end
 
