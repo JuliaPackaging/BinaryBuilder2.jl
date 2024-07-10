@@ -140,7 +140,11 @@ function deploy(as::ArchiveSource, prefix::String)
     checkprepared!("deploy", as, download_cache)
 
     # We unpack the archive into the desired location
-    unarchive(download_cache_path(as, download_cache), joinpath(prefix, as.target))
+    unarchive(
+        download_cache_path(as, download_cache),
+        joinpath(prefix, as.target);
+        overwrite=true,
+    )
 end
 
 function deploy(fs::FileSource, prefix::String)
