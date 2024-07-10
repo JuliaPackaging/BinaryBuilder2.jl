@@ -110,7 +110,7 @@ function prepare(jlls::Vector{JLLSource};
                  verbose::Bool = false,
                  force::Bool = false)
     # Split JLLs by platform:
-    jlls_by_platform = Dict{AbstractPlatform,Vector{JLLSource}}()
+    jlls_by_platform_by_prefix = Dict{AbstractPlatform,Dict{String,Vector{JLLSource}}}()
     registries = nothing
 
     for jll in jlls
@@ -136,38 +136,40 @@ function prepare(jlls::Vector{JLLSource};
                 continue
             end
         end
-        if jll.platform ∉ keys(jlls_by_platform)
-            jlls_by_platform[jll.platform] = JLLSource[]
+
+        if jll.platform ∉ keys(jlls_by_platform_by_prefix)
+            jlls_by_platform_by_prefix[jll.platform] = Dict{String,Vector{JLLSource}}()
         end
-        push!(jlls_by_platform[jll.platform], jll)
+        jlls_by_prefix = jlls_by_platform_by_prefix[jll.platform]
+        if jll.target ∉ keys(jlls_by_prefix)
+            jlls_by_prefix[jll.target] = JLLSource[]
+        end
+        push!(jlls_by_prefix[jll.target], jll)
     end
 
-    # For each group of platforms, we are able to download as a group:
-    for (platform, platform_jlls) in jlls_by_platform
-        # First, download everyone together, to give `JLLPrefixes` the
-        # opportunity to parallelize downloads (we are not doing that
-        # in `Pkg.add()` as of the time of this writing)
-        #pkgs = [deepcopy(jll.package) for jll in platform_jlls]
-        #collect_artifact_metas(pkgs; platform, verbose, project_dir, pkg_depot=depot)
-
-        # Collect group of paths
-        art_paths = collect_artifact_paths([jll.package for jll in platform_jlls]; platform, project_dir, pkg_depot=depot)
-        for jll in platform_jlls
-            pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
-            # Update `jll.package` with things from `pkg`
-            if pkg.version != Pkg.Types.VersionSpec()
-                jll.package.version = pkg.version
+    # For each group of platforms and sharded by prefix, we are able to download as a group:
+    # We can't do it all together because it's totally valid for us to try and download
+    # two different versions of the same JLL to different prefixes.
+    for (platform, platform_jlls_by_prefix) in jlls_by_platform_by_prefix
+        for (prefix, jlls_slice) in platform_jlls_by_prefix
+            art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
+            for jll in jlls_slice
+                pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
+                # Update `jll.package` with things from `pkg`
+                if pkg.version != Pkg.Types.VersionSpec()
+                    jll.package.version = pkg.version
+                end
+                if pkg.path !== nothing
+                    jll.package.path = pkg.path
+                end
+                if pkg.tree_hash !== nothing
+                    jll.package.tree_hash = pkg.tree_hash
+                end
+                if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
+                    jll.package.repo = pkg.repo
+                end
+                append!(jll.artifact_paths, art_paths[pkg])
             end
-            if pkg.path !== nothing
-                jll.package.path = pkg.path
-            end
-            if pkg.tree_hash !== nothing
-                jll.package.tree_hash = pkg.tree_hash
-            end
-            if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
-                jll.package.repo = pkg.repo
-            end
-            append!(jll.artifact_paths, art_paths[pkg])
         end
     end
 end
