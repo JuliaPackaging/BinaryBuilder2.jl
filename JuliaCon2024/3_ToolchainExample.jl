@@ -10,7 +10,7 @@ with_toolchains(toolchains) do prefix, env
             #include <stdio.h>
 
             int main() {
-                println("Hello, JuliaCon!\n");
+                printf("Hello, JuliaCon!\\n");
                 return 0;
             }
             """)
