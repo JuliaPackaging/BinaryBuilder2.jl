@@ -121,6 +121,46 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
     )
 end
 
+function JLLPackageDependencies(result::ExtractResult)
+    # Get list of JLLSources installed in this target's prefix
+    build_config = result.config.build.config
+    target_jll_deps = filter(d -> isa(d, JLLSource), get_default_target_spec(build_config).dependencies)
+    ret = JLLPackageDependency[JLLPackageDependency(jll.package.name) for jll in target_jll_deps]
+    return ret
+end
+
+function JLLSourceRecords(result::ExtractResult)
+    build_config = result.config.build.config
+    return [JLLSourceRecord(s) for s in build_config.source_trees[source_prefix()]]
+end
+
+function JLLProducts(result::ExtractResult)
+    products = AbstractJLLProduct[]
+    for product in result.config.products
+        # Skip library products, as those were translated by the auditor
+        if isa(product, LibraryProduct)
+            continue
+        end
+
+        push!(products, 
+            # Convert from ExecutableProduct/FileProduct to JLLProduct types
+            AbstractJLLProduct(
+                product,
+                artifact_path(result);
+                # Use the environment block from our BuildResult to locate them
+                env=result.config.build.env,
+                # If we've built some kind of compiler, look for binaries
+                # that match the host platform.
+                platform=host_if_crossplatform(result.config.platform)
+            )
+        )
+    end
+
+    # Copy over the LibraryProducts that were translated by the auditor
+    append!(products, result.audit_result.jll_lib_products)
+    return products
+end
+
 
 function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
     if result.status ∉ (:success, :cached)
@@ -128,18 +168,11 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
     end
     build_config = result.config.build.config
 
-    # First, translate all non-library products to JLLProducts
-    products = AbstractJLLProduct[
-        AbstractJLLProduct(p, artifact_path(result); env=result.config.build.env, platform=host_if_crossplatform(result.config.platform)) for p in result.config.products if !isa(p, LibraryProduct)
-    ]
-    # Then, append the JLLLibraryProducts that were filled out by the auditor:
-    append!(products, result.audit_result.jll_lib_products)
-
     return JLLBuildInfo(;
         src_version = build_config.src_version,
-        deps = [JLLPackageDependency(d.name) for d in build_config.pkg_deps],
+        deps = JLLPackageDependencies(result),
         # Encode all sources that are mounted in `/workspace/srcdir`
-        sources = [JLLSourceRecord(s) for s in build_config.source_trees["/workspace/srcdir"]],
+        sources = JLLSourceRecords(result),
         platform = result.config.platform,
         name,
         # TODO: Add links to our eventual deployment target
@@ -158,7 +191,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
                 download_sources = []
             ),
         ),
-        products,
+        products = JLLProducts(result),
     )
 end
 
@@ -188,7 +221,7 @@ function package!(config::PackageConfig)
     )
 
     # Register this JLL out into our universe
-    register_jll!(meta.universe, jll)
+    register_jll!(meta.universe, jll; verbose=meta.verbose)
 
     result = PackageResult(
         config,

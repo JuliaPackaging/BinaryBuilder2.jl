@@ -20,13 +20,13 @@ CT_LOG_PROGRESS_BAR=n
 CT_EXPERIMENTAL=y
 
 # Explicitly claim the '--build' triplet, so there's no confusion
-CT_BUILD="${MACHTYPE}"
-CT_BUILD_PREFIX="${MACHTYPE}-"
+CT_BUILD="${build}"
+CT_BUILD_PREFIX="${build}-"
 
 # Tell ct-ng to not remove our prefix... this really confused me, as the
 # build would finish, but the resultant artifact was empty, because it
 # would have cleared out the symlink to the target-specific prefix. Orz.
-CT_PREFIX_DIR="${prefix}"
+CT_PREFIX_DIR="${host_prefix}"
 CT_PREFIX_DIR_RO=n
 CT_RM_RF_PREFIX_DIR=n
 
@@ -71,8 +71,10 @@ case "${target}" in
         echo "CT_ARCH_FLOAT_HW=y"
         if [[ "${bb_full_target}" == armv6l* ]]; then
             echo "CT_ARCH_ARCH=\"armv6+fp\""
+            echo "CT_ARCH_FPU=\"vfp\""
         elif [[ "${bb_full_target}" == armv7l* ]]; then
             echo "CT_ARCH_ARCH=\"armv7-a+fp\""
+            echo "CT_ARCH_FPU=\"vfpv3\""
         else
             echo "ERROR: Unknown arm microarchitecture in ${bb_full_target}!" >&2
             exit 1

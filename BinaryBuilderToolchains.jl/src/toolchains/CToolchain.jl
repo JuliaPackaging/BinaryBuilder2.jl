@@ -12,10 +12,15 @@ struct CToolchain <: AbstractToolchain
     vendor::Symbol
     deps::Vector{JLLSource}
 
-    # If we're the default CToolchain (we assume we are) generate `cc`
-    # wrapper scripts, and set `CC="cc"`, etc...
-    default_ctoolchain::Bool
-    host_ctoolchain::Bool
+    # Allows adding a special prefix to the beginning of our wrapper scripts.
+    # Used to force the host toolchain to have e.g. `build-x86_64-linux-gnu-gcc`
+    # which is separate from `x86_64-linux-gnu-gcc`, which has different automatic
+    # include directories, for instance.  Defaults to `""`
+    wrapper_prefixes::Vector{String}
+
+    # Allows adding special prefix(es) to the beginning of our environment variables.
+    # This enables defining `CC` and `TARGETCC` and `TARGET_CC`, if we so wish.
+    env_prefixes::Vector{String}
 
     # If this is set to true (which is the default) we won't allow packages
     # to specify a `-march`; we're in control of that.
@@ -29,8 +34,8 @@ struct CToolchain <: AbstractToolchain
 
     function CToolchain(platform;
                         vendor = :auto,
-                        default_ctoolchain = false,
-                        host_ctoolchain = false,
+                        env_prefixes = [""],
+                        wrapper_prefixes = ["\${triplet}-", ""],
                         lock_microarchitecture = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("*"),
@@ -42,19 +47,11 @@ struct CToolchain <: AbstractToolchain
             throw(ArgumentError("Unknown C toolchain vendor '$(vendor)'"))
         end
 
-        if vendor == :auto
-            if os(platform.target) ∈ ("macos", "freebsd")
-                vendor = :clang
-            else
-                vendor = :gcc
-            end
+        if isempty(wrapper_prefixes)
+            throw(ArgumentError("Cannot have empty wrapper prefixes!  Did you mean [\"\"]?"))
         end
-        if vendor == :bootstrap
-            if os(platform.target) ∈ ("macos", "freebsd")
-                vendor = :clang_bootstrap
-            else
-                vendor = :gcc_bootstrap
-            end
+        if isempty(env_prefixes)
+            throw(ArgumentError("Cannot have empty env prefixes!  Did you mean [\"\"]?"))
         end
 
         if os(platform) == "linux" && isa(glibc_version, Symbol)
@@ -77,7 +74,7 @@ struct CToolchain <: AbstractToolchain
         end
 
         deps = jll_source_selection(
-            vendor,
+            get_vendor(vendor, platform),
             platform,
             gcc_version,
             llvm_version,
@@ -92,14 +89,34 @@ struct CToolchain <: AbstractToolchain
             platform,
             vendor,
             deps,
-            default_ctoolchain,
-            host_ctoolchain,
+            string.(wrapper_prefixes),
+            string.(env_prefixes),
             lock_microarchitecture,
             string.(extra_cflags),
             string.(extra_ldflags),
         )
     end
 end
+
+function get_vendor(vendor::Symbol, platform::AbstractPlatform)
+    clang_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+    if vendor == :auto
+        if clang_default(platform)
+            return :clang
+        else
+            return :gcc
+        end
+    end
+    if vendor == :bootstrap
+        if clang_default(platform)
+            return :clang_bootstrap
+        else
+            return :gcc_bootstrap
+        end
+    end
+    return vendor
+end
+get_vendor(ct::CToolchain) = get_vendor(ct.vendor, ct.platform)
 
 function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                               gcc_version,
@@ -112,11 +129,11 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "GCCBootstrap_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                # When we push up a new build of `GCCBoostrap_jll`, we always built it
+                # When we push up a new build of `GCCBootstrap_jll`, we always built it
                 # for the host we're actually doing the bootstrap from.  Because of this,
                 # we only get a single host architecture at a time.  That's fine, but
                 # it means that we need to choose branches named by the host platform.
-                rev="bb2/GCCBoostrap-$(triplet(platform.host))",
+                rev="bb2/GCCBootstrap-$(triplet(platform.host))",
                 source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
             ),
             #version=gcc_version,
@@ -131,18 +148,39 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         # Linux builds require the kernel headers for the target platform
         push!(deps, JLLSource(
             "LinuxKernelHeaders_jll",
-            platform.target,
+            platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
+            ),
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
             target=joinpath(gcc_triplet, "usr")
         ))
     end
 
     if libc(platform.target) == "glibc"
+        # Manual version selection, drop this once these are registered!
+        if v"2.17" ∈ glibc_version
+            glibc_repo = Pkg.Types.GitRepo(
+                rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
+                source="https://github.com/staticfloat/Glibc_jll.jl"
+            )
+        elseif v"2.19" ∈ glibc_version
+            glibc_repo = Pkg.Types.GitRepo(
+                rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
+                source="https://github.com/staticfloat/Glibc_jll.jl"
+            )
+        else
+            error("Don't know how to install Glibc $(glibc_version)")
+        end
+
         push!(deps, JLLSource(
             "Glibc_jll",
             platform.target;
+            uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
             # TODO: Should we encode this in the platform object somehow?
             version=glibc_version,
+            repo=glibc_repo,
             # This glibc is the one that gets embedded within GCC and it's for the target
             target=gcc_triplet,
         ))
@@ -159,6 +197,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
             repo=Pkg.Types.GitRepo(
                 rev="8d632ad5f2e2c419a4e67da14bf1609ab0291b24",
+                #rev="bb2/GCC",
                 source="https://github.com/staticfloat/GCC_jll.jl"
             ),
             # eventually, include a resolved version
@@ -168,19 +207,30 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         JLLSource(
             "Binutils_jll",
             platform;
-            version=binutils_version,
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Binutils_jll.jl"
+            ),
+            # eventually, include a resolved version
+            #version=binutils_version,
         ),
+        #=
         JLLSource(
             "Zlib_jll",
             platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
             # zlib gets installed into `<prefix>/<triplet>/usr`, and it's only for the target
             target=joinpath(gcc_triplet, "usr"),
         ),
+        =#
     ])
 end
 
 function Base.show(io::IO, toolchain::CToolchain)
-    println(io, "CToolchain ($(gcc_target_triplet(toolchain.platform)) => $(gcc_target_triplet(toolchain.platform)))")
+    println(io, "CToolchain ($(toolchain.platform))")
     for dep in toolchain.deps
         println(io, " - $(dep.package.name[1:end-4]) v$(dep.package.version)")
     end
@@ -226,6 +276,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         env["$(envvar_prefix)AS"] = "$(tool_prefix)as"
         env["$(envvar_prefix)CC"] = "$(tool_prefix)cc"
         env["$(envvar_prefix)CXX"] = "$(tool_prefix)c++"
+        env["$(envvar_prefix)CPP"] = "$(tool_prefix)cpp"
         env["$(envvar_prefix)LD"] = "$(tool_prefix)ld"
         env["$(envvar_prefix)NM"] = "$(tool_prefix)nm"
         env["$(envvar_prefix)RANLIB"] = "$(tool_prefix)ranlib"
@@ -249,15 +300,12 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         end
     end
 
-    # Even though the default toolchain generated the non-triplet-prefixed names,
-    # we prefer to be explicit whenever possible.  It makes it a lot easier to
-    # debug when things aren't what we expect.
-    tool_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(toolchain.platform.target))-" : "$(gcc_target_triplet(toolchain.platform.target))-"
-    if toolchain.default_ctoolchain
-        set_envvars("", tool_prefix)
-    end
-    if toolchain.host_ctoolchain
-        set_envvars("HOST", tool_prefix)
+    # We can have multiple wrapper prefixes, we always use the longest one
+    # as that's typically the most specific.
+    wrapper_prefixes = replace.(toolchain.wrapper_prefixes, ("\${triplet}" => triplet(toolchain.platform.target),))
+    wrapper_prefix = wrapper_prefixes[argmax(length.(wrapper_prefixes))]
+    for env_prefix in toolchain.env_prefixes
+        set_envvars(env_prefix, wrapper_prefix)
     end
     return env
 end
@@ -293,6 +341,25 @@ function link_flagmatch(f::Function, io::IO)
 end
 
 
+# Helper function to make many tool symlinks
+# `tool` is the name that we export, (which will be prefixed by
+# our target triplet) e.g. `ar`.  `tool_target` is the name of
+# the wrapped executable (e.g. `llvm-ar`).
+function make_tool_wrappers(toolchain, output_dir, tool, tool_target; wrapper::Function = identity)
+    # Helpful little hack to make our scripts more relocatable
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+
+    for wrapper_prefix in toolchain.wrapper_prefixes
+        tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), tool)
+        compiler_wrapper(wrapper,
+            joinpath(output_dir, "$(tool_prefixed)"),
+            "$(toolchain_prefix)/bin/$(tool_target)"
+        )
+    end
+end
+
+
+
 """
     gcc_wrappers(toolchain::CToolchain, dir::String)
 
@@ -307,138 +374,118 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
 
-    function _gcc_wrapper(tool_name, tool_target)
-        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+    function _gcc_wrapper(io)
+        # Fail out noisily if `-march` is set, but we're locking microarchitectures.
+        if toolchain.lock_microarchitecture
+            flagmatch(io, [flag"-march=.*"r]) do io
+                println(io, """
+                echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
+                exit 1
+                """)
+            end
+        end
 
-            # Fail out noisily if `-march` is set, but we're locking microarchitectures.
+        compile_flagmatch(io) do io
+            if Sys.islinux(p) || Sys.isfreebsd(p)
+                # Help GCCBootstrap find its own libraries under
+                # `/opt/${target}/${target}/lib{,64}`.  Note: we need to push them directly in
+                # the wrappers before any additional arguments because we want this path to have
+                # precedence over anything else.  In this way for example we avoid libraries
+                # from `CompilerSupportLibraries_jll` in `${libdir}` are picked up by mistake.
+                @warn("TODO: determine if this flag prepending is actually needed", maxlog=1)
+                libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
+                append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
+            end
+
             if toolchain.lock_microarchitecture
-                flagmatch(io, [flag"-march=.*"r]) do io
-                    println(io, """
-                    echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
-                    exit 1
-                    """)
-                end
-            end
-            
-            compile_flagmatch(io) do io
-                if Sys.islinux(p) || Sys.isfreebsd(p)
-                    # Help GCCBootstrap find its own libraries under
-                    # `/opt/${target}/${target}/lib{,64}`.  Note: we need to push them directly in
-                    # the wrappers before any additional arguments because we want this path to have
-                    # precedence over anything else.  In this way for example we avoid libraries
-                    # from `CompilerSupportLibraries_jll` in `${libdir}` are picked up by mistake.
-                    @warn("TODO: determine if this is actually needed", maxlog=1)
-                    libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
-                    append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
-                end
-
-                if toolchain.lock_microarchitecture
-                    append_flags(io, :PRE, get_march_flags(arch(p), march(p), "gcc"))
-                end
-
-                # Add any extra CFLAGS the user has requested of us
-                append_flags(io, :PRE, toolchain.extra_cflags)
-
-                @warn("TODO: add sanitize compile flags!", maxlog=1)
-                #sanitize_compile_flags!(p, flags)
+                append_flags(io, :PRE, get_march_flags(arch(p), march(p), "gcc"))
             end
 
-            # Force proper cxx11 string ABI usage, if it is set at all
-            if cxxstring_abi(p) == "cxx11"
-                append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=1")
-            elseif cxxstring_abi(p) == "cxx03"
-                append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=0")
+            # Add any extra CFLAGS the user has requested of us
+            append_flags(io, :PRE, toolchain.extra_cflags)
+
+            # Add on `-fsanitize-memory` if our platform has a santization tag applied
+            @warn("TODO: add sanitize compile flags!", maxlog=1)
+            #sanitize_compile_flags!(p, flags)
+        end
+
+        # Force proper cxx11 string ABI usage, if it is set at all
+        if cxxstring_abi(p) == "cxx11"
+            append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=1")
+        elseif cxxstring_abi(p) == "cxx03"
+            append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=0")
+        end
+
+        if Sys.isapple(p)
+            if os_version(p) === nothing
+                @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
             end
 
+            # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
+            if something(os_version(p), v"14") < v"16"
+                # Disable usage of `clock_gettime()`
+                append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
+            end
+
+            # Always compile for a particular minimum macOS verison
+            append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(p))")
+
+            if gcc_version.major in (4, 5)
+                push!(flags, "-Wl,-syslibroot,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root")
+            end
+        end
+
+        # Use hash of arguments to provide the random seed, for increased reproducibility,
+        # but only do this if it has not already been specified:
+        flagmatch(io, [!flag"-frandom-seed"r]) do io
+            append_flags(io, :PRE, "-frandom-seed=0x\${ARGS_HASH}")
+        end
+
+        # Add link-time-only flags
+        link_flagmatch(io) do io
+            # Yes, it does seem that the inclusion of `/lib64` on `powerpc64le` was fixed
+            # in GCC 6, broken again in GCC 7, and then fixed again in GCC 8+
+            if arch(p) == "powerpc64le" && Sys.islinux(p) && gcc_version.major in (4, 5, 7)
+                append_flags(io, :POST, [
+                    "-L$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
+                    "-Wl,-rpath-link,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
+                ])
+            end
+
+            # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
+            # to have extra space in the MachO headers so we can expand names, if necessary.
             if Sys.isapple(p)
-                if os_version(p) === nothing
-                    @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
-                end
-
-                # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
-                if something(os_version(p), v"14") < v"16"
-                    # Disable usage of `clock_gettime()`
-                    append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
-                end
-
-                # Always compile for a particular minimum macOS verison
-                append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(p))")
-
-                if gcc_version.major in (4, 5)
-                    push!(flags, "-Wl,-syslibroot,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root")
-                end
+                append_flags(io, :POST, "-headerpad_max_install_names")
             end
 
-            # Use hash of arguments to provide the random seed, for increased reproducibility,
-            # but only do this if it has not already been specified:
-            flagmatch(io, [!flag"-frandom-seed"r]) do io
-                append_flags(io, :PRE, "-frandom-seed=0x\${ARGS_HASH}")
+            # Do not embed timestamps, for reproducibility:
+            # https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/1232
+            if Sys.iswindows(p) && gcc_version ≥ v"5"
+                append_flags(io, :POST, "-Wl,--no-insert-timestamp")
             end
 
-            # Add link-time-only flags
-            link_flagmatch(io) do io
-                # Yes, it does seem that the inclusion of `/lib64` on `powerpc64le` was fixed
-                # in GCC 6, broken again in GCC 7, and then fixed again in GCC 8+
-                if arch(p) == "powerpc64le" && Sys.islinux(p) && gcc_version.major in (4, 5, 7)
-                    append_flags(io, :POST, [
-                        "-L$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
-                        "-Wl,-rpath-link,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root/lib64",
-                    ])
-                end
+            # Add any extra linker flags that the user has requested of us
+            append_flags(io, :POST, toolchain.extra_ldflags)
 
-                # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
-                # to have extra space in the MachO headers so we can expand names, if necessary.
-                if Sys.isapple(p)
-                    append_flags(io, :POST, "-headerpad_max_install_names")
-                end
-
-                # Do not embed timestamps, for reproducibility:
-                # https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/1232
-                if Sys.iswindows(p) && gcc_version ≥ v"5"
-                    append_flags(io, :POST, "-Wl,--no-insert-timestamp")
-                end
-
-                # Add any extra linker flags that the user has requested of us
-                append_flags(io, :POST, toolchain.extra_ldflags)
-
-                @warn("TODO: sanitize_link_flags()", maxlog=1)
-            end
+            @warn("TODO: sanitize_link_flags()", maxlog=1)
         end
     end
 
     @warn("TODO: Add ccache ability back in", maxlog=1)
 
-    # Generate target-specific wrappers always.  If we're a host toolchain, prefix with `host-`
-    # so that when doing a native build, you can call `host-x86_64-linux-gnu-gcc` and `x86_64-linux-gnu-gcc`
-    # separately, to disambiguate which should be used.
-    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
-    _gcc_wrapper("$(triplet_prefix)-gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-    _gcc_wrapper("$(triplet_prefix)-g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
+    # gcc, g++
+    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_target_triplet(p))-gcc"; wrapper=_gcc_wrapper)
+    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_target_triplet(p))-g++"; wrapper=_gcc_wrapper)
 
-    if toolchain.vendor == :gcc || toolchain.vendor == :gcc_bootstrap
-        _gcc_wrapper("$(triplet_prefix)-cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-        _gcc_wrapper("$(triplet_prefix)-c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
-        _gcc_wrapper("$(triplet_prefix)-cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
-    end
-
-    # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
-    # the C toolchain "vendor" is GCC!)
-    if toolchain.default_ctoolchain
-        _gcc_wrapper("gcc$(exeext(p))", "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-        _gcc_wrapper("g++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
-
-        if toolchain.vendor == :gcc || toolchain.vendor == :gcc_bootstrap
-            _gcc_wrapper("cc$(exeext(p))",  "$(gcc_target_triplet(p))-gcc$(exeext(p))")
-            _gcc_wrapper("c++$(exeext(p))", "$(gcc_target_triplet(p))-g++$(exeext(p))")
-            _gcc_wrapper("cpp$(exeext(p))", "$(gcc_target_triplet(p))-cpp$(exeext(p))")
-        end
+    if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
+        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_target_triplet(p))-gcc"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_target_triplet(p))-g++"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_target_triplet(p))-cpp"; wrapper=_gcc_wrapper)
     end
 end
 
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
-    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
 
     # Most tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = [
@@ -472,145 +519,111 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         ])
     end
 
-    # Helper function to make many tool symlinks
-    # `tool` is the name that we export, (which will be prefixed by
-    # our target triplet) e.g. `ar`.  `tool_target` is the name of
-    # the wrapped executable (e.g. `llvm-ar`).
-    function make_tool_symlinks(tool, tool_target; wrapper::Function = identity)
-        compiler_wrapper(wrapper,
-            joinpath(dir, "$(gcc_target_triplet(p))-$(tool)"),
-            "$(toolchain_prefix)/bin/$(tool_target)"
-        )
-        if toolchain.default_ctoolchain
-            compiler_wrapper(wrapper,
-                joinpath(dir, tool),
-                "$(toolchain_prefix)/bin/$(tool_target)"
-            )
+
+    # `ar` and `ranlib` have special treatment due to determinism requirements.
+    # Additionally, we use the `llvm-` prefixed tools on macOS.
+    function _ar_wrapper(io)
+        # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
+        # `ar` accepts many forms of its arguments, and we want to catch all of them.
+        println(io, raw"""
+        NONDETERMINISTIC=0
+        warn_nondeterministic() {
+            if [[ "${NONDETERMINISTIC}" != "1" ]]; then
+                echo "Non-reproducibility alert: This 'ar' invocation uses the '-U' flag which embeds timestamps." >&2
+                echo "ar flags: ${ARGS[@]}" >&2
+                echo "Continuing build, but please repent." >&2
+            fi
+            NONDETERMINISTIC=1
+        }
+        """)
+
+        # We'll start with the easy stuff; `-U` by itself, as any argument!
+        flagmatch(io, [flag"-U"]) do io
+            println(io, "warn_nondeterministic")
+        end
+
+        # However, the more traditional way to use `ar` is to mash a bunch of
+        # single-letter flags together into the first argument.  This can be
+        # preceeded by a dash, but doesn't have to be (sigh).
+        flagmatch(io, [flag"-?[^-]*U.*"r]; match_target="\${ARGS[0]}") do io
+            println(io, "warn_nondeterministic")
+        end
+
+        # Figure out if we've already set `-D`
+        flagmatch(io, [flag"-D"]) do io
+            println(io, "DETERMINISTIC=1")
+        end
+        flagmatch(io, [flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
+            println(io, "DETERMINISTIC=1")
+        end
+
+        # If we haven't already set `-U`, _and_ we haven't already set `-D`, then
+        # we'll try to set `-D`:
+        flagmatch(io, [!flag"--.*"r]; match_target="\${ARGS[0]}") do io
+            # If our first flag is not a double-dashed option, we will just
+            # slap `D` onto the end of it:
+            println(io, raw"""
+            if [[ "${NONDETERMINISTIC}" != "1" ]] && [[ "${DETERMINISTIC}" != "1" ]]; then
+                ARGS[0]="${ARGS[0]}D"
+                DETERMINISTIC="1"
+            fi
+            """)
+        end
+
+        # Eliminate the `u` option, as it's incompatible with `D` and is just an optimization
+        println(io, raw"""
+        if [[ "${DETERMINISTIC}" == "1" ]]; then
+            for ((i=0; i<"${#ARGS[@]}"; ++i)); do
+                if [[ "${ARGS[i]}" == "-u" ]]; then
+                    unset ARGS[$i]
+                fi
+            done
+
+            # Also find examles like `ar -ruD` or `ar ruD`
+            if [[ " ${ARGS[0]} " == *'u'* ]]; then
+                ARGS[0]=$(echo "${ARGS[0]}" | tr -d u)
+            fi
+        fi
+        """)
+    end
+
+    function _ranlib_wrapper(io)
+        # Warn the user if they provide `-U` in their build script
+        flagmatch(io, [flag"-[^-]*U.*"r]) do io
+            println(io, raw"""
+            echo "Non-reproducibility alert: This 'ranlib' invocation uses the '-U' flag which embeds timestamps." >&2
+            echo "ranlib flags: ${ARGS[@]}" >&2
+            echo "Continuing build, but please repent." >&2
+            """)
+        end
+
+        # If there's no `-U`, and we haven't already provided `-D`, insert it!
+        flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"]) do io
+            append_flags(io, :PRE, "-D")
         end
     end
 
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
     for tool in simple_tools
-        make_tool_symlinks("$(triplet_prefix)-$(tool)", "$(gcc_target_triplet(p))-$(tool)")
-        if toolchain.default_ctoolchain
-            make_tool_symlinks(tool, "$(gcc_target_triplet(p))-$(tool)")
-        end
+        make_tool_wrappers(toolchain, dir, tool, "$(gcc_target_triplet(p))-$(tool)")
     end
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_target_triplet(p))-c++filt"
-    make_tool_symlinks("$(triplet_prefix)-c++filt", cxxfilt_name)
-    if toolchain.default_ctoolchain
-        make_tool_symlinks("c++filt", cxxfilt_name)
-    end
-
-    # `ar` and `ranlib` have special treatment due to determinism requirements.
-    # Additionally, we use the `llvm-` prefixed tools on macOS.
-    function _ar_wrapper(tool_name, tool_target)
-        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
-            # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
-            # `ar` accepts many forms of its arguments, and we want to catch all of them.
-            println(io, raw"""
-            NONDETERMINISTIC=0
-            warn_nondeterministic() {
-                if [[ "${NONDETERMINISTIC}" != "1" ]]; then
-                    echo "Non-reproducibility alert: This 'ar' invocation uses the '-U' flag which embeds timestamps." >&2
-                    echo "ar flags: ${ARGS[@]}" >&2
-                    echo "Continuing build, but please repent." >&2
-                fi
-                NONDETERMINISTIC=1
-            }
-            """)
-
-            # We'll start with the easy stuff; `-U` by itself, as any argument!
-            flagmatch(io, [flag"-U"]) do io
-                println(io, "warn_nondeterministic")
-            end
-
-            # However, the more traditional way to use `ar` is to mash a bunch of
-            # single-letter flags together into the first argument.  This can be
-            # preceeded by a dash, but doesn't have to be (sigh).
-            flagmatch(io, [flag"-?[^-]*U.*"r]; match_target="\${ARGS[0]}") do io
-                println(io, "warn_nondeterministic")
-            end
-
-            # Figure out if we've already set `-D`
-            flagmatch(io, [flag"-D"]) do io
-                println(io, "DETERMINISTIC=1")
-            end
-            flagmatch(io, [flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
-                println(io, "DETERMINISTIC=1")
-            end
-
-            # If we haven't already set `-U`, _and_ we haven't already set `-D`, then
-            # we'll try to set `-D`:
-            flagmatch(io, [!flag"--.*"r]; match_target="\${ARGS[0]}") do io
-                # If our first flag is not a double-dashed option, we will just
-                # slap `D` onto the end of it:
-                println(io, raw"""
-                if [[ "${NONDETERMINISTIC}" != "1" ]] && [[ "${DETERMINISTIC}" != "1" ]]; then
-                    ARGS[0]="${ARGS[0]}D"
-                    DETERMINISTIC="1"
-                fi
-                """)
-            end
-
-            # Eliminate the `u` option, as it's incompatible with `D` and is just an optimization
-            println(io, raw"""
-            if [[ "${DETERMINISTIC}" == "1" ]]; then
-                for ((i=0; i<"${#ARGS[@]}"; ++i)); do
-                    if [[ "${ARGS[i]}" == "-u" ]]; then
-                        unset ARGS[$i]
-                    fi
-                done
-
-                # Also find examles like `ar -ruD` or `ar ruD`
-                if [[ " ${ARGS[0]} " == *'u'* ]]; then
-                    ARGS[0]=$(echo "${ARGS[0]}" | tr -d u)
-                fi
-            fi
-            """)
-        end
-    end
-
-    function _ranlib_wrapper(tool_name, tool_target)
-        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
-            # Warn the user if they provide `-U` in their build script
-            flagmatch(io, [flag"-[^-]*U.*"r]) do io
-                println(io, raw"""
-                echo "Non-reproducibility alert: This 'ranlib' invocation uses the '-U' flag which embeds timestamps." >&2
-                echo "ranlib flags: ${ARGS[@]}" >&2
-                echo "Continuing build, but please repent." >&2
-                """)
-            end
-
-            # If there's no `-U`, and we haven't already provided `-D`, insert it!
-            flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"]) do io
-                append_flags(io, :PRE, "-D")
-            end
-        end
-    end
+    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name)
 
     ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_target_triplet(p))-ar"
+    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper)
+
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_target_triplet(p))-ranlib"
-    _ar_wrapper("$(triplet_prefix)-ar", ar_name)
-    _ranlib_wrapper("$(triplet_prefix)-ranlib", ranlib_name)
-    if toolchain.default_ctoolchain
-        _ar_wrapper("ar", ar_name)
-        _ranlib_wrapper("ranlib", ranlib_name)
-    end
+    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper)
 
     # dlltool needs some determinism fixes as well
-    function _dlltool_wrapper(tool_name, tool_target)
-        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
+    if Sys.iswindows(p)
+        function _dlltool_wrapper(io)
             append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
         end
-    end
-    if Sys.iswindows(p)
-        _dlltool_wrapper("$(triplet_prefix)-dlltool", "$(gcc_target_triplet(p))-dlltool")
-        if toolchain.default_ctoolchain
-            _dlltool_wrapper("dlltool", "$(gcc_target_triplet(p))-dlltool")
-        end
+        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_target_triplet(p))-dlltool"; wrapper=_dlltool_wrapper)
     end
 end
 
@@ -625,35 +638,20 @@ interposed.
 function clang_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
-    triplet_prefix = toolchain.host_ctoolchain ? "host-$(gcc_target_triplet(p))" : "$(gcc_target_triplet(p))"
 
-    function _clang_wrapper(tool_name, tool_target)
-        compiler_wrapper(joinpath(dir, tool_name), "$(toolchain_prefix)/bin/$(tool_target)") do io
-            append_flags(io, :PRE, [
-                # Set the `target` for `clang` so it generates the right kind of code
-                "--target=$(gcc_target_triplet(p))",
-                # Set the sysroot
-                "--sysroot=$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root",
-                # Set the GCC toolchain location
-                "--gcc-toolchain=$(toolchain_prefix)",
-            ])
-        end
+    function _clang_wrapper(io)
+        append_flags(io, :PRE, [
+            # Set the `target` for `clang` so it generates the right kind of code
+            "--target=$(gcc_target_triplet(p))",
+            # Set the sysroot
+            "--sysroot=$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root",
+            # Set the GCC toolchain location
+            "--gcc-toolchain=$(toolchain_prefix)",
+        ])
     end
 
-    _clang_wrapper("$(triplet_prefix)-clang", "$(gcc_target_triplet(p))-clang")
-    _clang_wrapper("$(triplet_prefix)-clang++", "$(gcc_target_triplet(p))-clang++")
-
-    # Generate generalized wrapper if we're the default toolchain (woop woop) (and more if
-    # the C toolchain "vendor" is clang!)
-    if toolchain.default_ctoolchain
-        _clang_wrapper("clang", "$(gcc_target_triplet(p))-clang")
-        _clang_wrapper("clang++", "$(gcc_target_triplet(p))-clang++")
-
-        if toolchain.vendor == :clang
-            _clang_wrapper("cc", "$(gcc_target_triplet(p))-clang")
-            _clang_wrapper("c++", "$(gcc_target_triplet(p))-clang++")
-        end
-    end
+    make_tool_wrappers(toolchain, dir, "clang", "$(gcc_target_triplet(p))-clang"; wrapper=_clang_wrapper)
+    make_tool_wrappers(toolchain, dir, "clang++", "$(gcc_target_triplet(p))-clang++"; wrapper=_clang_wrapper)
 end
 
 
@@ -666,6 +664,13 @@ function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
         Platform("aarch64", "linux"),
         Platform("armv7l", "linux"),
         Platform("ppc64le", "linux"),
+
+        Platform("x86_64", "linux"; libc="musl"),
+        Platform("i686", "linux"; libc="musl"),
+        Platform("aarch64", "linux"; libc="musl"),
+        Platform("armv6l", "linux"; libc="musl"),
+        Platform("armv7l", "linux"; libc="musl"),
+
         Platform("x86_64", "windows"),
         Platform("i686", "windows"),
     ]

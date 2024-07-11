@@ -2,6 +2,15 @@ using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilde
 
 export ExtractConfig, extract!
 
+
+function guess_build_target(build::BuildResult)
+    target = guess_target(build.config)
+    if target === nothing
+        throw(ArgumentError("Cannot guess target platform for $(build); you must manually specify `platform` to `ExtractConfig()`!"))
+    end
+    return target
+end
+
 struct ExtractConfig
     # The build result we're packaging up
     build::BuildResult
@@ -12,8 +21,19 @@ struct ExtractConfig
     # The products that this package will ensure are available
     products::Vector{<:AbstractProduct}
 
+    # A `BuildResult` can actually contain multiple output prefixes; depending on how
+    # many different toolchains with different targets you ask for.  Here, you must
+    # declare which toolchain you want to extract from.  We will only allow access
+    # to that particular prefix when extracting.  Usually, this is just something
+    # like "target", and that gives access to what `$prefix` referred to within the
+    # build environment, but in the event that there were multiple build toolchains,
+    # and things were installed to `$host_prefix` or similar, this may instead be
+    # "host" and the extraction script must extract from `$host_prefix`, not `$prefix`.
+    target_spec::BuildTargetSpec
+
     # In most cases, the platform of the extraction is the platform of the build config,
-    # but occasionally we want to do things like build compilers.
+    # but occasionally we want to do things like build compilers.  The `extract_platform`
+    # denotes which 
     platform::AbstractPlatform
 
     # TODO: Add an `AuditConfig` field
@@ -25,12 +45,14 @@ struct ExtractConfig
     function ExtractConfig(build::BuildResult,
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
-                           platform::AbstractPlatform = build.config.platform.target,
+                           target_spec::BuildTargetSpec = get_default_target_spec(build.config),
+                           platform::AbstractPlatform = target_spec.platform.target,
                            audit_config = nothing)
         return new(
             build,
             String(script),
             products,
+            target_spec,
             platform,
             copy(build.config.to),
         )
@@ -41,7 +63,7 @@ BuildConfig(config::ExtractConfig) = config.build.config
 
 function Base.show(io::IO, config::ExtractConfig)
     build_config = BuildConfig(config)
-    print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(build_config.platform))")
+    print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(config.platform))")
 end
 
 function extract_content_hash(extract_script::String, products::Vector{<:AbstractProduct})
@@ -68,17 +90,19 @@ function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir
     run(config.build.exe, sandbox_config, shell)
 end
 
-function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
+function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts); kwargs...)
     # We're going to alter the mounts of the build a bit for extraction.
-    mounts = copy(config.build.mounts)
-
     # First, we're going swap out any mounts for deployed sources in `${prefix}`
     # This results in `${prefix}` containing only the files that were added by our build
-    for dest in keys(mounts)
-        if startswith(dest, "/workspace/destdir/")
-            mounts[dest] = MountInfo(mktempdir(), MountType.Overlayed)
-        end
+    # We drop any prefixes that do not match our `target_spec`.
+    target_dest = target_prefix(config.target_spec)
+
+    # Drop all `/workspace/destdir/` mounts, keeping only our `target_dest`
+    mounts = filter(mounts) do (dest, _)
+        !startswith(dest, "/workspace/destdir/")
     end
+    mounts[target_dest] = MountInfo(mktempdir(), MountType.Overlayed)
+
 
     # Insert a new metadir
     metadir = mktempdir()
@@ -86,21 +110,21 @@ function SandboxConfig(config::ExtractConfig, output_dir::String; kwargs...)
     # extraction script.  We copy here so that bash history and whatnot is preserved,
     # but unique for this extraction config.
     rm(metadir)
-    cp(mounts[metadir_prefix(config.build.config)].host_path, metadir)
+    cp(mounts[metadir_prefix()].host_path, metadir)
 
     extract_script_path = joinpath(metadir, "extract_script.sh")
     open(extract_script_path, write=true) do io
         println(io, "#!/bin/bash")
         println(io, "set -euo pipefail")
-        println(io, "source $(scripts_prefix(config.build.config))/save_env_hook")
-        println(io, "source $(scripts_prefix(config.build.config))/extraction_utils")
+        println(io, "source $(scripts_prefix())/save_env_hook")
+        println(io, "source $(scripts_prefix())/extraction_utils")
         println(io, config.script)
         println(io, "auto_install_license")
         println(io, "exit 0")
     end
     chmod(extract_script_path, 0o755)
 
-    mounts[metadir_prefix(config.build.config)] = MountInfo(metadir, MountType.Overlayed)
+    mounts[metadir_prefix()] = MountInfo(metadir, MountType.Overlayed)
 
     # Insert our extraction dir, which is a ReadWrite mount,
     # allowing us to pull the result back out from the overlay nest.
@@ -117,9 +141,10 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
     build_config = config.build.config
     meta = AbstractBuildMeta(config)
     @timeit config.to "audit" begin
-        prefix_alias = target_prefix(build_config.platform)
+        prefix_alias = target_prefix(config.target_spec)
         # Load JLLInfo structures for each dependency
-        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource)]
+        @warn("TODO: Make better way of denoting what is a dependency and what is not!", maxlog=1)
+        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource) && platforms_match(d.platform, host_if_crossplatform(config.platform))]
         return audit!(
             artifact_dir,
             LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
@@ -182,7 +207,7 @@ function extract!(config::ExtractConfig;
 
     if "extract-start" ∈ debug_modes
         @warn("Launching debug shell")
-        runshell(config; verbose)
+        runshell(config)
     end
 
     extract_log_io = IOBuffer()
@@ -190,7 +215,7 @@ function extract!(config::ExtractConfig;
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
                 sandbox_config, collector = sandbox_and_collector(extract_log_io, config, artifact_dir; verbose)
-                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix(build_config))/extract_script.sh`)
+                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix())/extract_script.sh`)
 
                 # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success
@@ -199,7 +224,7 @@ function extract!(config::ExtractConfig;
                         @error("""
                         Unable to locate $(num_unlocatable_products) products!
                         Running again with debugging enabled, then erroring out!
-                        """, platform=config.build.config.platform, run_status)
+                        """, platform=host_if_crossplatform(config.platform), run_status)
 
                         withenv("JULIA_DEBUG" => "all") do
                             count_unlocatable_products(config, artifact_dir)
@@ -215,8 +240,7 @@ function extract!(config::ExtractConfig;
                     try
                         audit_result = audit!(config, artifact_dir)
                     catch exception
-                        display(exception)
-                        @warn("Audit failed", exception)
+                        @error("Audit failed", exception=(exception, catch_backtrace()))
                         run_status = :errored
                         run_exception = exception
                     end

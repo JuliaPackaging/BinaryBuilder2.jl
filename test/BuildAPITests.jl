@@ -9,6 +9,9 @@ native_linux = Platform(native_arch, "linux")
 
 @warn("TODO: Write tests for DirectorySource patching")
 
+# Would be cool to do something like nvtpx output or something
+@warn("TODO: Write a test case that uses more than 3 platforms")
+
 @testset "BuildAPI" begin
 
 using BinaryBuilder2: next_jll_version
@@ -29,19 +32,18 @@ end
 @testset "Failing build" begin
     # This build explicitly fails because it runs `false`
     meta = BuildMeta(; verbose=false)
+    spec_plan = make_target_spec_plan()
     bad_build_config = BuildConfig(
         meta,
         "foo",
         v"1.0.0",
         [],
-        [],
-        [],
+        apply_spec_plan(spec_plan, native_linux, native_linux),
         raw"""
         env_val=pre
         false
         env_val=post
         """,
-        native_linux,
     );
     failing_build_result = build!(bad_build_config)
     @test failing_build_result.status == :failed
@@ -51,6 +53,7 @@ end
 
 @testset "Multi-stage build test" begin
     meta = BuildMeta(; verbose=false, disable_cache=true)
+    spec_plan = make_target_spec_plan()
     # First, build `libstring` from the BBToolchains testsuite
     cxx_string_abi_source =  DirectorySource(joinpath(
         pkgdir(BinaryBuilder2.BinaryBuilderToolchains),
@@ -63,8 +66,7 @@ end
         "libstring",
         v"1.0.0",
         [cxx_string_abi_source],
-        [],
-        [],
+        apply_spec_plan(spec_plan, native_linux, native_linux),
         raw"""
         cd 02_cxx_string_abi
         make libstring
@@ -73,7 +75,6 @@ end
         mkdir -p ${includedir}
         cp libstring.h ${includedir}/
         """,
-        native_linux,
     )
     libstring_build_result = build!(libstring_build_config)
     @test libstring_build_result.status == :success
@@ -103,14 +104,16 @@ end
     libstring_h_extract_result = extract!(libstring_h_extract_config)
     @test libstring_h_extract_result.status == :success
 
+    cxx_string_spec_plan = make_target_spec_plan(
+        ;target_dependencies=[ExtractResultSource(libstring_extract_result)]
+    )
     # Feed it in as a dependency to a build of `cxx_string_abi`
     cxx_string_abi_build_config = BuildConfig(
         meta,
         "cxx_string_abi",
         v"1.0.0",
         [cxx_string_abi_source],
-        [ExtractResultSource(libstring_extract_result)],
-        [],
+        apply_spec_plan(cxx_string_spec_plan, native_linux, native_linux),
         raw"""
         cd 02_cxx_string_abi
 
@@ -125,7 +128,6 @@ end
         cp build/cxx_string_abi* ${bindir}/
         touch build/
         """,
-        native_linux,
     )
     cxx_string_abi_build_result = build!(cxx_string_abi_build_config);
     @test cxx_string_abi_build_result.status == :success
@@ -157,23 +159,22 @@ end
 @testset "native zlib build test" begin
     # Test building `zlib`
     meta = BuildMeta(; verbose=false)
+    spec_plan = make_target_spec_plan()
     build_config = BuildConfig(
         meta,
         "Zlib",
         v"1.2.13",
         [
             ArchiveSource("https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.xz",
-                          "sha256:d14c38e313afc35a9a8760dadf26042f51ea0f5d154b0630a31da0540107fb98")
+                            "sha256:d14c38e313afc35a9a8760dadf26042f51ea0f5d154b0630a31da0540107fb98")
         ],
-        [],
-        [],
+        apply_spec_plan(spec_plan, native_linux, native_linux),
         """
         cd zlib*
         ./configure --prefix=\$prefix
         make -j30
         make install
         """,
-        native_linux,
     )
     build_result = build!(build_config; disable_cache=true);
     @test build_result.status == :success
@@ -244,16 +245,16 @@ using BinaryBuilder2: get_package_result
     # builds register things into it.
     universe_name = "BB2_tests-$(randstring(4))"
     meta = BuildMeta(;universe_name)
-    bootstrap_dir = joinpath(dirname(@__DIR__), "bootstrap")
+    bootstrap_dir = joinpath(pkgdir(BinaryBuilder2), "bootstrap")
 
     @testset "Zlib" begin
         # Test a `--dry-run` first!
         package_result = run_build_tarballs(meta, joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"); dry_run=true)
         @test package_result.status == :skipped
-        @test only(values(meta.builds)).status == :skipped
-        @test only(values(meta.extractions)).status == :skipped
-        @test only(values(meta.packagings)).status == :skipped
-        @test only(keys(meta.builds)).src_name == "Zlib"
+        @test all(result.status == :skipped for result in values(meta.builds))
+        @test all(result.status == :skipped for result in values(meta.extractions))
+        @test all(result.status == :skipped for result in values(meta.packagings))
+        @test all(config.src_name == "Zlib" for config in keys(meta.builds))
 
         # Test that we can take that dry run output and get everything we need for a `build_tarballs()` invocation
         build_args = extract_build_tarballs(get_package_result(meta, "Zlib"))

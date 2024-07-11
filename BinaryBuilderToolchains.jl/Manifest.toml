@@ -11,6 +11,12 @@ version = "1.1.1"
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
+[[deps.Attr_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "5fd54e3b6af15fbe2d0116891b36da11800fb0b7"
+uuid = "1fd713ca-387f-5abc-8002-d8b8b1623b73"
+version = "2.5.2+0"
+
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -212,8 +218,14 @@ deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 version = "1.10.0"
 
+[[deps.Tar_jll]]
+deps = ["Artifacts", "Attr_jll", "JLLWrappers", "Libdl", "Libiconv_jll"]
+git-tree-sha1 = "85e7d0ef5248971fbd824f29c52ab6168b895dfd"
+uuid = "9b64493d-8859-5bf3-93d7-7c32dd38186f"
+version = "1.35.0+0"
+
 [[deps.TreeArchival]]
-deps = ["SHA", "Tar", "Zstd_jll", "p7zip_jll"]
+deps = ["SHA", "Tar", "Tar_jll", "Zstd_jll", "p7zip_jll"]
 path = "../TreeArchival.jl"
 uuid = "216c6a2e-6c61-7669-6863-726165657274"
 version = "0.1.0"

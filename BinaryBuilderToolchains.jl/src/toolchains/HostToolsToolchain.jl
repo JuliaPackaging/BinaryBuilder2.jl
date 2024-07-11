@@ -1,5 +1,6 @@
 using NetworkOptions
 export HostToolsToolchain
+using Pkg.Types: VersionSpec
 
 """
     HostToolsToolchain
@@ -10,10 +11,8 @@ struct HostToolsToolchain <: AbstractToolchain
     platform::Platform
     deps::Vector{AbstractSource}
 
-    function HostToolsToolchain(platform = BBHostPlatform(), overrides=AbstractSource[])
-        peel_host(p::Platform) = p
-        peel_host(p::CrossPlatform) = p.host
-        platform = peel_host(platform)
+    function HostToolsToolchain(platform; overrides=AbstractSource[])
+        platform = host_if_crossplatform(platform)
 
         # If the user is lazy and only gives us names, just turn them into JLLSource objects
         overrides = map(overrides) do tool
@@ -33,11 +32,15 @@ struct HostToolsToolchain <: AbstractToolchain
             "file_jll",
             "flex_jll",
             "gawk_jll",
-            "GNUMake_jll",
+            # We use make v4.3, rather than the latest, because glibc's build system
+            # falls into an infinite loop with `make v4.4+`.  Eventually, we'll make
+            # it easy enough to customize that we'll just override this choice when
+            # building glibc.
+            PackageSpec(;name="GNUMake_jll", version=VersionSpec("4.3")),
             # We explcitly ask for a certain version here, because anything earlier
             # may try to use `/bin/sh` instead of `/bin/bash`, which doesn't work.
             # X-ref: https://github.com/JuliaPackaging/Yggdrasil/pull/8923
-            PackageSpec(;name="Libtool_jll", version=v"2.4.7+1"),
+            PackageSpec(;name="Libtool_jll", version=v"2.4.7+2"),
             "M4_jll",
 
             # We used to version Patchelf with date-based versions, but then
@@ -47,6 +50,7 @@ struct HostToolsToolchain <: AbstractToolchain
             PackageSpec(;name="Patchelf_jll", version=v"0.17.2+0"),
             "Perl_jll",
             "patch_jll",
+            "patchutils_jll",
 
             # Networking tools.  Note that since `CURL_jll` relies on `LibCURL_jll`
             # which is a stdlib, if the user is building for a triplet that includes

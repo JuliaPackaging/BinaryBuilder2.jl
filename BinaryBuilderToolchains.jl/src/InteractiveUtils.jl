@@ -95,7 +95,7 @@ function with_toolchains(f::Function, toolchains::Vector{<:AbstractToolchain};
 
         # Generate the env, given that we know the `prefix` we've deployed to
         env = foldl(path_appending_merge, [
-            toolchain_env.(toolchains, Ref(prefix))...,
+            toolchain_env.(toolchains, (prefix,))...,
             filter_env_vars(env),
         ])
         f(prefix, env)

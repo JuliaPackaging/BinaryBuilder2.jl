@@ -74,11 +74,17 @@ end
 function Base.show(io::IO, result::ExtractResult)
     build_config = result.config.build.config
     color = status_style(result.status)
-    print(io, styled"ExtractResult($(build_config.src_name), $(build_config.src_version), $(build_config.platform)) ({$(color):$(result.status)})")
+    print(io, styled"ExtractResult($(build_config.src_name), $(build_config.src_version), $(target_platform_string(build_config))) ({$(color):$(result.status)})")
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
-Sandbox.SandboxConfig(result::ExtractResult; kwargs...) = SandboxConfig(result.config, artifact_path(result); env=result.config.build.env)
+function Sandbox.SandboxConfig(result::ExtractResult; kwargs...)
+    meta = AbstractBuildMeta(result)
+    mounts = copy(result.config.build.mounts)
+    mounts["/workspace/logs/build"] = MountInfo(artifact_path(meta.universe, result.config.build.log_artifact), MountType.ReadOnly)
+    mounts["/workspace/logs/extract"] = MountInfo(artifact_path(meta.universe, result.log_artifact), MountType.ReadOnly)
+    return SandboxConfig(result.config, artifact_path(result), mounts; env=result.config.build.env)
+end
 function runshell(result::ExtractResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
     run(result.config.build.exe, SandboxConfig(result; verbose), shell)
 end

@@ -1,0 +1,65 @@
+commit d14d343a871944bb4fdd402369845da2fdde5e0a
+Author: Elliot Saba <staticfloat@gmail.com>
+Date:   Sat Jul 6 07:26:56 2024 +0000
+
+    Do not require vendor tags in triplets
+    
+    This fixes some autodetection gone wrong when we ask GCC to build
+    `aarch64-linux-gnu`, when it's expecting something more like
+    `aarch64-unknown-linux-gnu`.
+
+diff --git a/gcc/config.host b/gcc/config.host
+index 816a0f06cb7..1b22a5ab275 100644
+--- a/gcc/config.host
++++ b/gcc/config.host
+@@ -99,7 +99,7 @@ case ${host} in
+ esac
+ 
+ case ${host} in
+-  aarch64*-*-freebsd* | aarch64*-*-linux* | aarch64*-*-fuchsia*)
++  aarch64*-*freebsd* | aarch64*-*linux* | aarch64*-*fuchsia*)
+     case ${target} in
+       aarch64*-*-*)
+ 	host_extra_gcc_objs="driver-aarch64.o"
+@@ -107,9 +107,9 @@ case ${host} in
+ 	;;
+     esac
+     ;;
+-  arm*-*-freebsd* | arm*-*-linux* | arm*-*-fuchsia*)
++  arm*-*freebsd* | arm*-*linux* | arm*-*fuchsia*)
+     case ${target} in
+-      arm*-*-*)
++      arm*-*)
+ 	host_extra_gcc_objs="driver-arm.o"
+ 	host_xmake_file="${host_xmake_file} arm/x-arm"
+ 	;;
+@@ -133,9 +133,9 @@ case ${host} in
+ 	;;
+     esac
+     ;;
+-  mips*-*-linux*)
++  mips*-*linux*)
+     case ${target} in
+-      mips*-*-linux*)
++      mips*-*linux*)
+ 	host_extra_gcc_objs="driver-native.o"
+ 	host_xmake_file="${host_xmake_file} mips/x-native"
+       ;;
+@@ -151,7 +151,7 @@ case ${host} in
+         ;;
+     esac
+     case ${host} in
+-      *-*-linux* | *-*-freebsd*)
++      *-*linux* | *-*freebsd*)
+ 	if test "${GCC}:${ac_cv_sizeof_long}" = yes:4; then
+ 	  # On powerpc*-*-linux* use -Wl,--relax to link cc1,
+ 	  # if ld is new enough, otherwise force -O1 in CFLAGS.
+@@ -270,7 +270,7 @@ case ${host} in
+     out_host_hook_obj=host-solaris.o
+     host_xmake_file="${host_xmake_file} x-solaris"
+     ;;
+-  *-*-linux*)
++  *-*linux*)
+     out_host_hook_obj=host-linux.o
+     host_xmake_file="${host_xmake_file} x-linux"
+     ;;

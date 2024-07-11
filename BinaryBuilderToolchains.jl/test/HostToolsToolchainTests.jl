@@ -12,13 +12,12 @@ const verbose = false
 
     # Download the toolchain, make sure it runs.
     # We include a host-targeted C toolchain here, because our `autotools` test requires one.
-    c_toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
+    c_toolchain = CToolchain(platform)
     with_toolchains([toolchain, c_toolchain]) do prefix, env
         # This list should more or less mirror the `default_tools` in 
         host_tools = [
             # Build tools
-            "automake", "aclocal",
-            "autoconf",
+            "automake", "aclocal", "autoconf",
             "bison",
             "ccache",
             "file",

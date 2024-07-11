@@ -1,12 +1,16 @@
 High-priority list:
-
+ - Teach universes to pull down General registry from fork, scan registered JLLs and build map of buildcache hashes to JLL versions.
+   - JLLGenerator needs to encode build hashes.
+     - Top-level BB hash, for quick-reject
+     - Top-level package hash (all extract hashes combined)
+   - at top of build_tarballs() calculate package hash, check with buildcache for matching JLL version.
 
 
 - Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
 - Build GCCBootstrap for all linuces
   - Already have `x86_64-linux-gnu` and `aarch64-linux-gnu`, need to do the rest and publish from BinaryBuilder2.
 - Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
-  - Build Clang via GCCBoostrap
+  - Build Clang via GCCBootstrap
   - Look into this: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
 - Expand GCCBootstrap for Windows
   - Ensure that we have the patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)

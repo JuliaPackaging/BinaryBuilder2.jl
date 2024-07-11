@@ -1,13 +1,26 @@
-using BinaryBuilder2
+using BinaryBuilder2, Pkg
+
+
 
 host = Platform(arch(HostPlatform()), "linux")
 # The platforms we build for are themselves CrossPlatforms
 platforms = [
+    # Glibc linuces
     CrossPlatform(host => Platform("x86_64", "linux")),
     CrossPlatform(host => Platform("i686", "linux")),
     CrossPlatform(host => Platform("aarch64", "linux")),
+    CrossPlatform(host => Platform("armv6l", "linux")),
     CrossPlatform(host => Platform("armv7l", "linux")),
     CrossPlatform(host => Platform("ppc64le", "linux")),
+
+    # musl linuces
+    CrossPlatform(host => Platform("x86_64", "linux"; libc="musl")),
+    CrossPlatform(host => Platform("i686", "linux"; libc="musl")),
+    CrossPlatform(host => Platform("aarch64", "linux"; libc="musl")),
+    CrossPlatform(host => Platform("armv6l", "linux"; libc="musl")),
+    CrossPlatform(host => Platform("armv7l", "linux"; libc="musl")),
+
+    # Windows platforms
     CrossPlatform(host => Platform("x86_64", "windows")),
     CrossPlatform(host => Platform("i686", "windows")),
 ]
@@ -72,10 +85,17 @@ build_tarballs(;
             "e316477a914f567eccc34d5d29785b8b0f5a10208d36bbacedcc39048ecfe024"),
         DirectorySource(joinpath(@__DIR__, "./bundled"))
     ],
-    # This is not fully registered yet, it should have been
-    # built as part of this universe earlier on in our bootstrap
     host_dependencies = [
-        JLLSource("CrosstoolNG_jll"),
+        # This is not registered yet, so we just use one that I pushed up
+        JLLSource(
+            "CrosstoolNG_jll",
+            host;
+            uuid = Base.UUID("86569e53-7a4c-551c-9ab0-bc1131c15cd4"),
+            repo = Pkg.Types.GitRepo(
+                source="https://github.com/staticfloat/CrosstoolNG_jll.jl",
+                rev="bb2/GCCBootstrap-$(triplet(host))",
+            ),
+        ),
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/
@@ -91,20 +111,25 @@ build_tarballs(;
     ct-ng upgradeconfig
 
     # Unset some things that BB automatically inserts into the environment,
-    # but which crosstool-ng rightfully complains about.
+    # but which crosstool-ng complains about.
     for TOOL in CC CXX LD AS AR FC OBJCOPY OBJDUMP RANLIB STRIP LIPO MESON NM READELF; do
-        unset "${TOOL}" "HOST${TOOL}"
+        unset "${TOOL}"
     done
+    unset "GREP_OPTIONS"
 
     # Disable some checks that ct-ng performs
     export CT_ALLOW_BUILD_AS_ROOT_SURE=1
 
     # Do the actual build!
-    hostcc_env ct-ng build
+    ct-ng build
 
     # Fix case-insensitivity problems in netfilter headers
+    # This code is duplicated in the `LinuxKernelHeaders` recipe,
+    # since this JLL contains them too.
+    GCC_TARGET=$(basename $(compgen -G ${host_bindir}/*-gcc))
+    GCC_TARGET=${GCC_TARGET%*-gcc}
     if [[ "${target}" == *linux* ]]; then
-        NF="${prefix}/${target}/sysroot/usr/include/linux/netfilter"
+        NF="${host_prefix}/${GCC_TARGET}/sysroot/usr/include/linux/netfilter"
         for NAME in CONNMARK DSCP MARK RATEEST TCPMSS; do
             mv "${NF}/xt_${NAME}.h" "${NF}/xt_${NAME}_.h"
         done
@@ -113,22 +138,10 @@ build_tarballs(;
         done
         mv "${NF}_ipv6/ip6t_HL.h" "${NF}_ipv6/ip6t_HL_.h"
     fi
-
-    # Get GCC's target tuple
-    GCC_TARGET=$(basename $(compgen -G ${bindir}/*-gcc))
-    GCC_TARGET=${GCC_TARGET%*-gcc}
     """,
     platforms,
-    products;
-    toolchains=[
-        HostToolsToolchain(
-            host,
-            [
-                # We require make v4.3, rather than the latest, because GCC's build system
-                # falls into an infinite loop with `make v4.4+`.
-                JLLSource("GNUMake_jll", host; version=BinaryBuilder2.VersionSpec("4.3")),
-            ],
-        ),
-    ],
+    products,
     host,
+    # No target toolchains, only the host one.
+    target_toolchains = [],
 )

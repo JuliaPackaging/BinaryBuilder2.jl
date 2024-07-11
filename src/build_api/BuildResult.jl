@@ -96,10 +96,15 @@ end
 function Base.show(io::IO, result::BuildResult)
     config = result.config
     color = status_style(result.status)
-    print(io, styled"BuildResult($(config.src_name), $(config.src_version), $(config.platform)) ({$(color):$(result.status)})")
+    print(io, styled"BuildResult($(config.src_name), $(config.src_version), $(target_platform_string(config))) ({$(color):$(result.status)})")
 end
 
-Sandbox.SandboxConfig(result::BuildResult; kwargs...) = SandboxConfig(result.config, result.mounts; kwargs...)
+function Sandbox.SandboxConfig(result::BuildResult; kwargs...)
+    meta = AbstractBuildMeta(result)
+    mounts = copy(result.mounts)
+    mounts["/workspace/logs/build"] = MountInfo(artifact_path(meta.universe, result.log_artifact), MountType.ReadOnly)
+    return SandboxConfig(result.config, mounts; kwargs...)
+end
 
 function runshell(result::BuildResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
     run(result.exe, SandboxConfig(result; verbose, result.env), shell)
@@ -146,7 +151,7 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
 end
 
 function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})
-    return parse_env_block(String(read(exe, config, mounts, "$(metadir_prefix(config))/env")))
+    return parse_env_block(String(read(exe, config, mounts, "$(metadir_prefix())/env")))
 end
 
 function parse_env_block(env_string::AbstractString)

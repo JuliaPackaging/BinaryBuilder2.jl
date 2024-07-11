@@ -496,7 +496,11 @@ end
 
 function Base.BinaryPlatforms.select_platform(jll::JLLInfo, platform::AbstractPlatform = HostPlatform())
     builds = Dict(jart.platform => jart for jart in jll.builds)
-    return Base.BinaryPlatforms.select_platform(builds, platform)
+    jart = Base.BinaryPlatforms.select_platform(builds, platform)
+    if jart === nothing
+        throw(ArgumentError("No matching platform for $(platform) found in $(jll.builds)"))
+    end
+    return jart
 end
 
 # For historical reasons, our UUIDs are generated with some rather strange constants

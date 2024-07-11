@@ -11,11 +11,7 @@ build_tarballs(;
                         "68162f342243cd4189ed7c1f4e3bb1302caa3f2cbbf8331879bd01fe06c60cd3"),
         DirectorySource(joinpath(@__DIR__, "./bundled")),
     ],
-    host_dependencies = [
-        # These need to have been built for the target already!
-        # Note that in this recipe, the "target" is actually the host that
-        # we will be performing bootstrap on, so it's a good bet that these
-        # already exist!
+    target_dependencies = [
         JLLSource("Ncurses_jll"),
         JLLSource("Zlib_jll"),
     ],
@@ -41,7 +37,7 @@ build_tarballs(;
     # Build crosstool-ng
     # The extra CFLAGS here are because the `kconfig/` directory of `crosstool-ng` doesn't
     # pay attention to the actual location of `ncurses`, it just directly looks for `panel.h`
-    CFLAGS="-I${prefix}/include/ncursesw" ./configure --prefix=${prefix}
+    CFLAGS="-I${includedir}/ncursesw" ./configure --prefix=${prefix}
     make -j${nproc} V=1
     make -j${nproc} install
 
@@ -57,7 +53,7 @@ build_tarballs(;
         CT_LIBEXEC_DIR="$(dirname ${SCRIPT_DIR})/libexec/crosstool-ng"
         CT_DOC_DIR="$(dirname ${SCRIPT_DIR})/share/doc/crosstool-ng"
     )
-    "${SCRIPT_DIR}/ct-ng-real" "$@" "${MAKE_ARGS[@]}"
+    make -rf "${SCRIPT_DIR}/ct-ng-real" "$@" "${MAKE_ARGS[@]}"
     EOF
     chmod +x ${bindir}/ct-ng
     """,

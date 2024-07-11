@@ -17,11 +17,6 @@ git-tree-sha1 = "5fd54e3b6af15fbe2d0116891b36da11800fb0b7"
 uuid = "1fd713ca-387f-5abc-8002-d8b8b1623b73"
 version = "2.5.2+0"
 
-[[deps.AutoHashEquals]]
-git-tree-sha1 = "45bb6705d93be619b81451bb2006b7ee5d4e4453"
-uuid = "15f4f7f2-30c1-5605-9d31-71845cf9641f"
-version = "0.2.0"
-
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -143,9 +138,9 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "b596241ca2d0024f571f33a42876af76c428888e"
+path = "/home/sabae/.julia/dev/JLLPrefixes"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.3.9"
+version = "0.3.10"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -241,9 +236,9 @@ version = "0.4.1"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "3da7367955dcc5c54c1ba4d402ccdc09a1a3e046"
+git-tree-sha1 = "a028ee3cb5641cccc4c24e90c36b0a4f7707bdf5"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.13+1"
+version = "3.0.14+0"
 
 [[deps.OrderedCollections]]
 git-tree-sha1 = "dfdf5519f235516220579f949664f1bf44e741c5"
@@ -304,10 +299,10 @@ uuid = "2792f1a3-b283-48e8-9a74-f99dce5104f3"
 version = "0.1.0"
 
 [[deps.RegistryTools]]
-deps = ["AutoHashEquals", "LibGit2", "Pkg", "SHA", "UUIDs"]
-git-tree-sha1 = "3dd9eaa965a2925b0a34d994b4d886d797f54b20"
+deps = ["LibGit2", "Pkg", "SHA", "UUIDs"]
+git-tree-sha1 = "c0ac28884fab9ae94ed8cf3448aa950afc2ff9c1"
 uuid = "d1eb7eb1-105f-429d-abf5-b0f65cb9e2c4"
-version = "2.2.3"
+version = "2.3.0"
 
 [[deps.SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
@@ -315,9 +310,9 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-git-tree-sha1 = "492330c04efc3962cfb4a2567ed3567c9d8e7e90"
+git-tree-sha1 = "0f7b398a74a9fd40e7286f4ae352ba959fe52151"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
-version = "2.0.1"
+version = "2.0.2"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -376,7 +371,7 @@ uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 version = "0.5.24"
 
 [[deps.TreeArchival]]
-deps = ["SHA", "Tar", "Zstd_jll", "p7zip_jll"]
+deps = ["SHA", "Tar", "Tar_jll", "Zstd_jll", "p7zip_jll"]
 path = "TreeArchival.jl"
 uuid = "216c6a2e-6c61-7669-6863-726165657274"
 version = "0.1.0"
@@ -390,9 +385,9 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 
 [[deps.UserNSSandbox_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "815d13b522d97499451de6d7573183f70c556d3e"
+git-tree-sha1 = "d69d0c21b9d350df4729eb33b6fbaf1777ea8872"
 uuid = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
-version = "2023.9.26+0"
+version = "2024.6.23+0"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]

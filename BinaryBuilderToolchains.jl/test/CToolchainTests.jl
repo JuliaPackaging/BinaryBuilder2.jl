@@ -11,7 +11,7 @@ function capture_output(cmd)
     return p, output
 end
 
-function toolchain_tests(prefix, env, platform)
+function toolchain_tests(toolchain, prefix, env, platform)
     testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
     cd(testsuite_path) do
         # Run our entire test suite first
@@ -24,24 +24,25 @@ function toolchain_tests(prefix, env, platform)
 
         # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
         # `cxxstring_abi` defines showing in the build log:
-        @test haskey(platform.target, "cxxstring_abi")
-        cxxstring_abi_define = string(
-            "-D_GLIBCXX_USE_CXX11_ABI=",
-            platform.target["cxxstring_abi"] == "cxx11" ? "1" : "0",
-        )
+        if toolchain.vendor ∈ (:gcc, :gcc_bootstrap)
+            @test haskey(platform.target, "cxxstring_abi")
+            cxxstring_abi_define = string(
+                "-D_GLIBCXX_USE_CXX11_ABI=",
+                platform.target["cxxstring_abi"] == "cxx11" ? "1" : "0",
+            )
 
-        # Turn on verbose wrappers, and ensure we're using `g++` on all platforms
-        debug_env = copy(env)
-        debug_env["BB_WRAPPERS_VERBOSE"] = "true"
-        debug_env["CXX"] = "g++"
-        p, debug_out = capture_output(setenv(`make cleancheck-02_cxx_string_abi`, debug_env))
-        @test success(p)
-        @test occursin(cxxstring_abi_define, debug_out)
+            # Turn on verbose wrappers
+            debug_env = copy(env)
+            debug_env["BB_WRAPPERS_VERBOSE"] = "true"
+            p, debug_out = capture_output(setenv(`make cleancheck-02_cxx_string_abi`, debug_env))
+            @test success(p)
+            @test occursin(cxxstring_abi_define, debug_out)
+        end
     end
 
     # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
     for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
-        @test success(setenv(`$(wrapper) --version`))
+        @test success(setenv(`$(wrapper) --version`, env))
     end
 end
 
@@ -49,19 +50,19 @@ end
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
-    @test toolchain.vendor ∈ (:gcc, :clang)
+    toolchain = CToolchain(platform)
+    @test BinaryBuilderToolchains.get_vendor(toolchain) ∈ (:gcc, :clang)
     @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
 
     # Download the toolchain, make sure it runs
     with_toolchains([toolchain]) do prefix, env
-        toolchain_tests(prefix, env, platform)
+        toolchain_tests(toolchain, prefix, env, platform)
     end
 
     # Do the same, but with `GCCBootstrap`
-    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true, vendor = :bootstrap)
+    toolchain = CToolchain(platform; vendor = :bootstrap)
     with_toolchains([toolchain]) do prefix, env
-        toolchain_tests(prefix, env, platform)
+        toolchain_tests(toolchain, prefix, env, platform)
     end
 
     # Time for an advanced test: let's ensure that when deploying two CToolchains,
@@ -76,8 +77,8 @@ end
             # Create "host toolchain" with extra flags to link against the host prefix
             # In BB, this usually points to something like `/usr/local/`
             host_ctoolchain = CToolchain(platform;
-                host_ctoolchain = true,
-                default_ctoolchain = false,
+                env_prefixes=["HOST_"],
+                wrapper_prefixes=["host-"],
                 extra_ldflags=["-L$(host_prefix)/lib"],
                 extra_cflags=["-I$(host_prefix)/include"],
             )
@@ -85,8 +86,6 @@ end
             # Create "target toolchain" with extra flags to link against the target prefix
             # In BB, this usually points to something like `/workspace/destdir/$(target)`
             target_ctoolchain = CToolchain(platform;
-                host_ctoolchain = false,
-                default_ctoolchain = true,
                 extra_ldflags=["-L$(target_prefix)/lib"],
                 extra_cflags=["-I$(target_prefix)/include"],
             )
@@ -98,7 +97,7 @@ end
             host_version = 1
             target_version = 2
             for (toolchains, install_prefix, cc, libfoo_version) in (
-                    ([host_ctoolchain,   hosttools_toolchain], host_prefix,   "\${HOSTCC}",  host_version),
+                    ([host_ctoolchain,   hosttools_toolchain], host_prefix,   "\${HOST_CC}",  host_version),
                     ([target_ctoolchain, hosttools_toolchain], target_prefix, "\${CC}",      target_version))
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do
@@ -115,7 +114,7 @@ end
             # include path searched by the preprocessor and linker is correct:
             with_toolchains([host_ctoolchain, target_ctoolchain, hosttools_toolchain]) do prefix, env
                 cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation")) do
-                    for (version, install_prefix, cc) in ((host_version, host_prefix, "\${HOSTCC}"),
+                    for (version, install_prefix, cc) in ((host_version, host_prefix, "\${HOST_CC}"),
                                                           (target_version, target_prefix, "\${CC}"))
                         # Run preprocessor on `usesfoo.c`, print out `LIBFOO_VERSION`
                         p, output = capture_output(addenv(Cmd(["/bin/bash", "-c", "$(cc) -dM -E usesfoo.c"]), env))

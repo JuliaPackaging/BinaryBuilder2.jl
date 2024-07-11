@@ -11,12 +11,21 @@ build_tarballs(;
     ],
     script = raw"""
     cd $WORKSPACE/srcdir/zlib*
-    ./configure --prefix=${prefix}
-    make install -j${nproc}
+    CONFIGURE_FLAGS=()
+    MAKE_FLAGS=()
+    if [[ ${target} == *mingw* ]]; then
+        CONFIGURE_FLAGS+=( --sharedlibdir=${bindir} )
+        MAKE_FLAGS+=( SHAREDLIB=libz.dll SHAREDLIBM=libz-1.dll SHAREDLIBV=libz-1.2.11.dll LDSHAREDLIBC= )
+    fi
+    
+    ./configure --prefix=${prefix} "${CONFIGURE_FLAGS[@]}"
+    make install -j${nproc} "${MAKE_FLAGS[@]}"
     """,
     products = [
         LibraryProduct("libz", :libz),
     ],
-    # We're only building for the host here, as this is part of bootstrap
-    platforms = [host_linux],
+    host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
+    target_toolchains = [CToolchain(;vendor=:bootstrap)],
+    #platforms = [host_linux],
+    platforms = supported_platforms(),
 )

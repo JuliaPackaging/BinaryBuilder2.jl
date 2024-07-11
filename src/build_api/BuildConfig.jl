@@ -1,11 +1,14 @@
 using Base.BinaryPlatforms
 using TimerOutputs, Sandbox, BinaryBuilderToolchains
-using BinaryBuilderToolchains: gcc_platform, gcc_target_triplet, platform, path_appending_merge
+using BinaryBuilderToolchains: gcc_platform, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
 using MultiHashParsing, SHA, OutputCollectors
 
 export BuildConfig, build!, cleanup
+
+
+
 
 """
     BuildConfig
@@ -27,10 +30,9 @@ struct BuildConfig
     # The source version; this may not be what the resultant JLL gets published under, but it will
     # be recorded as metadata in the JLL itself.  We store this as a string because upstream version
     # numbers aren't always VersionNumber-compatible, and we want to store the precise upstream version.
+    # If no explicit `version_series` is given in the packaging step, we will attempt to parse this
+    # version as a `VersionNumber` and use its `major.minor` as the version series to publish under.
     src_version::String
-
-    # PackageSpec's that we depend on (for future consumption by the packaging step)
-    pkg_deps::Vector{PackageSpec}
 
     # AbstractSources that must be installed in the build environment.
     # Contains sources, host dependencies, target dependencies, and toolchains.
@@ -38,80 +40,65 @@ struct BuildConfig
     # `/workspace/srcdir` for sources, `/workspace/destdir/$(triplet)` for dependencies, etc...)
     source_trees::Dict{String,Vector{<:AbstractSource}}
     env::Dict{String,String}
-    toolchains::Vector{<:AbstractToolchain}
-
-    # Flags that influence the build environment and the generated compiler wrappers
-    allow_unsafe_flags::Bool
-    lock_microarchitecture::Bool
 
     # Bash script that will perform the actual build itself
     script::String
 
-    # The cross-platform we're using for this build, the `host` is the host of the
-    # actual sandbox itself, the `target` is the toolchains we're embedding.
-    platform::CrossPlatform
+    # In general, `toolchains` will have only a single entry, because
+    # we will be building a library to run on a particular machine.  However, we
+    # fully support building more complex projects, such as compilers that are
+    # made on the `build` machine, to run on the `host` machine, to themselves
+    # build things for the `target` machine.  In such a situation, we need
+    # toolchains for both the `host` and `target` present (and likely `build` too,
+    # if there's any bootstrapping to be done).  This dictionary maps from `name`
+    # (such as "host" or "target") to groups of toolchains.  See the comments in
+    # `split_toolchains()` for more.
+    target_specs::Vector{BuildTargetSpec}
 
     # We're going to store all sorts of timing information about our build in here
     to::TimerOutput
 
-    # Our content hash; we compute it once up-front because we may need to ask for it multiple times
+    # Our content hash; we cache it because we may need to ask for it multiple times
     content_hash::Ref{Union{Nothing,SHA1Hash}}
 
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
                          src_version::Union{VersionNumber, String},
                          sources::Vector,
-                         target_dependencies::Vector,
-                         host_dependencies::Vector,
-                         script::AbstractString,
-                         target::AbstractPlatform;
-                         host::AbstractPlatform = default_host(),
-                         toolchains::Vector = default_toolchains(CrossPlatform(host, target)),
-                         allow_unsafe_flags::Bool = false,
-                         lock_microarchitecture::Bool = true,
+                         target_specs::Vector{BuildTargetSpec},
+                         script::AbstractString;
                          kwargs...,
                          )
         sources = Vector{AbstractSource}(sources)
-        target_dependencies = Vector{AbstractSource}(target_dependencies)
-        host_dependencies = Vector{AbstractSource}(host_dependencies)
-        toolchains = Vector{AbstractToolchain}(toolchains)
-        # We're building for this cross_platform
-        cross_platform = CrossPlatform(
-            host,
-            target,
-        )
+        if count(bts -> :host ∈ bts.flags, target_specs) != 1
+            throw(ArgumentError("Invalid `target_specs`, must have exactly one marked as `:host`!"))
+        end
+        host = get_host_target_spec(target_specs).platform.host
 
-        # Helper functions to determine where different types of toolchains end up
-        # We put the "host" toolchain in a separate location because there are cases where we want to
-        # compile from aarch64-linux-gnu -> aarch64-linux-gnu, but use e.g. different GCC versions.
-        # So it's easiest if we separate the host toolchian from any other potential triplet target.
-        toolchain_prefix(toolchain::AbstractToolchain) = "/opt/$(gcc_target_triplet(platform(toolchain)))"
-        toolchain_prefix(toolchain::HostToolsToolchain) = "/opt/host"
-
+        # Dependencies for each target's prefix
+        target_deps = [target_prefix(bts) => bts.dependencies for bts in target_specs]
         source_trees = Dict{String,Vector{AbstractSource}}(
             # Target dependencies
-            target_prefix(cross_platform) => target_dependencies,
-            # Host dependencies (not including toolchains, those go in `/opt/host`)
-            host_prefix(cross_platform) => host_dependencies,
+            target_deps...,
             # The actual sources we're gonna build
-            source_prefix(cross_platform) => sources,
+            source_prefix() => sources,
 
             # BB shell scripts
-            scripts_prefix(cross_platform) => [DirectorySource(
+            scripts_prefix() => [DirectorySource(
                 joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts")
             )],
 
             # Metadata such as our build script
-            metadir_prefix(cross_platform) => [GeneratedSource() do out_dir
+            metadir_prefix() => [GeneratedSource() do out_dir
                 # Generate a `.bashrc` that contains all sorts of `source` statements and whatnot
                 bashrc_path = joinpath(out_dir, ".bashrc")
                 open(bashrc_path; write=true) do io
                     println(io, "#!/bin/bash")
-                    println(io, "export PATH=\${PATH}:$(scripts_prefix(cross_platform))/bin")
-                    println(io, "source $(scripts_prefix(cross_platform))/shell_customization")
+                    println(io, "export PATH=$(scripts_prefix())/bin:\${PATH}")
+                    println(io, "source $(scripts_prefix())/shell_customization")
 
                     # Always keep this one last, since it starts saving bash history from that point on.
-                    println(io, "source $(scripts_prefix(cross_platform))/save_env_hook")
+                    println(io, "source $(scripts_prefix())/save_env_hook")
                 end
                 chmod(bashrc_path, 0o755)
 
@@ -119,7 +106,7 @@ struct BuildConfig
                 open(script_path, write=true) do io
                     println(io, "#!/bin/bash")
                     println(io, "set -euo pipefail")
-                    println(io, "source $(metadir_prefix(cross_platform))/.bashrc")
+                    println(io, "source $(metadir_prefix())/.bashrc")
 
                     # Save history on every DEBUG invocation
                     println(io, "trap save_history DEBUG")
@@ -132,14 +119,12 @@ struct BuildConfig
                 chmod(script_path, 0o755)
             end]
         )
+
+
+        ## Environment setup
         env = Dict{String,String}()
-        for toolchain in toolchains
-            tc_prefix = toolchain_prefix(toolchain)
-            if !haskey(source_trees, tc_prefix)
-                source_trees[tc_prefix] = AbstractSource[]
-            end
-            append!(source_trees[tc_prefix], toolchain_sources(toolchain))
-            env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
+        for bts in target_specs
+            env, source_trees = apply_toolchains(bts, env, source_trees)
         end
 
         # Deduplicate JLLs; we tend to have a lot of duplicates, this ensures that
@@ -153,35 +138,15 @@ struct BuildConfig
             source_trees[prefix] = [non_jlls..., jlls...]
         end
 
-        target_prefix_path = target_prefix(cross_platform)
-        host_prefix_path = host_prefix(cross_platform)
         env = path_appending_merge(env, Dict(
             # Things to work well with a shell
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
             "TERM" => "xterm-256color",
+            "TERMINFO" => "/lib/terminfo",
             "WORKSPACE" => "/workspace",
-            "HISTFILE" => "$(metadir_prefix(cross_platform))/.bash_history",
-            "HOME" => metadir_prefix(cross_platform),
-
-            # Platform-targeting niceties
-            "target" => "$(gcc_target_triplet(cross_platform.target))",
-            "bb_full_target" => "$(triplet(cross_platform.target))",
-            "prefix" => target_prefix_path,
-            "bindir" => "$(target_prefix_path)/bin",
-            "libdir" => "$(target_prefix_path)/lib",
-            "shlibdir" => Sys.iswindows(cross_platform.target) ? "$(target_prefix_path)/bin" : "$(target_prefix_path)/lib",
-            "includedir" => "$(target_prefix_path)/include",
-            "dlext" => dlext(cross_platform.target)[2:end],
-
-            # The same things, repeated for `host`
-            "MACHTYPE" => "$(gcc_target_triplet(cross_platform.host))",
-            "host" => "$(gcc_target_triplet(cross_platform.host))",
-            "bb_full_host" => "$(triplet(cross_platform.host))",
-            "host_prefix" => host_prefix_path,
-            "host_bindir" => "$(host_prefix_path)/bin",
-            "host_libdir" => "$(host_prefix_path)/lib",
-            "host_shlibdir" => Sys.iswindows(cross_platform.host) ? "$(host_prefix_path)/bin" : "$(host_prefix_path)/lib",
-            "host_includedir" => "$(host_prefix_path)/include",
+            "HISTFILE" => "$(metadir_prefix())/.bash_history",
+            "HOME" => metadir_prefix(),
+            "MACHTYPE" => "$(triplet(gcc_platform(host)))",
 
             # Misc. pieces of information
             "BB_PRINT_COMMANDS" => "true",
@@ -193,23 +158,124 @@ struct BuildConfig
             meta,
             string(src_name),
             string(src_version),
-            [d.package for d in target_dependencies if isa(d, JLLSource)],
             source_trees,
             env,
-            toolchains,
-            allow_unsafe_flags,
-            lock_microarchitecture,
             string(script),
-            cross_platform,
+            target_specs,
             TimerOutput(),
             Ref{Union{SHA1Hash,Nothing}}(nothing),
         )
     end
 end
 AbstractBuildMeta(config::BuildConfig) = config.meta
+get_host_target_spec(config::BuildConfig) = get_host_target_spec(config.target_specs)
+function get_target_spec(config::BuildConfig, name::String)
+    for bts in config.target_specs
+        if bts.name == name
+            return bts
+        end
+    end
+    return nothing
+end
+#=
+"""
+    target_mapping(config::BuildConfig)
+
+Returns dictionary mapping target name (e.g. "host", "target", etc...) to the
+cross-platform representing the cross compiler used to compile for each target.
+For most builds, this will contain two mappings, one for the host, one for the
+target, however for more complicated builds there can be more than just those.
+"""
+function target_mapping(toolchains_mapping::Dict{String,<:Vector{<:AbstractToolchain}})
+    mapping = Dict{String,CrossPlatform}()
+    for (name, toolchains) in toolchains_mapping
+        target_toolchains = filter(is_target_toolchain, toolchains)
+        if isempty(target_toolchains)
+            continue
+        end
+        mapping[name] = first(target_toolchains).platform
+    end
+    return mapping
+end
+target_mapping(config::BuildConfig) = target_mapping(config.toolchains)
+BBHostPlatform(config::BuildConfig) = first(values(target_mapping(config))).host
+
+function host_mapping_key(mapping::Dict{String,CrossPlatform})
+    if haskey(mapping, "build")
+        return "build"
+    elseif haskey(mapping, "host")
+        return "host"
+    else
+        return nothing
+    end
+end
+host_mapping_key(config::BuildConfig) = host_mapping_key(target_mapping(config))
+
+function guess_target_key(mapping::Dict{String,CrossPlatform})
+    if haskey(mapping, "build") && haskey(mapping, "host")
+        return "host"
+    elseif haskey(mapping, "host") && haskey(mapping, "target")
+        return "target"
+    else
+        return nothing
+    end
+end
+guess_target_key(config::BuildConfig) = guess_target_key(target_mapping(config))
+
+function guess_target(mapping::Dict{String,CrossPlatform})
+    if length(mapping) == 2 && haskey(mapping, "target")
+        # Simple case that 99% of people will be using
+        return return mapping["target"].target
+    elseif length(mapping) == 3 && haskey(mapping, "target") && haskey(mapping, "host")
+        # Canuck mode oot and aboot.  Only the bravest souls,
+        # Tim Horton's in hand, will attempt a build like this.
+        return CrossPlatform(mapping["host"].target => mapping["target"].target)
+    else
+        # Science has gone too far!
+        return nothing
+    end
+end
+guess_target(config::BuildConfig) = guess_target(target_mapping(config))
+=#
+function target_platform_string(config::BuildConfig)
+    function get_spec_by_name(name)
+        for bts in config.target_specs
+            if bts.name == name
+                return bts
+            end
+        end
+        return nothing
+    end
+    function is_canadian()
+        return length(config.target_specs) == 3 &&
+               get_spec_by_name("build") !== nothing &&
+               get_spec_by_name("host") !== nothing &&
+               get_spec_by_name("target") !== nothing
+    end
+    host = get_host_target_spec(config.target_specs).platform.host
+    if length(config.target_specs) == 2
+        idx = findfirst(bts -> :host ∉ bts.flags, config.target_specs)
+        target = config.target_specs[idx].platform.target
+        return string(triplet(host), " => ", triplet(target))
+    elseif is_canadian()
+        # Canuck mode oot and aboot.  Only the bravest souls,
+        # Tim Horton's in hand, will attempt a build like this.
+        return string(
+            triplet(get_spec_by_name("build").platform.target),
+            " => ",
+            triplet(get_spec_by_name("host").platform.target),
+            " => ",
+            triplet(get_spec_by_name("target").platform.target),
+        )
+    else
+        # Science has gone too far!
+        return string(triplet(host), " => ?")
+    end
+end
+get_default_target_spec(config::BuildConfig) = get_default_target_spec(config.target_specs)
 
 function Base.show(io::IO, config::BuildConfig)
-    print(io, "BuildConfig($(config.src_name), $(config.src_version), $(config.platform))")
+    print(io, "BuildConfig($(config.src_name), $(config.src_version), $(target_platform_string(config)))")
 end
 
 function BinaryBuilderSources.content_hash(config::BuildConfig)
@@ -221,10 +287,13 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
         @timeit config.to "content_hash" begin
             # Metadata about the build itslef,
             println(hash_buffer, "[build_metadata]")
-            println(hash_buffer, "  platform = $(triplet(config.platform))")
-            println(hash_buffer, "  allow_unsafe_flags = $(config.allow_unsafe_flags)")
-            println(hash_buffer, "  lock_microarchitecture = $(config.lock_microarchitecture)")
             println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
+
+            # A section on our targets
+            println(hash_buffer, "[target_specs]")
+            for bts in config.target_specs
+                println(hash_buffer, "  $(bts.name): ", triplet(bts.platform))
+            end
 
             # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
             println(hash_buffer, "[source_trees]")
@@ -247,16 +316,11 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
     return config.content_hash[]::SHA1Hash
 end
 
-target_prefix(cross_platform::CrossPlatform) = string("/workspace/destdir/", triplet(cross_platform.target))
-host_prefix(cross_platform::CrossPlatform) = "/usr/local" #string("/workspace/destdir/", triplet(cross_platform.host))
-source_prefix(cross_platform::CrossPlatform) = "/workspace/srcdir"
-scripts_prefix(cross_platform::CrossPlatform) = "/workspace/scripts"
-metadir_prefix(cross_platform::CrossPlatform) = "/workspace/metadir"
-target_prefix(config::BuildConfig) = target_prefix(config.platform)
-host_prefix(config::BuildConfig) = host_prefix(config.platform)
-source_prefix(config::BuildConfig) = source_prefix(config.platform)
-scripts_prefix(config::BuildConfig) = scripts_prefix(config.platform)
-metadir_prefix(config::BuildConfig) = metadir_prefix(config.platform)
+# Helpers so I don't have to hard-code paths everywhere
+host_prefix() = "/usr/local"
+source_prefix() = "/workspace/srcdir"
+scripts_prefix() = "/workspace/scripts"
+metadir_prefix() = "/workspace/metadir"
 
 # Helper function to better control when we download all our deps
 # Ideally, this would be paralellized somehow.
@@ -274,7 +338,8 @@ function prepare(config::BuildConfig; verbose::Bool = false)
                     # if we build, e.g. `Zlib_jll`, we use that `Zlib_jll` for everything
                     # in the rest of the build.
                     cp(dirname(environment_path(universe)), project_dir; force=true)
-                    prepare(deps; verbose, project_dir, depot=depot_path(universe))
+                    # This verbose needs like a `verbose = verbose_level >= 2` or something
+                    prepare(deps; verbose=false, project_dir, depot=depot_path(universe))
                 end
             end
         end
@@ -288,19 +353,17 @@ function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String 
     # This is the temporary directory into which we will unpack/deploy sources,
     # run the actual build itself, etc...
     mounts = Dict{String,MountInfo}(
-        "/" => MountInfo(Sandbox.debian_rootfs(;platform = config.platform.host), MountType.Overlayed),
+        "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
     )
 
     @timeit config.to "deploy" begin
         for (idx, (prefix, srcs)) in enumerate(config.source_trees)
-            mount_type = MountType.Overlayed
-
             # Strip leading slashes so that `joinpath()` works as expected,
             # prefix with `idx` so that we can overlay multiple disparate folders
             # onto eachother in the sandbox, without clobbering each directory on
             # the host side.
             host_path = joinpath(deploy_root, string(idx, "-", lstrip(prefix, '/')))
-            mounts[prefix] = MountInfo(host_path, mount_type)
+            mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
 
             # Avoid deploying a second time if we're coming at this a second time
             if !isdir(host_path)
@@ -332,8 +395,8 @@ function SandboxConfig(config::BuildConfig,
         stdout,
         stderr,
         verbose,
-        # TODO: Add `config.platform.target` here as well!
-        multiarch = [config.platform.host],
+        # TODO: Add targets here as well, for bootstrapping!
+        multiarch = [get_host_target_spec(config).platform.host],
         kwargs...,
     )
 end
@@ -362,7 +425,7 @@ function sandbox_and_collector(log_io::IO,
     return sandbox_config, collector
 end
 
-function runshell(config::BuildConfig; verbose::Bool = false, shell::Cmd = `/bin/bash`)
+function runshell(config::BuildConfig; verbose::Bool = AbstractBuildMeta(config).verbose, shell::Cmd = `/bin/bash`)
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
     with_executor() do exe
@@ -438,7 +501,10 @@ function build!(config::BuildConfig;
     end
 
     @timeit config.to "build" begin
-        run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix(config))/build_script.sh`)
+        run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
+        if run_status != :success && verbose
+            @error("Build failed", run_status, run_exception)
+        end
     end
     wait(collector)
     build_log = String(take!(build_log_io))
@@ -474,6 +540,12 @@ function build!(config::BuildConfig;
 
     if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
         @warn("Launching debug shell")
+        if !verbose
+            for line in split(build_log, "\n")[end-50:end]
+                printstyled(line; color=:red)
+                println()
+            end
+        end
         runshell(result; verbose)
     end
     return result
