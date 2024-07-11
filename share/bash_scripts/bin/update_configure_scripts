@@ -1,0 +1,26 @@
+
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+AUTOCONF_SCRIPTS_DIR="$(dirname "${SCRIPT_DIR}")/autoconf_scripts"
+
+declare -A RECONF_TARGETS
+function replace_files()
+{
+    echo "Searching for ${1} files to replace..."
+    while IFS='' read -r -d '' FILE; do
+        cp -vf "${AUTOCONF_SCRIPTS_DIR}/${1}" "${FILE}"
+        RECONF_TARGETS["$(realpath "$(dirname "${FILE}")")"]="1"
+    done < <(find . -type f -name "${1}" -print0)
+}
+
+replace_files config.guess
+replace_files config.sub
+
+if [[ "${1:-}" == --reconf ]]; then
+    for d in "${!RECONF_TARGETS[@]}"; do
+        echo "Running autoreconf in $d..."
+        (cd "$d"; autoreconf -i -f)
+    done
+fi

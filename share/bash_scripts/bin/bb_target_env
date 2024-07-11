@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Copy all `HOST*` environment variables to `*`, e.g. `HOSTCC` -> `CC`, `HOSTLD` -> `LD`, etc...
+TARGET="${1}"
+shift 1
+
+TARGET_ENVS=( $(env | grep "^${TARGET}_" | cut -d'=' -f1) )
+for TARGET_ENV in "${TARGET_ENVS[@]}"; do
+    ENV="${TARGET_ENV#${TARGET}_}"
+    export "${ENV}=${!TARGET_ENV}"
+done
+
+# Then run the command line passed in to us.
+"$@"
