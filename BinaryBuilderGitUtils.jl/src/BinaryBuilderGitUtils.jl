@@ -97,14 +97,12 @@ function head_branch(repo_path::String; default::String="main")
     end
 end
 
-function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch(repo_path); verbose::Bool = false, force::Bool = true)
+function checkout!(repo_path::String, target::String, commit::HashOrString = head_branch(repo_path); verbose::Bool = false)
     if !iscommit(repo_path, commit)
         fetch!(repo_path; verbose)
     end
-    if !isdir(target)
-        run(git(["clone", "--shared", repo_path, target, quiet_args(verbose)...]))
-    end
-    run(git(["-C", target, "checkout", force_args(force)..., quiet_args(verbose)..., to_commit_str(commit)]))
+    run(git(["clone", "--shared", repo_path, target, quiet_args(verbose)...]))
+    run(git(["-C", target, "checkout", quiet_args(verbose)..., to_commit_str(commit)]))
 end
 
 function branch(repo_path::String)
