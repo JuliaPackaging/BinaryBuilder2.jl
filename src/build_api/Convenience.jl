@@ -58,6 +58,7 @@ function build_tarballs(src_name::String,
                         script::String,
                         products::Vector;
                         meta::AbstractBuildMeta = get_default_meta(),
+                        jll_name::String = src_name,
 
                         # Platform control
                         host::AbstractPlatform = default_host(),
@@ -77,7 +78,7 @@ function build_tarballs(src_name::String,
                             host_toolchains,
                             cross_compiler = isa(first(platforms), CrossPlatform)
                         ),
-                        extract_script::String = "extract \${prefix}/*",
+                        extract_scripts::Dict{String,String} = Dict(jll_name => "extract \${prefix}/*"),
                         kwargs...)
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
@@ -105,7 +106,7 @@ function build_tarballs(src_name::String,
     acceptable_statuses = (:success, :skipped, :cached)
 
     # First, build for all platforms
-    extract_results = ExtractResult[]
+    extract_results = Dict{String,Vector{ExtractResult}}(name => ExtractResult[] for (name, _) in extract_scripts)
     cleanup_tasks = Task[]
     for platform in platforms
         build_config = BuildConfig(
@@ -120,7 +121,7 @@ function build_tarballs(src_name::String,
         )
         build_result = build!(
             build_config;
-            extract_arg_hints = [(extract_script, products)],
+            extract_arg_hints = [(extract_script, products) for (_, extract_script) in extract_scripts],
             @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr, :debug_modes, :disable_cache)...,
         )
         if build_result.status ∉ acceptable_statuses
@@ -132,27 +133,29 @@ function build_tarballs(src_name::String,
                 throw_BuildError("Unexpected BuildResult status :$(build_result.status)", build_result)
             end
         end
-        extract_config = ExtractConfig(
-            build_result,
-            extract_script,
-            products;
-            platform,
-            @extract_kwargs(kwargs, :metadir)...,
-        )
-        extract_result = extract!(
-            extract_config;
-            @extract_kwargs(kwargs, :debug_modes, :disable_cache)...,
-        )
-        if extract_result.status ∉ acceptable_statuses
-            if extract_result.status == :failed
-                throw_BuildError("Extract script failed", extract_result)
-            elseif extract_result.status == :errored
-                throw_BuildError("Unknown error", extract_result)
-            else
-                throw_BuildError("Unexpected ExtractResult status :$(extract_result.status)", extract_result)
+        for (extract_name, extract_script) in extract_scripts
+            extract_config = ExtractConfig(
+                build_result,
+                extract_script,
+                products;
+                platform,
+                @extract_kwargs(kwargs, :metadir)...,
+            )
+            extract_result = extract!(
+                extract_config;
+                @extract_kwargs(kwargs, :debug_modes, :disable_cache)...,
+            )
+            if extract_result.status ∉ acceptable_statuses
+                if extract_result.status == :failed
+                    throw_BuildError("Extract script failed", extract_result)
+                elseif extract_result.status == :errored
+                    throw_BuildError("Unknown error", extract_result)
+                else
+                    throw_BuildError("Unexpected ExtractResult status :$(extract_result.status)", extract_result)
+                end
             end
+            push!(extract_results[extract_name], extract_result)
         end
-        push!(extract_results, extract_result)
 
         # In the background, cleanup the previous build result
         push!(cleanup_tasks, Threads.@spawn cleanup(build_result))
@@ -160,7 +163,8 @@ function build_tarballs(src_name::String,
     # Take those extractions, and group them together as a single package
     package_config = PackageConfig(
         extract_results;
-        @extract_kwargs(kwargs, :jll_name, :version_series, :julia_compat)...,
+        jll_name,
+        @extract_kwargs(kwargs, :version_series, :julia_compat)...,
     )
     package_result = package!(package_config)
     if package_result.status ∉ acceptable_statuses
