@@ -76,6 +76,7 @@ function prepare(sources::Vector{<:AbstractSource};
         prepare(jlls; verbose, project_dir, depot, force)
     end
     prepare.(non_jlls; verbose)
+    return nothing
 end
 function deploy(sources::Vector{<:AbstractSource}, prefix::String)
     # Special-case JLL sources, as we get a material benefit when batching those:
@@ -83,6 +84,7 @@ function deploy(sources::Vector{<:AbstractSource}, prefix::String)
     non_jlls = [s for s in sources if !isa(s, JLLSource)]
     deploy(jlls, prefix)
     deploy.(non_jlls, Ref(prefix))
+    return nothing
 end
 verify(sources::Vector{<:AbstractSource}) = all(verify.(sources))
 function content_hash(sources::Vector{<:AbstractSource})
