@@ -155,7 +155,7 @@ function unarchive(source_path::String, output_dir::String;
 
     run(pipeline(
         extract_source,
-        pipeline(`$(Tar_jll.tar()) -C $(output_dir) -x`; stderr=stderr_out),
+        pipeline(`$(Tar_jll.tar()) -C $(output_dir) -x -o`; stderr=stderr_out),
     ))
     return nothing
 end
