@@ -101,7 +101,7 @@ end
                     ([target_ctoolchain, hosttools_toolchain], target_prefix, "\${CC}",      target_version))
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do
-                        @test success(addenv(Cmd(["/bin/bash", "-c", "make install CC=$(cc) prefix=$(install_prefix) VERSION=$(libfoo_version)"]), env))
+                        @test success(setenv(Cmd(["/bin/bash", "-c", "make install CC=$(cc) prefix=$(install_prefix) VERSION=$(libfoo_version)"]), env))
                         libfoo_h_path = joinpath(install_prefix, "include", "libfoo.h")
                         @test isfile(libfoo_h_path)
                         @test contains(String(read(libfoo_h_path)), "#define LIBFOO_VERSION $(libfoo_version)")
@@ -117,7 +117,7 @@ end
                     for (version, install_prefix, cc) in ((host_version, host_prefix, "\${HOST_CC}"),
                                                           (target_version, target_prefix, "\${CC}"))
                         # Run preprocessor on `usesfoo.c`, print out `LIBFOO_VERSION`
-                        p, output = capture_output(addenv(Cmd(["/bin/bash", "-c", "$(cc) -dM -E usesfoo.c"]), env))
+                        p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "$(cc) -dM -E usesfoo.c"]), env))
                         @test success(p)
                         version_str = only(filter(l -> startswith(l, "#define LIBFOO_VERSION"), split(output, "\n")))
                         @test parse(Int, last(split(version_str," "))) == version
@@ -125,8 +125,8 @@ end
                         # Next, compile it and ensure that the library it tries to load ends
                         # with the right SOVERSION:
                         mkpath(joinpath(install_prefix, "bin"))
-                        run(addenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
-                        p, output = capture_output(addenv(`readelf -d $(install_prefix)/bin/foo`, env))
+                        run(setenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
+                        p, output = capture_output(setenv(`readelf -d $(install_prefix)/bin/foo`, env))
                         @test success(p)
                         m = match(r"Shared library: \[(libfoo[^ ]+)\]", output)
                         @test m !== nothing

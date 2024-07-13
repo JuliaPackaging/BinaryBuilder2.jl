@@ -69,7 +69,7 @@ usage with `run()` commands as follows:
 
     with_toolchains(toolchains) do prefix, env
         cd(build_path) do
-            run(addenv(`make install`, env))
+            run(setenv(`make install`, env))
         end
     end
 
