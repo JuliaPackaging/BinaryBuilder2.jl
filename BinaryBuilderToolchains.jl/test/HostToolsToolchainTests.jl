@@ -43,15 +43,15 @@ const verbose = false
         for tool in host_tools
             @testset "$tool" begin
                 # Ensure the tool comes from us
-                @test startswith(readchomp(addenv(`sh -c "which $tool"`, env)), prefix)
+                @test startswith(readchomp(setenv(`sh -c "which $tool"`, env)), prefix)
                 # Ensure it's runnable
-                @test success(addenv(`$tool --version`, env))
+                @test success(setenv(`$tool --version`, env))
             end
         end
 
         # These tools require special treatment
-        @test startswith(readchomp(addenv(`sh -c "which bzip2"`, env)), prefix)
-        @test success(pipeline(addenv(`bzip2 --version`, env), stdout=devnull))
+        @test startswith(readchomp(setenv(`sh -c "which bzip2"`, env)), prefix)
+        @test success(pipeline(setenv(`bzip2 --version`, env), stdout=devnull))
 
         # Run our more extensive test suites.
         testsuite_path = joinpath(@__DIR__, "testsuite", "HostToolsToolchain")
