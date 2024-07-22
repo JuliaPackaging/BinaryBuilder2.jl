@@ -136,7 +136,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 rev="bb2/GCCBootstrap-$(triplet(platform.host))",
                 source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
             ),
-            #version=gcc_version,
+            version=gcc_version,
         )]
     end
 
