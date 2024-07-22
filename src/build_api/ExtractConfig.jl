@@ -32,8 +32,7 @@ struct ExtractConfig
     target_spec::BuildTargetSpec
 
     # In most cases, the platform of the extraction is the platform of the build config,
-    # but occasionally we want to do things like build compilers.  The `extract_platform`
-    # denotes which 
+    # but occasionally we want to do things like build compilers, so this can be a crossplatform.
     platform::AbstractPlatform
 
     # TODO: Add an `AuditConfig` field
