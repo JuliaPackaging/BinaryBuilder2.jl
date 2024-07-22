@@ -277,20 +277,6 @@ function extract_build_tarballs(package_config::PackageConfig)
                 fail_out("BuildConfig objects do not match on $(name) dependencies!")
             end
         end
-
-        # Check that the host of the build is the same for all builds
-        if build_config.host != build_config1.host
-            fail_out("BuildConfig objects have different host platforms!")
-        end
-
-        # Check that the toolchains are consistent
-        for (idx, bts) in enumerate(build_config.target_specs)
-            bts1 = build_config1.target_specs[idx]
-            if bts1.name != bts.name ||
-               bts1.toolchains != bts.toolchain
-               fail_out("BuildConfig objects have different target specifications!")
-            end
-        end
     end
 
     # Check that all extraction's platforms are the builds' platforms
@@ -305,7 +291,7 @@ function extract_build_tarballs(package_config::PackageConfig)
     # necessary to fill out all `build_tarballs()` arguments:
     extract_config = first(extract_configs)
     build_config = extract_config.build.config
-    target_spec = get_default_target_spec(build_config)
+    spec_dict = Dict(extract_config.platform => extract_config.build.config.target_specs for extract_config in extract_configs)
     host_spec = get_host_target_spec(build_config)
 
     # Do not inherit `--dry-run` modes
@@ -316,17 +302,13 @@ function extract_build_tarballs(package_config::PackageConfig)
         :src_name => build_config.src_name,
         :src_version => build_config.src_version,
         :sources => build_config.source_trees[source_prefix()],
-        :target_dependencies => target_spec.dependencies,
-        :host_dependencies => host_spec.dependencies,
         :script => build_config.script,
         :products => extract_config.products,
         :meta => meta,
         :platforms => getproperty.(extract_configs, :platform),
-        :toolchains => host_spec.toolchains,
+        :spec_generator => (host, platform) -> spec_dict[platform],
         :host => host_spec.platform.host,
         :extract_script => extract_config.script,
-        :allow_unsafe_flags => build_config.allow_unsafe_flags,
-        :lock_microarchitecture => build_config.lock_microarchitecture,
         :jll_name => package_config.name,
         :version_series => VersionNumber(package_config.version.major, package_config.version.minor),
         :julia_compat => package_config.julia_compat,
