@@ -2,10 +2,15 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "ced855d84a221016f1dd25764706fb494ba61af5"
+project_hash = "bf09de041dc6a6f7c6289e452581e50eed95dd03"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[deps.ExprTools]]
+git-tree-sha1 = "27415f162e6028e81c72b82ef756bf321213b6ec"
+uuid = "e2ba6199-217a-4e67-a87a-7c52f15ade04"
+version = "0.1.10"
 
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]

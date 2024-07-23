@@ -1,6 +1,5 @@
 using KeywordArgumentExtraction, Test
 
-# Simple case; just take in a few arguments
 call_log = []
 function foo_simple(x::Int; verbose::Bool = false, force::Bool = false)
     push!(call_log, ["foo_simple", x, verbose, force])
@@ -43,7 +42,7 @@ function make_call_log(x, verbose, force, retry_limit)
     ]
 end
 
-@testset "simple cases" begin
+@testset "Simple cases" begin
     test_call_log(make_call_log(0, true, true, 3)) do
         driver_simple_explicit(0; verbose=true, force=true, retry_limit=3)
     end
@@ -55,7 +54,7 @@ end
         driver_matched_name(0; verbose=true, force=true, retry_limit=3)
     end
 
-    #Test that extra kwargs are silently ignored
+    # Test that extra kwargs are silently ignored
     test_call_log(make_call_log(1, false, false, 2)) do
         driver_simple_explicit(1; verbose=false, force=false, retry_limit=2, ignore_me=true)
     end
@@ -99,6 +98,43 @@ end
     test_call_log(make_nested_call_log(0, 2, true, true, 3)) do
         driver_nested(0; num_runs=2, verbose=true, force=true, retry_limit=3)
     end
+end
+
+# This function errors if kwargs are passed that are not consumed by `@auto_extract_kwargs`
+@ensure_all_kwargs_consumed function driver_simple_checked(x::Int; kwargs...)
+    @auto_extract_kwargs foo_simple(x; kwargs...)
+    @auto_extract_kwargs bar_simple(x; kwargs...)
+end
+
+function driver_complex_checked(x::Int; kwargs...)
+    @ensure_all_kwargs_consumed_header()
+    @auto_extract_kwargs foo_simple(x; kwargs...)
+    @auto_extract_kwargs bar_simple(x; kwargs...)
+    @ensure_all_kwargs_consumed_check(kwargs)
+end
+
+@ensure_all_kwargs_consumed function driver_explicit_checked(x::Int; kwargs...)
+    foo_simple(x; @extract_kwargs(kwargs, :verbose, :force)...)
+    bar_simple(x; @extract_kwargs(kwargs, :verbose, :retry_limit)...)
+end
+
+@testset "Consumption" begin
+    # Test that extra kwargs cause an error if the function is checking
+    test_call_log(make_call_log(1, false, false, 2)) do
+        driver_simple_checked(1; verbose=false, force=false, retry_limit=2)
+    end
+    @test_throws ErrorException driver_simple_checked(1; verbose=false, this_will="error")
+
+    test_call_log(make_call_log(1, false, false, 2)) do
+        driver_complex_checked(1; verbose=false, force=false, retry_limit=2)
+    end
+    @test_throws ErrorException driver_complex_checked(1; verbose=false, this_will="error")
+
+    # Also test with `@extract_kwargs`
+    test_call_log(make_call_log(1, false, false, 2)) do
+        driver_explicit_checked(1; verbose=false, force=false, retry_limit=2)
+    end
+    @test_throws ErrorException driver_explicit_checked(1; verbose=false, this_will="error")
 end
 
 function foo_no_kwargs(x::Int)

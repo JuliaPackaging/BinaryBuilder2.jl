@@ -1,6 +1,7 @@
 module KeywordArgumentExtraction
+using ExprTools
 
-export @extract_kwargs, @auto_extract_kwargs
+export @extract_kwargs, @auto_extract_kwargs, @ensure_all_kwargs_consumed, @ensure_all_kwargs_consumed_header, @ensure_all_kwargs_consumed_check
 
 """
     @extract_kwargs(kwargs, keys...)
@@ -19,8 +20,23 @@ on to the function call `foo()`.
 """
 macro extract_kwargs(kwargs, keys...)
     quote
-        Dict(k => v for (k, v) in pairs($(esc(kwargs))) if k in [$(keys...)])
+        begin
+            if $(esc(Expr(:isdefined, :consumed_kwargs)))
+                for k in [$(keys...)]
+                    push!($(esc(:consumed_kwargs)), k)
+                end
+            end
+            Dict(k => v for (k, v) in pairs($(esc(kwargs))) if k in [$(keys...)])
+        end
     end
+end
+
+function find_kwargs_splat(kwargs)
+    splat_idxs = findall(a -> Meta.isexpr(a, Symbol("...")), kwargs)
+    if length(splat_idxs) != 1
+        throw(ArgumentError("Function call must have exactly one `kwargs....` splat (found $(length(splat_idxs)))"))
+    end
+    return only(kwargs[splat_idxs[1]].args)
 end
 
 """
@@ -43,6 +59,8 @@ applicable to the target function call.  Example:
     end
 
     driver(config; verbose=true, fooify=false, barbar=false)
+
+Note that method matching is performed using only positional arguments.
 """
 macro auto_extract_kwargs(ex)
     # Ensure we've been given a function call
@@ -60,11 +78,7 @@ macro auto_extract_kwargs(ex)
     # Find the `kwargs...` splat (there must be exactly one).  This is what we
     # will extract matching keyword arguments from.
     parameters = ex.args[parameters_idxs[1]]
-    kwargs_idxs = findall(a -> Meta.isexpr(a, Symbol("...")), parameters.args)
-    if length(kwargs_idxs) != 1
-        throw(ArgumentError("Function call must have exactly one `kwargs....` splat (found $(length(kwargs_idxs)))"))
-    end
-    kwargs_name = only(parameters.args[kwargs_idxs[1]].args)
+    kwargs_name = find_kwargs_splat(parameters.args)
     kwargs_args = [a for a in parameters.args if !Meta.isexpr(a, Symbol("..."))]
 
     # Split these, as I don't know how to get `esc()` to work with a list of pairs, etc...
@@ -107,9 +121,74 @@ macro auto_extract_kwargs(ex)
             sub_kwargs = Dict(k => $(esc(kwargs_name))[k] for k in method_kwargs_names if haskey($(esc(kwargs_name)), k))
         end
 
+        if $(esc(Expr(:isdefined, :consumed_kwargs)))
+            for k in keys(sub_kwargs)
+                push!($(esc(:consumed_kwargs)), k)
+            end
+        end
+
         # Insert these sub_kwargs into a new call to our function:
         $(func_name)($(non_kwargs_args...); kwargs..., sub_kwargs...)
     end
+end
+
+macro ensure_all_kwargs_consumed_header()
+    return quote
+        $(esc(:consumed_kwargs)) = Set{Symbol}()
+    end
+end
+
+function check_kwargs_consumed(consumed_kwargs, kwargs)
+    unconsumed_kwargs = setdiff(keys(kwargs), consumed_kwargs)
+    if !isempty(unconsumed_kwargs)
+        error("Did not consume all keyword arguments: $(unconsumed_kwargs)")
+    end
+end
+
+macro ensure_all_kwargs_consumed_check(kwargs_splat_name)
+    return quote
+        $(check_kwargs_consumed)($(esc(:consumed_kwargs)), $(esc(kwargs_splat_name)))
+    end
+end
+
+"""
+    @ensure_all_kwargs_consumed(ex)
+
+Helper macro to be applied to function definitions.  Wraps the function body in
+code to ensure that all keyword arguments in a `kwargs...` splat are actually
+used when passed to `@auto_extract_kwargs` invocations.  If a keyword argument
+is not consumed, an error is raised.  The wrapped code will look like:
+
+    function foo(; kwargs...)
+        @ensure_all_kwargs_consumed_header()
+        try
+            ...
+        finally
+            @ensure_all_kwargs_consumed_check(kwargs)
+        end
+    end
+
+For functions with more complex control flow, you can use the two sub-macros
+`@ensure_all_kwargs_consumed_header()` and `@ensureall_kwargs_consumed_check()`
+at the appropriate entry and exit points in your function to assert that no
+mis-spelled keyword arguments are being ignored.
+"""
+macro ensure_all_kwargs_consumed(ex)
+    data = splitdef(ex)
+    # Find name of kwargs splat (usually `kwargs`)
+    kwargs_splat_name = find_kwargs_splat(data[:kwargs])
+
+    data[:body] = quote
+        begin
+            @ensure_all_kwargs_consumed_header()
+            try
+                $(data[:body])
+            finally
+                @ensure_all_kwargs_consumed_check($(kwargs_splat_name))
+            end
+        end
+    end
+    return esc(combinedef(data))
 end
 
 
