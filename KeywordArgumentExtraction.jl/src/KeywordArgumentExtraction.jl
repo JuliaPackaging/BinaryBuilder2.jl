@@ -68,8 +68,12 @@ macro auto_extract_kwargs(ex)
     kwargs_args = [a for a in parameters.args if !Meta.isexpr(a, Symbol("..."))]
 
     # Split these, as I don't know how to get `esc()` to work with a list of pairs, etc...
-    kwargs_args_keys = [a.args[1] for a in kwargs_args]
-    kwargs_args_vals = [esc(a.args[2]) for a in kwargs_args]
+    get_kwarg_key(s::Symbol) = s
+    get_kwarg_key(s::Expr) = s.args[1]
+    get_kwarg_value(s::Symbol) = esc(s)
+    get_kwarg_value(s::Expr) = esc(s.args[2])
+    kwargs_args_keys = get_kwarg_key.(kwargs_args)
+    kwargs_args_vals = get_kwarg_value.(kwargs_args)
 
     # Get the non-keyword arguments.  We'll use these to find the correct method to analyze.
     non_kwargs_args = esc.(filter(a -> !Meta.isexpr(a, :parameters), ex.args[2:end]))

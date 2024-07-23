@@ -19,6 +19,12 @@ function driver_simple_automatic(x::Int; kwargs...)
     @auto_extract_kwargs bar_simple(x; kwargs...)
 end
 
+# Test driver for when we pass a kwarg with the shorthand name
+function driver_matched_name(x::Int; verbose::Bool = false, kwargs...)
+    @auto_extract_kwargs foo_simple(x; verbose, kwargs...)
+    @auto_extract_kwargs bar_simple(x; verbose, kwargs...)
+end
+
 function test_call_log(f::Function, reference_call_log)
     empty!(call_log)
     f()
@@ -43,6 +49,10 @@ end
     end
     test_call_log(make_call_log(0, true, true, 3)) do
         driver_simple_automatic(0; verbose=true, force=true, retry_limit=3)
+    end
+
+    test_call_log(make_call_log(0, true, true, 3)) do
+        driver_matched_name(0; verbose=true, force=true, retry_limit=3)
     end
 
     #Test that extra kwargs are silently ignored
