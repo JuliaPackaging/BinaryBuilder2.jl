@@ -91,3 +91,17 @@ end
     end
 end
 
+function foo_no_kwargs(x::Int)
+    push!(call_log, ["foo_no_kwargs", x])
+end
+
+function driver_no_kwargs(x::Int; kwargs...)
+    @auto_extract_kwargs foo_no_kwargs(x; kwargs...)
+end
+
+@testset "Edge cases" begin
+    # Test case where we use `@auto_extract_kwargs` on something that has no kwargs
+    test_call_log([["foo_no_kwargs", 1]]) do
+        driver_no_kwargs(1; ignore_me=true)
+    end
+end
