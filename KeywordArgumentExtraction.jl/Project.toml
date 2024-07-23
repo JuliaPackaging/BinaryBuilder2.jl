@@ -1,0 +1,13 @@
+name = "KeywordArgumentExtraction"
+uuid = "45533465-3150-2073-4772-41774b207255"
+authors = ["Elliot Saba"]
+version = "1.0.0"
+
+[deps]
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
