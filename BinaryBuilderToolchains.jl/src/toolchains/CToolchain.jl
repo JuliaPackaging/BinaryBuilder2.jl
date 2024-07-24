@@ -491,13 +491,14 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     @warn("TODO: Add ccache ability back in", maxlog=1)
 
     # gcc, g++
-    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_target_triplet(p))-gcc"; wrapper=_gcc_wrapper)
-    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_target_triplet(p))-g++"; wrapper=_gcc_wrapper)
+    gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper)
+    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper)
 
     if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
-        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_target_triplet(p))-gcc"; wrapper=_gcc_wrapper)
-        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_target_triplet(p))-g++"; wrapper=_gcc_wrapper)
-        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_target_triplet(p))-cpp"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_triplet)-cpp"; wrapper=_gcc_wrapper)
     end
 end
 
@@ -621,18 +622,19 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     end
 
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
+    gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     for tool in simple_tools
-        make_tool_wrappers(toolchain, dir, tool, "$(gcc_target_triplet(p))-$(tool)")
+        make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)")
     end
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
-    cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_target_triplet(p))-c++filt"
+    cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
     make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name)
 
-    ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_target_triplet(p))-ar"
+    ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
     make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper)
 
-    ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_target_triplet(p))-ranlib"
+    ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
     make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper)
 
     # dlltool needs some determinism fixes as well
@@ -640,7 +642,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         function _dlltool_wrapper(io)
             append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
         end
-        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_target_triplet(p))-dlltool"; wrapper=_dlltool_wrapper)
+        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper)
     end
 end
 
