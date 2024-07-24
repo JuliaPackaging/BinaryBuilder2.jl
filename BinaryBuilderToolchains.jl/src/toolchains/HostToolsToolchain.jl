@@ -138,6 +138,11 @@ function toolchain_sources(toolchain::HostToolsToolchain)
             # Libtool is annoying enough that I want it to show up when using `BB_WRAPPERS_VERBOSE=1`.
             compiler_wrapper(identity, joinpath(out_dir, "libtool"), "$(toolchain_prefix)/bin/libtool")
         end
+        if any(jll.package.name == "GNUMake_jll" for jll in toolchain.deps)
+            compiler_wrapper(identity, joinpath(out_dir, "make"), "$(toolchain_prefix)/bin/make")
+            compiler_wrapper(identity, joinpath(out_dir, "gmake"), "$(toolchain_prefix)/bin/make")
+            compiler_wrapper(identity, joinpath(out_dir, "gnumake"), "$(toolchain_prefix)/bin/make")
+        end
         if any(jll.package.name == "file_jll" for jll in toolchain.deps)
             compiler_wrapper(joinpath(out_dir, "file"), "$(toolchain_prefix)/bin/file") do io
                 # Fix relocatability issues
