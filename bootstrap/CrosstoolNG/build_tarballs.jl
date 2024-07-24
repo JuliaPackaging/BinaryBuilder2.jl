@@ -1,4 +1,4 @@
-using BinaryBuilder2
+using BinaryBuilder2, Pkg
 
 # We will build for Linux for the current host
 host_linux = Platform(arch(HostPlatform()), "linux")
@@ -12,8 +12,28 @@ build_tarballs(;
         DirectorySource(joinpath(@__DIR__, "./bundled")),
     ],
     target_dependencies = [
-        JLLSource("Ncurses_jll"),
-        JLLSource("Zlib_jll"),
+        # TODO: Drop these once `Zlib_jll` on `General` is built by BB2.
+        JLLSource(
+            "Zlib_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+        JLLSource(
+            "Ncurses_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap",
+                source="https://github.com/staticfloat/Ncurses_jll.jl"
+            ),
+        ),
+        JLLSource(
+            "Readline_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap",
+                source="https://github.com/staticfloat/Readline_jll.jl"
+            ),
+        ),
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/crosstool-ng*/
@@ -56,6 +76,11 @@ build_tarballs(;
     make -rf "${SCRIPT_DIR}/ct-ng-real" "$@" "${MAKE_ARGS[@]}"
     EOF
     chmod +x ${bindir}/ct-ng
+    sed -i.bak -e 's&export \([^[:space:]]*\)[[:space:]]* = /opt/host-tools/.*&export \1 = $(shell which \1)&' ${bindir}/ct-ng-real
+    rm ${bindir}/ct-ng-real.bak
+    sed -i.bak -e 's&export \([^[:space:]]*\)="/opt/host-tools/.*"&export \1="$(which \1)"&' ${prefix}/share/crosstool-ng/paths.sh
+    rm ${prefix}/share/crosstool-ng/paths.sh.bak
+
     """,
     platforms = [host_linux],
     products = [
