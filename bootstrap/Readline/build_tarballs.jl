@@ -1,4 +1,4 @@
-using BinaryBuilder2
+using BinaryBuilder2, Pkg
 
 host_linux = Platform(arch(HostPlatform()), "linux")
 build_tarballs(;
@@ -10,7 +10,15 @@ build_tarballs(;
         FileSource("https://ftp.gnu.org/gnu/readline/readline-8.2-patches/readline82-001",
                     "bbf97f1ec40a929edab5aa81998c1e2ef435436c597754916e6a5868f273aff7"),
     ],
-    target_dependencies = [JLLSource("Ncurses_jll")],
+    target_dependencies = [
+        JLLSource(
+            "Ncurses_jll",
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap",
+                source="https://github.com/staticfloat/Ncurses_jll.jl",
+            ),
+        ),
+    ],
     script = raw"""
     cd $WORKSPACE/srcdir/readline-*/
 
@@ -28,5 +36,5 @@ build_tarballs(;
         LibraryProduct(["libreadline", "libreadline8"], :libreadline),
     ],
     # We're only building for the host here, as this is part of bootstrap
-    platforms = [host_linux],
+    platforms = supported_platforms(),
 )

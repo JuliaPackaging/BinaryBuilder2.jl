@@ -1,6 +1,5 @@
 using BinaryBuilder2
 
-host_linux = Platform(arch(HostPlatform()), "linux")
 build_tarballs(;
     src_name = "Ncurses",
     src_version = v"6.4",
@@ -27,7 +26,8 @@ build_tarballs(;
         --enable-warnings \
         --enable-assertions \
         --enable-database \
-        --without-tests
+        --without-tests \
+        --with-build-cc=${HOST_CC}
     make -j${nproc}
     make install
 
@@ -46,5 +46,5 @@ build_tarballs(;
         LibraryProduct(["libpanel", "libpanel6"], :libpanel),
     ],
     # We're only building for the host, since this is a bootstrap
-    platforms = [host_linux],
+    platforms = supported_platforms(),
 )
