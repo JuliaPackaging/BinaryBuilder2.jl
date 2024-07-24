@@ -32,6 +32,9 @@ struct CToolchain <: AbstractToolchain
     extra_cflags::Vector{String}
     extra_ldflags::Vector{String}
 
+    # Concretized versions of our tools
+    tool_versions::Dict{String,VersionNumber}
+
     function CToolchain(platform;
                         vendor = :auto,
                         env_prefixes = [""],
@@ -62,9 +65,9 @@ struct CToolchain <: AbstractToolchain
                 #       Non-default glibc version is kind of a compatibility issue....
                 @warn("TODO: Should glibc_version be embedded within the triplet?", maxlog=1)
                 if arch(platform) ∈ ("x86_64", "i686", "powerpc64le",)
-                    glibc_version = VersionSpec("2.17")
+                    glibc_version = v"2.17"
                 elseif arch(platform) ∈ ("armv7l", "aarch64")
-                    glibc_version = VersionSpec("2.19")
+                    glibc_version = v"2.19"
                 else
                     throw(ArgumentError("Unknown oldest glibc version for architecture '$(arch)'!"))
                 end
@@ -85,6 +88,20 @@ struct CToolchain <: AbstractToolchain
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         resolve_versions!(deps; julia_version=nothing)
 
+        jll_versions = Dict{String,Any}()
+        function record_jll_version(name, names)
+            for jll in deps
+                if jll.package.name ∈ names
+                    jll_versions[name] = jll.package.version
+                end
+            end
+        end
+
+        record_jll_version("GCC", ("GCC_jll", "GCCBootstrap_jll"))
+        record_jll_version("LLVM", ("Clang_jll",))
+        record_jll_version("Binutils", ("Binutils_jll",))
+        record_jll_version("Glibc", ("Glibc_jll",))
+
         return new(
             platform,
             vendor,
@@ -94,6 +111,7 @@ struct CToolchain <: AbstractToolchain
             lock_microarchitecture,
             string.(extra_cflags),
             string.(extra_ldflags),
+            jll_versions,
         )
     end
 end
@@ -136,7 +154,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 rev="bb2/GCCBootstrap-$(triplet(platform.host))",
                 source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
             ),
-            version=gcc_version,
+            version=v"9.4.0",
         )]
     end
 
@@ -160,12 +178,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
 
     if libc(platform.target) == "glibc"
         # Manual version selection, drop this once these are registered!
-        if v"2.17" ∈ glibc_version
+        if v"2.17" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
                 rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
-        elseif v"2.19" ∈ glibc_version
+        elseif v"2.19" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
                 rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
@@ -211,7 +229,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/Binutils_jll.jl"
             ),
             # eventually, include a resolved version
-            #version=binutils_version,
+            version=v"2.41.2",
         ),
         #=
         JLLSource(
@@ -369,7 +387,7 @@ however if `toolchain.default_ctoolchain` is set, also generates the generic
 wrapper names `cc`, `gcc`, `c++`, etc...
 """
 function gcc_wrappers(toolchain::CToolchain, dir::String)
-    gcc_version = only(jll.package.version for jll in toolchain.deps if jll.package.name ∈ ("GCC_jll", "GCCBootstrap_jll"))
+    gcc_version = toolchain.tool_versions["GCC"]
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
 
