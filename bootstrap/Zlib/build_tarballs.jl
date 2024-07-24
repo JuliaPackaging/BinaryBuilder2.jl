@@ -26,6 +26,5 @@ build_tarballs(;
     ],
     host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
     target_toolchains = [CToolchain(;vendor=:bootstrap)],
-    #platforms = [host_linux],
     platforms = supported_platforms(),
 )

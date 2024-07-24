@@ -1,10 +1,7 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-version = "2.0.0"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-
-[workspace]
-projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
+version = "2.0.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -20,6 +17,7 @@ Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
 HistoricalStdlibVersions = "6df8b67a-e8a0-4029-b4b7-ac196fe72102"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
+KeywordArgumentExtraction = "45533465-3150-2073-4772-41774b207255"
 LazyJLLWrappers = "21706172-204c-4d4f-5420-656854206f44"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 LocalRegistry = "89398ba2-070a-4b16-a995-9893c55d93cf"
@@ -55,3 +53,6 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Accessors", "Test"]
+
+[workspace]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]

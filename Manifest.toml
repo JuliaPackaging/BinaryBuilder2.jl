@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "c1ee65e5af83737ee13bda11cd5bced3e0d8a958"
+project_hash = "2e8b82ab63d0da0f695bc6b3232a6f661054e165"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -39,7 +39,7 @@ uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
 [[deps.BinaryBuilderProducts]]
-deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl"]
+deps = ["BinaryBuilderSources", "JLLGenerator", "KeywordArgumentExtraction", "Libdl"]
 path = "BinaryBuilderProducts.jl"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
@@ -149,6 +149,12 @@ deps = ["Artifacts", "Preferences"]
 git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
 version = "1.5.0"
+
+[[deps.KeywordArgumentExtraction]]
+deps = ["InteractiveUtils"]
+path = "KeywordArgumentExtraction.jl"
+uuid = "45533465-3150-2073-4772-41774b207255"
+version = "1.0.0"
 
 [[deps.LazilyInitializedFields]]
 git-tree-sha1 = "8f7f3cabab0fd1800699663533b6d5cb3fc0e612"
