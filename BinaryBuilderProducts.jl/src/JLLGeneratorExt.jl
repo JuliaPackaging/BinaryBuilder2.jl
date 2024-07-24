@@ -56,7 +56,7 @@ function JLLLibraryProduct(lp::LibraryProduct, prefix::String; kwargs...)
     )
 end
 function AbstractJLLProduct(lp::LibraryProduct, prefix::String; kwargs...)
-    return JLLLibraryProduct(lp, prefix; @extract_kwargs(kwargs, :env, :platform)...)
+    return @auto_extract_kwargs JLLLibraryProduct(lp, prefix; kwargs...)
 end
 
 function toposort_artifacts()

@@ -1,5 +1,6 @@
 module BinaryBuilderProducts
 using Base.BinaryPlatforms
+using KeywordArgumentExtraction
 
 export ExecutableProduct, FileProduct, FrameworkProduct, LibraryProduct, AbstractProduct, locate
 
