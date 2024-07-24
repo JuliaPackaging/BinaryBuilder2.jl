@@ -151,7 +151,7 @@ uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
 version = "1.5.0"
 
 [[deps.KeywordArgumentExtraction]]
-deps = ["InteractiveUtils"]
+deps = ["ExprTools", "InteractiveUtils"]
 path = "KeywordArgumentExtraction.jl"
 uuid = "45533465-3150-2073-4772-41774b207255"
 version = "1.0.0"
