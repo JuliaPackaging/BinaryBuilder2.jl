@@ -136,6 +136,20 @@ end
             end
         end
     end
+
+    # Ensure that `$CC --version` at least works for all of our supported platforms
+    for target in supported_platforms(CToolchain)
+        for vendor in (:auto, :bootstrap)
+            toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor)
+            with_toolchains([toolchain]) do prefix, env
+                for tool_name in ("CC", "LD", "AS")
+                    @testset "$(triplet(target)) - $(vendor) - $(tool_name)" begin
+                        @test success(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                    end
+                end
+            end
+        end
+    end
 end
 
 @warn "TODO: test macos version min?"
