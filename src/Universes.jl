@@ -3,6 +3,7 @@ using Artifacts
 using JLLGenerator
 using Random, TOML
 using BinaryBuilderGitUtils
+using KeywordArgumentExtraction
 import LazyJLLWrappers
 import LocalRegistry
 import TreeArchival
@@ -101,6 +102,7 @@ struct Universe
                       registry_url::Union{Nothing,AbstractString} = nothing,
                       persistent::Bool = false,
                       kwargs...)
+        @ensure_all_kwargs_consumed_header()
         if isempty(registries)
             throw(ArgumentError("Must pass at least one registry to `Universe()`!"))
         end
@@ -129,7 +131,7 @@ struct Universe
         end
 
         # Ensure the registries are up to date, with our commits replayed on top
-        update_and_checkout_registries!(
+        @auto_extract_kwargs update_and_checkout_registries!(
             registries,
             depot_path;
             branch_name = name === nothing ? nothing : "bb2/$(name)",
@@ -165,6 +167,7 @@ struct Universe
             end
         end
 
+        @ensure_all_kwargs_consumed_check(kwargs)
         return uni
     end
 end
@@ -330,8 +333,8 @@ function prune!(u::Universe)
     end
 end
 
-function update_and_checkout_registries!(u::Universe; kwargs...)
-    return update_and_checkout_registries!(
+@ensure_all_kwargs_consumed function update_and_checkout_registries!(u::Universe; kwargs...)
+    return @auto_extract_kwargs update_and_checkout_registries!(
         u.registries,
         u.depot_path;
         branch_name = u.name === nothing ? nothing : "bb2/$(u.name)",
