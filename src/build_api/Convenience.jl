@@ -1,4 +1,4 @@
-using BinaryBuilderProducts: @extract_kwargs
+using KeywordArgumentExtraction
 export build_tarballs, BuildError, run_build_tarballs, extract_build_tarballs
 
 struct BuildError <: Exception
@@ -80,6 +80,7 @@ function build_tarballs(src_name::String,
                         ),
                         extract_scripts::Dict{String,String} = Dict(jll_name => "extract \${prefix}/*"),
                         kwargs...)
+    @ensure_all_kwargs_consumed_header()
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
     target_dependencies = Vector{ConvenienceSource}(target_dependencies)
@@ -109,7 +110,7 @@ function build_tarballs(src_name::String,
     extract_results = Dict{String,Vector{ExtractResult}}(name => ExtractResult[] for (name, _) in extract_scripts)
     cleanup_tasks = Task[]
     for platform in platforms
-        build_config = BuildConfig(
+        build_config = @auto_extract_kwargs BuildConfig(
             meta,
             src_name,
             src_version,
@@ -117,12 +118,12 @@ function build_tarballs(src_name::String,
             spec_generator(host, platform),
             script;
             host,
-            @extract_kwargs(kwargs, :allow_unsafe_flags, :lock_microarchitecture, :env_modifier!)...,
+            kwargs...,
         )
-        build_result = build!(
+        build_result = @auto_extract_kwargs build!(
             build_config;
             extract_arg_hints = [(extract_script, products) for (_, extract_script) in extract_scripts],
-            @extract_kwargs(kwargs, :deploy_root, :stdout, :stderr, :debug_modes, :disable_cache)...,
+            kwargs...,
         )
         if build_result.status ∉ acceptable_statuses
             if build_result.status == :failed
@@ -134,16 +135,16 @@ function build_tarballs(src_name::String,
             end
         end
         for (extract_name, extract_script) in extract_scripts
-            extract_config = ExtractConfig(
+            extract_config = @auto_extract_kwargs ExtractConfig(
                 build_result,
                 extract_script,
                 products;
                 platform,
-                @extract_kwargs(kwargs, :metadir)...,
+                kwargs...,
             )
-            extract_result = extract!(
+            extract_result = @auto_extract_kwargs extract!(
                 extract_config;
-                @extract_kwargs(kwargs, :debug_modes, :disable_cache)...,
+                kwargs...,
             )
             if extract_result.status ∉ acceptable_statuses
                 if extract_result.status == :failed
@@ -161,10 +162,10 @@ function build_tarballs(src_name::String,
         push!(cleanup_tasks, Threads.@spawn cleanup(build_result))
     end
     # Take those extractions, and group them together as a single package
-    package_config = PackageConfig(
+    package_config = @auto_extract_kwargs PackageConfig(
         extract_results;
         jll_name,
-        @extract_kwargs(kwargs, :version_series, :julia_compat)...,
+        kwargs...,
     )
     package_result = package!(package_config)
     if package_result.status ∉ acceptable_statuses
@@ -172,6 +173,7 @@ function build_tarballs(src_name::String,
     end
     save_cache(meta.build_cache)
     wait.(cleanup_tasks)
+    @ensure_all_kwargs_consumed_check(kwargs)
     return package_result
 end
 

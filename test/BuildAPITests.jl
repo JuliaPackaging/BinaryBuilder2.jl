@@ -266,7 +266,7 @@ using BinaryBuilder2: get_package_result
         fail_build_args[:script] = "false"
         @test_throws BuildError build_tarballs(;fail_build_args...)
         fail_extract_args = copy(build_args)
-        fail_extract_args[:extract_script] = "false"
+        fail_extract_args[:extract_scripts] = Dict("Zlib" => "false")
         @test_throws BuildError build_tarballs(;fail_extract_args...)
     end
     @testset "Ncurses" begin

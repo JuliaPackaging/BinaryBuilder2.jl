@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0-DEV"
 manifest_format = "2.0"
-project_hash = "b042561165dc9041e842f2052df74f400064b477"
+project_hash = "d7478c900efc95b3489f9a5eb72d0d72fb79c34c"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -27,12 +27,6 @@ version = "0.2.0"
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
-[[deps.BinaryBuilder2]]
-deps = ["Artifacts", "BinaryBuilderAuditor", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "Dates", "Downloads", "Git", "HistoricalStdlibVersions", "JLLGenerator", "JLLPrefixes", "LazyJLLWrappers", "Libdl", "LocalRegistry", "MultiHashParsing", "ObjectFile", "OrderedCollections", "OutputCollectors", "Pkg", "Preferences", "Random", "Reexport", "RegistryTools", "SHA", "Sandbox", "Scratch", "StyledStrings", "TOML", "Test", "TimerOutputs", "TreeArchival", "gh_cli_jll"]
-path = "."
-uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-version = "2.0.0"
-
 [[deps.BinaryBuilderAuditor]]
 deps = ["BinaryBuilderProducts", "JLLGenerator", "ObjectFile", "Patchelf_jll"]
 path = "BinaryBuilderAuditor.jl"
@@ -52,7 +46,7 @@ uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
 [[deps.BinaryBuilderProducts]]
-deps = ["BinaryBuilderSources", "JLLGenerator", "Libdl"]
+deps = ["BinaryBuilderSources", "JLLGenerator", "KeywordArgumentExtraction", "Libdl"]
 path = "BinaryBuilderProducts.jl"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
@@ -85,7 +79,7 @@ version = "4.15.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.1.1+0"
+version = "1.1.0+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -164,10 +158,11 @@ git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
 version = "1.5.0"
 
-[[deps.JuliaSyntaxHighlighting]]
-deps = ["StyledStrings"]
-uuid = "dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"
-version = "1.11.0"
+[[deps.KeywordArgumentExtraction]]
+deps = ["InteractiveUtils"]
+path = "KeywordArgumentExtraction.jl"
+uuid = "45533465-3150-2073-4772-41774b207255"
+version = "1.0.0"
 
 [[deps.LazilyInitializedFields]]
 git-tree-sha1 = "8f7f3cabab0fd1800699663533b6d5cb3fc0e612"
@@ -203,7 +198,7 @@ version = "1.11.0"
 [[deps.LibGit2_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll"]
 uuid = "e37daf67-58a4-590a-8e99-b0245dd2ffc5"
-version = "1.8.0+0"
+version = "1.7.2+0"
 
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
@@ -227,11 +222,12 @@ uuid = "89398ba2-070a-4b16-a995-9893c55d93cf"
 version = "0.5.6"
 
 [[deps.Logging]]
+deps = ["StyledStrings"]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 version = "1.11.0"
 
 [[deps.Markdown]]
-deps = ["Base64", "JuliaSyntaxHighlighting", "StyledStrings"]
+deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 version = "1.11.0"
 
@@ -242,7 +238,7 @@ version = "2.28.6+0"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-version = "2024.3.11"
+version = "2023.12.12"
 
 [[deps.MultiHashParsing]]
 deps = ["SHA"]
@@ -282,7 +278,7 @@ version = "1.0.0"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
-version = "10.43.0+0"
+version = "10.42.0+1"
 
 [[deps.Patchelf_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
@@ -291,9 +287,9 @@ uuid = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
 version = "0.18.0+0"
 
 [[deps.Pkg]]
-deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "Random", "SHA", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.12.0"
+version = "1.11.0"
 
     [deps.Pkg.extensions]
     REPLExt = "REPL"
@@ -400,7 +396,7 @@ uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 version = "0.5.24"
 
 [[deps.TreeArchival]]
-deps = ["SHA", "Tar", "Zstd_jll", "p7zip_jll"]
+deps = ["SHA", "Tar", "Tar_jll", "Zstd_jll", "p7zip_jll"]
 path = "TreeArchival.jl"
 uuid = "216c6a2e-6c61-7669-6863-726165657274"
 version = "0.1.0"
@@ -423,7 +419,7 @@ version = "2023.9.26+0"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.3.1+0"
+version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -440,9 +436,9 @@ version = "2.35.0+0"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.60.0+0"
+version = "1.59.0+0"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
-version = "17.5.0+0"
+version = "17.4.0+2"
