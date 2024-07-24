@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "13007fa9e9e5114362719a2d27a1a2334dbf362d"
+project_hash = "855ccccc3e176989d8696d2a92c85b38b13fdde1"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -112,6 +112,12 @@ deps = ["Artifacts", "Preferences"]
 git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
 uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
 version = "1.5.0"
+
+[[deps.KeywordArgumentExtraction]]
+deps = ["InteractiveUtils"]
+path = "../KeywordArgumentExtraction.jl"
+uuid = "45533465-3150-2073-4772-41774b207255"
+version = "1.0.0"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
