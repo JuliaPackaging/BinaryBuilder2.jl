@@ -164,7 +164,7 @@ fi
 # On musl targets, disable a bunch of things we don't want
 if [[ "${target}" == *-musl* ]]; then
     GCC_CONF_ARGS+=( --disable-libssp --disable-libmpx --disable-libmudflap )
-    GCC_CONF_ARGS+=( --disable-libsanitizer --disable-symvers )
+    GCC_CONF_ARGS+=( --disable-libsanitizer --disable-symvers --enable-clocale=generic )
     export libat_cv_have_ifunc=no
     export ac_cv_have_decl__builtin_ffs=yes
 
@@ -331,7 +331,7 @@ function gcc_spec_generator(host, platform)
             "Musl_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="348ed6c4e67bb05ea03d0f39773c76eabb94afd0",
                 source="https://github.com/staticfloat/Musl_jll.jl"
             ),
             target=target_str,
