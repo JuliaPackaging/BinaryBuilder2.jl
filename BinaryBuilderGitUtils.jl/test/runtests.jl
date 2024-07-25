@@ -7,6 +7,8 @@ using BinaryBuilderGitUtils
         clone!("https://github.com/JuliaLang/Pkg.jl", pkg_path)
         @test isdir(pkg_path)
         @test head_branch(pkg_path) == "master"
+        @test isbranch(pkg_path, "master")
+        @test !isbranch(pkg_path, "this_should_never_be_a_branch_name_please_nobody_ever_make_one_named_this")
 
         our_head = "bffd0633cb73a20aacb39c641591fa9035c434a3"
         head = only(log(pkg_path, our_head; limit=1))

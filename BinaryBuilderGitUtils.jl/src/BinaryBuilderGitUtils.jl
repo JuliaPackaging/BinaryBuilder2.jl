@@ -2,7 +2,7 @@ module BinaryBuilderGitUtils
 
 using Git, MultiHashParsing, gh_cli_jll
 import Base.BinaryPlatforms: tags
-export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, rebase!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch, branch, branch!
+export iscommit, commit!, init!, fetch!, clone!, checkout!, push!, rebase!, remote_url, remote_url!, tags, tag!, log, log_between, head_branch, branch, branch!, isbranch
 
 # Easy converter of MultiHash objects to strings
 to_commit_str(x::String) = x
@@ -111,6 +111,10 @@ end
 
 function branch!(repo_path::String, branch::String; verbose::Bool = false)
     run(git(["-C", repo_path, "checkout", "-B", branch, quiet_args(verbose)...]))
+end
+
+function isbranch(repo_path::String, branch::String)
+    return success(git(["-C", repo_path, "rev-parse", "--verify", branch]))
 end
 
 function commit!(checkout_path::String, message::String; verbose::Bool = false)
