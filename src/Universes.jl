@@ -597,9 +597,20 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     rm(export_dir; force=true, recursive=true)
     mkpath(export_dir)
 
-    checkout!(jll_bare_repo, jll_path, head_branch(jll_bare_repo))
+    uni_branch_name = "bb2/$(u.name)"
     if u.name !== nothing
-        branch!(jll_path, "bb2/$(u.name)")
+        if isbranch(jll_bare_repo, uni_branch_name)
+            src_branch = uni_branch_name
+        else
+            src_branch = head_branch(jll_bare_repo)
+        end
+    else
+        src_branch = head_branch(jll_bare_repo)
+    end
+
+    checkout!(jll_bare_repo, jll_path, src_branch)
+    if u.name !== nothing
+        branch!(jll_path, uni_branch_name)
     end
 
     # First, we have to archive each artifact into a tarball
