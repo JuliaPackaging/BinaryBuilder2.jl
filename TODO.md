@@ -14,8 +14,6 @@ High-priority list:
   - Look into this: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
 - Expand GCCBootstrap for Windows
   - Ensure that we have the patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)
-- Expand GCCBootstrap for macOS
-- Expand GCCBootstrap for FreeBSD
 - Build GCC <-> Glibc baked header diff tarballs
   - Build easy "diff/core" packaging utility to analyze a set of outputs for
     shared content and create a `FooCore_jll` and `FooXYZ_jll` set of artifacts
@@ -29,7 +27,6 @@ High-priority list:
 - Build BinaryBuilderAuditor.jl
   - Use parallel workqueue
   - Output results in TOML or JSON or something machine-readable
-  - Build-in to `package!()` step
   - Auto-install license as an audit pass, not as a bash `trap` statement
 - Finish implementation of `DepotCompactor.jl` to save disk space on Yggdrasil
   - Create torture-test-suite to run a bunch of builds in parallel on a new depot, to make sure that we can share resources properly
