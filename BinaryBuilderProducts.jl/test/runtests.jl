@@ -17,6 +17,17 @@ using JLLGenerator: rtld_symbols, rtld_flags
             "93b6890109b5dc9e6e022888cef5e8d3180a4ea0eae3ceab1ce6f247b5fbc66c",
         ),
     )
+    function dlext(triplet::String)
+        if endswith(triplet, "-gnu")
+            return "so"
+        elseif endswith(triplet, "-mingw32")
+            return "dll"
+        elseif endswith(triplet, "-darwin")
+            return "dylib"
+        else
+            error("Unrecognized triplet '$(triplet)' for our little `dlext()` mockup")
+        end
+    end
     for (target, as) in artifacts_downloads
         @testset "$(target)" begin
             env = Dict(
@@ -24,6 +35,7 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 "bindir" => "/prefix/bin",
                 "libdir" => "/prefix/lib",
                 "shlibdir" => contains(target, "mingw32") ? "/prefix/bin" : "/prefix/lib",
+                "dlext" => dlext(target),
                 "bb_full_target" => target,
             )
             mktempdir() do dir
@@ -35,6 +47,8 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 true_products = [
                     (ExecutableProduct, "\${bindir}/xzdec", :xzdec),
                     (LibraryProduct, "\${shlibdir}/liblzma", :liblzma),
+                    # Also test that if someone puts a `dlext` at the end, it still works
+                    (LibraryProduct, "\${shlibdir}/liblzma.\${dlext}", :liblzma),
                     (FileProduct, "\${libdir}/liblzma.a", :liblzma_a),
                 ]
 

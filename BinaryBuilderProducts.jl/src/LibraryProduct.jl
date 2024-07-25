@@ -89,6 +89,10 @@ function locate(lp::LibraryProduct, prefix::String;
     for path in lp.paths
         path = path_prefix_transformation(LibraryProduct, path, prefix, env)
         libname = basename(path)
+        try
+            libname = first(parse_dl_name_version(libname, os(platform)))
+        catch
+        end
         @debug("Trying", path, libname)
 
         # Skip non-existant directories
