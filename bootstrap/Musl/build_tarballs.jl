@@ -32,20 +32,26 @@ musl_arch()
 }
 
 # Force an SONAME with a version number
-export LDFLAGS="-Wl,-soname,libc.musl-$(musl_target).so.1"
-${WORKSPACE}/srcdir/musl-*/configure --prefix=${prefix} \
+export LDFLAGS="-Wl,-soname,libc.musl-$(musl_arch).so.1"
+${WORKSPACE}/srcdir/musl-*/configure --prefix=/usr \
     --build=${MACHTYPE} \
     --host=${target} \
     --disable-multilib \
     --disable-werror \
     --enable-optimize \
-    --enable-debug
+    --enable-debug \
+    --disable-gcc-wrapper
 
 make -j${nproc}
-make install
+make install DESTDIR="${prefix}"
+
+# Fix wrong symlink in `lib`
+ln -sfv ../usr/lib/libc.so ${prefix}/lib/ld-musl-$(musl_arch).so.1
+ln -sfv libc.so ${prefix}/usr/lib/libc.musl-$(musl_arch).so.1
 """
 
 # For each version, build it!
+meta = BinaryBuilder2.get_default_meta()
 for version in keys(musl_version_sources)
     build_tarballs(;
         src_name = "Musl",
@@ -54,9 +60,10 @@ for version in keys(musl_version_sources)
         script,
         platforms = filter(p -> libc(p) == "musl", supported_platforms()),
         products = [
-            LibraryProduct(["libc"], :libc),
+            LibraryProduct(["usr/lib/libc"], :libc),
         ],
         host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
         target_toolchains = [CToolchain(;vendor=:bootstrap)],
+        meta,
     )
 end
