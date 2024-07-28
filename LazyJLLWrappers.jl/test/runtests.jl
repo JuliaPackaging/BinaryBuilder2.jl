@@ -1,4 +1,4 @@
-using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl
+using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl, Accessors
 
 # For more debugging info, set `io = stdout`
 function generate_and_load_jll(jllinfo, test_code::String;
@@ -26,6 +26,13 @@ function generate_and_load_jll(jllinfo, test_code::String;
             end
         end
     end
+end
+
+function only_foreign_platforms(jllinfo, host = HostPlatform())
+    jllinfo = @set jllinfo.builds = filter(jllinfo.builds) do build
+        return !platforms_match(build.platform, host)
+    end
+    return jllinfo
 end
 
 example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contrib", "example_jllinfos")
@@ -122,6 +129,17 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
             extra_preferences = Dict("vulkan_hpp_path" => dir)
         )
     end
+
+    # Test that loading a JLL with no matching platforms doesn't error.
+    generate_and_load_jll(
+        only_foreign_platforms(include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl"))),
+        """
+        @test !HelloWorldC_jll.is_available()
+        @test !isdefined(HelloWorldC_jll, :hello_world)
+        @test isdefined(HelloWorldC_jll, :eager_mode)
+        @test HelloWorldC_jll.eager_mode() === nothing
+        """,
+    )
 end
 
 # Test that `LazyLirary` support works on Julias new enough to use it

@@ -133,6 +133,13 @@ macro generate_jll_from_toml()
     platform = get_augmented_platform(jb, jll)
     build = select_artifact(jll["builds"], artifact_name, platform)
 
+    # Right off the bat, if we don't have a matching platform, we just
+    # instantly return the definition of a "dead" JLL:
+    if build === nothing
+        dead_jll_definition(jb)
+        return synthesize(jb)
+    end
+
     # Add top-level statements like exports, imports of other libraries,
     # declarations of globals, etc...
     top_level_statements(jb, build, platform)

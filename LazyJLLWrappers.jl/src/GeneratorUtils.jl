@@ -79,6 +79,19 @@ function select_artifact(artifacts, name::String, host::AbstractPlatform)
     return select_platform(artifacts, host)
 end
 
+function dead_jll_definition(jb::JLLBlocks)
+    push!(jb.top_level_blocks, :(is_available() = false))
+    push!(jb.top_level_blocks, :(eager_mode() = nothing))
+    declare_path_libpath(jb)
+end
+
+function declare_path_libpath(jb::JLLBlocks)
+    push!(jb.top_level_blocks, emit_typed_global(:PATH, Ref{String}, Ref{String}(""); isconst=true))
+    push!(jb.top_level_blocks, emit_typed_global(:LIBPATH, Ref{String}, Ref{String}(""); isconst=true))
+    push!(jb.top_level_blocks, emit_typed_global(:PATH_list, Vector{String}, String[]; isconst=true))
+    push!(jb.top_level_blocks, emit_typed_global(:LIBPATH_list, Vector{String}, String[]; isconst=true))
+end
+
 
 function top_level_statements(jb::JLLBlocks, artifact, platform)
     if VERSION >= v"1.6.0"
@@ -95,10 +108,8 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
         push!(jb.top_level_blocks, :(using $(Symbol(dep["name"]))))
     end
 
-    # Add `is_available()` definition based on whether `artifact` is `nothing` or not:
-    push!(jb.top_level_blocks, quote
-    is_available() = $(artifact !== nothing)
-    end)
+    # Add `is_available()` definition (this is false in `dead_jll_definition()`)
+    push!(jb.top_level_blocks, :(is_available() = true))
 
     # Add `export $foo` for every product
     for product in artifact["products"]
@@ -110,10 +121,7 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
     append!(jb.top_level_blocks, Meta.parse.(values(artifact["callback_defs"])))
 
     # Also add `PATH` and `LIBPATH` initialization
-    push!(jb.top_level_blocks, emit_typed_global(:PATH, Ref{String}, Ref{String}(""); isconst=true))
-    push!(jb.top_level_blocks, emit_typed_global(:LIBPATH, Ref{String}, Ref{String}(""); isconst=true))
-    push!(jb.top_level_blocks, emit_typed_global(:PATH_list, Vector{String}, String[]; isconst=true))
-    push!(jb.top_level_blocks, emit_typed_global(:LIBPATH_list, Vector{String}, String[]; isconst=true))
+    declare_path_libpath(jb)
 
     # Add our platform object, so that we can introspect the result of platform augmentation
     push!(jb.top_level_blocks, emit_typed_global(:platform, typeof(platform), Meta.parse(repr(platform)); isconst=true))
