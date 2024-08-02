@@ -161,6 +161,14 @@ function JLLProducts(result::ExtractResult)
     return products
 end
 
+function JLLBuildLicenses(name::String, result::ExtractResult)
+    licenses_dir = joinpath(artifact_path(result), "share", "licenses", name)
+    if !isdir(licenses_dir)
+        throw(ArgumentError("No `share/licenses/$(name)` directory in extraction!"))
+    end
+    filenames = readdir(licenses_dir)
+    return [JLLBuildLicense(f, String(read(joinpath(licenses_dir, f)))) for f in filenames]
+end
 
 function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
     if result.status ∉ (:success, :cached)
@@ -191,6 +199,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
                 download_sources = []
             ),
         ),
+        licenses = JLLBuildLicenses(name, result),
         products = JLLProducts(result),
     )
 end

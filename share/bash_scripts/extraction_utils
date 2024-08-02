@@ -10,7 +10,6 @@ extract() {
             CP_FLAGS=( "-a" )
             if [[ "${BB_PRINT_COMMANDS}" == "true" ]]; then
                 CP_FLAGS+=( "-v" )
-                #echo "extracting: ${file##${prefix}/}" >&2
             fi
 
             dest="${extract_dir}/${file##${prefix}/}"
@@ -26,19 +25,14 @@ install_license() {
         exit 1
     fi
     for file in "$@"; do
-        DEST="${prefix}/share/licenses/${SRC_NAME}/$(basename "${file}")"
+        DEST="${extract_dir}/share/licenses/${SRC_NAME}/$(basename "${file}")"
         echo "Installing license file \"$file\" to \"${DEST}\"..."
         install -Dm644 "${file}" "${DEST}"
     done
 }
 
-# "quiet find"
-qfind() {
-    find "$@" 2>/dev/null
-}
-
-has_license_dir() {
-    [[ -d "${prefix}/share/licenses/${SRC_NAME}" ]]
+license_dir() {
+    echo -n "${1}/share/licenses/${SRC_NAME}"
 }
 
 find_license_files() {
@@ -59,28 +53,34 @@ find_license_files() {
 
 # Function to attempt to automatically install license files
 auto_install_license() {
-    if ! has_license_dir; then
-        # The license directory doesn't exist, let's find all licenses
-        ROOTDIR="${WORKSPACE}/srcdir"
-        readarray -d '' LICENSE_FILES < <(find_license_files "${ROOTDIR}")
+    if ! [[ -d "$(license_dir "${extract_dir}")" ]]; then
+        # If there is a license directory installed in `${prefix}`, copy that over
+        if [[ -d "$(license_dir "${prefix}")" ]]; then
+            mkdir -p "$(dirname "$(license_dir "${extract_dir}")")"
+            cp -Ra "$(license_dir "${prefix}")" "$(license_dir "${extract_dir}")"
+        else
+            # The license directory doesn't exist, let's find all licenses
+            ROOTDIR="${WORKSPACE}/srcdir"
+            readarray -d '' LICENSE_FILES < <(find_license_files "${ROOTDIR}")
 
-        if [[ "${#LICENSE_FILES[@]}" == 0 ]]; then
-            # If we didn't find any license files, try again if there is a single subdirectory of `srcdir`,
-            # (excluding `patches`).  This allows us to easily unwrap single-directory srcdirs,
-            # which is a very common scenario.
-            readarray -d '' SUBDIRS < <(find "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type d -not -path "${ROOTDIR}/patches" -print0 2>/dev/null)
-            if [[ "${#SUBDIRS[@]}" == "1" ]]; then
-                readarray -d '' LICENSE_FILES < <(find_license_files "${ROOTDIR}/${SUBDIRS[0]}")
+            if [[ "${#LICENSE_FILES[@]}" == 0 ]]; then
+                # If we didn't find any license files, try again if there is a single subdirectory of `srcdir`,
+                # (excluding `patches`).  This allows us to easily unwrap single-directory srcdirs,
+                # which is a very common scenario.
+                readarray -d '' SUBDIRS < <(find "${ROOTDIR}" -mindepth 1 -maxdepth 1 -type d -not -path "${ROOTDIR}/patches" -print0 2>/dev/null)
+                if [[ "${#SUBDIRS[@]}" == "1" ]]; then
+                    readarray -d '' LICENSE_FILES < <(find_license_files "${SUBDIRS[0]}")
+                fi
             fi
-        fi
 
-        if [[ "${#LICENSE_FILES[@]}" != 0 ]]; then
-            install_license "${LICENSE_FILES[@]}"
+            if [[ "${#LICENSE_FILES[@]}" != 0 ]]; then
+                install_license "${LICENSE_FILES[@]}"
+            fi
         fi
     fi
 
     if [[ "$@" == "-c" ]]; then
         # If we pass the `-c` option, return code shows whether there is a license installed
-        has_license_dir
+        [[ -d "$(license_dir "${extract_dir}")" ]]
     fi
 }

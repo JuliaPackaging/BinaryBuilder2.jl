@@ -228,9 +228,7 @@ function extract!(config::ExtractConfig;
                         withenv("JULIA_DEBUG" => "all") do
                             count_unlocatable_products(config, artifact_dir)
                         end
-
-                        run_status = :errored
-                        run_exception = ArgumentError("Unable to locate all products")
+                        run_status = :failed
                     end
                 end
 
@@ -238,8 +236,14 @@ function extract!(config::ExtractConfig;
                     # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
                     try
                         audit_result = audit!(config, artifact_dir)
+                        if !success(audit_result)
+                            @error("Audit failed")
+                            print_results(audit_result)
+                            run_status = :failed
+                        end
                     catch exception
-                        @error("Audit failed", exception=(exception, catch_backtrace()))
+                        # this shouldn't happen, but there's a lot going on in the audit, so let's be defensive
+                        @error("Audit errored", exception=(exception, catch_backtrace()))
                         run_status = :errored
                         run_exception = exception
                     end
@@ -257,6 +261,11 @@ function extract!(config::ExtractConfig;
         Pkg.Artifacts.create_artifact() do artifact_dir
             open(joinpath(artifact_dir, "$(build_config.src_name)-extract.log"); write=true) do io
                 write(io, extract_log)
+            end
+            if audit_result !== nothing
+                open(joinpath(artifact_dir, "$(build_config.src_name)-audit.log"); write=true) do io
+                    print_results(audit_result; io)
+                end
             end
         end
     end
