@@ -74,6 +74,9 @@ end
         cp build/*.so ${shlibdir}/
         mkdir -p ${includedir}
         cp libstring.h ${includedir}/
+
+        mkdir -p ${prefix}/share/licenses/libstring
+        echo "public domain" > ${prefix}/share/licenses/libstring/LICENSE.md
         """,
     )
     libstring_build_result = build!(libstring_build_config)
