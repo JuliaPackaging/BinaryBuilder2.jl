@@ -1,3 +1,4 @@
+mozilla_ca_certs_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MPL-2.0"))
 jll = JLLInfo(;
     name = "MozillaCACerts",
     version = v"2023.1.10+0",
@@ -23,7 +24,8 @@ jll = JLLInfo(;
                     :cacert,
                     "share/cacert.pem",
                 ),
-            ]
+            ],
+            licenses = [mozilla_ca_certs_license],
         ),
 
     ]

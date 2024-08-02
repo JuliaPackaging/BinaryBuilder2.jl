@@ -1,3 +1,4 @@
+nghttp_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))
 jll = JLLInfo(;
     name = "nghttp2",
     version = v"1.52.0+1",
@@ -25,7 +26,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -51,7 +53,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -77,7 +80,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -103,7 +107,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -129,7 +134,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -155,7 +161,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -181,7 +188,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -207,7 +215,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -233,7 +242,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -259,7 +269,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -285,7 +296,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -311,7 +323,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -337,7 +350,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -363,7 +377,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -389,7 +404,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -415,7 +431,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
         JLLBuildInfo(;
@@ -441,7 +458,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [nghttp_license],
         ),
 
     ]

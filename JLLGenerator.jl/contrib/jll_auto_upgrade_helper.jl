@@ -146,7 +146,9 @@ function print_artifact_info(entry, platform, version, name)
     end
 
     println("""
-                ]
+                ],
+                # Note, you should replace this with the actual license
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
             ),
     """)
 end

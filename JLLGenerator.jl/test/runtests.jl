@@ -14,6 +14,16 @@ using JLLGenerator: rtld_symbols, rtld_flags, default_rtld_flags
     @test_throws ArgumentError rtld_symbols(0x80000000)
 end
 
+@testset "License names" begin
+    if !Sys.isapple()
+        for (name, text) in JLLGenerator.license_texts
+            poss_names = JLLGenerator.licensecheck(text).licenses_found
+            @test length(poss_names) == 1
+            @test name == only(poss_names)
+        end
+    end
+end
+
 function roundtrip_jll_through_toml(jll)
     io = IOBuffer()
     TOML.print(io, generate_toml_dict(jll))
@@ -21,6 +31,8 @@ function roundtrip_jll_through_toml(jll)
     d = TOML.parse(toml_str)
     return d, parse_toml_dict(d)
 end
+
+mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))
 
 @testset "Hand-crafted XZ_jll" begin
     # Hand-crafted XZ_jll impersonation
@@ -57,7 +69,8 @@ end
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
                     JLLLibraryProduct(:liblzma, "lib/liblzma.so.5", liblzma_deps),
-                ]
+                ],
+                licenses = [mit_license],
             ),
             JLLBuildInfo(;
                 src_version = v"5.4.3",
@@ -79,6 +92,7 @@ end
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
                     JLLLibraryProduct(:liblzma, "bin/liblzma-5.dll", liblzma_deps),
                 ],
+                licenses = [mit_license],
             ),
             JLLBuildInfo(;
                 src_version = v"5.4.3",
@@ -99,7 +113,8 @@ end
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
                     JLLLibraryProduct(:liblzma, "lib/liblzma.5.dylib", liblzma_deps),
-                ]
+                ],
+                licenses = [mit_license],
             ),
         ],
         julia_compat = "1.7",
@@ -139,6 +154,7 @@ end
 
         @test isfile(joinpath(dir, "JLL.toml"))
         @test isfile(joinpath(dir, "README.md"))
+        @test isfile(joinpath(dir, "LICENSE.md"))
         @test isfile(joinpath(dir, "Project.toml"))
         @test isfile(joinpath(dir, "src", "$(jll.name)_jll.jl"))
 
@@ -179,6 +195,7 @@ end
                         download_sources = [],
                     ),
                     products = [],
+                    licenses = [mit_license],
                 ),
                 JLLBuildInfo(;
                     src_version = v"1.2.13+1",
@@ -196,6 +213,7 @@ end
                         download_sources = [],
                     ),
                     products = [],
+                    licenses = [mit_license],
                 ),
             ]
         )
@@ -247,6 +265,27 @@ end
                         flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     ),
                 ],
+                licenses = [mit_license],
+            ),
+        ]
+    )
+end
+
+@testset "Missing Licenses" begin
+    @test_throws ArgumentError JLLInfo(;
+        name = "Zlib",
+        version = v"1.2.13+1",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.2.13+1",
+                platform = Platform("aarch64", "linux"; libc = "glibc"),
+                name = "Zlib",
+                artifact = JLLArtifactBinding(
+                    treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                    download_sources = [],
+                ),
+                products = [],
+                licenses = [],
             ),
         ]
     )
@@ -296,7 +335,8 @@ end
                             [JLLLibraryDep(nothing, :libgcc_s)],
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
-                    ]
+                    ],
+                    licenses = [mit_license],
                 ),
             ],
         )
@@ -352,7 +392,8 @@ end
                             println("this is our callback!")
                         end
                         """
-                    )
+                    ),
+                    licenses = [mit_license],
                 ),
             ],
         )
@@ -419,6 +460,7 @@ end
                     download_sources = [],
                 ),
                 products = zlib_products,
+                licenses = [mit_license],
             ),
             JLLBuildInfo(;
                 src_version = v"1.2.13+1",
@@ -430,6 +472,7 @@ end
                     download_sources = [],
                 ),
                 products = zlib_products,
+                licenses = [mit_license],
             ),
         ]
     )
@@ -448,6 +491,7 @@ end
                     download_sources = [],
                 ),
                 products = zlib_products,
+                licenses = [mit_license],
             ),
         ]
     )
@@ -491,20 +535,28 @@ using BinaryBuilderSources: PkgSpec
         uuid = "68e3532b-a499-55ff-9963-d1c0c0748b3a",
         tree_hash = Base.SHA1("4e723769ce39a7f9cba8eca2a83671358d292fe7"),
         repo=Pkg.Types.GitRepo(
-            rev="5ec0cc763fa91207e0c2327790360c2dd74ecc3d",
+            rev="3574bb57a8e29d239be1228fadbc1951ff7d50c6",
             source="https://github.com/staticfloat/Ncurses_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
+
+    ncurses_treehashes = Dict(
+        Platform("x86_64", "linux") => "sha1:878c086b5c47c2ae924784e33e207fd90d5afb10",
+        Platform("i686", "linux") => "sha1:a5c03066d3513fb920a2fa36f378d72e1a0b3b82",
+        Platform("aarch64", "linux") => "sha1:11546f8e24d870c97f4641fb950522445bb95487",
+        Platform("armv7l", "linux") => "sha1:7f0bad2b60a975368106a29aa07b1ae89f6577f9",
+        Platform("powerpc64le", "linux") => "sha1:eb1b898a44c9fb4c5d6ae1eb4d1c90896612cc4e",
+    )
 
     mktempdir() do prefix
         prepare(jll; depot=prefix)
         data = parse_toml_dict(jll; depot=prefix)
 
         @test data.name == "Ncurses"
-        @test length(data.builds) == 1
-        build = only(data.builds)
-        @test build.name == "Ncurses"
-        @test length(build.products) == 4
-        @test build.artifact.treehash == "sha1:baa68ef9a67b35dc73d5aba4bda83d7f0b9767ef"
+        for build in data.builds
+            @test build.name == "Ncurses"
+            @test length(build.products) == 4
+            @test build.artifact.treehash == ncurses_treehashes[build.platform]
+        end
     end
 end

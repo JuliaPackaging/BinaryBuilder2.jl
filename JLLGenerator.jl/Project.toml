@@ -5,7 +5,9 @@ version = "0.3.0"
 
 [deps]
 BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+LicenseCheck = "726dbf0d-6eb6-41af-b36c-cd770e0f00cc"
 MultiHashParsing = "73786568-6863-756d-6873-6168796e616d"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
@@ -20,13 +22,16 @@ BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 BinaryBuilderSourcesExt = "BinaryBuilderSources"
 
 [compat]
+BinaryBuilderPlatformExtensions = "0.1"
+LicenseCheck = "0.2"
+MultiHashParsing = "0.1"
 Reexport = "1"
 StructEquality = "2"
 julia = "1.9"
 
 [extras]
-Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "BinaryBuilderSources"]

@@ -1,3 +1,5 @@
+Base.include(@__MODULE__, joinpath(@__DIR__, "llvm_license.jl"))
+
 jll = JLLInfo(;
     name = "libLLVM",
     version = v"15.0.7+8",
@@ -41,7 +43,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -83,7 +86,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -125,7 +129,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -167,7 +172,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -209,7 +215,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -251,7 +258,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -293,7 +301,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -335,7 +344,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -377,7 +387,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -419,7 +430,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -461,7 +473,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -503,7 +516,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -545,7 +559,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -587,7 +602,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -629,7 +645,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -671,7 +688,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -713,7 +731,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -755,7 +774,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -797,7 +817,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -839,7 +860,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -881,7 +903,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -923,7 +946,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -965,7 +989,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1007,7 +1032,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1049,7 +1075,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1091,7 +1118,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1133,7 +1161,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1175,7 +1204,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1217,7 +1247,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1259,7 +1290,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1301,7 +1333,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1343,7 +1376,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1385,7 +1419,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1427,7 +1462,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1469,7 +1505,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1511,7 +1548,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1553,7 +1591,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1595,7 +1634,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1637,7 +1677,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1679,7 +1720,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1721,7 +1763,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1763,7 +1806,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1805,7 +1849,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1847,7 +1892,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1889,7 +1935,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1931,7 +1978,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -1973,7 +2021,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2015,7 +2064,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2057,7 +2107,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2099,7 +2150,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2141,7 +2193,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2183,7 +2236,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools/llvm-config",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2225,7 +2279,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2267,7 +2322,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2309,7 +2365,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -2351,7 +2408,8 @@ jll = JLLInfo(;
                     :llvm_config,
                     "tools\\llvm-config.exe",
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
     ]

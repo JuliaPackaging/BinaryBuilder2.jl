@@ -1,3 +1,100 @@
+pcre2_license = JLLBuildLicense("LICENSE.md", """
+PCRE2 LICENCE
+-------------
+
+PCRE2 is a library of functions to support regular expressions whose syntax
+and semantics are as close as possible to those of the Perl 5 language.
+
+Releases 10.00 and above of PCRE2 are distributed under the terms of the "BSD"
+licence, as specified below, with one exemption for certain binary
+redistributions. The documentation for PCRE2, supplied in the "doc" directory,
+is distributed under the same terms as the software itself. The data in the
+testdata directory is not copyrighted and is in the public domain.
+
+The basic library functions are written in C and are freestanding. Also
+included in the distribution is a just-in-time compiler that can be used to
+optimize pattern matching. This is an optional feature that can be omitted when
+the library is built.
+
+
+THE BASIC LIBRARY FUNCTIONS
+---------------------------
+
+Written by:       Philip Hazel
+Email local part: Philip.Hazel
+Email domain:     gmail.com
+
+Retired from University of Cambridge Computing Service,
+Cambridge, England.
+
+Copyright (c) 1997-2022 University of Cambridge
+All rights reserved.
+
+
+PCRE2 JUST-IN-TIME COMPILATION SUPPORT
+--------------------------------------
+
+Written by:       Zoltan Herczeg
+Email local part: hzmester
+Email domain:     freemail.hu
+
+Copyright(c) 2010-2022 Zoltan Herczeg
+All rights reserved.
+
+
+STACK-LESS JUST-IN-TIME COMPILER
+--------------------------------
+
+Written by:       Zoltan Herczeg
+Email local part: hzmester
+Email domain:     freemail.hu
+
+Copyright(c) 2009-2022 Zoltan Herczeg
+All rights reserved.
+
+
+THE "BSD" LICENCE
+-----------------
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+    * Redistributions of source code must retain the above copyright notices,
+      this list of conditions and the following disclaimer.
+
+    * Redistributions in binary form must reproduce the above copyright
+      notices, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+
+    * Neither the name of the University of Cambridge nor the names of any
+      contributors may be used to endorse or promote products derived from this
+      software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+
+EXEMPTION FOR BINARY LIBRARY-LIKE PACKAGES
+------------------------------------------
+
+The second condition in the BSD licence (covering binary redistributions) does
+not apply all the way down a chain of software. If binary package A includes
+PCRE2, it must respect the condition, but if package B is software that
+includes package A, the condition is not imposed on package B unless it uses
+PCRE2 independently.
+
+End
+""")
+
 jll = JLLInfo(;
     name = "PCRE2",
     version = v"10.42.0+1",
@@ -37,7 +134,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -75,7 +173,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -113,7 +212,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -151,7 +251,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -189,7 +290,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -227,7 +329,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -265,7 +368,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -303,7 +407,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -341,7 +446,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -379,7 +485,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -417,7 +524,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -455,7 +563,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -493,7 +602,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -531,7 +641,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -569,7 +680,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -607,7 +719,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
         JLLBuildInfo(;
@@ -645,7 +758,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [pcre2_license],
         ),
 
     ]

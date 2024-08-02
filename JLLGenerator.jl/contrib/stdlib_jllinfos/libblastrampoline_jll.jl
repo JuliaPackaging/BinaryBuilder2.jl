@@ -6,6 +6,7 @@ function libblastrampoline_on_load_callback()
     end
 end
 """
+lbt_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))
 
 jll = JLLInfo(;
     name = "libblastrampoline",
@@ -38,7 +39,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -68,7 +70,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -98,7 +101,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -128,7 +132,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -158,7 +163,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -188,7 +194,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -218,7 +225,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -248,7 +256,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -278,7 +287,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -308,7 +318,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -338,7 +349,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -368,7 +380,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -398,7 +411,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -428,7 +442,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -458,7 +473,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -488,7 +504,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
         JLLBuildInfo(;
@@ -518,7 +535,8 @@ jll = JLLInfo(;
             ],
             callback_defs = Dict(
                 :libblastrampoline_on_load_callback => on_load_callback_def,
-            )
+            ),
+            licenses = [lbt_license],
         ),
 
     ]

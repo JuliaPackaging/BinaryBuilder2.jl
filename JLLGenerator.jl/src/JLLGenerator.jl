@@ -1,16 +1,17 @@
 module JLLGenerator
 
-using Pkg, MultiHashParsing, StructEquality, TOML, SHA, Reexport
+using Pkg, MultiHashParsing, StructEquality, TOML, SHA, Reexport, LicenseCheck
 import Base: UUID
 @reexport using BinaryBuilderPlatformExtensions
 
 export JLLInfo, JLLBuildInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
-       JLLPackageDependency, JLLArtifactBinding, AbstractProducts,
+       JLLPackageDependency, JLLArtifactBinding, AbstractProducts, JLLBuildLicense,
        generate_jll, generate_toml_dict, parse_toml_dict
 
 include("RTLD_flags.jl")
 include("PkgCompatHacks.jl")
+include("LicenseTexts.jl")
 
 # Helper function for creating empty typed arrays
 empty_convert(T, x) = isempty(x) ? T[] : x
@@ -299,7 +300,57 @@ function parse_toml_dict(::Type{JLLArtifactBinding}, d::Dict)
 end
 
 
+"""
+    JLLBuildLicense
 
+Describes the license a JLL build is released under.  Contains a `filename`, and the
+full `license_text`, which gets written out to `\${jll_prefix}/licenses/\${filename}`.
+The `license_type` is the SPDX identifier of the license, if any exists.  This can be
+automatically determined by a convenience constructor, using `LicenseCheck`.
+"""
+@struct_hash_equal struct JLLBuildLicense
+    filename::String
+    license_text::String
+    license_type::Union{Nothing,String}
+end
+
+"""
+    JLLBuildLicense(filename::String, license_text::String)
+
+Helper to construct a new JLLBuildLicense and use `LicenseCheck` to auto-guess
+what type of license is contained within `license_text`.
+"""
+function JLLBuildLicense(filename::String, license_text::String)
+    # Dodge annoying `go` limitation on aarch64-apple-darwin
+    # X-ref: https://github.com/ericphanson/LicenseCheck.jl/issues/11
+    if Sys.isapple()
+        result = (;licenses_found=[])
+    else
+        result = licensecheck(license_text)
+    end
+    if length(result.licenses_found) != 1
+        return JLLBuildLicense(filename, license_text, nothing)
+    end
+    return JLLBuildLicense(filename, license_text, only(result.licenses_found))
+end
+
+function generate_toml_dict(license::JLLBuildLicense)
+    d = Dict(
+        "filename" => license.filename,
+        "license_text" => license.license_text,
+    )
+    if license.license_type !== nothing
+        d["license_type"] = license.license_type
+    end
+    return d
+end
+function parse_toml_dict(::Type{JLLBuildLicense}, d::Dict)
+    return JLLBuildLicense(
+        d["filename"],
+        d["license_text"],
+        get(d, "license_type", nothing),
+    )
+end
 
 
 """
@@ -335,6 +386,9 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # A list of sources as `(source_url, hash)` pairs
     sources::Vector{JLLSourceRecord}
 
+    # The license this build is released under
+    licenses::Vector{JLLBuildLicense}
+
     # Whether this artifact should be considered lazy
     lazy::Bool
 
@@ -345,7 +399,7 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     init_def::Union{Nothing,String}
 
     function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
-                          deps, sources, lazy, callback_defs, init_def)
+                          deps, sources, licenses, lazy, callback_defs, init_def)
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
             if isa(p, JLLLibraryProduct)
@@ -372,6 +426,10 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             end
         end
 
+        if isempty(licenses)
+            throw(ArgumentError("Must provide at least one license for JLLBuild!"))
+        end
+
         return new(
             string(src_version),
             platform,
@@ -381,6 +439,7 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             empty_convert(AbstractJLLProduct, products),
             empty_convert(JLLPackageDependency, deps),
             empty_convert(JLLSourceRecord, sources),
+            licenses,
             lazy,
             Dict{Symbol,String}(Symbol(k) => string(v) for (k,v) in callback_defs),
             init_def,
@@ -388,11 +447,11 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     end
 end
 
-function JLLBuildInfo(;src_version, platform, name, artifact, products,
+function JLLBuildInfo(;src_version, platform, name, artifact, products, licenses,
                           deps = [], sources = [], lazy = false, callback_defs = Dict(),
                           init_def = nothing, auxilliary_artifacts = Dict())
     return JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
-                           deps, sources, lazy, callback_defs, init_def)
+                           deps, sources, licenses, lazy, callback_defs, init_def)
 end
 
 function generate_toml_dict(info::JLLBuildInfo)
@@ -400,6 +459,7 @@ function generate_toml_dict(info::JLLBuildInfo)
         "src_version" => info.src_version,
         "deps" => generate_toml_dict.(info.deps),
         "sources" => generate_toml_dict.(info.sources),
+        "licenses" => generate_toml_dict.(info.licenses),
         "platform" => triplet(info.platform),
         "name" => string(info.name),
         "artifact" => generate_toml_dict(info.artifact),
@@ -419,6 +479,7 @@ function parse_toml_dict(::Type{JLLBuildInfo}, d::Dict)
         src_version = d["src_version"],
         deps = [parse_toml_dict(JLLPackageDependency, p) for p in d["deps"]],
         sources = [parse_toml_dict(JLLSourceRecord, p) for p in d["sources"]],
+        licenses = parse_toml_dict.(JLLBuildLicense, d["licenses"]),
         platform = parse(AbstractPlatform, d["platform"]),
         name = d["name"],
         artifact = parse_toml_dict(JLLArtifactBinding, d["artifact"]),
@@ -557,6 +618,22 @@ function bind_jll_artifact!(artifacts_toml_path::String, name::String, platform:
     )
 end
 
+function coalesce_licenses(info::JLLInfo)
+    # Easy case; are all license vectors the same?
+    if all(build.licenses == info.builds[1].licenses for build in info.builds)
+        return Dict(l.filename => l for l in info.builds[1].licenses)
+    end
+
+    # Hard case; write out a triplet-suffixed license:
+    ret = Dict{String,JLLBuildLicense}()
+    for build in info.builds
+        for lic in build.licenses
+            ret["$(triplet(build.platform))-$(lic.filename)"] = lic
+        end
+    end
+    return ret
+end
+
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
         for child in readdir(out_dir)
@@ -672,6 +749,19 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
         """)        
     end
 
+    # Generate top-level `LICENSE.md` (always MIT)
+    open(joinpath(out_dir, "LICENSE.md"); write=true) do io
+        println(io, get_license_text("MIT"))
+    end
+
+    # Generate per-build licenses
+    mkpath(joinpath(out_dir, "licenses"))
+    for (name, lic) in coalesce_licenses(info)
+        open(joinpath(out_dir, "licenses", name); write=true) do io
+            println(io, lic.license_text)
+        end
+    end
+
     # Generate `Project.toml`
     open(joinpath(out_dir, "Project.toml"); write=true) do io
         project_dict = Dict(
@@ -759,7 +849,6 @@ end
 # BB-specific stuff (like version of BB used to do build, etc... will be in a separate `BB.toml`)
 @warn("""
 TODO: Add the following to our JLL.toml output:
-- License (of JLL itself and built objects)
 - Upstream URL
 - Description
 """)

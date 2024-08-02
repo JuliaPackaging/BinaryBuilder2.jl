@@ -1,3 +1,4 @@
+mbedtls_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("Apache-2.0"))
 jll = JLLInfo(;
     name = "MbedTLS",
     version = v"2.28.2+1",
@@ -42,7 +43,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -85,7 +87,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -128,7 +131,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -171,7 +175,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -214,7 +219,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -257,7 +263,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -300,7 +307,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -343,7 +351,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -386,7 +395,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -429,7 +439,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -472,7 +483,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -515,7 +527,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -558,7 +571,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -601,7 +615,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -644,7 +659,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -687,7 +703,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
         JLLBuildInfo(;
@@ -730,7 +747,8 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mbedtls_license],
         ),
 
     ]

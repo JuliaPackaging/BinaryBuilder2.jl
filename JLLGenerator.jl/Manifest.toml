@@ -2,7 +2,7 @@
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "296f94d033ecf898b2fab82b83f0756b5bc39867"
+project_hash = "cadc07c83331eb2ee8b4a577db9801e4d59df27f"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -49,6 +49,12 @@ uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
+[[deps.JLLWrappers]]
+deps = ["Artifacts", "Preferences"]
+git-tree-sha1 = "7e5d6779a1e09a36db2a7b6cff50942a0a7d0fca"
+uuid = "692b3bcd-3c85-4b1f-b108-f13ce0eb3210"
+version = "1.5.0"
+
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
@@ -75,6 +81,12 @@ version = "1.11.0+1"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
+
+[[deps.LicenseCheck]]
+deps = ["licensecheck_jll"]
+git-tree-sha1 = "e98bc9e1f773123cfdb1fa3d7a4c898e1f030341"
+uuid = "726dbf0d-6eb6-41af-b36c-cd770e0f00cc"
+version = "0.2.2"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -111,6 +123,12 @@ version = "1.6.3"
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 version = "1.10.0"
+
+[[deps.Preferences]]
+deps = ["TOML"]
+git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
+uuid = "21216c6a-2e73-6563-6e65-726566657250"
+version = "1.4.3"
 
 [[deps.Printf]]
 deps = ["Unicode"]
@@ -166,6 +184,12 @@ uuid = "4ec0a83e-493e-50e2-b9ac-8f72acf5a8f5"
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
 version = "1.2.13+1"
+
+[[deps.licensecheck_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "b790ad21ac235c39c0eb34214ccf3d5f5ea60efa"
+uuid = "4ecb348a-8b88-51ea-b912-4c460483ee91"
+version = "0.3.101+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]

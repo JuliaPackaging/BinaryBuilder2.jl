@@ -1,3 +1,5 @@
+hwc_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))
+
 jll = JLLInfo(;
     name = "PlatformAugmentedHelloWorldC",
     version = v"1.3.0+0",
@@ -33,7 +35,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -61,7 +64,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -89,7 +93,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -117,7 +122,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -145,7 +151,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -173,7 +180,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -201,7 +209,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -229,7 +238,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -257,7 +267,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -285,7 +296,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin\\hello_world.exe",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -313,7 +325,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -341,7 +354,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -369,7 +383,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -397,7 +412,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -425,7 +441,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin/hello_world",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
         JLLBuildInfo(;
@@ -453,7 +470,8 @@ jll = JLLInfo(;
                     :hello_world_doppelganger,
                     "bin\\hello_world.exe",
                 ),
-            ]
+            ],
+            licenses = [hwc_license],
         ),
 
     ]
