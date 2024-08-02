@@ -7,7 +7,7 @@ Because we are generally operating on files outside of the sandbox environment,
 we allow passing in `prefix_alias` to serve as the in-sandbox path prefix, as
 that is the prefix that symlinks would have been pointing to.
 """
-function absolute_to_relative_symlinks!(scan::ScanResult, prefix_alias::String; verbose::Bool = false)
+function absolute_to_relative_symlinks!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}}, prefix_alias::String)
     if !isabspath(prefix_alias)
         throw(ArgumentError("prefix_alias must be an absolute path!"))
     end
@@ -24,9 +24,8 @@ function absolute_to_relative_symlinks!(scan::ScanResult, prefix_alias::String; 
                 joinpath(prefix_alias, link_target),
                 joinpath(prefix_alias, dirname(rel_path)),
             )
-            if verbose
-                @info("Converting relative symlink", rel_path, new_link_target)
-            end
+
+            push_result!(pass_results, "absolute_to_relative_symlinks!", :success, rel_path, " -> $(new_link_target)")
             rm(abs_path; force=true)
             symlink(new_link_target, abs_path)
         end

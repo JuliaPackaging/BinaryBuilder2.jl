@@ -89,10 +89,10 @@ end
     capture_output(cmd::Cmd)
 
 Run `cmd`, capturing the output into an `IOBuffer`, return the process object and
-the output `IOBuffer`.
+the output, converted to a `String`.
 """
 function capture_output(cmd::Cmd)
     output = IOBuffer()
     proc = run(pipeline(ignorestatus(cmd); stdout=output, stderr=output))
-    return proc, output
+    return proc, String(take!(output))
 end

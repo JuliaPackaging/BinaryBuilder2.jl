@@ -2,6 +2,7 @@ using Test, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArc
 
 include("ScanningTests.jl")
 include("passes/RelativeSymlinkTests.jl")
+include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
 include("passes/DynamicLinkageTests.jl")
 
@@ -27,6 +28,8 @@ include("passes/DynamicLinkageTests.jl")
             run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path)`, env))
             symlink(joinpath(prefix, "lib", libplus_soname), joinpath(prefix, "lib", "libplus$(dlext(platform))"))
             run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib -lplus`, env))
+            mkpath(joinpath(prefix, "share", "licenses", "libplus"))
+            touch(joinpath(prefix, "share", "licenses", "libplus", "LICENSE.md"))
         end
 
         library_products = [
@@ -36,6 +39,7 @@ include("passes/DynamicLinkageTests.jl")
         result = audit!(prefix, library_products, JLLInfo[]; verbose=true)
         @test readlink(joinpath(prefix, "lib", "libplus$(dlext(platform))")) == libplus_soname
         @test length(result.jll_lib_products) == 2
+        @test success(result)
 
         # Run audit a second time with `readonly=true`, ensure that the treehash does not change
         pre_treehash = treehash(prefix)
@@ -43,5 +47,6 @@ include("passes/DynamicLinkageTests.jl")
         post_treehash = treehash(prefix)
         @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 2
+        @test success(result)
     end
 end
