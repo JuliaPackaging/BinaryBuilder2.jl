@@ -55,4 +55,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 test = ["Accessors", "Test"]
 
 [workspace]
-projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl"]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl", "KeywordArgumentExtraction.jl"]

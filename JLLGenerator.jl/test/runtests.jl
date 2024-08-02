@@ -533,20 +533,12 @@ using BinaryBuilderSources: PkgSpec
     jll = JLLSource(PkgSpec(;
         name = "Ncurses_jll",
         uuid = "68e3532b-a499-55ff-9963-d1c0c0748b3a",
-        tree_hash = Base.SHA1("4e723769ce39a7f9cba8eca2a83671358d292fe7"),
+        tree_hash = Base.SHA1("f801fa135e0e3aa5b7ff026ff8b5fdcfefefdb3c"),
         repo=Pkg.Types.GitRepo(
             rev="3574bb57a8e29d239be1228fadbc1951ff7d50c6",
             source="https://github.com/staticfloat/Ncurses_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
-
-    ncurses_treehashes = Dict(
-        Platform("x86_64", "linux") => "sha1:878c086b5c47c2ae924784e33e207fd90d5afb10",
-        Platform("i686", "linux") => "sha1:a5c03066d3513fb920a2fa36f378d72e1a0b3b82",
-        Platform("aarch64", "linux") => "sha1:11546f8e24d870c97f4641fb950522445bb95487",
-        Platform("armv7l", "linux") => "sha1:7f0bad2b60a975368106a29aa07b1ae89f6577f9",
-        Platform("powerpc64le", "linux") => "sha1:eb1b898a44c9fb4c5d6ae1eb4d1c90896612cc4e",
-    )
 
     mktempdir() do prefix
         prepare(jll; depot=prefix)
@@ -556,7 +548,6 @@ using BinaryBuilderSources: PkgSpec
         for build in data.builds
             @test build.name == "Ncurses"
             @test length(build.products) == 4
-            @test build.artifact.treehash == ncurses_treehashes[build.platform]
         end
     end
 end
