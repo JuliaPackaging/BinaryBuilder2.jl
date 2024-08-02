@@ -1,3 +1,5 @@
+Base.include(@__MODULE__, joinpath(@__DIR__, "llvm_license.jl"))
+
 jll = JLLInfo(;
     name = "LLVMLibUnwind",
     version = v"14.0.6+0",
@@ -30,7 +32,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -61,7 +64,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -92,7 +96,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -123,7 +128,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -154,7 +160,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -185,7 +192,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -216,7 +224,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -247,7 +256,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -278,7 +288,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -309,7 +320,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -340,7 +352,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -371,7 +384,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -402,7 +416,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -433,7 +448,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -464,7 +480,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
         JLLBuildInfo(;
@@ -495,7 +512,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [llvm_license],
         ),
 
     ]

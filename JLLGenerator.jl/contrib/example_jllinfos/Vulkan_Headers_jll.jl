@@ -1,3 +1,5 @@
+vulkan_headers_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("Apache-2.0"))
+
 jll = JLLInfo(;
     name = "Vulkan_Headers",
     version = v"1.3.243+1",
@@ -27,7 +29,8 @@ jll = JLLInfo(;
                     :vulkan_hpp,
                     "include/vulkan/vulkan.hpp",
                 ),
-            ]
+            ],
+            licenses = [vulkan_headers_license],
         ),
 
     ]

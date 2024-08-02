@@ -1,3 +1,5 @@
+mpfr_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("GPL-3.0"))
+
 jll = JLLInfo(;
     name = "MPFR",
     version = v"4.2.0+1",
@@ -30,7 +32,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -61,7 +64,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -92,7 +96,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -123,7 +128,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -154,7 +160,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -185,7 +192,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -216,7 +224,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -247,7 +256,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -278,7 +288,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -309,7 +320,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -340,7 +352,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -371,7 +384,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -402,7 +416,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -433,7 +448,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -464,7 +480,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -495,7 +512,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
         JLLBuildInfo(;
@@ -526,7 +544,8 @@ jll = JLLInfo(;
                     [JLLLibraryDep(:GMP_jll, :libgmp)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [mpfr_license],
         ),
 
     ]

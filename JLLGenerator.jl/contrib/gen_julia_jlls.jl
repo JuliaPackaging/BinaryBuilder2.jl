@@ -7,6 +7,10 @@ rm(out_dir; force=true, recursive=true)
 ENV["JULIA_PKG_PRECOMPILE_AUTO"] = "false"
 
 for file in readdir(joinpath(@__DIR__, "stdlib_jllinfos"); join=true)
+    if !endswith(file, "_jll.jl")
+        continue
+    end
+
     m = Module()
     Core.eval(m, :(using JLLGenerator))
     Core.include(m, file)

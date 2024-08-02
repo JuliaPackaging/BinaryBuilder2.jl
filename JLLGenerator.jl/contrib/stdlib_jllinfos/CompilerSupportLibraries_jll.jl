@@ -1,3 +1,5 @@
+csl_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("GPL-3.0"))
+
 jll = JLLInfo(;
     name = "CompilerSupportLibraries",
     version = v"1.0.5+1",
@@ -65,7 +67,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -125,7 +128,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -191,7 +195,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -257,7 +262,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -311,7 +317,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -371,7 +378,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -431,7 +439,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -497,7 +506,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -563,7 +573,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -629,7 +640,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -689,7 +701,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -749,7 +762,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -809,7 +823,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -875,7 +890,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -941,7 +957,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1007,7 +1024,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1067,7 +1085,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1127,7 +1146,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1187,7 +1207,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1253,7 +1274,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1319,7 +1341,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1385,7 +1408,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1445,7 +1469,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1505,7 +1530,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1565,7 +1591,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1641,7 +1668,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1723,7 +1751,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1805,7 +1834,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1871,7 +1901,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -1937,7 +1968,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2003,7 +2035,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2069,7 +2102,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2135,7 +2169,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2201,7 +2236,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2267,7 +2303,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2333,7 +2370,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2399,7 +2437,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2459,7 +2498,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2519,7 +2559,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2579,7 +2620,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2645,7 +2687,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2711,7 +2754,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2777,7 +2821,8 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2853,7 +2898,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -2935,7 +2981,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
         JLLBuildInfo(;
@@ -3017,7 +3064,8 @@ jll = JLLInfo(;
                     :libssp_dll_a,
                     "lib\\libssp.dll.a",
                 ),
-            ]
+            ],
+            licenses = [csl_license],
         ),
 
     ]
