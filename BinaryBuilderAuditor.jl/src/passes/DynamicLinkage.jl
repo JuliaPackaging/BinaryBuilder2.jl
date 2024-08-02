@@ -1,8 +1,8 @@
 using BinaryBuilderProducts, JLLGenerator
 
 function resolve_dynamic_links!(scan::ScanResult,
-                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}},
-                                verbose::Bool = false)
+                                pass_results::Dict{String,Vector{PassResult}},
+                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
     # We need to generate a graph showing which libraries are needed by the
     # `library_products` in our `scan`.
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
@@ -45,20 +45,19 @@ function resolve_dynamic_links!(scan::ScanResult,
                 # compiled `libbar.so` to link against `libfoo.so`) then we need to update
                 # its linkage:
                 if haskey(scan.soname_forwards, lib_dep_soname)
-                    update_linkage!(scan, rel_path, lib_dep_soname => scan.soname_forwards[lib_dep_soname]; verbose)
+                    update_linkage!(scan, pass_results, rel_path, lib_dep_soname => scan.soname_forwards[lib_dep_soname])
                     lib_dep_soname = scan.soname_forwards[lib_dep_soname]
                 end
 
                 if !haskey(scan.soname_locator, lib_dep_soname)
-                    @error("Unable to map dependency", lib_dep_soname, lib_path=rel_path)
-                    error()
+                    push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Unable to map dependency '$(lib_dep_soname)'")
+                    continue
                 end
                 dep_lib_relpath = scan.soname_locator[lib_dep_soname]
 
                 if !haskey(scan.library_products, dep_lib_relpath)
-                    @show scan.library_products
-                    @error("Dependency on library that is not listed as a LibraryProduct!", rel_path, lib_dep_soname)
-                    error()
+                    push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Dependency on '$(lib_dep_relpath)' is not listed as a LibraryProduct")
+                    continue
                 end
 
                 jll_name = nothing
@@ -83,9 +82,9 @@ function resolve_dynamic_links!(scan::ScanResult,
     return jll_lib_products
 end
 
-function update_linkage!(scan::ScanResult, rel_path::AbstractString,
-                         (old_soname, new_soname)::Pair{<:AbstractString,<:AbstractString};
-                         verbose::Bool = false)
+function update_linkage!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}},
+                         rel_path::AbstractString,
+                         (old_soname, new_soname)::Pair{<:AbstractString,<:AbstractString})
     if Sys.iswindows(scan.platform)
         return
     end
@@ -97,15 +96,11 @@ function update_linkage!(scan::ScanResult, rel_path::AbstractString,
         cmd = patchelf(scan, `--replace-needed $(old_soname) $(new_soname) $(abs_path)`)
     end
 
-    if verbose
-        @info("Updating linkage", rel_path, old_soname, new_soname)
-    end
-
     proc, output = capture_output(cmd)
     if !success(proc)
-        println(String(take!(output)))
-        @error("Unable to update linkage", rel_path, old_soname, new_soname)
-        error()
+        push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Failed to set RPATH '$(rpath_str)': $(output)")
+    else
+        push_result!(pass_results, "update_linkage!", :success, rel_path, "Updating linkage '$(old_soname)' -> '$(new_soname)'")
     end
 
     # Ensure that our object handle gets refreshed
@@ -113,8 +108,8 @@ function update_linkage!(scan::ScanResult, rel_path::AbstractString,
 end
 
 function rpaths_consistent!(scan::ScanResult,
-                            dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}};
-                            verbose::Bool = false)
+                            pass_results::Dict{String,Vector{PassResult}},
+                            dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
         return
@@ -145,8 +140,8 @@ function rpaths_consistent!(scan::ScanResult,
             soname = get(scan.soname_forwards, soname, soname)
 
             if soname ∉ keys(soname_locator)
-                @error("Unable to resolve dependency", lib_path=rel_path, soname)
-                error()
+                push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
+                continue
             end
             push!(dep_relpaths, relpath(dirname(soname_locator[soname]), dirname(rel_path)))
         end
@@ -169,15 +164,11 @@ function rpaths_consistent!(scan::ScanResult,
             cmd = patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`)
         end
 
-        if verbose
-            @info("Setting RPATH", rel_path, rpath_str)
-        end
-
         proc, output = capture_output(cmd)
         if !success(proc)
-            println(String(take!(output)))
-            @error("Unable to set RPATH on library", rel_path, rpath_str)
-            error()
+            push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Failed to set RPATH '$(rpath_str)': $(output)")
+        else
+            push_result!(pass_results, "rpaths_consistent!", :success, rel_path, "Set RPATH '$(rpath_str)'")
         end
     end
 end

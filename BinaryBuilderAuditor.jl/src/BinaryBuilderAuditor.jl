@@ -6,18 +6,11 @@ export audit!, AuditResult
 include("Utils.jl")
 include("SystemLibraries.jl")
 include("Scanning.jl")
+include("AuditResult.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
-
-@warn("TODO: Add logging framework to store audit results")
-
-struct AuditResult
-    scan::ScanResult
-
-    # These contain the learned interdependency structure of the libraries
-    jll_lib_products::Vector{JLLLibraryProduct}
-end
+include("passes/Licenses.jl")
 
 
 function audit!(prefix::String,
@@ -38,30 +31,39 @@ function audit!(prefix::String,
         library_products,
         env,
     )
+    pass_results = Dict{String,Vector{PassResult}}()
 
     # First pass; symlink translation
     if !readonly
-        absolute_to_relative_symlinks!(scan, prefix_alias; verbose)
+        absolute_to_relative_symlinks!(scan, pass_results, prefix_alias)
     end
 
     # Ensure that all libraries have SONAMEs
     if !readonly
-        ensure_sonames!(scan)
+        ensure_sonames!(scan, pass_results)
     end
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
     get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
     dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}(Symbol(dep.name) => get_library_products(dep, platform) for dep in dependencies)
-    jll_lib_products = resolve_dynamic_links!(scan, dep_libs, verbose)
+    jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
-        rpaths_consistent!(scan, dep_libs; verbose)
+        rpaths_consistent!(scan, pass_results, dep_libs)
+    end
+
+    # Ensure that there are some licenses
+    licenses_present(scan, pass_results)
+
+    if verbose
+        print_results(pass_results)
     end
 
     return AuditResult(
         scan,
+        pass_results,
         jll_lib_products,
     )
 end

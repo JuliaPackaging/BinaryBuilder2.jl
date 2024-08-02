@@ -47,13 +47,17 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
                 LibraryProduct("libmult", :libmult),
             ],
         )
-        ensure_sonames!(scan; verbose=true)
+        pass_results = Dict{String,Vector{PassResult}}()
+        ensure_sonames!(scan, pass_results)
+        @test success(pass_results)
 
         # First, resolve dynamic links when these are two librares in the same build:
         jll_lib_products = resolve_dynamic_links!(
             scan,
+            pass_results,
             Dict{Symbol,Vector{JLLLibraryProduct}}(),
         )
+        @test success(pass_results)
 
         @test length(jll_lib_products) == 2
         @test jll_lib_products[1].varname == :libplus
@@ -80,10 +84,12 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
             HostPlatform(),
             [LibraryProduct("libmult", :libmult)],
         )
-        ensure_sonames!(scan; verbose=true)
+        pass_results = Dict{String,Vector{PassResult}}()
+        ensure_sonames!(scan, pass_results)
 
         jll_lib_products = resolve_dynamic_links!(
             scan,
+            pass_results,
             Dict{Symbol,Vector{JLLLibraryProduct}}(
                 :LibPlus => [
                     JLLLibraryProduct(
@@ -94,6 +100,7 @@ libmult_soname = versioned_shlib("libmult", 2, platform)
                 ]
             ),
         )
+        @test success(pass_results)
         @test length(jll_lib_products) == 1
         @test jll_lib_products[1].varname == :libmult
         @test jll_lib_products[1].path == joinpath("lib", libmult_soname)
@@ -118,12 +125,15 @@ end
         end
 
         scan = scan_files(prefix, HostPlatform(), [LibraryProduct("lib/plus/libplus", :libplus)])
-        ensure_sonames!(scan; verbose=true)
+        pass_results = Dict{String,Vector{PassResult}}()
+        ensure_sonames!(scan, pass_results)
         jll_lib_products = resolve_dynamic_links!(
             scan,
+            pass_results,
             Dict{Symbol,Vector{JLLLibraryProduct}}(),
         )
-        rpaths_consistent!(scan, Dict{Symbol,Vector{JLLLibraryProduct}}())
+        rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
+        @test success(pass_results)
 
         readmeta(libmult_path) do ohs
             @test only(rpaths(RPath(only(ohs)))) == "\$ORIGIN/plus"

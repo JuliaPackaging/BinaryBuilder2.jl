@@ -14,7 +14,7 @@ This function also has a side-effect of filling out `scan.soname_locator`, which
 allows mapping from library SONAME to `rel_path`, which is very useful for
 resolving dynamic linkage.
 """
-function ensure_sonames!(scan::ScanResult; verbose::Bool = false)
+function ensure_sonames!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}})
     # Windows doesn't do SONAMEs, it just always uses the basename of the DLL.
     if Sys.iswindows(scan.platform)
         return
@@ -24,10 +24,6 @@ function ensure_sonames!(scan::ScanResult; verbose::Bool = false)
     # so here all we need to do is update the binaries
     for rel_path in scan.missing_sonames
         soname = basename(rel_path)
-        if verbose
-            @info("Adding SONAME to library", rel_path, soname)
-        end
-
         abs_path = abspath(scan, rel_path)
         if Sys.isapple(scan.platform)
             cmd = `-id $(soname) $(abs_path)`
@@ -37,9 +33,8 @@ function ensure_sonames!(scan::ScanResult; verbose::Bool = false)
 
         proc, output = capture_output(cmd)
         if !success(proc)
-            println(String(take!(output)))
-            @error("Unable to set SONAME on library", rel_path)
-            error()
+            push_result!(pass_results, "ensure_sonames!", :fail, rel_path, "Failed to set SONAME: $(output)")
+            continue
         end
 
         # Refresh our ObjectHandle, since the above manipulation
