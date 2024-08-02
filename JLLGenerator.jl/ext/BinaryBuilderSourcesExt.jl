@@ -25,7 +25,12 @@ function JLLGenerator.parse_toml_dict(j::JLLSource; depot::Union{Nothing,String}
     if !isfile(jll_toml_path)
         throw(ArgumentError("JLL $(j.package.name) v$(j.package.version) has no JLL.toml file!  Was it built by BB2?"))
     end
-    return parse_toml_dict(TOML.parsefile(jll_toml_path))
+    try
+        return parse_toml_dict(TOML.parsefile(jll_toml_path))
+    catch
+        @error("Invalid dependency JLL.toml file", name=j.package.name, version=j.package.version, jll_toml_path)
+        rethrow()
+    end
 end
 
 end # module
