@@ -4,7 +4,7 @@ steps:
       - JuliaCI/julia#v1:
           version: "${JULIA_VERSION?}"
           arch: "${ARCH?}"
-      - JuliaCI/jack#sf/julia-v1.12:
+      - JuliaCI/jack#v1:
           install:
             - "GNUMake_jll"
     commands: |
