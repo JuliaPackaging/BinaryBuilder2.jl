@@ -210,9 +210,9 @@ version = "0.2.2"
 
 [[deps.LocalRegistry]]
 deps = ["Random", "RegistryInstances", "RegistryTools", "TOML", "UUIDs"]
-git-tree-sha1 = "d01c44f41135b4e39656201ae77a95aeba9fe395"
+git-tree-sha1 = "80d096310838ebd9dfbe7934034da35c26ff4df4"
 uuid = "89398ba2-070a-4b16-a995-9893c55d93cf"
-version = "0.5.6"
+version = "0.5.7"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
@@ -242,9 +242,9 @@ version = "1.2.0"
 
 [[deps.ObjectFile]]
 deps = ["Reexport", "StructIO"]
-git-tree-sha1 = "195e0a19842f678dd3473ceafbe9d82dfacc583c"
+git-tree-sha1 = "7249afa1c4dfd86bfbcc9b28939ab6ef844f4e11"
 uuid = "d8793406-e978-5875-9003-1fc021f44a92"
-version = "0.4.1"
+version = "0.4.2"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
