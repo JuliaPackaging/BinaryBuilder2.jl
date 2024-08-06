@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0-DEV"
 manifest_format = "2.0"
-project_hash = "b9c7cba844b23936ccf25596c26801730d8c538c"
+project_hash = "f47069d81c5c8a61c3a2bbeca1c0769a722a3f77"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -141,7 +141,7 @@ version = "1.11.0"
 deps = ["BinaryBuilderPlatformExtensions", "Dates", "Libdl", "LicenseCheck", "MultiHashParsing", "Pkg", "Reexport", "SHA", "StructEquality", "TOML"]
 path = "JLLGenerator.jl"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
-version = "0.3.0"
+version = "0.3.1"
 weakdeps = ["BinaryBuilderSources"]
 
     [deps.JLLGenerator.extensions]
@@ -184,7 +184,7 @@ version = "1.11.0"
 deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML"]
 path = "LazyJLLWrappers.jl"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
-version = "1.0.2"
+version = "1.0.3"
 
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
@@ -263,9 +263,9 @@ version = "1.2.0"
 
 [[deps.ObjectFile]]
 deps = ["Reexport", "StructIO"]
-git-tree-sha1 = "195e0a19842f678dd3473ceafbe9d82dfacc583c"
+git-tree-sha1 = "7249afa1c4dfd86bfbcc9b28939ab6ef844f4e11"
 uuid = "d8793406-e978-5875-9003-1fc021f44a92"
-version = "0.4.1"
+version = "0.4.2"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
