@@ -117,7 +117,7 @@ Base.BinaryPlatforms.triplet(cp::CrossPlatform) = Base.BinaryPlatforms.triplet(c
 Base.show(io::IO, cp::CrossPlatform) = print(io, "CrossPlatform(", cp.host, " -> ", cp.target, ")")
 Base.repr(cp::CrossPlatform) = "CrossPlatform($(repr(cp.encoded)))"
 
-# Specifically override comparison between a `CrossPlatform` and a `Platform` to compare against the `target`,
+# Specifically override comparison between a `CrossPlatform` and a `Platform` to compare against the `host`,
 # unless the other `Platform` is actually an encoded `CrossPlatform`, in which case we just use the `encoded`
 # platform within the `CrossPlatform` to match.
 function Base.BinaryPlatforms.platforms_match(cp::CrossPlatform, p::Platform)
@@ -125,7 +125,7 @@ function Base.BinaryPlatforms.platforms_match(cp::CrossPlatform, p::Platform)
         (haskey(p, "target_os") && haskey(p, "target_arch"))
         return platforms_match(cp.encoded, p)
     end
-    platforms_match(cp.target, p)
+    platforms_match(cp.host, p)
 end
 Base.BinaryPlatforms.platforms_match(p::Platform, cp::CrossPlatform) = platforms_match(cp, p)
 

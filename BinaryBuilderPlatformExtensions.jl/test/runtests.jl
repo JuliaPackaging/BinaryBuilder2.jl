@@ -70,6 +70,9 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
         glibc_to_m1 = CrossPlatform(
             Platform("x86_64", "linux"; libc="glibc") => Platform("aarch64", "macos")
         )
+        glibc_to_m1_libstdcxx = CrossPlatform(
+            Platform("x86_64", "linux"; libc="glibc", libstdcxx_version=v"3.4.29") => Platform("aarch64", "macos")
+        )
         musl_to_m1 = CrossPlatform(
             Platform("x86_64", "linux"; libc="musl") => Platform("aarch64", "macos")
         )
@@ -131,26 +134,25 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
         # When comparing a `CrossPlatform` to a `Platform`, we basically
         # just match the `Platform` to the `target` of the `CrossPlatform`,
         # so that by default we are loading in target binaries to compile against.
+        win32 = Platform("i686", "windows")
         ppc64le_glibc = Platform("ppc64le", "linux"; libc="glibc")
+        x86_64_glibc = Platform("x86_64", "linux"; libc="glibc")
+        x86_64_glibc_libstdcxx = Platform("x86_64", "linux"; libc="glibc", libstdcxx_version=v"3.4.30")
         m1 = Platform("aarch64", "macos")
         m1_osver = Platform("aarch64", "macos"; os_version=v"20")
         m1_osver_newer = Platform("aarch64", "macos"; os_version=v"21")
 
-        # Windows targeting glibc should match glibc
-        @test platforms_match(win_to_ppc64le_glibc, ppc64le_glibc)
-        @test platforms_match(ppc64le_glibc, win_to_ppc64le_glibc)
+        # Windows targeting glibc should match windows
+        @test platforms_match(win_to_ppc64le_glibc, win32)
+        @test platforms_match(win32, win_to_ppc64le_glibc)
 
         # Targeting glibc should not match M1
         @test !platforms_match(win_to_ppc64le_glibc, m1)
         @test !platforms_match(m1, win_to_ppc64le_glibc)
 
-        # Targeting M1 should match M1, but not if our target disagrees on something specific.
-        @test platforms_match(glibc_to_m1, m1)
-        @test platforms_match(glibc_to_m1, m1_osver)
-        @test platforms_match(glibc_to_m1, m1_osver_newer)
-        @test platforms_match(glibc_to_m1_osver, m1)
-        @test platforms_match(glibc_to_m1_osver, m1_osver)
-        @test !platforms_match(glibc_to_m1_osver, m1_osver_newer)
+        @test platforms_match(glibc_to_m1, x86_64_glibc)
+        @test platforms_match(glibc_to_m1, x86_64_glibc_libstdcxx)
+        @test !platforms_match(glibc_to_m1_libstdcxx, x86_64_glibc_libstdcxx)
 
         # AnyPlatforms should always match everything, as usual
         for cp in [glibc_libgfortran_to_m1_osver, glibc_to_m1, win_to_ppc64le_glibc]
@@ -172,10 +174,10 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
         )
         @test select_platform(artifacts, cp)
 
-        # When given bare platforms, choose the one that matches our target
+        # When given bare platforms, choose the one that matches our host
         artifacts = Dict(
-            Platform("aarch64", "macos") => true,
-            Platform("x86_64", "linux") => false,
+            Platform("aarch64", "macos") => false,
+            Platform("x86_64", "linux") => true,
             Platform("i686", "windows") => false,
         )
         @test select_platform(artifacts, cp)
