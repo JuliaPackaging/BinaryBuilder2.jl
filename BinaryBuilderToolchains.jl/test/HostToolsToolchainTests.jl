@@ -34,6 +34,7 @@ const verbose = false
 
             # Compression tools
             "tar",
+            "bzip2",
             "gzip",
             "zstd",
             "xz",
@@ -46,10 +47,6 @@ const verbose = false
                 @test success(setenv(`$tool --version`, env))
             end
         end
-
-        # These tools require special treatment
-        @test startswith(readchomp(setenv(`sh -c "which bzip2"`, env)), prefix)
-        @test success(pipeline(setenv(`bzip2 --version`, env), stdout=devnull))
 
         # Run our more extensive test suites.
         testsuite_path = joinpath(@__DIR__, "testsuite", "HostToolsToolchain")
