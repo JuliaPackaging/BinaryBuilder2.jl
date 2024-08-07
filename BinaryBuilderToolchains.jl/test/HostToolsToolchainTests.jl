@@ -8,7 +8,6 @@ const verbose = false
     toolchain = HostToolsToolchain(platform)
     @test !isempty(filter(jll -> jll.package.name == "GNUMake_jll", toolchain.deps))
     @test !isempty(filter(jll -> jll.package.name == "Patchelf_jll", toolchain.deps))
-    @test !isempty(filter(jll -> jll.package.name == "Ccache_jll", toolchain.deps))
 
     # Download the toolchain, make sure it runs.
     # We include a host-targeted C toolchain here, because our `autotools` test requires one.
@@ -19,7 +18,6 @@ const verbose = false
             # Build tools
             "automake", "aclocal", "autoconf",
             "bison",
-            "ccache",
             "file",
             "flex",
             "gawk",

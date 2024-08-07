@@ -21,7 +21,7 @@ All toolchains must define the following methods:
     - used to configure tool versions, etc...
 * toolchain_sources(toolchain)
     - returns a vector of `AbstractSource`'s representing the dependencies
-      needed to run this toolchain
+      needed to run this toolchain, relative to some installation prefix
 * toolchain_env(toolchain, deployed_prefix::String)
     - returns a dictionary listing the environment variables to be added
       in to commands that use this toolchain.

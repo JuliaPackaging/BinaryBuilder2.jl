@@ -152,6 +152,9 @@ struct BuildConfig
             "BB_PRINT_COMMANDS" => "true",
             "nproc" => get(ENV, "BINARYBUILDER_NPROC", string(Sys.CPU_THREADS)),
             "SRC_NAME" => src_name,
+
+            # ccache
+            "CCACHE_DIR" => "/var/cache/ccache",
         ))
 
         return new(
@@ -354,6 +357,7 @@ function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String 
     # run the actual build itself, etc...
     mounts = Dict{String,MountInfo}(
         "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
+        "/var/cache/ccache" => MountInfo(ccache_cache(), MountType.ReadWrite),
     )
 
     @timeit config.to "deploy" begin

@@ -29,10 +29,15 @@ using BinaryBuilder2: next_jll_version
     @test next_jll_version(nothing, v"1.2.0") == v"1.2.0"
 end
 
+# By default, don't allow ccache usage in these tests
+spec_plan = make_target_spec_plan(;
+    host_toolchains=[CToolchain(;use_ccache=false), HostToolsToolchain()],
+    target_toolchains=[CToolchain(;use_ccache=false)],
+)
+
 @testset "Failing build" begin
     # This build explicitly fails because it runs `false`
     meta = BuildMeta(; verbose=false)
-    spec_plan = make_target_spec_plan()
     bad_build_config = BuildConfig(
         meta,
         "foo",
@@ -53,7 +58,6 @@ end
 
 @testset "Multi-stage build test" begin
     meta = BuildMeta(; verbose=false, disable_cache=true)
-    spec_plan = make_target_spec_plan()
     # First, build `libstring` from the BBToolchains testsuite
     cxx_string_abi_source =  DirectorySource(joinpath(
         pkgdir(BinaryBuilder2.BinaryBuilderToolchains),
@@ -107,8 +111,10 @@ end
     libstring_h_extract_result = extract!(libstring_h_extract_config)
     @test libstring_h_extract_result.status == :success
 
-    cxx_string_spec_plan = make_target_spec_plan(
-        ;target_dependencies=[ExtractResultSource(libstring_extract_result)]
+    cxx_string_spec_plan = make_target_spec_plan(;
+        host_toolchains=[CToolchain(;use_ccache=false), HostToolsToolchain()],
+        target_toolchains=[CToolchain(;use_ccache=false)],
+        target_dependencies=[ExtractResultSource(libstring_extract_result)],
     )
     # Feed it in as a dependency to a build of `cxx_string_abi`
     cxx_string_abi_build_config = BuildConfig(
@@ -162,7 +168,6 @@ end
 @testset "native zlib build test" begin
     # Test building `zlib`
     meta = BuildMeta(; verbose=false)
-    spec_plan = make_target_spec_plan()
     build_config = BuildConfig(
         meta,
         "Zlib",

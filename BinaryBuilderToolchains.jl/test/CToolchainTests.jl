@@ -47,20 +47,30 @@ function toolchain_tests(toolchain, prefix, env, platform)
 end
 
 
+using BinaryBuilderToolchains: get_vendor
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-    toolchain = CToolchain(platform)
-    @test BinaryBuilderToolchains.get_vendor(toolchain) ∈ (:gcc, :clang)
-    @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
+    mktempdir() do ccache_dir
+        for use_ccache in (true, false)
+            toolchain = CToolchain(platform; use_ccache)
+            @test get_vendor(toolchain) ∈ (:gcc, :clang)
+            if get_vendor(toolchain) == :gcc
+                @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
+            elseif get_vendor(toolchain) == :clang
+                @test !isempty(filter(jll -> jll.package.name == "Clang_jll", toolchain.deps))
+            end
 
-    # Download the toolchain, make sure it runs
-    with_toolchains([toolchain]) do prefix, env
-        toolchain_tests(toolchain, prefix, env, platform)
+            # Download the toolchain, make sure it runs
+            with_toolchains([toolchain]) do prefix, env
+                env["CCACHE_DIR"] = ccache_dir
+                toolchain_tests(toolchain, prefix, env, platform)
+            end
+        end
     end
 
     # Do the same, but with `GCCBootstrap`
-    toolchain = CToolchain(platform; vendor = :bootstrap)
+    toolchain = CToolchain(platform; vendor = :bootstrap, use_ccache=false)
     with_toolchains([toolchain]) do prefix, env
         toolchain_tests(toolchain, prefix, env, platform)
     end
@@ -81,6 +91,7 @@ end
                 wrapper_prefixes=["host-"],
                 extra_ldflags=["-L$(host_prefix)/lib"],
                 extra_cflags=["-I$(host_prefix)/include"],
+                use_ccache=false,
             )
 
             # Create "target toolchain" with extra flags to link against the target prefix
@@ -88,6 +99,7 @@ end
             target_ctoolchain = CToolchain(platform;
                 extra_ldflags=["-L$(target_prefix)/lib"],
                 extra_cflags=["-I$(target_prefix)/include"],
+                use_ccache=false,
             )
 
             # We'll need things like `make` etc...
@@ -140,7 +152,7 @@ end
     # Ensure that `$CC --version` at least works for all of our supported platforms
     for target in supported_platforms(CToolchain)
         for vendor in (:auto, :bootstrap)
-            toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor)
+            toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor, use_ccache=false)
             with_toolchains([toolchain]) do prefix, env
                 for tool_name in ("CC", "LD", "AS")
                     @testset "$(triplet(target)) - $(vendor) - $(tool_name)" begin

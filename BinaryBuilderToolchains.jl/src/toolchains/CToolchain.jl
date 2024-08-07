@@ -26,6 +26,10 @@ struct CToolchain <: AbstractToolchain
     # to specify a `-march`; we're in control of that.
     lock_microarchitecture::Bool
 
+    # If this is set to true (which is the default) we allow `ccache` to accelerate
+    # our compilation and linking with `gcc` and `clang`.
+    use_ccache::Bool
+
     # Extra compiler and linker flags that should be inserted.
     # We typically use these to add `-L/workspace/destdir/${target}`
     # in BinaryBuilder.
@@ -40,6 +44,7 @@ struct CToolchain <: AbstractToolchain
                         env_prefixes = [""],
                         wrapper_prefixes = ["\${triplet}-", ""],
                         lock_microarchitecture = true,
+                        use_ccache = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("*"),
                         binutils_version = v"2.38.0+4",
@@ -83,24 +88,25 @@ struct CToolchain <: AbstractToolchain
             llvm_version,
             binutils_version,
             glibc_version,
+            use_ccache,
         )
 
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         resolve_versions!(deps; julia_version=nothing)
 
-        jll_versions = Dict{String,Any}()
-        function record_jll_version(name, names)
+        tool_versions = Dict{String,Any}()
+        function record_tool_version(name, names)
             for jll in deps
                 if jll.package.name ∈ names
-                    jll_versions[name] = jll.package.version
+                    tool_versions[name] = jll.package.version
                 end
             end
         end
 
-        record_jll_version("GCC", ("GCC_jll", "GCCBootstrap_jll"))
-        record_jll_version("LLVM", ("Clang_jll",))
-        record_jll_version("Binutils", ("Binutils_jll",))
-        record_jll_version("Glibc", ("Glibc_jll",))
+        record_tool_version("GCC", ("GCC_jll", "GCCBootstrap_jll"))
+        record_tool_version("LLVM", ("Clang_jll",))
+        record_tool_version("Binutils", ("Binutils_jll",))
+        record_tool_version("Glibc", ("Glibc_jll",))
 
         return new(
             platform,
@@ -109,9 +115,10 @@ struct CToolchain <: AbstractToolchain
             string.(wrapper_prefixes),
             string.(env_prefixes),
             lock_microarchitecture,
+            use_ccache,
             string.(extra_cflags),
             string.(extra_ldflags),
-            jll_versions,
+            tool_versions,
         )
     end
 end
@@ -140,10 +147,23 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                               gcc_version,
                               llvm_version,
                               binutils_version,
-                              glibc_version)
+                              glibc_version,
+                              use_ccache)
+    # Collect our JLLSource objects for all of our compiler pieces:
+    deps = JLLSource[]
+
+    if use_ccache
+        push!(deps, JLLSource(
+            "Ccache_jll",
+            platform.host;
+            # Purposefully use an older version that does not rely on CompilerSupportLibraries_jll
+            version=v"4.2.0+0",
+        ))
+    end
+
     # If we're asking for a GCCBootstrap-based toolchain, give just that and nothing else, as it contains everything.
     if vendor == :gcc_bootstrap
-        return [JLLSource(
+        push!(deps, JLLSource(
             "GCCBootstrap_jll",
             platform;
             repo=Pkg.Types.GitRepo(
@@ -155,95 +175,95 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
             ),
             version=v"9.4.0",
-        )]
-    end
-
-    # Collect our JLLSource objects for all of our compiler pieces:
-    deps = JLLSource[]
-
-    gcc_triplet = triplet(gcc_platform(platform.target))
-    if os(platform.target) == "linux"
-        # Linux builds require the kernel headers for the target platform
-        push!(deps, JLLSource(
-            "LinuxKernelHeaders_jll",
-            platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
-                source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
-            ),
-            # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
-            target=joinpath(gcc_triplet, "usr")
         ))
-    end
-
-    if libc(platform.target) == "glibc"
-        # Manual version selection, drop this once these are registered!
-        if v"2.17" == glibc_version
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        elseif v"2.19" == glibc_version
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        else
-            error("Don't know how to install Glibc $(glibc_version)")
+    elseif vendor == :gcc
+        gcc_triplet = triplet(gcc_platform(platform.target))
+        if os(platform.target) == "linux"
+            # Linux builds require the kernel headers for the target platform
+            push!(deps, JLLSource(
+                "LinuxKernelHeaders_jll",
+                platform.target;
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/GCC",
+                    source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
+                ),
+                # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
+                target=joinpath(gcc_triplet, "usr")
+            ))
         end
 
-        push!(deps, JLLSource(
-            "Glibc_jll",
-            platform.target;
-            uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
-            # TODO: Should we encode this in the platform object somehow?
-            version=glibc_version,
-            repo=glibc_repo,
-            # This glibc is the one that gets embedded within GCC and it's for the target
-            target=gcc_triplet,
-        ))
-    end
+        if libc(platform.target) == "glibc"
+            # Manual version selection, drop this once these are registered!
+            if v"2.17" == glibc_version
+                glibc_repo = Pkg.Types.GitRepo(
+                    rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
+                    source="https://github.com/staticfloat/Glibc_jll.jl"
+                )
+            elseif v"2.19" == glibc_version
+                glibc_repo = Pkg.Types.GitRepo(
+                    rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
+                    source="https://github.com/staticfloat/Glibc_jll.jl"
+                )
+            else
+                error("Don't know how to install Glibc $(glibc_version)")
+            end
 
-    # Include GCC, and it's own bundled versions of Zlib, as well as Binutils
-    # These are compilers, so they take in the full cross platform.
-    # TODO: Get `GCC_jll.jl` packaged so that I don't
-    #       have to pull down a special commit like this!
-    append!(deps, [
-        JLLSource(
-            "GCC_jll",
-            platform;
-            uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
-                source="https://github.com/staticfloat/GCC_jll.jl"
+            push!(deps, JLLSource(
+                "Glibc_jll",
+                platform.target;
+                uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
+                # TODO: Should we encode this in the platform object somehow?
+                version=glibc_version,
+                repo=glibc_repo,
+                # This glibc is the one that gets embedded within GCC and it's for the target
+                target=gcc_triplet,
+            ))
+        end
+
+        # Include GCC, and it's own bundled versions of Zlib, as well as Binutils
+        # These are compilers, so they take in the full cross platform.
+        # TODO: Get `GCC_jll.jl` packaged so that I don't
+        #       have to pull down a special commit like this!
+        append!(deps, [
+            JLLSource(
+                "GCC_jll",
+                platform;
+                uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
+                repo=Pkg.Types.GitRepo(
+                    #rev="bb2/GCC",
+                    rev="010718ad99aa1c3aece99718043dc4ff12504633",
+                    source="https://github.com/staticfloat/GCC_jll.jl"
+                ),
+                # eventually, include a resolved version
+                # but for now, we're locked to this specific version
+                version=v"9.1.0",
             ),
-            # eventually, include a resolved version
-            # but for now, we're locked to this specific version
-            version=v"9.4.0",
-        ),
-        JLLSource(
-            "Binutils_jll",
-            platform;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
-                source="https://github.com/staticfloat/Binutils_jll.jl"
+            JLLSource(
+                "Binutils_jll",
+                platform;
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/GCC",
+                    source="https://github.com/staticfloat/Binutils_jll.jl"
+                ),
+                # eventually, include a resolved version
+                version=v"2.41.2",
             ),
-            # eventually, include a resolved version
-            version=v"2.41.2",
-        ),
-        #=
-        JLLSource(
-            "Zlib_jll",
-            platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
+            #=
+            JLLSource(
+                "Zlib_jll",
+                platform.target;
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/GCC",
+                    source="https://github.com/staticfloat/Zlib_jll.jl"
+                ),
+                # zlib gets installed into `<prefix>/<triplet>/usr`, and it's only for the target
+                target=joinpath(gcc_triplet, "usr"),
             ),
-            # zlib gets installed into `<prefix>/<triplet>/usr`, and it's only for the target
-            target=joinpath(gcc_triplet, "usr"),
-        ),
-        =#
-    ])
+            =#
+        ])
+    else
+        throw(ArgumentError("Invalid vendor '$(vendor)'!"))
+    end
 end
 
 function Base.show(io::IO, toolchain::CToolchain)
@@ -258,15 +278,19 @@ function toolchain_sources(toolchain::CToolchain)
 
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
     # our compiler wrappers!
+    installing_jll(name::String) = any(jll.package.name == name for jll in toolchain.deps)
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
-        if any(jll.package.name == "GCC_jll" for jll in toolchain.deps) || any(jll.package.name == "GCCBootstrap_jll" for jll in toolchain.deps)
+        if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll")
             gcc_wrappers(toolchain, out_dir)
         end
-        if any(jll.package.name == "Clang_jll" for jll in toolchain.deps)
+        if installing_jll("Clang_jll")
             clang_wrappers(toolchain, out_dir)
         end
-        if any(jll.package.name == "Binutils_jll" for jll in toolchain.deps) || any(jll.package.name == "GCCBootstrap_jll" for jll in toolchain.deps)
+        if installing_jll("Binutils_jll") || installing_jll("GCCBootstrap_jll")
             binutils_wrappers(toolchain, out_dir)
+        end
+        if installing_jll("Ccache_jll")
+            make_tool_wrappers(toolchain, out_dir, "ccache", "ccache")
         end
     end)
 
@@ -274,8 +298,8 @@ function toolchain_sources(toolchain::CToolchain)
 
     # Note that we eliminate the illegal "version" fields from our PackageSpec
     jll_deps = copy(toolchain.deps)
-    @warn("TODO: do I need to filter these out here?", maxlog=1)
-    filter_illegal_versionspecs!([jll.package for jll in jll_deps])
+    #@warn("TODO: do I need to filter these out here?", maxlog=1)
+    #filter_illegal_versionspecs!([jll.package for jll in jll_deps])
     append!(sources, jll_deps)
     return sources
 end
@@ -324,6 +348,10 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     for env_prefix in toolchain.env_prefixes
         set_envvars(env_prefix, wrapper_prefix)
     end
+
+    if toolchain.use_ccache
+        env["CCACHE_COMPILERCHECK"] = "content"
+    end
     return env
 end
 
@@ -358,7 +386,7 @@ function link_flagmatch(f::Function, io::IO)
 end
 
 
-# Helper function to make many tool symlinks
+# Helper function to make many tool wrappers at once
 # `tool` is the name that we export, (which will be prefixed by
 # our target triplet) e.g. `ar`.  `tool_target` is the name of
 # the wrapped executable (e.g. `llvm-ar`).
@@ -486,9 +514,14 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
             @warn("TODO: sanitize_link_flags()", maxlog=1)
         end
-    end
 
-    @warn("TODO: Add ccache ability back in", maxlog=1)
+        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
+        if toolchain.use_ccache
+            println(io, """
+            PROG=( "$(toolchain_prefix)/bin/ccache" "\${PROG[@]}" )
+            """)
+        end
+    end
 
     # gcc, g++
     gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
