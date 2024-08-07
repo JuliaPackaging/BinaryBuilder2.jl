@@ -86,7 +86,7 @@ function Sandbox.SandboxConfig(result::ExtractResult; kwargs...)
     return SandboxConfig(result.config, artifact_path(result), mounts; env=result.config.build.env)
 end
 function runshell(result::ExtractResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
-    run(result.config.build.exe, SandboxConfig(result; verbose), shell)
+    run(result.config.build.exe, SandboxConfig(result; verbose), ignorestatus(shell))
 end
 
 

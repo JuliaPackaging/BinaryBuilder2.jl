@@ -107,7 +107,7 @@ function Sandbox.SandboxConfig(result::BuildResult; kwargs...)
 end
 
 function runshell(result::BuildResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
-    run(result.exe, SandboxConfig(result; verbose, result.env), shell)
+    run(result.exe, SandboxConfig(result; verbose, result.env), ignorestatus(shell))
 end
 
 function find_mount_for_path(mounts::Dict{String,MountInfo}, path::String)

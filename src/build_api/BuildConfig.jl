@@ -374,7 +374,7 @@ function runshell(config::BuildConfig; verbose::Bool = AbstractBuildMeta(config)
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
     with_executor() do exe
-        run(exe, sandbox_config, shell)
+        run(exe, sandbox_config, ignorestatus(shell))
     end
 end
 

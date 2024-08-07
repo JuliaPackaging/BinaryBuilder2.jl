@@ -86,7 +86,7 @@ end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir()), shell::Cmd = `/bin/bash`)
     sandbox_config = SandboxConfig(config, output_dir)
-    run(config.build.exe, sandbox_config, shell)
+    run(config.build.exe, sandbox_config, ignorestatus(shell))
 end
 
 function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts); kwargs...)
