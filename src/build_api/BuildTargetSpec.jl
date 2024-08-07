@@ -117,6 +117,7 @@ function add_target_dir_envs(env, target_prefix_path, platform, name)
         name_maker(name, "shlibdir") => Sys.iswindows(platform) ? "$(target_prefix_path)/bin" : "$(target_prefix_path)/lib",
         name_maker(name, "includedir") => "$(target_prefix_path)/include",
         name_maker(name, "dlext") => dlext(platform)[2:end],
+        name_maker(name, "nbits") => string(nbits(platform)),
     ))
 end
 

@@ -136,9 +136,6 @@ apt install -y vim
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
 
-# Update configure scripts for all projects
-#update_configure_scripts --reconf
-
 # Force everything to default to cross compiling; this avoids differences
 # in behavior between when we target our own triplet
 for f in $(find . -name configure); do
@@ -169,17 +166,11 @@ if [[ "${target}" == *-musl* ]]; then
     export ac_cv_have_decl__builtin_ffs=yes
 
 elif [[ "${target}" == *-mingw* ]]; then
-    # On mingw, we need to explicitly set the windres code page to 1, otherwise windres segfaults
-    export CPPFLAGS="${CPPFLAGS} -DCP_ACP=1"
-
-    # On mingw override native system header directories
-    GCC_CONF_ARGS+=( --with-native-system-header-dir=/include )
-
     # On mingw, we need to explicitly enable openmp
     GCC_CONF_ARGS+=( --enable-libgomp )
 
-    # We also need to symlink our lib directory specially
-    #ln -s sys-root/lib ${sysroot}/lib
+    # Mingw just always looks in `mingw/` instead of `usr/`, so we symlink it:
+    ln -s usr ${host_prefix}/${target}/mingw
 
 elif [[ "${target}" == *-darwin* ]]; then
     # GCC doesn't turn LTO on by default for some reason.
@@ -203,11 +194,6 @@ for proj in mpfr mpc isl gmp; do
     fi
 done
 
-# Do not run fixincludes except on Darwin
-# if [[ ${target} != *-darwin* ]]; then
-#     sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in
-# fi
-
 # Apply all gcc patches, if any exist
 if compgen -G "${WORKSPACE}/srcdir/patches/gcc-*.patch" > /dev/null; then
     for p in ${WORKSPACE}/srcdir/patches/gcc-*.patch; do
@@ -223,7 +209,8 @@ cd $WORKSPACE/srcdir/gcc_build
 # die while failing to build docs.
 MAKEVARS=( MAKEINFO=true )
 
-for TOOL in CC CXX AS AR NM LD RANLIB; do
+for TOOL in CC CPP CXX AS AR NM LD RANLIB; do
+    unset "${TOOL}"
     BUILD_NAME="BUILD_${TOOL}"
     export ${TOOL}_FOR_BUILD=${!BUILD_NAME}
     TARGET_NAME="TARGET_${TOOL}"
@@ -237,11 +224,15 @@ done
 # not just as "host-ld" or "host-as", etc... Otherwise, the `collect2` we generate looks
 # for these names.  This lovely mess of bash results in `--with-ld=x86_64-linux-gnu-ld`
 for TOOL in LD AS DSYMUTIL; do
-    if [[ -n "${!TOOL:-}" ]]; then
+    if [[ -v "TARGET_${TOOL}" ]]; then
         tool="$(tr '[:upper:]' '[:lower:]' <<<"${TOOL}")"
         GCC_CONF_ARGS+=( --with-${tool}="$(which "${target}-${tool}")" )
     fi
 done
+# It's critical that the above makes a mapping for `--with-ld`, so just assert that
+# it does, here and now, rather than wasting everyone's time later:
+[[ "${GCC_CONF_ARGS[@]}" == *--with-ld=* ]]
+[[ "${GCC_CONF_ARGS[@]}" == *--with-as=* ]]
 
 $WORKSPACE/srcdir/gcc-*/configure \
     --prefix="${host_prefix}" \
@@ -267,6 +258,9 @@ rm -f ${prefix}/${target}/lib*/*.la
 
 # Remove heavy doc directories
 rm -rf ${prefix}/share/man
+
+# Install licenses
+install_license ${WORKSPACE}/srcdir/gcc-*/COPYING*
 """
 
 # Build for these host platforms
@@ -276,10 +270,23 @@ host_platforms = [
 ]
 
 # Build for all supported target platforms
-target_platforms = supported_platforms(;experimental=true)
+target_platforms = [
+    Platform("x86_64", "linux"),
+    Platform("i686", "linux"),
+    Platform("aarch64", "linux"),
+    Platform("armv6l", "linux"),
+    Platform("armv7l", "linux"),
+    Platform("powerpc64le", "linux"),
 
-# Only glibc linux for now
-target_platforms = filter(p -> libc(p) == "glibc", target_platforms)
+    Platform("x86_64", "linux"; libc="musl"),
+    Platform("i686", "linux"; libc="musl"),
+    Platform("aarch64", "linux"; libc="musl"),
+    Platform("armv6l", "linux"; libc="musl"),
+    Platform("armv7l", "linux"; libc="musl"),
+
+    Platform("x86_64", "windows"),
+    Platform("i686", "windows"),
+]
 
 platforms = vcat(
     # Build cross-gcc from `host => target`
@@ -305,17 +312,17 @@ function gcc_spec_generator(host, platform)
         ))
     end
 
-    if libc(platform.target) == "glibc"
+    if os(platform.target) == "linux" && libc(platform.target) == "glibc"
         if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le")
             # v2.17
             glibc_repo = Pkg.Types.GitRepo(
-                rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
+                rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
             # v2.19
             glibc_repo = Pkg.Types.GitRepo(
-                rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
+                rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         end
@@ -326,16 +333,24 @@ function gcc_spec_generator(host, platform)
             repo=glibc_repo,
             target=target_str,
         ))
-    elseif libc(platform.target) == "musl"
+    elseif os(platform.target) == "linux" &&  libc(platform.target) == "musl"
         push!(target_sources, JLLSource(
             "Musl_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="348ed6c4e67bb05ea03d0f39773c76eabb94afd0",
+                rev="827bfab690e1cab77b4d48e1a250c8acd3547443",
                 source="https://github.com/staticfloat/Musl_jll.jl"
             ),
             target=target_str,
         ))
+    elseif os(platform.target) == "windows"
+        push!(target_sources, JLLSource(
+            "Mingw_jll",
+            platform.target;
+            target=target_str,
+        ))
+    else
+        throw(ArgumentError("Don't know how to install libc sources for $(triplet(platform.target))"))
     end
 
     return [

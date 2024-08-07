@@ -48,6 +48,9 @@ make install DESTDIR="${prefix}"
 # Fix wrong symlink in `lib`
 ln -sfv ../usr/lib/libc.so ${prefix}/lib/ld-musl-$(musl_arch).so.1
 ln -sfv libc.so ${prefix}/usr/lib/libc.musl-$(musl_arch).so.1
+
+# Install license
+install_license ${WORKSPACE}/srcdir/musl-*/COPYRIGHT
 """
 
 # For each version, build it!
@@ -58,7 +61,13 @@ for version in keys(musl_version_sources)
         src_version = version,
         sources = musl_version_sources[version],
         script,
-        platforms = filter(p -> libc(p) == "musl", supported_platforms()),
+        platforms = [
+            Platform("x86_64", "linux"; libc="musl"),
+            Platform("i686", "linux"; libc="musl"),
+            Platform("aarch64", "linux"; libc="musl"),
+            Platform("armv6l", "linux"; libc="musl"),
+            Platform("armv7l", "linux"; libc="musl"),
+        ],
         products = [
             LibraryProduct(["usr/lib/libc"], :libc),
         ],

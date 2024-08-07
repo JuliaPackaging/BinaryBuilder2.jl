@@ -28,6 +28,9 @@ glibc_version_platforms = Dict{VersionNumber,Vector}(
 script = raw"""
 cd ${WORKSPACE}/srcdir/glibc-*/
 
+# Install license
+install_license COPYING*
+
 # Some things need /lib64, others just need /lib
 case ${target} in
     x86_64*)
