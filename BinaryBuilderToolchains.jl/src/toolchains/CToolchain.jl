@@ -230,8 +230,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
-                    #rev="bb2/GCC",
-                    rev="010718ad99aa1c3aece99718043dc4ff12504633",
+                    rev="bb2/GCC",
                     source="https://github.com/staticfloat/GCC_jll.jl"
                 ),
                 # eventually, include a resolved version
