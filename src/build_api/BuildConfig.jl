@@ -425,9 +425,13 @@ function build!(config::BuildConfig;
             if verbose
                 @info("Build cached", config, build_hash=content_hash(config))
             end
-            result = BuildResult_cached(config)
-            meta.builds[config] = result
-            return result
+            try
+                result = BuildResult_cached(config)
+                meta.builds[config] = result
+                return result
+            catch exception
+                @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
+            end
         end
     end
 
