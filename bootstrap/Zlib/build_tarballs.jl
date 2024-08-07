@@ -26,5 +26,21 @@ build_tarballs(;
     ],
     host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
     target_toolchains = [CToolchain(;vendor=:bootstrap)],
-    platforms = supported_platforms(),
+    platforms = [
+        Platform("x86_64", "linux"),
+        Platform("i686", "linux"),
+        Platform("aarch64", "linux"),
+        Platform("armv6l", "linux"),
+        Platform("armv7l", "linux"),
+        Platform("powerpc64le", "linux"),
+
+        Platform("x86_64", "linux"; libc="musl"),
+        Platform("i686", "linux"; libc="musl"),
+        Platform("aarch64", "linux"; libc="musl"),
+        Platform("armv6l", "linux"; libc="musl"),
+        Platform("armv7l", "linux"; libc="musl"),
+
+        Platform("x86_64", "windows"),
+        Platform("i686", "windows"),
+    ],
 )

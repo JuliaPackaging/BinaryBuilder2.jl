@@ -3,7 +3,21 @@ using BinaryBuilder2
 meta = BinaryBuilder2.get_default_meta()
 src_name = "LinuxKernelHeaders"
 src_version = v"6.9.5"
-platforms = filter(Sys.islinux, supported_platforms(;experimental=true))
+linarch(arch) = Platform(arch, "linux")
+platforms = [
+    Platform("x86_64", "linux"),
+    Platform("i686", "linux"),
+    Platform("armv7l", "linux"),
+    Platform("armv6l", "linux"),
+    Platform("aarch64", "linux"),
+    Platform("powerpc64le", "linux"),
+
+    Platform("x86_64", "linux"; libc="musl"),
+    Platform("i686", "linux"; libc="musl"),
+    Platform("armv7l", "linux"; libc="musl"),
+    Platform("armv6l", "linux"; libc="musl"),
+    Platform("aarch64", "linux"; libc="musl"),
+]
 
 # Build the tarballs, and possibly a `build.jl` as well.
 build_tarballs(;

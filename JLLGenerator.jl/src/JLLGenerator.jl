@@ -238,9 +238,9 @@ struct JLLPackageDependency
                 string(name),
             ))
             if isempty(uuids)
-                uuid = jll_specific_uuid5(uuid_package, "$(info.name)_jll")
+                uuid = jll_specific_uuid5(uuid_package, "$(name)_jll")
             elseif length(uuids) > 1
-                throw(ArgumentError("More than one '$(info.name)_jll' package registered?!"))
+                throw(ArgumentError("More than one '$(name)_jll' package registered?!"))
             else
                 uuid = only(uuids)
             end
@@ -726,7 +726,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
         # In general, we'd need access to a registry lookup to turn our name/UUID pairs in `JLLInfo`
         # into a linkable URL, so we punt this off to the caller by only printing the name unless
         # the URL is listed in `dep_url_mapping` in the `build_metadata` dictionary.
-        deps = unique(stack([jart.deps for jart in info.builds]))
+        deps = unique(vcat([jart.deps for jart in info.builds]...))
         dep_url_mapping = get(build_metadata, "dep_url_mapping", Dict{String,String}())
         println(io, """
         # Dependencies

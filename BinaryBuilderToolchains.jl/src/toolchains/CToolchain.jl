@@ -71,10 +71,10 @@ struct CToolchain <: AbstractToolchain
                 @warn("TODO: Should glibc_version be embedded within the triplet?", maxlog=1)
                 if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le",)
                     glibc_version = v"2.17"
-                elseif arch(platform.target) ∈ ("armv7l", "aarch64")
+                elseif arch(platform.target) ∈ ("armv6l", "armv7l", "aarch64")
                     glibc_version = v"2.19"
                 else
-                    throw(ArgumentError("Unknown oldest glibc version for architecture '$(arch)'!"))
+                    throw(ArgumentError("Unknown oldest glibc version for architecture '$(platform.target)'!"))
                 end
             else
                 throw(ArgumentError("Invalid magic glibc_version argument :$(glibc_version)"))
@@ -190,34 +190,34 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
                 target=joinpath(gcc_triplet, "usr")
             ))
-        end
 
-        if libc(platform.target) == "glibc"
-            # Manual version selection, drop this once these are registered!
-            if v"2.17" == glibc_version
-                glibc_repo = Pkg.Types.GitRepo(
-                    rev="1ae9e1bdd75523bf0f027a9a740888ee6aad22ac",
-                    source="https://github.com/staticfloat/Glibc_jll.jl"
-                )
-            elseif v"2.19" == glibc_version
-                glibc_repo = Pkg.Types.GitRepo(
-                    rev="d436c3277e9bce583bcc5c469849fc9809bf86e9",
-                    source="https://github.com/staticfloat/Glibc_jll.jl"
-                )
-            else
-                error("Don't know how to install Glibc $(glibc_version)")
+            if libc(platform.target) == "glibc"
+                # Manual version selection, drop this once these are registered!
+                if v"2.17" == glibc_version
+                    glibc_repo = Pkg.Types.GitRepo(
+                        rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
+                        source="https://github.com/staticfloat/Glibc_jll.jl"
+                    )
+                elseif v"2.19" == glibc_version
+                    glibc_repo = Pkg.Types.GitRepo(
+                        rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
+                        source="https://github.com/staticfloat/Glibc_jll.jl"
+                    )
+                else
+                    error("Don't know how to install Glibc $(glibc_version)")
+                end
+
+                push!(deps, JLLSource(
+                    "Glibc_jll",
+                    platform.target;
+                    uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
+                    # TODO: Should we encode this in the platform object somehow?
+                    version=glibc_version,
+                    repo=glibc_repo,
+                    # This glibc is the one that gets embedded within GCC and it's for the target
+                    target=gcc_triplet,
+                ))
             end
-
-            push!(deps, JLLSource(
-                "Glibc_jll",
-                platform.target;
-                uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
-                # TODO: Should we encode this in the platform object somehow?
-                version=glibc_version,
-                repo=glibc_repo,
-                # This glibc is the one that gets embedded within GCC and it's for the target
-                target=gcc_triplet,
-            ))
         end
 
         # Include GCC, and it's own bundled versions of Zlib, as well as Binutils
@@ -715,7 +715,7 @@ function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
         Platform("aarch64", "linux"),
         Platform("armv7l", "linux"),
         Platform("ppc64le", "linux"),
-#=
+
         Platform("x86_64", "linux"; libc="musl"),
         Platform("i686", "linux"; libc="musl"),
         Platform("aarch64", "linux"; libc="musl"),
@@ -724,6 +724,5 @@ function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
 
         Platform("x86_64", "windows"),
         Platform("i686", "windows"),
-=#
     ]
 end
