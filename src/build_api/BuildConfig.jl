@@ -180,66 +180,7 @@ function get_target_spec(config::BuildConfig, name::String)
     end
     return nothing
 end
-#=
-"""
-    target_mapping(config::BuildConfig)
 
-Returns dictionary mapping target name (e.g. "host", "target", etc...) to the
-cross-platform representing the cross compiler used to compile for each target.
-For most builds, this will contain two mappings, one for the host, one for the
-target, however for more complicated builds there can be more than just those.
-"""
-function target_mapping(toolchains_mapping::Dict{String,<:Vector{<:AbstractToolchain}})
-    mapping = Dict{String,CrossPlatform}()
-    for (name, toolchains) in toolchains_mapping
-        target_toolchains = filter(is_target_toolchain, toolchains)
-        if isempty(target_toolchains)
-            continue
-        end
-        mapping[name] = first(target_toolchains).platform
-    end
-    return mapping
-end
-target_mapping(config::BuildConfig) = target_mapping(config.toolchains)
-BBHostPlatform(config::BuildConfig) = first(values(target_mapping(config))).host
-
-function host_mapping_key(mapping::Dict{String,CrossPlatform})
-    if haskey(mapping, "build")
-        return "build"
-    elseif haskey(mapping, "host")
-        return "host"
-    else
-        return nothing
-    end
-end
-host_mapping_key(config::BuildConfig) = host_mapping_key(target_mapping(config))
-
-function guess_target_key(mapping::Dict{String,CrossPlatform})
-    if haskey(mapping, "build") && haskey(mapping, "host")
-        return "host"
-    elseif haskey(mapping, "host") && haskey(mapping, "target")
-        return "target"
-    else
-        return nothing
-    end
-end
-guess_target_key(config::BuildConfig) = guess_target_key(target_mapping(config))
-
-function guess_target(mapping::Dict{String,CrossPlatform})
-    if length(mapping) == 2 && haskey(mapping, "target")
-        # Simple case that 99% of people will be using
-        return return mapping["target"].target
-    elseif length(mapping) == 3 && haskey(mapping, "target") && haskey(mapping, "host")
-        # Canuck mode oot and aboot.  Only the bravest souls,
-        # Tim Horton's in hand, will attempt a build like this.
-        return CrossPlatform(mapping["host"].target => mapping["target"].target)
-    else
-        # Science has gone too far!
-        return nothing
-    end
-end
-guess_target(config::BuildConfig) = guess_target(target_mapping(config))
-=#
 function target_platform_string(config::BuildConfig)
     function get_spec_by_name(name)
         for bts in config.target_specs
