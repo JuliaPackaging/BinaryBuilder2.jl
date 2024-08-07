@@ -11,7 +11,7 @@ const verbose = false
 
     # Download the toolchain, make sure it runs.
     # We include a host-targeted C toolchain here, because our `autotools` test requires one.
-    c_toolchain = CToolchain(platform)
+    c_toolchain = CToolchain(platform; use_ccache=false)
     with_toolchains([toolchain, c_toolchain]) do prefix, env
         # This list should more or less mirror the `default_tools` in 
         host_tools = [
