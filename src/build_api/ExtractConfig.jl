@@ -198,9 +198,13 @@ function extract!(config::ExtractConfig;
                 build_hash = content_hash(config.build.config)
                 @info("Extraction cached", config, extract_hash, build_hash)
             end
-            result = ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
-            meta.extractions[config] = result
-            return result
+            try
+                result = ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
+                meta.extractions[config] = result
+                return result
+            catch exception
+                @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
+            end
         end
     end
 
