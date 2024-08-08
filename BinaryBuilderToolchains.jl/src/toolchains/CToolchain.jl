@@ -152,15 +152,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # Collect our JLLSource objects for all of our compiler pieces:
     deps = JLLSource[]
 
-    if use_ccache
-        push!(deps, JLLSource(
-            "Ccache_jll",
-            platform.host;
-            # Purposefully use an older version that does not rely on CompilerSupportLibraries_jll
-            version=v"4.2.0+0",
-        ))
-    end
-
     # If we're asking for a GCCBootstrap-based toolchain, give just that and nothing else, as it contains everything.
     if vendor == :gcc_bootstrap
         push!(deps, JLLSource(
@@ -175,6 +166,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
             ),
             version=v"9.4.0",
+            target="gcc",
         ))
     elseif vendor == :gcc
         gcc_triplet = triplet(gcc_platform(platform.target))
@@ -188,7 +180,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
                 ),
                 # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
-                target=joinpath(gcc_triplet, "usr")
+                target=joinpath("gcc", gcc_triplet, "usr")
             ))
 
             if libc(platform.target) == "glibc"
@@ -215,7 +207,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     version=glibc_version,
                     repo=glibc_repo,
                     # This glibc is the one that gets embedded within GCC and it's for the target
-                    target=gcc_triplet,
+                    target=joinpath("gcc", gcc_triplet),
                 ))
             end
         end
@@ -230,22 +222,26 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
-                    source="https://github.com/staticfloat/GCC_jll.jl"
+                    #rev="bb2/GCC",
+                    rev="2f960bf26dd3d3918f07d564184b35b9c20552f4",
+                    source="https://github.com/staticfloat/GCC_jll.jl",
                 ),
                 # eventually, include a resolved version
                 # but for now, we're locked to this specific version
                 version=v"9.1.0",
+                target="gcc",
             ),
             JLLSource(
                 "Binutils_jll",
                 platform;
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
-                    source="https://github.com/staticfloat/Binutils_jll.jl"
+                    #rev="bb2/GCC",
+                    rev="36a3c2374c0e546ae3bc9223e3de6cb4b0d55371",
+                    source="https://github.com/staticfloat/Binutils_jll.jl",
                 ),
                 # eventually, include a resolved version
-                version=v"2.41.2",
+                version=v"2.41.0",
+                target="gcc",
             ),
             #=
             JLLSource(
@@ -256,7 +252,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     source="https://github.com/staticfloat/Zlib_jll.jl"
                 ),
                 # zlib gets installed into `<prefix>/<triplet>/usr`, and it's only for the target
-                target=joinpath(gcc_triplet, "usr"),
+                target=joinpath("gcc", gcc_triplet, "usr"),
             ),
             =#
         ])
@@ -288,9 +284,6 @@ function toolchain_sources(toolchain::CToolchain)
         if installing_jll("Binutils_jll") || installing_jll("GCCBootstrap_jll")
             binutils_wrappers(toolchain, out_dir)
         end
-        if installing_jll("Ccache_jll")
-            make_tool_wrappers(toolchain, out_dir, "ccache", "ccache")
-        end
     end)
 
     @warn("TODO: Generate xcrun shim", maxlog=1)
@@ -308,8 +301,13 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
 
     insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),
-        joinpath(deployed_prefix, "bin"),
     ])
+
+    if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
+        insert_PATH!(env, :PRE, [
+            joinpath(deployed_prefix, "gcc", "bin"),
+        ])
+    end
 
     function set_envvars(envvar_prefix::String, tool_prefix::String)
         env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
@@ -346,10 +344,6 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     wrapper_prefix = wrapper_prefixes[argmax(length.(wrapper_prefixes))]
     for env_prefix in toolchain.env_prefixes
         set_envvars(env_prefix, wrapper_prefix)
-    end
-
-    if toolchain.use_ccache
-        env["CCACHE_COMPILERCHECK"] = "content"
     end
     return env
 end
@@ -389,10 +383,9 @@ end
 # `tool` is the name that we export, (which will be prefixed by
 # our target triplet) e.g. `ar`.  `tool_target` is the name of
 # the wrapped executable (e.g. `llvm-ar`).
-function make_tool_wrappers(toolchain, output_dir, tool, tool_target; wrapper::Function = identity)
-    # Helpful little hack to make our scripts more relocatable
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
-
+function make_tool_wrappers(toolchain, output_dir, tool, tool_target;
+                            wrapper::Function = identity,
+                            toolchain_prefix::String = "\$(dirname \"\${WRAPPER_DIR}\")")
     for wrapper_prefix in toolchain.wrapper_prefixes
         tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), tool)
         compiler_wrapper(wrapper,
@@ -416,7 +409,7 @@ wrapper names `cc`, `gcc`, `c++`, etc...
 function gcc_wrappers(toolchain::CToolchain, dir::String)
     gcc_version = toolchain.tool_versions["GCC"]
     p = toolchain.platform.target
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
 
     function _gcc_wrapper(io)
         # Fail out noisily if `-march` is set, but we're locking microarchitectures.
@@ -517,25 +510,29 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
         if toolchain.use_ccache
             println(io, """
-            PROG=( "$(toolchain_prefix)/bin/ccache" "\${PROG[@]}" )
+            # If `ccache` is available, use it!
+            if which ccache >/dev/null; then
+                PROG=( ccache "\${PROG[@]}" )
+            fi
             """)
         end
     end
 
     # gcc, g++
     gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
-    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper)
-    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper)
+    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
 
     if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
-        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper)
-        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper)
-        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_triplet)-cpp"; wrapper=_gcc_wrapper)
+        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_triplet)-cpp"; wrapper=_gcc_wrapper, toolchain_prefix)
     end
 end
 
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
 
     # Most tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = [
@@ -656,25 +653,25 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
     gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     for tool in simple_tools
-        make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)")
+        make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)"; toolchain_prefix)
     end
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
-    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name)
+    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix)
 
     ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
-    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper)
+    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix)
 
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
-    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper)
+    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix)
 
     # dlltool needs some determinism fixes as well
     if Sys.iswindows(p)
         function _dlltool_wrapper(io)
             append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
         end
-        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper)
+        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper, toolchain_prefix)
     end
 end
 

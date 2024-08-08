@@ -39,6 +39,7 @@ include("WrapperUtils.jl")
 include("PathUtils.jl")
 include("toolchains/CToolchain.jl")
 include("toolchains/HostToolsToolchain.jl")
+include("toolchains/CMakeToolchain.jl")
 include("PkgUtils.jl")
 include("InteractiveUtils.jl")
 
