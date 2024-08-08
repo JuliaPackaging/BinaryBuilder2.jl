@@ -28,7 +28,6 @@ struct HostToolsToolchain <: AbstractToolchain
             "autoconf_jll",
             "Bison_jll",
             "Ccache_jll",
-            "CMake_jll",
             "file_jll",
             "flex_jll",
             "gawk_jll",

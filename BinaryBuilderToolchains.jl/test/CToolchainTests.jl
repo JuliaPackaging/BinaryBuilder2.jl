@@ -1,51 +1,10 @@
 using Test, BinaryBuilderSources, BinaryBuilderToolchains, BinaryBuilderPlatformExtensions, Base.BinaryPlatforms, Scratch
+using BinaryBuilderToolchains: path_appending_merge
 
 # Enable this for lots of JLLPrefixes output
 const verbose = false
 
-function capture_output(cmd)
-    output = Pipe()
-    p = run(pipeline(cmd; stdout=output, stderr=output); wait=false)
-    close(output.in)
-    output = String(read(output))
-    return p, output
-end
-
-function toolchain_tests(toolchain, prefix, env, platform)
-    testsuite_path = joinpath(@__DIR__, "testsuite", "CToolchain")
-    cd(testsuite_path) do
-        # Run our entire test suite first
-        p = run(ignorestatus(setenv(`make -s cleancheck-all`, env)))
-        # If this fails, run it again, but with `make` not set to silent
-        if !success(p)
-            run(setenv(`make cleancheck-all`, env))
-        end
-        @test success(p)
-
-        # Run the `cxx_string_abi` with `BB_WRAPPERS_VERBOSE` and ensure that we get the right
-        # `cxxstring_abi` defines showing in the build log:
-        if toolchain.vendor ∈ (:gcc, :gcc_bootstrap)
-            @test haskey(platform.target, "cxxstring_abi")
-            cxxstring_abi_define = string(
-                "-D_GLIBCXX_USE_CXX11_ABI=",
-                platform.target["cxxstring_abi"] == "cxx11" ? "1" : "0",
-            )
-
-            # Turn on verbose wrappers
-            debug_env = copy(env)
-            debug_env["BB_WRAPPERS_VERBOSE"] = "true"
-            p, debug_out = capture_output(setenv(`make cleancheck-02_cxx_string_abi`, debug_env))
-            @test success(p)
-            @test occursin(cxxstring_abi_define, debug_out)
-        end
-    end
-
-    # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
-    for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
-        @test success(setenv(`$(wrapper) --version`, env))
-    end
-end
-
+include("common.jl")
 
 using BinaryBuilderToolchains: get_vendor
 @testset "CToolchain" begin
@@ -62,17 +21,19 @@ using BinaryBuilderToolchains: get_vendor
             end
 
             # Download the toolchain, make sure it runs
+            @info("CToolchain tests", vendor=:auto, use_ccache)
             with_toolchains([toolchain]) do prefix, env
                 env["CCACHE_DIR"] = ccache_dir
-                toolchain_tests(toolchain, prefix, env, platform)
+                toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
             end
         end
     end
 
     # Do the same, but with `GCCBootstrap`
     toolchain = CToolchain(platform; vendor = :bootstrap, use_ccache=false)
+    @info("CToolchain tests", vendor=:bootstrap, use_ccache=false)
     with_toolchains([toolchain]) do prefix, env
-        toolchain_tests(toolchain, prefix, env, platform)
+        toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
     end
 
     # Time for an advanced test: let's ensure that when deploying two CToolchains,
@@ -124,25 +85,28 @@ using BinaryBuilderToolchains: get_vendor
 
             # Next, within a single shell with _both_ toolchains installed, verify that the
             # include path searched by the preprocessor and linker is correct:
-            with_toolchains([host_ctoolchain, target_ctoolchain, hosttools_toolchain]) do prefix, env
-                cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation")) do
-                    for (version, install_prefix, cc) in ((host_version, host_prefix, "\${HOST_CC}"),
-                                                          (target_version, target_prefix, "\${CC}"))
-                        # Run preprocessor on `usesfoo.c`, print out `LIBFOO_VERSION`
-                        p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "$(cc) -dM -E usesfoo.c"]), env))
-                        @test success(p)
-                        version_str = only(filter(l -> startswith(l, "#define LIBFOO_VERSION"), split(output, "\n")))
-                        @test parse(Int, last(split(version_str," "))) == version
+            with_toolchains([host_ctoolchain, hosttools_toolchain]) do _, host_env
+                with_toolchains([target_ctoolchain]) do _, target_env
+                    env = path_appending_merge(host_env, target_env)
+                    cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation")) do
+                        for (version, install_prefix, cc) in ((host_version, host_prefix, "\${HOST_CC}"),
+                                                              (target_version, target_prefix, "\${CC}"))
+                            # Run preprocessor on `usesfoo.c`, print out `LIBFOO_VERSION`
+                            p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "$(cc) -dM -E usesfoo.c"]), env))
+                            @test success(p)
+                            version_str = only(filter(l -> startswith(l, "#define LIBFOO_VERSION"), split(output, "\n")))
+                            @test parse(Int, last(split(version_str," "))) == version
 
-                        # Next, compile it and ensure that the library it tries to load ends
-                        # with the right SOVERSION:
-                        mkpath(joinpath(install_prefix, "bin"))
-                        run(setenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
-                        p, output = capture_output(setenv(`readelf -d $(install_prefix)/bin/foo`, env))
-                        @test success(p)
-                        m = match(r"Shared library: \[(libfoo[^ ]+)\]", output)
-                        @test m !== nothing
-                        @test m.captures[1] == "libfoo.so.$(version)"
+                            # Next, compile it and ensure that the library it tries to load ends
+                            # with the right SOVERSION:
+                            mkpath(joinpath(install_prefix, "bin"))
+                            run(setenv(Cmd(["/bin/bash", "-c", "$(cc) -o $(install_prefix)/bin/foo -lfoo usesfoo.c"]), env))
+                            p, output = capture_output(setenv(`readelf -d $(install_prefix)/bin/foo`, env))
+                            @test success(p)
+                            m = match(r"Shared library: \[(libfoo[^ ]+)\]", output)
+                            @test m !== nothing
+                            @test m.captures[1] == "libfoo.so.$(version)"
+                        end
                     end
                 end
             end
@@ -150,13 +114,18 @@ using BinaryBuilderToolchains: get_vendor
     end
 
     # Ensure that `$CC --version` at least works for all of our supported platforms
+    @info("Running `\$CC --version` for $(length(supported_platforms(CToolchain))) platforms")
     for target in supported_platforms(CToolchain)
         for vendor in (:auto, :bootstrap)
             toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor, use_ccache=false)
             with_toolchains([toolchain]) do prefix, env
                 for tool_name in ("CC", "LD", "AS")
                     @testset "$(triplet(target)) - $(vendor) - $(tool_name)" begin
-                        @test success(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                        p, output = capture_output(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                        if !success(p)
+                            println(output)
+                        end
+                        @test success(p)
                     end
                 end
             end
