@@ -252,7 +252,7 @@ using BinaryBuilder2: get_package_result
     # Create a meta with a universe that we will then inspect as other
     # builds register things into it.
     universe_name = "BB2_tests-$(randstring(4))"
-    meta = BuildMeta(;universe_name)
+    meta = BuildMeta(;universe_name,target_list=[BBHostPlatform()])
     bootstrap_dir = joinpath(pkgdir(BinaryBuilder2), "bootstrap")
 
     @testset "Zlib" begin
