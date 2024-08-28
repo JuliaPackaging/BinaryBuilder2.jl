@@ -12,9 +12,6 @@ musl_version_sources = Dict{VersionNumber,Vector}(
     ],
 )
 
-name = "Musl"
-version = v"1.1.24"
-
 # Bash recipe for building across all platforms
 script = raw"""
 mkdir ${WORKSPACE}/srcdir/musl_build

@@ -1,9 +1,6 @@
 using BinaryBuilder2
 
 meta = BinaryBuilder2.get_default_meta()
-src_name = "LinuxKernelHeaders"
-src_version = v"6.9.5"
-linarch(arch) = Platform(arch, "linux")
 platforms = [
     Platform("x86_64", "linux"),
     Platform("i686", "linux"),
@@ -24,7 +21,7 @@ build_tarballs(;
     src_name = "LinuxKernelHeaders",
     src_version = v"6.9.5",
     sources = [
-        ArchiveSource("https://mirrors.edge.kernel.org/pub/linux/kernel/v$(src_version.major).x/linux-$(src_version).tar.xz",
+        ArchiveSource("https://mirrors.edge.kernel.org/pub/linux/kernel/v6.x/linux-6.9.5.tar.xz",
                       "a51fb4ab5003a6149bd9bf4c18c9b1f0f4945c272549095ab154b9d1052f95b1"),
     ],
     script = raw"""
@@ -63,7 +60,7 @@ build_tarballs(;
     NF="${prefix}/include/linux/netfilter"
     for NAME in CONNMARK DSCP MARK RATEEST TCPMSS; do
         mv "${NF}/xt_${NAME}.h" "${NF}/xt_${NAME}_.h"
-    done    
+    done
 
     for NAME in ECN TTL; do
         mv "${NF}_ipv4/ipt_${NAME}.h" "${NF}_ipv4/ipt_${NAME}_.h"

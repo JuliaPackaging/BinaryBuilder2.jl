@@ -133,6 +133,9 @@ cd ${WORKSPACE}/srcdir
 apt update
 apt install -y vim
 
+# Move all `target` dependencies over to the `host` prefix,
+# because we need those deps available in the `host` prefix
+
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
 
@@ -170,7 +173,9 @@ elif [[ "${target}" == *-mingw* ]]; then
     GCC_CONF_ARGS+=( --enable-libgomp )
 
     # Mingw just always looks in `mingw/` instead of `usr/`, so we symlink it:
+    mkdir -p ${host_prefix}/${target}
     ln -s usr ${host_prefix}/${target}/mingw
+    ln -s usr ${target_prefix}/${target}/mingw
 
 elif [[ "${target}" == *-darwin* ]]; then
     # GCC doesn't turn LTO on by default for some reason.
@@ -244,7 +249,7 @@ $WORKSPACE/srcdir/gcc-*/configure \
     --disable-bootstrap \
     --enable-threads=posix \
     --enable-languages=c,c++ \
-    --with-build-sysroot="${host_prefix}/${target}" \
+    --with-build-sysroot="${target_prefix}/${target}" \
     --with-sysroot="${host_prefix}/${target}" \
     --program-prefix="${target}-" \
     ${GCC_CONF_ARGS[@]}
@@ -365,15 +370,15 @@ function gcc_spec_generator(host, platform)
             "host",
             CrossPlatform(host => platform.host),
             [CToolchain(; vendor=:bootstrap, lock_microarchitecture)],
-            target_sources,
+            [],
             Set([:default]),
         ),
         BuildTargetSpec(
             "target",
             CrossPlatform(host => platform.target),
             [CToolchain(; vendor=:bootstrap, lock_microarchitecture)],
-            [],
-            Set{Symbol}(),
+            target_sources,
+            Set([]),
         ),
     ]
 end

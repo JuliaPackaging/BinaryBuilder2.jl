@@ -63,6 +63,7 @@ host_platforms = [
 
 # Build for all supported target platforms, except for macOS, which uses cctools, not binutils :(
 target_platforms = [
+    #=
     Platform("x86_64", "linux"),
     Platform("i686", "linux"),
     Platform("aarch64", "linux"),
@@ -78,6 +79,8 @@ target_platforms = [
 
     Platform("x86_64", "windows"),
     Platform("i686", "windows"),
+    =#
+    Platform("x86_64", "macos"),
 ]
 
 platforms = vcat(

@@ -1,7 +1,5 @@
 using BinaryBuilder2, Pkg
 
-
-
 host = Platform(arch(HostPlatform()), "linux")
 # The platforms we build for are themselves CrossPlatforms
 platforms = [
@@ -92,8 +90,8 @@ build_tarballs(;
             host;
             uuid = Base.UUID("86569e53-7a4c-551c-9ab0-bc1131c15cd4"),
             repo = Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/CrosstoolNG_jll.jl",
-                rev="bb2/GCCBootstrap-$(triplet(host))",
+                source="https://github.com/JuliaBinaryWrappers/CrosstoolNG_jll.jl",
+                rev="main",
             ),
         ),
     ],
@@ -109,13 +107,6 @@ build_tarballs(;
 
     # This takes our stripped-down config and fills out all the other options
     ct-ng upgradeconfig
-
-    # Unset some things that BB automatically inserts into the environment,
-    # but which crosstool-ng complains about.
-    for TOOL in CC CXX LD AS AR FC OBJCOPY OBJDUMP RANLIB STRIP LIPO MESON NM READELF; do
-        unset "${TOOL}"
-    done
-    unset "GREP_OPTIONS"
 
     # Disable some checks that ct-ng performs
     export CT_ALLOW_BUILD_AS_ROOT_SURE=1
@@ -142,6 +133,7 @@ build_tarballs(;
     platforms,
     products,
     host,
-    # No target toolchains, only the host one.
+    # No target toolchains, only the host one, and for that one, only tools like `make`.
+    host_toolchains = [HostToolsToolchain()],
     target_toolchains = [],
 )
