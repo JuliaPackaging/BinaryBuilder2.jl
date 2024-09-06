@@ -1,5 +1,5 @@
 export CToolchain
-using Pkg
+using Pkg, SHA
 using Pkg.Types: PackageSpec, VersionSpec
 
 struct CToolchain <: AbstractToolchain
@@ -408,6 +408,20 @@ wrapper names `cc`, `gcc`, `c++`, etc...
 """
 function gcc_wrappers(toolchain::CToolchain, dir::String)
     gcc_version = toolchain.tool_versions["GCC"]
+
+    # Build hash of compiler JLLs that we will feed to `ccache` to identify our
+    # specific compiler set:
+    compiler_treehash = ""
+    for jll_name in ("GCC", "GCC_support_libraries", "GCC_crt_objects", "Binutils")
+        jll = get_jll(toolchain, string(jll_name, "_jll"))
+        if jll !== nothing
+            compiler_treehash = string(compiler_treehash, jll.package.tree_hash)
+        else
+            @warn("Tried to treehash JLL $(jll_name) but failed; perhaps unusual CToolchain creation?")
+        end
+    end
+    compiler_treehash = bytes2hex(sha256(compiler_treehash))
+
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
 
@@ -512,7 +526,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             println(io, """
             # If `ccache` is available, use it!
             if which ccache >/dev/null; then
-                PROG=( ccache "\${PROG[@]}" )
+                PROG=( ccache "compiler_check=string:$(compiler_treehash)" "\${PROG[@]}" )
             fi
             """)
         end

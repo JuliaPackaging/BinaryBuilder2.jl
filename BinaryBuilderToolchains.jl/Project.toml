@@ -12,6 +12,7 @@ JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 NetworkOptions = "ca575930-c2e3-43a9-ace4-1e988b2c1908"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
+SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 
 [compat]
