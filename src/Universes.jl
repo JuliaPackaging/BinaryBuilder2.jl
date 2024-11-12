@@ -173,7 +173,7 @@ struct Universe
 end
 
 function cleanup(uni::Universe)
-    if !uni.persistent
+    if !uni.persistent && isdir(uni.depot_path)
         @info("Cleaning up universe", depot_path=uni.depot_path)
         rm(uni.depot_path; force=true, recursive=true)
     end
@@ -455,12 +455,25 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
     @sync begin
         for build in jll.builds
             Threads.@spawn begin
-                # Archive the main artifact        
-                TreeArchival.archive(
-                    artifact_path(u, build.artifact.treehash),
-                    get_tarball_path(build, nothing),
-                    compressor,
-                )
+                # Archive the main artifact
+                rm(get_tarball_path(build, nothing); force=true)
+                try
+                    TreeArchival.archive(
+                        artifact_path(u, build.artifact.treehash),
+                        get_tarball_path(build, nothing),
+                        compressor,
+                    )
+                catch e
+                    @error(
+                        "Unable to export artifact",
+                        artifact_path=artifact_path(u, build.artifact.treehash),
+                        tarball_path=get_tarball_path(build, nothing),
+                        compressor,
+                        jll.name,
+                        build.name,
+                    )
+                    rethrow(e)
+                end
                 update_binding!(build.artifact, get_tarball_path(build, nothing))
 
                 # Next, archive each auxilliary artifact as well
@@ -630,7 +643,7 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     # Next, generate the JLL in-place and commit it
     generate_jll(jll_path, jll)
     commit!(jll_path, "$(jll.name) v$(jll.version)")
-    deploy_jll(jll_path, u.deploy_org, u.name, jll.name, tag_name, export_dir, verbose)
+    deploy_jll(jll_path, u.deploy_org, uni_branch_name, jll.name, tag_name, export_dir, verbose)
 
     in_universe(u) do env
         # Next, add that JLL to the universe's environment

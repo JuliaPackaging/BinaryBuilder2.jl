@@ -45,13 +45,11 @@ function locate(ep::ExecutableProduct, prefix::String;
             path = string(path, ".exe")
         end
 
-        @debug("Trying", path, isfile(path), Sys.isexecutable(path))
-        if isfile(path)
-            # If the file is not executable, fail out
-            if !Sys.isexecutable(path)
-                continue
-            end
-            return prefix_remove(path, prefix)
+        rel_path = prefix_remove(path, prefix)
+        @debug("Trying", rel_path, isfile(path), Sys.isexecutable(path))
+        if isfile(path) && Sys.isexecutable(path)
+            @debug("Found", rel_path)
+            return rel_path
         end
     end
     return nothing

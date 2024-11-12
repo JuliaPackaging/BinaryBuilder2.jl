@@ -122,7 +122,9 @@ struct BuildConfig
 
 
         ## Environment setup
-        env = Dict{String,String}()
+        env = Dict{String,String}(
+            "bb_toolchain_names" => join([bts.name for bts in target_specs], " "),
+        )
         for bts in target_specs
             env, source_trees = apply_toolchains(bts, env, source_trees)
         end
@@ -141,7 +143,7 @@ struct BuildConfig
         env = path_appending_merge(env, Dict(
             # Things to work well with a shell
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
-            "TERM" => "xterm-256color",
+            "TERM" => "screen-256color",
             "TERMINFO" => "/lib/terminfo",
             "WORKSPACE" => "/workspace",
             "HISTFILE" => "$(metadir_prefix())/.bash_history",
@@ -217,6 +219,7 @@ function target_platform_string(config::BuildConfig)
     end
 end
 get_default_target_spec(config::BuildConfig) = get_default_target_spec(config.target_specs)
+get_target_spec_by_name(config::BuildConfig, name::String) = get_target_spec_by_name(config.target_specs, name)
 
 function Base.show(io::IO, config::BuildConfig)
     print(io, "BuildConfig($(config.src_name), $(config.src_version), $(target_platform_string(config)))")
@@ -328,8 +331,13 @@ function SandboxConfig(config::BuildConfig,
                        stdin = stdin,
                        stderr = stderr,
                        verbose::Bool = false,
+                       save_env::Bool = true,
                        pwd = "/workspace/srcdir",
                        kwargs...)
+    if !save_env
+        env = copy(env)
+        env["BB_SAVE_ENV"] = "false"
+    end
     return SandboxConfig(
         mounts,
         env;

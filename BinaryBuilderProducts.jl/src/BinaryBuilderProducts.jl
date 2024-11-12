@@ -77,7 +77,7 @@ function path_prefix_transformation(T::Type{<:AbstractProduct}, path, prefix, en
                 template(path, env),
                 env_checked_get(env, "prefix"),
             ),
-            parse(Platform, env_checked_get(env, "bb_full_target")),
+            parse(AbstractPlatform, env_checked_get(env, "bb_full_target")),
         )
     )
 end

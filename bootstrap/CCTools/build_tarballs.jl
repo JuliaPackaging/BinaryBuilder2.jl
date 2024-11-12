@@ -1,4 +1,4 @@
-using BinaryBuilder2
+using BinaryBuilder2, Pkg
 
 meta = BinaryBuilder2.get_default_meta()
 host_platforms = [
@@ -11,7 +11,7 @@ mac_platforms = [
 ]
 target_platforms = [CrossPlatform(host => target) for host in host_platforms, target in mac_platforms][:]
 
-tblgen_package = build_tarballs(;
+build_tarballs(;
     src_name = "tblgen",
     src_version = v"1300.6.5",
     sources = [
@@ -42,12 +42,20 @@ tblgen_package = build_tarballs(;
         #ExecutableProduct("llvm-config", :llvm_config),
     ],
     host_dependencies = [JLLSource("Python_jll")],
-    target_dependencies = [JLLSource("Zlib_jll")],
+    target_dependencies = [
+        JLLSource(
+            "Zlib_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+    ],
     meta,
     # Don't package this JLL, we're just using this to get the `tblgen_source` below.
     package_jll = false,
 )
-tblgen_source = ExtractResultSource(only(tblgen_package.config.named_extractions["tblgen"]))
+tblgen_source = ExtractResultSource(BinaryBuilder2.get_extract_result(meta, "tblgen"))
 
 build_tarballs(;
     src_name = "libtapi",
@@ -57,7 +65,6 @@ build_tarballs(;
                   "b8c5ac40267aa5f6004dd38cc2b2cd84f2d9d555"),
     ],
     script = raw"""
-    apt update && apt install -y gdb vim
     TAPIDIR="${WORKSPACE}/srcdir/apple-libtapi"
     install_license ${TAPIDIR}/LICENSE.*
     mkcd ${TAPIDIR}/build
@@ -80,32 +87,50 @@ build_tarballs(;
     products = [
         LibraryProduct("libtapi", :libtapi),
     ],
-    host_dependencies = [JLLSource("Python_jll"), JLLSource("Zlib_jll"), tblgen_source],
-    target_dependencies = [JLLSource("Zlib_jll")],
+    host_dependencies = [JLLSource("Python_jll"), tblgen_source],
+    target_dependencies = [
+        JLLSource(
+            "Zlib_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+    ],
     meta,
 )
 
 using BinaryBuilder2: BuildTargetSpec
-function cctools_spec_generator(host, platform)
+function cctools_build_spec_generator(host, platform)
     return [
         BuildTargetSpec(
             "build",
             CrossPlatform(host => host),
-            [CToolchain(), CMakeToolchain(), HostToolsToolchain()],
+            [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
             [], #[JLLSource("Python_jll")],
             Set([:host]),
         ),
         BuildTargetSpec(
             "host",
             CrossPlatform(host => platform.host),
-            [CToolchain(;vendor=:clang), CMakeToolchain()],
-            [JLLSource("libtapi_jll"), JLLSource("Zlib_jll")],
+            [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain()],
+            [
+                JLLSource("libtapi_jll"),
+                JLLSource(
+                    "Zlib_jll";
+                    # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
+                    repo=Pkg.Types.GitRepo(
+                        rev="bb2/GCC",
+                        source="https://github.com/staticfloat/Zlib_jll.jl"
+                    ),
+                ),
+            ],
             Set([:default]),
         ),
         BuildTargetSpec(
             "target",
             CrossPlatform(host => platform.target),
-            [], #CToolchain(;vendor=:bootstrap)],
+            [],
             [],
             Set{Symbol}(),
         ),
@@ -122,18 +147,28 @@ build_tarballs(;
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/cctools-port/cctools
-    ./configure --prefix=${prefix} --target=${target} \
-                         --with-libtapi=${host_prefix}
+    install_license ./APPLE_LICENSE
+    install_license ./COPYING
+    
+    # Disable uname wrapper, because it makes LLVM build confused
+    rm -f $(which uname)
+
+    ./configure --prefix=${prefix} \
+                --build=${build} \
+                --host=${host} \
+                --target=${target} \
+                --with-libtapi=${host_prefix} \
+                --disable-lto-support
     make -j${nproc}
     make -j${nproc} install
 
     # Install license
-    install_license ${WORKSPACE}/srcdir/musl-*/COPYRIGHT
     """,
     platforms = target_platforms,
     products = [
-        LibraryProduct(["usr/lib/libc"], :libc),
+        ExecutableProduct(raw"${target}-ld", :ld),
+        ExecutableProduct(raw"${target}-lipo", :lipo),
     ],
-    spec_generator = cctools_spec_generator,
+    build_spec_generator = cctools_build_spec_generator,
     meta,
 )

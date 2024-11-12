@@ -93,15 +93,17 @@ function locate(lp::LibraryProduct, prefix::String;
             libname = first(parse_dl_name_version(libname, os(platform)))
         catch
         end
-        @debug("Trying", path, libname)
+        rel_path = prefix_remove(path, prefix)
+        @debug("Trying", rel_path, libname)
 
         # Skip non-existant directories
         path_dir = dirname(path)
         if !isdir(path_dir)
-            @debug("Skipping non-existant directory", path_dir)
+            @debug("Skipping non-existant directory", dir=dirname(rel_path))
             continue
         end
 
+        num_valid_dl_paths = 0
         for f in readdir(path_dir)
             # Skip any names that aren't a valid dynamic library for the given
             # platform (note this will cause problems if something compiles a `.so`
@@ -109,12 +111,19 @@ function locate(lp::LibraryProduct, prefix::String;
             if !valid_dl_path(f, platform)
                 continue
             end
+            num_valid_dl_paths += 1
 
             parsed_libname, parsed_version = parse_dl_name_version(f, os(platform))
-            @debug("Trying", f, parsed_libname)
+            @debug("Trying", f, parsed_libname, libname)
             if parsed_libname == libname
-                return prefix_remove(joinpath(path_dir, f), prefix)
+                rel_path_parsed = prefix_remove(joinpath(path_dir, f), prefix)
+                @debug("Found", rel_path_parsed)
+                return rel_path_parsed
             end
+        end
+
+        if num_valid_dl_paths == 0
+            @debug("Didn't find any valid dynamic library paths", path_dir=prefix_remove(path_dir, prefix), platform=triplet(platform))
         end
     end
     return nothing

@@ -70,6 +70,23 @@ function PlatformlessWrapper(ct::CToolchain)
 end
 
 
+# CMakeToolchain support
+function BinaryBuilderToolchains.CMakeToolchain(; kwargs...)
+    return PlatformlessWrapper{CMakeToolchain}(;kwargs=Dict(kwargs...))
+end
+function apply_platform(pw::PlatformlessWrapper{CMakeToolchain}, platform::CrossPlatform)
+    return CMakeToolchain(platform; pw.kwargs...)
+end
+function apply_platform(cmt::CMakeToolchain, p::AbstractPlatform)
+    if !platforms_match(cmt.platform, p)
+        throw(ArgumentError("Attempted to `apply_platform` a CMakeToolchain with platform $(triplet(cmt.platform)) but for $(triplet(p))"))
+    end
+    return cmt
+end
+function PlatformlessWrapper(cmt::CMakeToolchain)
+    return CMakeToolchain(;vendor=BinaryBuilderToolchains.get_vendor(cmt))
+end
+
 # HostToolsToolchain support
 function BinaryBuilderToolchains.HostToolsToolchain(;kwargs...)
     return PlatformlessWrapper{HostToolsToolchain}(;kwargs=kwargs)
@@ -79,9 +96,6 @@ function apply_platform(pw::PlatformlessWrapper{HostToolsToolchain}, platform::A
 end
 apply_platform(htt::HostToolsToolchain, ::AbstractPlatform) = htt
 PlatformlessWrapper(htt::HostToolsToolchain) = HostToolsToolchain()
-
-# Override for platformless toolchains
-is_target_toolchain(::PlatformlessWrapper{T}) where {T<:AbstractToolchain} = is_target_toolchain(T)
 
 # Automatic conversion of `Pair{Platform,Platform}` => `CrossPlatform`
 apply_platform(x, cp::Pair{Platform,Platform}) = apply_platform(x, CrossPlatform(cp))

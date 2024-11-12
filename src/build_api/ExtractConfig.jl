@@ -35,6 +35,13 @@ struct ExtractConfig
     # but occasionally we want to do things like build compilers, so this can be a crossplatform.
     platform::AbstractPlatform
 
+    # A list of extraction results that we rely upon; this is used when a single
+    # build generates multiple extractions, and there is a dependency relationship
+    # between the outputs (e.g. the LLVM build generates `Clang_jll` as well as
+    # `libLLVM_jll`, and `clang` depends on `libLLVM`, even before `libLLVM_jll.jl`
+    # has been packaged).
+    inter_deps::Dict{String,<:Any}
+
     # TODO: Add an `AuditConfig` field
     #audit::AuditConfig
 
@@ -46,6 +53,7 @@ struct ExtractConfig
                            products::Vector{<:AbstractProduct};
                            target_spec::BuildTargetSpec = get_default_target_spec(build.config),
                            platform::AbstractPlatform = target_spec.platform.target,
+                           inter_deps::Dict{String,<:Any} = Dict{String,Any}(),
                            audit_config = nothing)
         return new(
             build,
@@ -53,6 +61,7 @@ struct ExtractConfig
             products,
             target_spec,
             platform,
+            inter_deps,
             copy(build.config.to),
         )
     end
@@ -73,10 +82,13 @@ function extract_content_hash(extract_script::String, products::Vector{<:Abstrac
     println(hash_buffer, "[extraction_metadata]")
     println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(extract_script)))")
     println(hash_buffer, "[products]")
-    library_products = LibraryProduct[p for p in products if isa(p, LibraryProduct)]
-    for product in sort(library_products; by = p->p.varname)
+    for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
     end
+    # println(hash_buffer, "[inter_deps]")
+    # for config in inter_dep_configs
+    #     println(hash_buffer, "  $(config.name) - $(content_hash(config))")
+    # end
 
     return SHA1Hash(sha1(take!(hash_buffer)))
 end
@@ -85,7 +97,7 @@ function BinaryBuilderSources.content_hash(config::ExtractConfig)
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir()), shell::Cmd = `/bin/bash`)
-    sandbox_config = SandboxConfig(config, output_dir)
+    sandbox_config = SandboxConfig(config, output_dir; save_env=false)
     run(config.build.exe, sandbox_config, ignorestatus(shell))
 end
 
@@ -95,12 +107,10 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     # This results in `${prefix}` containing only the files that were added by our build
     # We drop any prefixes that do not match our `target_spec`.
     target_dest = target_prefix(config.target_spec)
-
-    # Drop all `/workspace/destdir/` mounts, keeping only our `target_dest`
     mounts = filter(mounts) do (dest, _)
         !startswith(dest, "/workspace/destdir/")
     end
-    mounts[target_dest] = MountInfo(mktempdir(), MountType.Overlayed)
+    mounts[target_dest] = MountInfo(mktempdir(), MountType.OverlayedReadOnly)
 
 
     # Insert a new metadir
@@ -133,6 +143,7 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     env = copy(config.build.config.env)
     env["extract_dir"] = "/workspace/extract"
     env["BB_WRAPPERS_VERBOSE"] = "true"
+    env["BB_SAVE_ENV"] = "false"
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
@@ -142,30 +153,42 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
     @timeit config.to "audit" begin
         prefix_alias = target_prefix(config.target_spec)
         # Load JLLInfo structures for each dependency
-        @warn("TODO: Make better way of denoting what is a dependency and what is not!", maxlog=1)
         dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource) && platforms_match(d.platform, host_if_crossplatform(config.platform))]
+        platform = host_if_crossplatform(config.platform)
+
+        # Get libraries for all JLL dependencies
+        get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
+        get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
+        dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}()
+        for dep in dep_jll_infos
+            dep_libs[Symbol(dep.name)] = get_library_products(dep, platform)
+        end
+        # Get libraries for all inter-dependencies
+        for (inter_dep_name, inter_dep) in config.inter_deps
+            dep_libs[Symbol(inter_dep_name)] = inter_dep.audit_result.jll_lib_products
+        end
         return audit!(
             artifact_dir,
             LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
-            dep_jll_infos;
+            dep_libs;
             prefix_alias,
             env = config.build.env,
-            platform = host_if_crossplatform(config.platform),
+            platform,
             kwargs...
         )
     end
 end
 
-function count_unlocatable_products(config::ExtractConfig, prefix)
-    num_unlocatable = 0
+function find_unlocatable_products(config::ExtractConfig, prefix)
+    unlocatable_products = []
     for product in config.products
         if locate(product, prefix;
                   env=config.build.env,
                   platform=host_if_crossplatform(config.platform)) === nothing
-            num_unlocatable += 1
+            push!(unlocatable_products, product)
         end
     end
-    return num_unlocatable
+    return unlocatable_products
 end
 
 function extract!(config::ExtractConfig;
@@ -222,15 +245,19 @@ function extract!(config::ExtractConfig;
 
                 # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success
-                    num_unlocatable_products = count_unlocatable_products(config, artifact_dir)
-                    if num_unlocatable_products > 0
+                    unlocatable_products = find_unlocatable_products(config, artifact_dir)
+                    if length(unlocatable_products) > 0
                         @error("""
-                        Unable to locate $(num_unlocatable_products) products!
-                        Running again with debugging enabled, then erroring out!
-                        """, platform=host_if_crossplatform(config.platform), run_status)
+                            Unable to locate $(length(unlocatable_products)) products!
+                            names: $(join([p.varname for p in unlocatable_products], ", "))
+                            Running again with debugging enabled, then erroring out!
+                            """,
+                            platform=host_if_crossplatform(config.platform),
+                            run_status,
+                        )
 
                         withenv("JULIA_DEBUG" => "all") do
-                            count_unlocatable_products(config, artifact_dir)
+                            find_unlocatable_products(config, artifact_dir)
                         end
                         run_status = :failed
                     end
@@ -241,8 +268,11 @@ function extract!(config::ExtractConfig;
                     try
                         audit_result = audit!(config, artifact_dir)
                         if !success(audit_result)
-                            @error("Audit failed")
+                            @error("Audit failed, Running again with debugging enabled, then erroring out!")
                             print_results(audit_result)
+                            withenv("JULIA_DEBUG" => "all") do
+                                audit!(config, artifact_dir)
+                            end
                             run_status = :failed
                         end
                     catch exception

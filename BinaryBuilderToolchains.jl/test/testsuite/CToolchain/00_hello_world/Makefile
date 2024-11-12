@@ -9,7 +9,7 @@ $(PROJECT_DIR)/build:
 
 $(HELLO): hello.c | $(PROJECT_DIR)/build
 	$(CC) -o $@ $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^
-	$(STRIP) --strip-all $@
+	$(STRIP) $@
 
 clean:
 	rm -rf $(PROJECT_DIR)/build

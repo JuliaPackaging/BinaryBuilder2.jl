@@ -9,7 +9,7 @@ include("passes/DynamicLinkageTests.jl")
 
 @testset "audit!" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
+    toolchain = CToolchain(platform; use_ccache=false)
 
     # Use some bundled C source code from our test suite
     libplus_c_path = joinpath(@__DIR__, "source", "libplus.c")
@@ -36,17 +36,35 @@ include("passes/DynamicLinkageTests.jl")
             LibraryProduct("libplus", :libplus),
             LibraryProduct("libmult", :libmult),
         ]
-        result = audit!(prefix, library_products, JLLInfo[]; verbose=true)
+        empty_dep_libs = Dict{Symbol,Vector{JLLLibraryProduct}}()
+        result = audit!(prefix, library_products, empty_dep_libs; verbose=true)
         @test readlink(joinpath(prefix, "lib", "libplus$(dlext(platform))")) == libplus_soname
         @test length(result.jll_lib_products) == 2
         @test success(result)
 
         # Run audit a second time with `readonly=true`, ensure that the treehash does not change
         pre_treehash = treehash(prefix)
-        result = audit!(prefix, library_products, JLLInfo[])
+        result = audit!(prefix, library_products, empty_dep_libs; readonly=true)
         post_treehash = treehash(prefix)
         @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 2
+        @test success(result)
+
+        # Also check to see that this works if we say that `libplus` belongs
+        # to another JLL/extraction:
+        dep_libs = Dict{Symbol,Vector{JLLLibraryProduct}}(
+            :LibPlus => [
+                JLLLibraryProduct(
+                    :libplus,
+                    joinpath("lib", libplus_soname),
+                    [],
+                ),
+            ]
+        )
+        result = audit!(prefix, [LibraryProduct("libmult", :libmult)], dep_libs; readonly=true)
+        post_treehash = treehash(prefix)
+        @test pre_treehash == post_treehash
+        @test length(result.jll_lib_products) == 1
         @test success(result)
     end
 end

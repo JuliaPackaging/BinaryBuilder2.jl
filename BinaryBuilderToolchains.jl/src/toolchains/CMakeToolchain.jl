@@ -96,8 +96,8 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
     execute_process(COMMAND \$ENV{CC} -print-sysroot OUTPUT_VARIABLE CMAKE_SYSROOT OUTPUT_STRIP_TRAILING_WHITESPACE)
     """)
 
-    # Set frameworks for macOS
     if Sys.isapple(toolchain.platform.target)
+        # Set frameworks for macOS
         println(io, """
         set(CMAKE_SYSTEM_FRAMEWORK_PATH
             \${CMAKE_SYSROOT}/System/Library/Frameworks
@@ -144,6 +144,7 @@ function toolchain_sources(toolchain::CMakeToolchain)
         JLLSource(
             "CMake_jll",
             toolchain.platform.host;
+            version=VersionSpec("3.30.2"),
             target="cmake",
         ),
         GeneratedSource(;target="wrappers") do out_dir
@@ -151,6 +152,7 @@ function toolchain_sources(toolchain::CMakeToolchain)
                 tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), "cmake")
                 compiler_wrapper(
                     cmake_wrapper,
+                    identity,
                     joinpath(out_dir, tool_prefixed),
                     "$(toolchain_prefix)/cmake/bin/cmake",
                 )

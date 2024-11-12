@@ -218,12 +218,6 @@ function parse_build_tarballs_args(ARGS::Vector{String})
 
     parsed_kwargs[:disable_cache] = check_flag!(ARGS, "--disable-cache")
 
-    # Build/output directory locations
-    output_dir, output_dir_path = extract_flag!(ARGS, "--output-dir")
-    if output_dir
-        parsed_kwargs[:output_dir] = output_dir_path
-    end
-
     # Slurp up the last argument as platforms
     if length(ARGS) == 1
         parsed_kwargs[:target_list] = parse.(AbstractPlatform, split(ARGS[1], ","))
@@ -283,7 +277,6 @@ struct BuildMeta <: AbstractBuildMeta
     dry_run::Set{Symbol}
     json_output::Union{Nothing,IO}
     register::Bool
-    output_dir::String
 
     function BuildMeta(;target_list::Vector{Platform} = Platform[],
                         universe_name::Union{AbstractString,Nothing} = nothing,
@@ -294,7 +287,6 @@ struct BuildMeta <: AbstractBuildMeta
                         disable_cache::Bool = false,
                         dry_run::Vector{Symbol} = Symbol[],
                         register::Bool = false,
-                        output_dir::AbstractString = joinpath(pwd(), "products"),
                        )
         if !isa(debug_modes, Set)
             debug_modes = Set(debug_modes)
@@ -306,7 +298,11 @@ struct BuildMeta <: AbstractBuildMeta
             end
         end
 
-        universe = Universe(something([universe_name], [])...; deploy_org, persistent=true)
+        universe = Universe(
+            something([universe_name], [])...;
+            deploy_org,
+            persistent=universe_name !== nothing,
+        )
 
         if isa(json_output, AbstractString)
             json_output = open(json_output, write=true)
@@ -329,7 +325,6 @@ struct BuildMeta <: AbstractBuildMeta
             Set{Symbol}(dry_run),
             json_output,
             register,
-            output_dir,
         )
     end
 end
@@ -357,11 +352,25 @@ Convenience constructor that calls `parse_build_tarballs_args()` on `ARGS`.
 """
 BuildMeta(ARGS::Vector{String}) = BuildMeta(;parse_build_tarballs_args(ARGS)...)
 
-function get_package_result(meta::BuildMeta, name::String)
+function strip_jll_suffix(name)
     if endswith(name, "_jll")
         name = name[1:end-4]
     end
-    return meta.packagings[only(filter(config -> config.name == name, keys(meta.packagings)))]
+    return name
+end
+function get_package_result(meta::BuildMeta, name::String)
+    criteria(config) = config.name == strip_jll_suffix(name)
+    return meta.packagings[only(filter(criteria, keys(meta.packagings)))]
+end
+
+function get_extract_result(meta::BuildMeta, src_name::String, platform::AbstractPlatform = AnyPlatform())
+    criteria(config) = config.build.config.src_name == src_name && platforms_match(config.platform, platform)
+    return meta.extractions[only(filter(criteria, keys(meta.extractions)))]
+end
+
+function get_build_result(meta::BuildMeta, src_name::String)
+    criteria(config) = config.src_name == src_name
+    return meta.builds[only(filter(criteria, keys(meta.builds)))]
 end
 
 # TODO: Add serialization tools for all of these structures

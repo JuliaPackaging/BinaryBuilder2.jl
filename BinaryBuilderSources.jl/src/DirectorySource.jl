@@ -46,19 +46,30 @@ end
 # Nothing to prepare!
 prepare(ds::DirectorySource; verbose::Bool = false) = nothing
 
+"""
+    cptree(src::String, dst::String, follow_symlinks::Bool)
+
+Simple recursive `cp()` wrapper that creates directories in `dst` as they are
+encountered in `src`.  Errors out if a directory in `src` already exists as a
+file in `dst`.  Note; both `sr`
+"""
+function cptree(src::String, dst::String, follow_symlinks::Bool)
+    mkpath(dst)
+    for f in readdir(src)
+        f_src = joinpath(src, f)
+        f_dst = joinpath(dst, f)
+        if isdir(f_src)
+            cptree(f_src, f_dst, follow_symlinks)
+        else
+            cp(f_src, f_dst; follow_symlinks)
+        end
+    end
+end
+
 function deploy(ds::DirectorySource, prefix::String)
     # We want to be able to merge the contents of `ds.source` into `prefix`,
-    # so we can't use a top-level `cp()`, sadly.
-    target_dir = joinpath(prefix, ds.target)
-    mkpath(target_dir)
-
-    for f in readdir(ds.source)
-        # Copy the content of the source directory to the destination
-        cp(joinpath(ds.source, f),
-           joinpath(target_dir, basename(f));
-           follow_symlinks=ds.follow_symlinks,
-        )
-    end
+    # so we can't use a top-level `cp()`, instead we use our own `cptree()`.
+    cptree(ds.source, joinpath(prefix, ds.target), ds.follow_symlinks)
 end
 
 function content_hash(ds::DirectorySource)

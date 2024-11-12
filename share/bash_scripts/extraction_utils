@@ -1,18 +1,29 @@
 #!/bin/bash
 
 extract() {
-    prefix="$(realpath "${prefix}")"
+    local prefix_to_remove=""
+    local arg
     for arg in "$@"; do
-        files=( $(compgen -G "${arg}") )
+        local toolchain_name
+        for toolchain_name in ${bb_toolchain_names}; do
+            local toolchain_prefix_var="${toolchain_name}_prefix"
+            if [[ "${arg}" == "${!toolchain_prefix_var}/"* ]]; then
+                prefix_to_remove="${!toolchain_prefix_var}/"
+                break
+            fi
+        done
+        if [[ -z "${prefix_to_remove}" ]]; then
+            echo "WARNING: Could not find a matching prefix for extraction path ${arg}"
+        fi
+        local files=( $(compgen -G "${arg}") )
+        local file
         for file in "${files[@]}"; do
-            file="$(realpath "${file}")"
-
-            CP_FLAGS=( "-a" )
+            local CP_FLAGS=( "-av" )
             if [[ "${BB_PRINT_COMMANDS}" == "true" ]]; then
                 CP_FLAGS+=( "-v" )
             fi
 
-            dest="${extract_dir}/${file##${prefix}/}"
+            local dest="${extract_dir}/${file##${prefix_to_remove}}"
             mkdir -p "$(dirname "${dest}")"
             cp "${CP_FLAGS[@]}" "${file}" "${dest}"
         done

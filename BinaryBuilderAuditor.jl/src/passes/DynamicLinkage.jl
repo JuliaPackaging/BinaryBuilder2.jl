@@ -16,16 +16,42 @@ function resolve_dynamic_links!(scan::ScanResult,
     # resolve each dep to its matching value in `soname_map`
     jll_lib_products = JLLLibraryProduct[]
     for (rel_path, lib) in scan.library_products
-        oh = scan.binary_objects[rel_path]
-        lib_soname = get_soname(oh)
-        if lib_soname === nothing && Sys.iswindows(scan.platform)
-            lib_soname = basename(rel_path)
+        local lib_soname, lib_deps
+
+        # Helper to get the SONAME and dependencies from a binary object
+        function get_soname_and_deps(oh::ObjectHandle)
+            lib_soname = get_soname(oh)
+            if lib_soname === nothing && Sys.iswindows(scan.platform)
+                lib_soname = basename(rel_path)
+            end
+            lib_deps = [path(dl) for dl in DynamicLinks(oh)]
+            return lib_soname, lib_deps
+        end
+
+        if rel_path ∈ keys(scan.binary_objects)
+            lib_soname, lib_deps = get_soname_and_deps(scan.binary_objects[rel_path])
+        else
+            # Try to parse this as an implicit LD script, skipping it if we can't.
+            ld_script = parse_implicit_ld_script(scan, rel_path)
+            if ld_script === nothing
+                @debug("Skipping unparseable library", lib_path=rel_path)
+                continue
+            end
+            lib_deps = ld_script.dep_sonames
+            # If there is only one backing library, we consider ourselves a
+            # "forwarding" linker script, and just use the backing library directly
+            if length(lib_deps) == 1
+                oh = scan.binary_objects[scan.soname_locator[lib_deps[1]]]
+                lib_soname, lib_deps = get_soname_and_deps(oh)
+            else
+                lib_soname = basename(rel_path)
+            end
         end
 
         # Resolve each dependency to one of the `LibraryLink` objects
         # we created above, use that to construct a `JLLLibraryDep`
         jll_deps = JLLLibraryDep[]
-        for lib_dep_soname in [path(dl) for dl in DynamicLinks(oh)]
+        for lib_dep_soname in lib_deps
             # Skip system libraries that we don't want to track, because
             # we don't redistribute them.
             if is_system_library(lib_dep_soname, scan.platform)
@@ -56,7 +82,7 @@ function resolve_dynamic_links!(scan::ScanResult,
                 dep_lib_relpath = scan.soname_locator[lib_dep_soname]
 
                 if !haskey(scan.library_products, dep_lib_relpath)
-                    push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Dependency on '$(lib_dep_relpath)' is not listed as a LibraryProduct")
+                    push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Dependency on '$(dep_lib_relpath)' is not listed as a LibraryProduct")
                     continue
                 end
 

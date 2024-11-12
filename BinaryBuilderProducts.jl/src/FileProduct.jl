@@ -28,9 +28,11 @@ function locate(fp::FileProduct, prefix::String;
     @debug("Locating FileProduct", fp)
     for path in fp.paths
         path = path_prefix_transformation(FileProduct, path, prefix, env)
-        @debug("Trying", path, isfile(path))
+        rel_path = prefix_remove(path, prefix)
+        @debug("Trying", rel_path)
         if ispath(path)
-            return prefix_remove(path, prefix)
+            @debug("Found", rel_path)
+            return rel_path
         end
     end
     return nothing

@@ -46,7 +46,9 @@ function on_error_trap() {
 	if [[ "${RET}" != 0 ]]; then \
 		echo "Previous command '${BASH_COMMAND}' exited with code ${RET}" >&2; \
 	fi
-	save_env
+	if [[ "${BB_SAVE_ENV:-true}" == "true" ]]; then
+		save_env
+	fi
 	exit "${RET}"
 }
 

@@ -7,11 +7,19 @@ struct PackageResult
     # Overall status of the packaging.  One of :successful, :failed or :skipped
     status::Symbol
 
+    # If we deployed this somewhere, record where
+    deploy_url::Union{Nothing,String}
+    deploy_rev::Union{Nothing,String}
+
     function PackageResult(config::PackageConfig,
-                           status::Symbol)
+                           status::Symbol,
+                           deploy_url::Union{Nothing,String} = nothing,
+                           deploy_rev::Union{Nothing,String} = nothing)
         return new(
             config,
             status,
+            deploy_url,
+            deploy_rev,
         )
     end
 end
@@ -37,4 +45,15 @@ end
 function tarballs_dir(result::PackageResult)
     meta = AbstractBuildMeta(result.config)
     return joinpath(meta.universe.depot_path, "tarballs", string(result.config.name, "-", result.config.version))
+end
+
+using JLLGenerator: jll_specific_uuid5, uuid_package
+function BinaryBuilderSources.PackageSpec(result::PackageResult)
+    uuid = jll_specific_uuid5(uuid_package, "$(result.config.name)_jll_jll")
+    return PackageSpec(;
+        name="$(result.config.name)_jll",
+        uuid,
+        version=result.config.version,
+        repo=Pkg.Types.GitRepo(;source=result.deploy_url, rev=result.deploy_rev),
+    )
 end

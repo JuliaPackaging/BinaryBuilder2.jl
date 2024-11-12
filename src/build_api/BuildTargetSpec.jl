@@ -26,7 +26,13 @@ struct BuildTargetSpec
 
         # Concretize toolchains for `platform`
         toolchains = map(toolchains) do toolchain
-            toolchain = alter_toolchain(name, flags, target_prefix(name, platform, flags), toolchain)
+            # Set flags and whatnot if applicable
+            toolchain = alter_toolchain(target_prefix(name, platform, flags), toolchain)
+
+            # Alter wrapper and environment prefix mappings based on our `name`:
+            toolchain = rename_wrapper_prefixes(name, flags, toolchain)
+
+            # Re-name `wrapper_prefixes`
             return apply_platform(toolchain, platform)
         end
 
@@ -55,7 +61,36 @@ end
 # conflicts with bootstrap CToolchains.
 toolchain_prefix(bts::BuildTargetSpec, ::HostToolsToolchain) = "/opt/$(bts.name)-tools"
 
-function alter_toolchain(name::String, flags::Set{Symbol}, target_prefix::String, pw::PlatformlessWrapper{CToolchain})
+function rename_wrapper_prefixes(name::String, flags::Set{Symbol}, pw::PlatformlessWrapper{T}) where T
+    pw = copy(pw)
+    if hasfield(T, :wrapper_prefixes) && hasfield(T, :env_prefixes)
+        # wrapper_prefixes control the naming of the wrapper bash scripts for the toolchains
+        wrapper_prefixes = String[]
+        # env_prefixes control the naming of environment variables that point to our wrappers
+        env_prefixes = String[]
+        
+        # if `name` is "host", this makes a "host-x86_64-linux-gnu-gcc" wrapper.
+        push!(wrapper_prefixes, string(name, "-\${triplet}-"))
+        push!(wrapper_prefixes, "\${triplet}-")
+        # if `name` is `"host`", this makes "$HOSTCC" and "$HOST_CC" envvars
+        append!(env_prefixes, [
+            uppercase(name),
+            string(uppercase(name), "_"),
+        ])
+
+        # If `:default` is set in our flags, make a `x86_64-linux-gnu-gcc` wrapper
+        # as well as a `gcc` wrapper and point `$CC` at our compiler.
+        if :default ∈ flags
+            append!(wrapper_prefixes, ["\${triplet}-", ""])
+            push!(env_prefixes, "")
+        end
+        pw.kwargs[:wrapper_prefixes] = wrapper_prefixes
+        pw.kwargs[:env_prefixes] = env_prefixes
+    end
+    return pw
+end
+
+function alter_toolchain(target_prefix::String, pw::PlatformlessWrapper{CToolchain})
     # Alter this object to contain extra flags, prefixes, etc...
     pw = copy(pw)
 
@@ -68,33 +103,10 @@ function alter_toolchain(name::String, flags::Set{Symbol}, target_prefix::String
         get(pw.kwargs, :extra_ldflags, String[])...,
         "-L$(target_prefix)/lib",
     ]
-
-    # wrapper_prefixes control the naming of the wrapper bash scripts for the toolchains
-    wrapper_prefixes = String[]
-    # env_prefixes control the naming of environment variables that point to our wrappers
-    env_prefixes = String[]
-    
-    # if `name` is "host", this makes a "host-x86_64-linux-gnu-gcc" wrapper.
-    push!(wrapper_prefixes, string(name, "-\${triplet}-"))
-    push!(wrapper_prefixes, "\${triplet}-")
-    # if `name` is `"host`", this makes "$HOSTCC" and "$HOST_CC" envvars
-    append!(env_prefixes, [
-        uppercase(name),
-        string(uppercase(name), "_"),
-    ])
-
-    # If `:default` is set in our flags, make a `x86_64-linux-gnu-gcc` wrapper
-    # as well as a `gcc` wrapper and point `$CC` at our compiler.
-    if :default ∈ flags
-        append!(wrapper_prefixes, ["\${triplet}-", ""])
-        push!(env_prefixes, "")
-    end
-    pw.kwargs[:wrapper_prefixes] = wrapper_prefixes
-    pw.kwargs[:env_prefixes] = env_prefixes
     return pw
 end
-alter_toolchain(::String, ::Set{Symbol}, ::String, pw::PlatformlessWrapper) = pw
-alter_toolchain(::String, ::Set{Symbol}, ::String, toolchain::AbstractToolchain) = toolchain
+alter_toolchain(::String, pw::PlatformlessWrapper) = pw
+alter_toolchain(::String, toolchain::AbstractToolchain) = toolchain
 
 # Each toolchain target gets its own directory-like environment variables
 function add_target_dir_envs(env, target_prefix_path, platform, name)
@@ -155,6 +167,13 @@ function get_default_target_spec(specs::Vector{BuildTargetSpec})
 end
 function get_host_target_spec(specs::Vector{BuildTargetSpec})
     idx = findfirst(bts -> :host ∈ bts.flags, specs)
+    if idx === nothing
+        return nothing
+    end
+    return specs[idx]
+end
+function get_target_spec_by_name(specs::Vector{BuildTargetSpec}, name::String)
+    idx = findfirst(bts -> name == bts.name, specs)
     if idx === nothing
         return nothing
     end

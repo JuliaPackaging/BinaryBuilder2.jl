@@ -4,7 +4,7 @@ using BinaryBuilderAuditor: ensure_sonames!, get_soname
 function make_libfoo(prefix)
     # We will create a library without an SONAME by using the BB toolchain package
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-    toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
+    toolchain = CToolchain(platform; use_ccache=false)
 
     # Use some bundled C source code from our test suite
     libplus_c_path = joinpath(dirname(@__DIR__), "source", "libplus.c")
@@ -46,7 +46,9 @@ end
         end
         ensure_sonames!(scan, pass_results)
         @test !success(pass_results)
-        print_results(pass_results)
+        io = IOBuffer()
+        print_results(pass_results; io)
+        @test occursin("Failed to set SONAME:", String(take!(io)))
         @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in pass_results["ensure_sonames!"])
     end
 end

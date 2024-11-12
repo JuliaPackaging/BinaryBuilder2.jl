@@ -7,6 +7,7 @@ include("Utils.jl")
 include("SystemLibraries.jl")
 include("Scanning.jl")
 include("AuditResult.jl")
+include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
@@ -15,7 +16,7 @@ include("passes/Licenses.jl")
 
 function audit!(prefix::String,
                 library_products::Vector{LibraryProduct},
-                dependencies::Vector{JLLInfo};
+                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}};
                 prefix_alias::String = prefix,
                 platform::AbstractPlatform = HostPlatform(),
                 env::Dict{String,String} = Dict{String,String}(
@@ -44,9 +45,6 @@ function audit!(prefix::String,
     end
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
-    get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
-    get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
-    dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}(Symbol(dep.name) => get_library_products(dep, platform) for dep in dependencies)
     jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs)
 
     # Ensure that all libraries and executables have the correct RPATH setup

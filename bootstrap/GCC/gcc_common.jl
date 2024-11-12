@@ -1,5 +1,5 @@
 using BinaryBuilder2, Pkg
-using BinaryBuilder2: BuildTargetSpec, gcc_platform
+using BinaryBuilder2: BuildTargetSpec, gcc_platform, get_target_spec_by_name
 
 meta = BinaryBuilder2.get_default_meta()
 
@@ -68,21 +68,21 @@ const gcc_version_sources = Dict{VersionNumber,Vector}(
         ArchiveSource("https://mirrors.kernel.org/gnu/gmp/gmp-6.1.2.tar.xz",
                       "87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912"),
     ],
-    v"9.1.0" => [
-        ArchiveSource("https://mirrors.kernel.org/gnu/gcc/gcc-9.1.0/gcc-9.1.0.tar.xz",
-                      "79a66834e96a6050d8fe78db2c3b32fb285b230b855d0a66288235bc04b327a0"),
+    v"9.4.0" => [
+        ArchiveSource("https://mirrors.kernel.org/gnu/gcc/gcc-9.4.0/gcc-9.4.0.tar.xz",
+                      "c95da32f440378d7751dd95533186f7fc05ceb4fb65eb5b85234e6299eb9838e"),
         ArchiveSource("https://mirrors.kernel.org/gnu/mpfr/mpfr-4.0.2.tar.xz",
                       "1d3be708604eae0e42d578ba93b390c2a145f17743a744d8f3f8c2ad5855a38a";
-                      target="gcc-9.1.0"),
+                      target="gcc-9.4.0"),
         ArchiveSource("https://mirrors.kernel.org/gnu/mpc/mpc-1.1.0.tar.gz",
                       "6985c538143c1208dcb1ac42cedad6ff52e267b47e5f970183a3e75125b43c2e";
-                      target="gcc-9.1.0"),
+                      target="gcc-9.4.0"),
         ArchiveSource("https://gcc.gnu.org/pub/gcc/infrastructure/isl-0.18.tar.bz2",
                       "6b8b0fd7f81d0a957beb3679c81bbb34ccc7568d5682844d8924424a0dadcb1b";
-                      target="gcc-9.1.0"),
+                      target="gcc-9.4.0"),
         ArchiveSource("https://mirrors.kernel.org/gnu/gmp/gmp-6.1.2.tar.xz",
                       "87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912";
-                      target="gcc-9.1.0"),
+                      target="gcc-9.4.0"),
     ],
     v"10.2.0" => [
         ArchiveSource("https://mirrors.kernel.org/gnu/gcc/gcc-10.2.0/gcc-10.2.0.tar.xz",
@@ -130,14 +130,16 @@ const gcc_version_sources = Dict{VersionNumber,Vector}(
 script = raw"""
 cd ${WORKSPACE}/srcdir
 
-apt update
-apt install -y vim
-
 # Move all `target` dependencies over to the `host` prefix,
 # because we need those deps available in the `host` prefix
 
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
+if [[ "${target}" != *mingw* ]]; then
+    lib64="lib${target_nbits%32}"
+else
+    lib64="lib"
+fi
 
 # Force everything to default to cross compiling; this avoids differences
 # in behavior between when we target our own triplet
@@ -268,6 +270,78 @@ rm -rf ${prefix}/share/man
 install_license ${WORKSPACE}/srcdir/gcc-*/COPYING*
 """
 
+function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatform)
+    return Dict(
+        "libstdcxx" => ExtractSpec(
+            raw"""
+            extract ${prefix}/${target}/include
+            extract ${prefix}/${target}/${lib64}/libstdc++*
+            """,
+            [
+                FileProduct([raw"${target}/include/c++/${gcc_version}/iostream"], :iostream),
+                FileProduct([raw"${target}/${lib64}/libstdc++.a"], :libstdcxx_a),
+                LibraryProduct([raw"${target}/${lib64}/libstdc++"], :libstdcxx),
+            ],
+            get_target_spec_by_name(build, "host"),
+            platform.target,
+        ),
+        "GCC_support_libraries" => ExtractSpec(
+            raw"""
+            extract ${prefix}/${target}/${lib64}
+            # Remove `libstdc++`, as that was extracted in `libstdcxx`
+            rm -f ${extract_dir}/${target}/${lib64}/libstdc++*
+            """,
+            [
+                LibraryProduct([
+                        raw"${target}/${lib64}/libgcc_s",
+                        # Special windows naming of libgcc_s
+                        raw"${target}/${lib64}/libgcc_s_seh",
+                        raw"${target}/${lib64}/libgcc_s_sjlj",
+                    ],
+                    :libgcc_s
+                ),
+            ],
+            get_target_spec_by_name(build, "host"),
+            platform.target,
+        ),
+        "GCC_crt_objects" => ExtractSpec(
+            raw"""
+            extract ${prefix}/lib/gcc/${target}/${gcc_version}
+            """,
+            [
+                FileProduct([raw"lib/gcc/${target}/${gcc_version}/crtbegin.o"], :crtbegin_o),
+                FileProduct([raw"lib/gcc/${target}/${gcc_version}/crtend.o"], :crtend_o),
+                FileProduct([raw"lib/gcc/${target}/${gcc_version}/libgcc.a"], :libgcc_a),
+            ],
+            get_target_spec_by_name(build, "host"),
+            platform.target,
+        ),
+        "GCC" => ExtractSpec(
+            raw"""
+            # Remove things already extracted elsewhere
+            extract ${prefix}/**
+            rm -rf ${extract_dir}/${target}/include
+            rm -rf ${extract_dir}/${target}/${lib64}
+            rm -rf ${extract_dir}/lib/gcc
+            """,
+            [
+                ExecutableProduct("\${target}-gcc", :gcc),
+                ExecutableProduct("\${target}-g++", :gxx),
+            ],
+            get_target_spec_by_name(build, "host"),
+            platform,
+        ),
+    )
+end
+gcc_extraction_map = Dict(
+    "libstdcxx" => ["libstdcxx"],
+    "GCC_support_libraries" => ["GCC_support_libraries"],
+    "GCC_crt_objects" => ["GCC_crt_objects"],
+    # We explicitly do not depend on the above libraries, because they are `target`
+    # and not cross-platform, thus do not get installed at the same time in JLLPrefixes.
+    "GCC" => ["GCC"],
+)
+
 # Build for these host platforms
 host_platforms = [
     Platform("x86_64", "linux"),
@@ -300,7 +374,7 @@ platforms = vcat(
     (CrossPlatform(target, target) for target in target_platforms)...,
 )
 
-function gcc_spec_generator(host, platform)
+function gcc_build_spec_generator(host, platform)
     target_str = triplet(gcc_platform(platform.target))
     lock_microarchitecture = false
 

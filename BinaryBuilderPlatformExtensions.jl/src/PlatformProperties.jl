@@ -20,9 +20,8 @@ end
 """
     macos_version(p::AbstractPlatform)
 
-If no `os_version` is specified in `p`, default to the oldest we support in the Julia world,
-which is `macOS 10.8` (kernel version 14), but if it is actually specified, then return the
-specified value (mapping from kernel version to macOS version).
+If no `os_version` is specified in `p`, return `nothing`.  Otherwise, map the kernel
+version through `macos_version(::Int)` to get a string like `"10.15"`.
 
 ```jldoctest
 julia> macos_version(Platform("x86_64", "macos"; os_version="18"))
@@ -33,8 +32,10 @@ function macos_version(p::AbstractPlatform)
     if os(p) != "macos"
         return nothing
     end
-    version = something(os_version(p), v"14.0.0")
-    return macos_version(version.major)
+    if os_version(p) === nothing
+        return nothing
+    end
+    return macos_version(os_version(p))
 end
 
 

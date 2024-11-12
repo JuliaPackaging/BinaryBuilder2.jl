@@ -1,0 +1,8 @@
+#!/bin/bash
+if [[ "\${@}" == *"--show-sdk-path"* ]]; then
+   echo /opt/target-aarch64-apple-darwin/clang/aarch64-apple-darwin
+elif [[ "\${@}" == *"--show-sdk-version"* ]]; then
+   echo 11.1
+else
+   exec "\${@}"
+fi

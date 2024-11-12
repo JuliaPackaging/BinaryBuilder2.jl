@@ -39,8 +39,9 @@ struct HostToolsToolchain <: AbstractToolchain
             # We explcitly ask for a certain version here, because anything earlier
             # may try to use `/bin/sh` instead of `/bin/bash`, which doesn't work.
             # X-ref: https://github.com/JuliaPackaging/Yggdrasil/pull/8923
-            PackageSpec(;name="Libtool_jll", version=v"2.4.7+2"),
+            PackageSpec(;name="Libtool_jll", version=v"2.4.7+4"),
             "M4_jll",
+            "Ninja_jll",
 
             # We used to version Patchelf with date-based versions, but then
             # we switched to actual upstream version numbers; Pkg chooses the
@@ -192,6 +193,12 @@ function toolchain_sources(toolchain::HostToolsToolchain)
                 end
             end
         end
+        if any(jll.package.name == "M4_jll" for jll in toolchain.deps)
+            compiler_wrapper(identity, joinpath(out_dir, "m4"), "$(toolchain_prefix)/bin/m4")
+        end
+        if any(jll.package.name == "Ninja" for jll in toolchain.deps)
+            compiler_wrapper(identity, joinpath(out_dir, "ninja"), "$(toolchain_prefix)/bin/ninja")
+        end
     end)
 
     append!(sources, toolchain.deps)
@@ -215,7 +222,7 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
     env["AUTOMAKE_UNINSTALLED"] = "true"
     env["AUTOCONF"] = joinpath(deployed_prefix, "wrappers", "autoconf")
     env["AUTOM4TE"] = joinpath(deployed_prefix, "wrappers", "autom4te")
-    env["M4"] = joinpath(deployed_prefix, "bin", "m4")
+    env["M4"] = joinpath(deployed_prefix, "wrappers", "m4")
 
     # Use the bundled CA root file
     env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")

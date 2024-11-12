@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [[ "${target}" == aarch64-* ]]; then
+    echo " arm64"
+else
+    echo " $(uname -m)"
+fi
+EOF

@@ -1,5 +1,6 @@
 module TestingUtils
-using BinaryBuilder2: storage_locations
+using BinaryBuilderPlatformExtensions, BinaryBuilderToolchains
+using BinaryBuilder2: storage_locations, make_target_spec_plan
 
 # A helper function to set storage locations, mostly for testing
 function with_storage_locations(f::Function, mappings::Dict{Symbol,String})
@@ -39,6 +40,26 @@ function with_temp_storage_locations(f::Function)
 end
 export with_temp_storage_locations
 
+# We often don't allow ccache usage in tests
+native_arch = arch(HostPlatform())
+alien_arch = native_arch == "x86_64" ? "aarch64" : "x86_64"
+native_linux = Platform(native_arch, "linux")
+alien_linux = Platform(alien_arch, "linux")
+spec_plan = make_target_spec_plan(;
+    host_toolchains=[CToolchain(;use_ccache=false), HostToolsToolchain()],
+    target_toolchains=[CToolchain(;use_ccache=false)],
+)
+export native_arch, alien_arch, alien_linux, native_linux, spec_plan
+
+
+using BinaryBuilder2: BinaryBuilderToolchains, DirectorySource
+cxx_string_abi_source =  DirectorySource(joinpath(
+    pkgdir(BinaryBuilderToolchains),
+    "test",
+    "testsuite",
+    "CToolchain"
+))
+export cxx_string_abi_source
 
 end # module TestingUtils
 

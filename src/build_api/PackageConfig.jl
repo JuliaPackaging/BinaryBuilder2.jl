@@ -14,13 +14,19 @@ struct PackageConfig
     # a debug variant, etc...
     named_extractions::Dict{String,Vector{ExtractResult}}
 
+    # Extra JLL dependencies that are not implicit in the `ExtractResult`.
+    # Often used for inter-build dependencies in complicated builds.
+    extra_deps::Vector{PackageSpec}
+
     # Julia compat specification for this JLL
     julia_compat::String
 
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
                            jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = default_jll_version_series(extractions),
-                           julia_compat::AbstractString = "1.6")
+                           extra_deps::Vector{PackageSpec} = PackageSpec[],
+                           julia_compat::AbstractString = "1.6",
+                           duplicate_extraction_handling::Symbol = :error)
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
         end
@@ -35,11 +41,51 @@ struct PackageConfig
             throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
 
+        if jll_name ∉ keys(extractions)
+            throw(ArgumentError("One of the extractions must have the same name as the JLL itself!"))
+        end
+
+        valid_deh_values = (:error, :ignore_all, :ignore_identical)
+        if duplicate_extraction_handling ∉ valid_deh_values
+            throw(ArgumentError("Invalid `duplicate_extraction_handling` value, must be one of: $(valid_deh_values)"))
+        end
+
+        # Check to make sure we don't have "duplicate extractions" listed here:
+        for (name, extract_results) in extractions
+            duplicate_extractions = ExtractResult[]
+            unique_extractions = Dict{AbstractPlatform,ExtractResult}()
+            for extract_result in extract_results
+                # If this extract result's platform is already in `unique_extractions`,
+                # we push it onto `duplicate_extractions` according to our handling behavior
+                if extract_result.config.platform ∈ keys(unique_extractions)
+                    if duplicate_extraction_handling == :ignore_all
+                        # If ignoring, do nothing
+                    elseif duplicate_extraction_handling == :ignore_identical
+                        # If ignoring identical, only push if not identical
+                        if unique_extractions[extract_result.config.platform].artifact != extract_result.artifact
+                            push!(duplicate_extractions, extract_result)
+                        end
+                    else
+                        # Otherwise always push
+                        push!(duplicate_extractions, extract_result)
+                    end
+                else
+                    unique_extractions[extract_result.config.platform] = extract_result
+                end
+            end
+            filter!(r -> r ∈ values(unique_extractions), extract_results)
+
+            if !isempty(duplicate_extractions)
+                @error("Duplicate extractions found!  Maybe set `duplicate_extraction_handling` keyword argument?", name, duplicate_extractions)
+                throw(ArgumentError("Duplicate extractions"))
+            end
+        end
+
         # Calculate the next version number immediately
         meta = AbstractBuildMeta(extractions)
         version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
 
-        return new(jll_name, version, extractions, string(julia_compat))
+        return new(jll_name, version, extractions, extra_deps, string(julia_compat))
     end
 end
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
@@ -121,12 +167,15 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
     )
 end
 
-function JLLPackageDependencies(result::ExtractResult)
+function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
     # Get list of JLLSources installed in this target's prefix
     build_config = result.config.build.config
     target_jll_deps = filter(d -> isa(d, JLLSource), get_default_target_spec(build_config).dependencies)
-    ret = JLLPackageDependency[JLLPackageDependency(jll.package.name) for jll in target_jll_deps]
-    return ret
+    deps = [JLLPackageDependency(jll.package.name, jll.package.uuid) for jll in target_jll_deps]
+    for pkg in extra_deps
+        push!(deps, JLLPackageDependency(pkg.name, pkg.uuid))
+    end
+    return deps
 end
 
 function JLLSourceRecords(result::ExtractResult)
@@ -161,16 +210,23 @@ function JLLProducts(result::ExtractResult)
     return products
 end
 
-function JLLBuildLicenses(name::String, result::ExtractResult)
-    licenses_dir = joinpath(artifact_path(result), "share", "licenses", name)
+function JLLBuildLicenses(result::ExtractResult)
+    licenses_dir = joinpath(artifact_path(result), "share", "licenses")
     if !isdir(licenses_dir)
-        throw(ArgumentError("No `share/licenses/$(name)` directory in extraction!"))
+        throw(ArgumentError("No `share/licenses/` directory in extraction!"))
     end
-    filenames = readdir(licenses_dir)
-    return [JLLBuildLicense(f, String(read(joinpath(licenses_dir, f)))) for f in filenames]
+
+    package_name = readdir(licenses_dir)
+    if length(package_name) != 1
+        throw(ArgumentError("More than one directory in `share/licenses/`: $(package_name)"))
+    end
+    package_name = only(package_name)
+
+    filenames = readdir(joinpath(licenses_dir, package_name))
+    return [JLLBuildLicense(f, String(read(joinpath(licenses_dir, package_name, f)))) for f in filenames]
 end
 
-function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
+function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec})
     if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
@@ -178,7 +234,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
 
     return JLLBuildInfo(;
         src_version = build_config.src_version,
-        deps = JLLPackageDependencies(result),
+        deps = JLLPackageDependencies(result, extra_deps),
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = JLLSourceRecords(result),
         platform = result.config.platform,
@@ -199,7 +255,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult)
                 download_sources = []
             ),
         ),
-        licenses = JLLBuildLicenses(name, result),
+        licenses = JLLBuildLicenses(result),
         products = JLLProducts(result),
     )
 end
@@ -220,7 +276,7 @@ function package!(config::PackageConfig)
     end
 
     builds = vcat(
-        ([JLLBuildInfo(name, extraction) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+        ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
     )
     jll = JLLInfo(;
         name = config.name,

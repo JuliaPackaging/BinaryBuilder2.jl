@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.4"
+julia_version = "1.10.5"
 manifest_format = "2.0"
 project_hash = "7b2e28bace7b83e5ad50f8efc228c9a25c209601"
 
@@ -46,9 +46,9 @@ version = "0.1.0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
-git-tree-sha1 = "b1c55339b7c6c350ee89f2c1604299660525b248"
+git-tree-sha1 = "8ae8d32e09f0dcf42a36b90d4e17f5dd2e4c4215"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "4.15.0"
+version = "4.16.0"
 
     [deps.Compat.extensions]
     CompatLinearAlgebraExt = "LinearAlgebra"
@@ -233,6 +233,12 @@ deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 version = "1.10.0"
 
+[[deps.PrecompileTools]]
+deps = ["Preferences"]
+git-tree-sha1 = "5aa36f7049a63a1528fe8f7c3f2113413ffd4e1f"
+uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+version = "1.2.1"
+
 [[deps.Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
@@ -279,16 +285,15 @@ uuid = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
 version = "2.1.0"
 
 [[deps.StructIO]]
-deps = ["Test"]
-git-tree-sha1 = "010dc73c7146869c042b49adcdb6bf528c12e859"
+git-tree-sha1 = "c581be48ae1cbf83e899b14c07a807e1787512cc"
 uuid = "53d494c1-5632-5724-8f4c-31dff12d585f"
-version = "0.3.0"
+version = "0.3.1"
 
 [[deps.StyledStrings]]
-deps = ["TOML"]
-git-tree-sha1 = "8e2a8d6d7c749419d8b9a7f9ca85f7a74640cc57"
+deps = ["PrecompileTools", "TOML"]
+git-tree-sha1 = "711c9650010c95814911c2005ea04e70e70e65ed"
 uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
-version = "1.0.2"
+version = "1.0.3"
 
 [[deps.TOML]]
 deps = ["Dates"]
@@ -305,10 +310,6 @@ deps = ["Artifacts", "Attr_jll", "JLLWrappers", "Libdl", "Libiconv_jll"]
 git-tree-sha1 = "85e7d0ef5248971fbd824f29c52ab6168b895dfd"
 uuid = "9b64493d-8859-5bf3-93d7-7c32dd38186f"
 version = "1.35.0+0"
-
-[[deps.Test]]
-deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
-uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [[deps.TreeArchival]]
 deps = ["SHA", "Tar", "Tar_jll", "Zstd_jll", "p7zip_jll"]

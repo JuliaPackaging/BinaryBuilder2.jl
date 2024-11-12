@@ -131,7 +131,7 @@ function scan_files(prefix::String, platform::AbstractPlatform,
     for lib in library_products
         lib_located_path = locate(lib, prefix; env, platform)
         if lib_located_path === nothing
-            @error("Unable to locate library", lib, prefix)
+            @error("Unable to locate library", lib, prefix, platform)
             error()
         end
 

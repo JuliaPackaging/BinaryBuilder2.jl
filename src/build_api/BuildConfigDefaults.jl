@@ -104,7 +104,7 @@ function apply_spec_plan(target_spec_plan::Vector,
     return target_specs
 end
 
-function default_spec_generator(;kwargs...)
+function default_build_spec_generator(;kwargs...)
     spec_plan = make_target_spec_plan(;kwargs...)
     return (host, platform) -> apply_spec_plan(spec_plan, host, platform)
 end

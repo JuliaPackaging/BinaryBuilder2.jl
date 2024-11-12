@@ -30,14 +30,17 @@ struct CToolchain <: AbstractToolchain
     # our compilation and linking with `gcc` and `clang`.
     use_ccache::Bool
 
+    # Clang options, we can use different runtime libs (:libgcc, :compiler_rt),
+    # different c++ runtimes (:libstdcxx, :libcxx), and different linkers (:ld, :lld)
+    compiler_runtime::Symbol
+    cxx_runtime::Symbol
+    linker::Symbol
+
     # Extra compiler and linker flags that should be inserted.
     # We typically use these to add `-L/workspace/destdir/${target}`
     # in BinaryBuilder.
     extra_cflags::Vector{String}
     extra_ldflags::Vector{String}
-
-    # Concretized versions of our tools
-    tool_versions::Dict{String,VersionNumber}
 
     function CToolchain(platform::CrossPlatform;
                         vendor = :auto,
@@ -49,10 +52,32 @@ struct CToolchain <: AbstractToolchain
                         llvm_version = VersionSpec("*"),
                         binutils_version = v"2.38.0+4",
                         glibc_version = :oldest,
+                        compiler_runtime = :auto,
+                        cxx_runtime = :auto,
+                        linker = :auto,
                         extra_cflags = String[],
                         extra_ldflags = String[])
-        if vendor ∉ (:auto, :gcc, :clang, :bootstrap)
-            throw(ArgumentError("Unknown C toolchain vendor '$(vendor)'"))
+        function _check_valid(val, valid_set, name)
+            if val ∉ valid_set
+                throw(ArgumentError("Invalid value '$(val)' for `$(name)`, must be one of $(valid_set)"))
+            end
+        end
+        valid_vendors = (:auto, :gcc, :clang, :bootstrap, :gcc_bootstrap, :clang_bootstrap)
+        _check_valid(vendor, valid_vendors, "vendor")
+
+        valid_cxx_runtimes = (:auto, :libcxx, :libstdxx)
+        _check_valid(cxx_runtime, valid_cxx_runtimes, "cxx_runtime")
+
+        valid_compiler_runtimes = (:auto, :libgcc, :compiler_rt)
+        _check_valid(compiler_runtime, valid_compiler_runtimes, "compiler_runtime")
+
+        if get_vendor(vendor, platform) ∈ (:gcc, :gcc_bootstrap)
+            if cxx_runtime == :libcxx
+                throw(ArgumentError("GCC cannot use libcxx, must use libstdc++!"))
+            end
+            if compiler_runtime == :compiler_rt
+                throw(ArgumentError("GCC cannot use compiler_rt, must use libgcc!"))
+            end
         end
 
         if isempty(wrapper_prefixes)
@@ -89,24 +114,12 @@ struct CToolchain <: AbstractToolchain
             binutils_version,
             glibc_version,
             use_ccache,
+            compiler_runtime,
+            cxx_runtime,
         )
 
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         resolve_versions!(deps; julia_version=nothing)
-
-        tool_versions = Dict{String,Any}()
-        function record_tool_version(name, names)
-            for jll in deps
-                if jll.package.name ∈ names
-                    tool_versions[name] = jll.package.version
-                end
-            end
-        end
-
-        record_tool_version("GCC", ("GCC_jll", "GCCBootstrap_jll"))
-        record_tool_version("LLVM", ("Clang_jll",))
-        record_tool_version("Binutils", ("Binutils_jll",))
-        record_tool_version("Glibc", ("Glibc_jll",))
 
         return new(
             platform,
@@ -116,9 +129,11 @@ struct CToolchain <: AbstractToolchain
             string.(env_prefixes),
             lock_microarchitecture,
             use_ccache,
+            compiler_runtime,
+            cxx_runtime,
+            linker,
             string.(extra_cflags),
             string.(extra_ldflags),
-            tool_versions,
         )
     end
 end
@@ -143,16 +158,224 @@ function get_vendor(vendor::Symbol, platform::AbstractPlatform)
 end
 get_vendor(ct::CToolchain) = get_vendor(ct.vendor, ct.platform)
 
+# This one only returns `gcc` or `clang`, no `bootstrap` distinction.
+function get_simple_vendor(vendor::Symbol)
+    if vendor == :clang_bootstrap
+        return "clang"
+    elseif vendor == :gcc_bootstrap
+        return "gcc"
+    else
+        return string(vendor)
+    end
+end
+get_simple_vendor(toolchain::CToolchain) = get_simple_vendor(get_vendor(toolchain))
+
+
+function auto_chooser(criteria, val, platform, choices)
+    if val == :auto
+        if criteria(platform)
+            return choices[1]
+        else
+            return choices[2]
+        end
+    end
+    return val
+end
+
+function get_compiler_runtime(runtime::Symbol, platform::AbstractPlatform)
+    compiler_rt_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+    return auto_chooser(compiler_rt_default, runtime, platform, (:compiler_rt, :libgcc))
+end
+get_compiler_runtime(ct::CToolchain) = get_compiler_runtime(ct.compiler_runtime, ct.platform)
+function get_compiler_runtime_str(x)
+    compiler_runtime = get_compiler_runtime(x)
+    if compiler_runtime == :compiler_rt
+        return "compiler-rt"
+    elseif compiler_runtime == :libgcc
+        return "libgcc"
+    else
+        throw(ArgumentError("Unknown compiler runtime '$(compiler_runtime)'"))
+    end
+end
+
+
+function get_cxx_runtime(runtime::Symbol, platform::AbstractPlatform)
+    libcxx_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+    return auto_chooser(libcxx_default, runtime, platform, (:libcxx, :libstdcxx))
+end
+get_cxx_runtime(ct::CToolchain) = get_cxx_runtime(ct.cxx_runtime, ct.platform)
+function get_cxx_runtime_str(args...)
+    cxx_runtime = string(get_cxx_runtime(args...))
+    return replace(cxx_runtime, r"xx$" => "++")
+end
+
+
+function get_linker(linker::Symbol, platform::AbstractPlatform)
+    lld_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+    return auto_chooser(lld_default, linker, platform, (:lld, :ld))
+end
+get_linker(ct::CToolchain) = get_linker(ct.linker, ct.platform)
+
+
 function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                               gcc_version,
                               llvm_version,
                               binutils_version,
                               glibc_version,
-                              use_ccache)
+                              use_ccache,
+                              compiler_runtime,
+                              cxx_runtime)
     # Collect our JLLSource objects for all of our compiler pieces:
     deps = JLLSource[]
+    sysroot_path = joinpath(get_simple_vendor(vendor), triplet(gcc_platform(platform.target)))
 
-    # If we're asking for a GCCBootstrap-based toolchain, give just that and nothing else, as it contains everything.
+    if libc(platform.target) == "glibc"
+        # Manual version selection, drop this once these are registered!
+        if v"2.17" == glibc_version
+            glibc_repo = Pkg.Types.GitRepo(
+                rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
+                source="https://github.com/staticfloat/Glibc_jll.jl"
+            )
+        elseif v"2.19" == glibc_version
+            glibc_repo = Pkg.Types.GitRepo(
+                rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
+                source="https://github.com/staticfloat/Glibc_jll.jl"
+            )
+        else
+            error("Don't know how to install Glibc $(glibc_version)")
+        end
+
+        libc_jlls = [JLLSource(
+            "Glibc_jll",
+            platform.target;
+            uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
+            # TODO: Should we encode this in the platform object somehow?
+            version=glibc_version,
+            repo=glibc_repo,
+            # This glibc is the one that gets embedded within GCC and it's for the target
+            target=sysroot_path,
+        )]
+    elseif libc(platform.target) == "musl"
+        libc_jlls = [JLLSource(
+            "Musl_jll",
+            platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="827bfab690e1cab77b4d48e1a250c8acd3547443",
+                source="https://github.com/staticfloat/Musl_jll.jl"
+            ),
+            target=sysroot_path,
+        )]
+    elseif os(platform.target) == "macos"
+        @warn("Take in `macos_version(platform.target)` and feed that to `macOSSDK_jll.jl` here", maxlog=1)
+        libc_jlls = [JLLSource(
+            "macOSSDK_jll",
+            platform.target;
+            repo=Pkg.Types.GitRepo(
+                source="https://github.com/staticfloat/macOSSDK_jll.jl",
+                rev="main",
+            ),
+            version=v"11.1",
+            target=sysroot_path,
+        )]
+    elseif os(platform.target) == "windows"
+        libc_jlls = [JLLSource(
+            "Mingw_jll",
+            platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap",
+                source="https://github.com/staticfloat/Mingw_jll.jl",
+            ),
+            target=sysroot_path,
+        )]
+    else
+        error("Unknown libc for $(triplet(platform.target))")
+    end
+
+    if os(platform.target) == "macos"
+        binutils_jlls = [
+            JLLSource(
+                "CCTools_jll",
+                platform;
+                uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/ClangBootstrap",
+                    source="https://github.com/staticfloat/CCTools_jll.jl",
+                ),
+                # eventually, include a resolved version
+                version=v"986.0.0",
+                target=get_simple_vendor(vendor),
+            ),
+            JLLSource(
+                "libtapi_jll",
+                platform.host;
+                uuid=Base.UUID("defda0c2-6d1f-5f19-8ead-78afca958a10"),
+                repo=Pkg.Types.GitRepo(
+                    rev="bb2/ClangBootstrap",
+                    source="https://github.com/staticfloat/libtapi_jll.jl",
+                ),
+                # eventually, include a resolved version
+                version=v"1300.6.0",
+                target=get_simple_vendor(vendor),
+            ),
+            JLLSource("ldid_jll", platform.host),
+        ]
+    else
+        binutils_jlls = [JLLSource(
+            "Binutils_jll",
+            platform;
+            repo=Pkg.Types.GitRepo(
+                #rev="bb2/GCC",
+                rev="36a3c2374c0e546ae3bc9223e3de6cb4b0d55371",
+                source="https://github.com/staticfloat/Binutils_jll.jl",
+            ),
+            # eventually, include a resolved version
+            version=v"2.41.0",
+            target=get_simple_vendor(vendor),
+        )]
+    end
+
+    # Both GCC and Clang can use the GCC support libraries
+    gcc_support_libs = [
+        JLLSource(
+            "GCC_support_libraries_jll",
+            platform.target;
+            uuid=Base.UUID("465c4c53-7f13-5720-b733-07d6cbd50c3b"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/GCC_support_libraries_jll.jl",
+            ),
+            version=v"9.4.0",
+            target=get_simple_vendor(vendor),
+        ),
+        JLLSource(
+            "GCC_crt_objects_jll",
+            platform.target;
+            uuid=Base.UUID("7bc14925-bf4e-535d-80f2-90698dc22d13"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/GCC_crt_objects_jll.jl",
+            ),
+            version=v"9.4.0",
+            target=get_simple_vendor(vendor),
+        ),
+    ]
+    libstdcxx_libs = [
+        JLLSource(
+            "libstdcxx_jll",
+            platform.target;
+            uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/libstdcxx_jll.jl",
+            ),
+            version=v"9.4.0",
+            target=get_simple_vendor(vendor),
+        ),
+    ]
+    
+
+    # If we're asking for a bootstrap toolchain, give just that and nothing else,
+    # which is why we `return` from within here.
     if vendor == :gcc_bootstrap
         push!(deps, JLLSource(
             "GCCBootstrap_jll",
@@ -168,51 +391,28 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             version=v"9.4.0",
             target="gcc",
         ))
-    elseif vendor == :gcc
-        gcc_triplet = triplet(gcc_platform(platform.target))
-        if os(platform.target) == "linux"
-            # Linux builds require the kernel headers for the target platform
-            push!(deps, JLLSource(
-                "LinuxKernelHeaders_jll",
-                platform.target;
-                repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
-                    source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
-                ),
-                # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
-                target=joinpath("gcc", gcc_triplet, "usr")
-            ))
+        return deps
+    end
 
-            if libc(platform.target) == "glibc"
-                # Manual version selection, drop this once these are registered!
-                if v"2.17" == glibc_version
-                    glibc_repo = Pkg.Types.GitRepo(
-                        rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
-                        source="https://github.com/staticfloat/Glibc_jll.jl"
-                    )
-                elseif v"2.19" == glibc_version
-                    glibc_repo = Pkg.Types.GitRepo(
-                        rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
-                        source="https://github.com/staticfloat/Glibc_jll.jl"
-                    )
-                else
-                    error("Don't know how to install Glibc $(glibc_version)")
-                end
+    if os(platform.target) == "linux"
+        # Linux builds require the kernel headers for the target platform
+        push!(deps, JLLSource(
+            "LinuxKernelHeaders_jll",
+            platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
+            ),
+            # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
+            target=joinpath(sysroot_path, "usr")
+        ))
+    end
 
-                push!(deps, JLLSource(
-                    "Glibc_jll",
-                    platform.target;
-                    uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
-                    # TODO: Should we encode this in the platform object somehow?
-                    version=glibc_version,
-                    repo=glibc_repo,
-                    # This glibc is the one that gets embedded within GCC and it's for the target
-                    target=joinpath("gcc", gcc_triplet),
-                ))
-            end
-        end
+    # Always include the libc
+    append!(deps, libc_jlls)
 
-        # Include GCC, and it's own bundled versions of Zlib, as well as Binutils
+    if vendor == :gcc
+        # Include GCC as well as Binutils
         # These are compilers, so they take in the full cross platform.
         # TODO: Get `GCC_jll.jl` packaged so that I don't
         #       have to pull down a special commit like this!
@@ -222,43 +422,71 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
-                    #rev="bb2/GCC",
-                    rev="2f960bf26dd3d3918f07d564184b35b9c20552f4",
+                    rev="bb2/GCC",
                     source="https://github.com/staticfloat/GCC_jll.jl",
                 ),
                 # eventually, include a resolved version
                 # but for now, we're locked to this specific version
-                version=v"9.1.0",
+                version=v"9.4.0",
                 target="gcc",
             ),
-            JLLSource(
-                "Binutils_jll",
-                platform;
-                repo=Pkg.Types.GitRepo(
-                    #rev="bb2/GCC",
-                    rev="36a3c2374c0e546ae3bc9223e3de6cb4b0d55371",
-                    source="https://github.com/staticfloat/Binutils_jll.jl",
-                ),
-                # eventually, include a resolved version
-                version=v"2.41.0",
-                target="gcc",
-            ),
-            #=
-            JLLSource(
-                "Zlib_jll",
-                platform.target;
-                repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
-                    source="https://github.com/staticfloat/Zlib_jll.jl"
-                ),
-                # zlib gets installed into `<prefix>/<triplet>/usr`, and it's only for the target
-                target=joinpath("gcc", gcc_triplet, "usr"),
-            ),
-            =#
+            gcc_support_libs...,
+            libstdcxx_libs...,
+            binutils_jlls...,
         ])
+    elseif vendor == :clang || vendor == :clang_bootstrap
+        if vendor == :clang
+            append!(deps, [
+                JLLSource(
+                    "Clang_jll",
+                    platform;
+                    repo=Pkg.Types.GitRepo(
+                        rev="bb2/GCC",
+                        source="https://github.com/staticfloat/Clang_jll.jl",
+                    ),
+                    version=v"17.0.7",
+                    target="clang",
+                ),
+                binutils_jlls...,
+            ])
+        else
+            append!(deps, [
+                JLLSource(
+                    "LLVMBootstrap_Clang_jll",
+                    platform;
+                    uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
+                    repo=Pkg.Types.GitRepo(
+                        rev="bb2/ClangBootstrap",
+                        source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
+                    ),
+                    version=v"17.0.0",
+                    target="clang",
+                ),
+                JLLSource(
+                    "LLVMBootstrap_libLLVM_jll",
+                    platform;
+                    uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
+                    repo=Pkg.Types.GitRepo(
+                        rev="bb2/ClangBootstrap",
+                        source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
+                    ),
+                    version=v"17.0.0",
+                    target="clang",
+                ),
+                binutils_jlls...,
+            ])
+        end
+        if get_compiler_runtime(compiler_runtime, platform) == :libgcc
+            append!(deps, gcc_support_libs)
+        end
+        if get_cxx_runtime(cxx_runtime, platform) == :libstdcxx
+            append!(deps, libstdcxx_libs)
+        end
     else
         throw(ArgumentError("Invalid vendor '$(vendor)'!"))
     end
+
+    return deps
 end
 
 function Base.show(io::IO, toolchain::CToolchain)
@@ -268,20 +496,29 @@ function Base.show(io::IO, toolchain::CToolchain)
     end
 end
 
+function get_jll(toolchain::CToolchain, name::String)
+    for jll in toolchain.deps
+        if jll.package.name == name
+            return jll
+        end
+    end
+    return nothing
+end
+
 function toolchain_sources(toolchain::CToolchain)
     sources = AbstractSource[]
 
+    installing_jll(name) = get_jll(toolchain, name) !== nothing
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
     # our compiler wrappers!
-    installing_jll(name::String) = any(jll.package.name == name for jll in toolchain.deps)
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
         if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll")
             gcc_wrappers(toolchain, out_dir)
         end
-        if installing_jll("Clang_jll")
+        if installing_jll("Clang_jll") || installing_jll("LLVMBootstrap_Clang_jll")
             clang_wrappers(toolchain, out_dir)
         end
-        if installing_jll("Binutils_jll") || installing_jll("GCCBootstrap_jll")
+        if installing_jll("Binutils_jll") || installing_jll("CCTools_jll") || installing_jll("GCCBootstrap_jll")
             binutils_wrappers(toolchain, out_dir)
         end
     end)
@@ -299,15 +536,21 @@ end
 function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     env = Dict{String,String}()
 
-    insert_PATH!(env, :PRE, [
-        joinpath(deployed_prefix, "wrappers"),
-    ])
-
     if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
         insert_PATH!(env, :PRE, [
             joinpath(deployed_prefix, "gcc", "bin"),
         ])
     end
+
+    if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
+        insert_PATH!(env, :PRE, [
+            joinpath(deployed_prefix, "clang", "bin"),
+        ])
+    end
+
+    insert_PATH!(env, :PRE, [
+        joinpath(deployed_prefix, "wrappers"),
+    ])
 
     function set_envvars(envvar_prefix::String, tool_prefix::String)
         env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
@@ -345,6 +588,16 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     for env_prefix in toolchain.env_prefixes
         set_envvars(env_prefix, wrapper_prefix)
     end
+
+    sdk_jll = get_jll(toolchain, "macOSSDK_jll")
+    if sdk_jll !== nothing
+        env["MACOSX_DEPLOYMENT_TARGET"] = string(
+            sdk_jll.package.version.major,
+            ".",
+            sdk_jll.package.version.minor,
+        )
+    end
+    
     return env
 end
 
@@ -385,16 +638,113 @@ end
 # the wrapped executable (e.g. `llvm-ar`).
 function make_tool_wrappers(toolchain, output_dir, tool, tool_target;
                             wrapper::Function = identity,
+                            post_func::Function = identity,
                             toolchain_prefix::String = "\$(dirname \"\${WRAPPER_DIR}\")")
     for wrapper_prefix in toolchain.wrapper_prefixes
         tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), tool)
         compiler_wrapper(wrapper,
+            post_func,
             joinpath(output_dir, "$(tool_prefixed)"),
             "$(toolchain_prefix)/bin/$(tool_target)"
         )
     end
 end
 
+"""
+    march_check(io, toolchain)
+
+Insert into your compiler wrapper definition near the top to error out if the user
+supplies a `-march` flag when `lock_microarchitecture` has been set to `true`.
+If compiling, also inserts a `-march` flag to set the microarchitectural level
+the toolchain is locked to.  For more details, see `expand_microarchitectures()`.
+"""
+function add_microarchitectural_flags(io, toolchain)
+    # Fail out noisily if `-march` is set, but we're locking microarchitectures.
+    if toolchain.lock_microarchitecture
+        flagmatch(io, [flag"-march=.*"r]) do io
+            println(io, """
+            echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
+            exit 1
+            """)
+        end
+
+        # Also insert `-march=foo` where `foo` is defined by the microarchitectural level of `p`.
+        compile_flagmatch(io) do io
+            march_flags = get_march_flags(
+                arch(toolchain.platform.target),
+                march(toolchain.platform.target),
+                get_simple_vendor(toolchain),
+            )
+            append_flags(io, :PRE, march_flags)
+        end
+    end
+end
+
+"""
+    add_cxxabi_flags(io, toolchain)
+
+Insert into your compiler wrapper definition so that when using `libstdc++` as the
+backing C++ runtime, the correct cxx11 string ABI is used.  This will forcibly
+insert `-D_GLIBCXX_USE_CXX11_ABI=[1|0]` arguments to the compiler.  For more
+details, see `expand_cxxstring_abis()`.
+"""
+function add_cxxabi_flags(io, toolchain)
+    if get_cxx_runtime(toolchain) == :libstdcxx
+        compile_flagmatch(io) do io
+            # Force proper cxx11 string ABI usage, if it is set at all
+            if cxxstring_abi(toolchain.platform.target) == "cxx11"
+                append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=1")
+            elseif cxxstring_abi(toolchain.platform.target) == "cxx03"
+                append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=0")
+            end
+        end
+    end
+end
+
+"""
+    add_user_flags(io, toolchain)
+
+The user can insert "extra" CFLAGS and LDFLAGS that they want our CToolchain
+to use; this adds them to the relevant PRE and POST flag lists.
+"""
+function add_user_flags(io, toolchain)
+    compile_flagmatch(io) do io
+        # Add any extra CFLAGS the user has requested of us
+        append_flags(io, :PRE, toolchain.extra_cflags)
+    end
+    link_flagmatch(io) do io
+        # Add any extra linker flags that the user has requested of us
+        append_flags(io, :POST, toolchain.extra_ldflags)
+    end
+end
+
+function add_macos_flags(io, toolchain)
+    if Sys.isapple(toolchain.platform.target)
+        if os_version(toolchain.platform.target) === nothing
+            @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(toolchain.platform.target), maxlog=1)
+        end
+    
+        compile_flagmatch(io) do io
+            # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
+            if get_simple_vendor(toolchain) == "gcc"
+                if something(os_version(toolchain.platform.target), v"14") < v"16"
+                    # Disable usage of `clock_gettime()`
+                    append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
+                end
+            end
+            
+            # Always compile for a particular minimum macOS verison
+            #append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
+        end
+
+        link_flagmatch(io) do io
+            # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
+            # to have extra space in the MachO headers so we can expand names, if necessary.
+            append_flags(io, :POST, "-Wl,-headerpad_max_install_names")
+            #append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_version(toolchain.platform.target))")
+        end
+    end
+end
 
 
 """
@@ -407,17 +757,22 @@ however if `toolchain.default_ctoolchain` is set, also generates the generic
 wrapper names `cc`, `gcc`, `c++`, etc...
 """
 function gcc_wrappers(toolchain::CToolchain, dir::String)
-    gcc_version = toolchain.tool_versions["GCC"]
+    gcc_version = v"0.0.0"
+    for name in ("GCC", "GCCBootstrap")
+        jll = get_jll(toolchain, string(name, "_jll"))
+        if jll !== nothing
+            gcc_version = jll.package.version
+            break
+        end
+    end
 
     # Build hash of compiler JLLs that we will feed to `ccache` to identify our
     # specific compiler set:
     compiler_treehash = ""
-    for jll_name in ("GCC", "GCC_support_libraries", "GCC_crt_objects", "Binutils")
+    for jll_name in ("GCCBootstrap", "GCC", "GCC_support_libraries", "GCC_crt_objects", "Binutils")
         jll = get_jll(toolchain, string(jll_name, "_jll"))
         if jll !== nothing
             compiler_treehash = string(compiler_treehash, jll.package.tree_hash)
-        else
-            @warn("Tried to treehash JLL $(jll_name) but failed; perhaps unusual CToolchain creation?")
         end
     end
     compiler_treehash = bytes2hex(sha256(compiler_treehash))
@@ -426,15 +781,10 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
 
     function _gcc_wrapper(io)
-        # Fail out noisily if `-march` is set, but we're locking microarchitectures.
-        if toolchain.lock_microarchitecture
-            flagmatch(io, [flag"-march=.*"r]) do io
-                println(io, """
-                echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
-                exit 1
-                """)
-            end
-        end
+        add_microarchitectural_flags(io, toolchain)
+        add_cxxabi_flags(io, toolchain)
+        add_user_flags(io, toolchain)
+        add_macos_flags(io, toolchain)
 
         compile_flagmatch(io) do io
             if Sys.islinux(p) || Sys.isfreebsd(p)
@@ -446,43 +796,17 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 @warn("TODO: determine if this flag prepending is actually needed", maxlog=1)
                 libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
                 append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
-            end
-
-            if toolchain.lock_microarchitecture
-                append_flags(io, :PRE, get_march_flags(arch(p), march(p), "gcc"))
-            end
-
-            # Add any extra CFLAGS the user has requested of us
-            append_flags(io, :PRE, toolchain.extra_cflags)
+            end            
 
             # Add on `-fsanitize-memory` if our platform has a santization tag applied
             @warn("TODO: add sanitize compile flags!", maxlog=1)
             #sanitize_compile_flags!(p, flags)
         end
 
-        # Force proper cxx11 string ABI usage, if it is set at all
-        if cxxstring_abi(p) == "cxx11"
-            append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=1")
-        elseif cxxstring_abi(p) == "cxx03"
-            append_flags(io, :PRE, "-D_GLIBCXX_USE_CXX11_ABI=0")
-        end
-
         if Sys.isapple(p)
-            if os_version(p) === nothing
-                @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
-            end
-
-            # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
-            if something(os_version(p), v"14") < v"16"
-                # Disable usage of `clock_gettime()`
-                append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
-            end
-
-            # Always compile for a particular minimum macOS verison
-            append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(p))")
-
+            # Older GCC versions need the syslibroot specified directly
             if gcc_version.major in (4, 5)
-                push!(flags, "-Wl,-syslibroot,$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root")
+                push!(flags, "-Wl,-syslibroot,$(toolchain_prefix)/$(gcc_target_triplet(p))")
             end
         end
 
@@ -503,20 +827,11 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 ])
             end
 
-            # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
-            # to have extra space in the MachO headers so we can expand names, if necessary.
-            if Sys.isapple(p)
-                append_flags(io, :POST, "-headerpad_max_install_names")
-            end
-
             # Do not embed timestamps, for reproducibility:
             # https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/1232
             if Sys.iswindows(p) && gcc_version ≥ v"5"
                 append_flags(io, :POST, "-Wl,--no-insert-timestamp")
             end
-
-            # Add any extra linker flags that the user has requested of us
-            append_flags(io, :POST, toolchain.extra_ldflags)
 
             @warn("TODO: sanitize_link_flags()", maxlog=1)
         end
@@ -544,18 +859,79 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     end
 end
 
+
+
+"""
+    clang_wrappers(toolchain::CToolchain, dir::String)
+
+Generate wrapper scripts (using `compiler_wrapper()`) into `dir` to launch
+tools like `gcc`, `g++`, etc... from `GCC_jll` with appropriate flags
+interposed.
+"""
+function clang_wrappers(toolchain::CToolchain, dir::String)
+    p = toolchain.platform.target
+    gcc_triplet = gcc_target_triplet(p)
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
+
+    function _clang_wrapper(io; is_clangxx::Bool = false)
+        # Teach `clang` how to respond to `-print-sysroot`.  This is needed for our CMake scripts.
+        flagmatch(io, [flag"-print-sysroot"]) do io
+            println(io, "echo \"$(toolchain_prefix)/$(gcc_triplet)\"")
+            println(io, "exit 0")
+        end
+
+        append_flags(io, :PRE, [
+            # Set the `target` for `clang` so it generates the right kind of code
+            "--target=$(gcc_triplet)",
+            # Set the sysroot
+            "--sysroot=$(toolchain_prefix)/$(gcc_triplet)",
+        ])
+
+        link_flagmatch(io) do io
+            append_flags(io, :PRE, [
+                # Set the runtime library
+                "--rtlib=$(get_compiler_runtime_str(toolchain))",
+            ])
+        end
+
+        if is_clangxx
+            append_flags(io, :PRE, [
+                # Set the C++ runtime library, but only in clang++
+                "--stdlib=$(get_cxx_runtime_str(toolchain))",
+            ])
+        end
+
+        add_microarchitectural_flags(io, toolchain)
+        add_cxxabi_flags(io, toolchain)
+        add_user_flags(io, toolchain)
+        add_macos_flags(io, toolchain)
+
+        if Sys.isapple(p)
+            if os_version(p) === nothing
+                @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
+            end
+        end
+    end
+
+    make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
+    if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
+        make_tool_wrappers(toolchain, dir, "cc", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "c++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
+    end
+end
+
+
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
+    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/$(get_simple_vendor(toolchain))"
 
     # Most tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = [
         "as",
-        "ld",
         "nm",
         "objcopy",
         "objdump",
-        "strip",
     ]
     @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
     @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
@@ -578,6 +954,18 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         append!(simple_tools, [
             "readelf",
         ])
+    end
+
+    function _ld_wrapper(io)
+        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
+        if toolchain.use_ccache
+            println(io, """
+            # If `ccache` is available, use it!
+            if which ccache >/dev/null; then
+                PROG=( ccache "\${PROG[@]}" )
+            fi
+            """)
+        end
     end
 
 
@@ -664,11 +1052,74 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
+    function _strip_wrapper_pre(io)
+        # On non-apple platforms, we don't need to do anything
+        if !Sys.isapple(p)
+            return
+        end
+
+        # Otherwise, we need to do some RATHER ONEROUS parsing.
+        # We need to identify every file touched by `strip` and then
+        # re-sign them all using `ldid`.  Because `strip` can take
+        # multiple output files, we end up doing a bunch of custom
+        # argument parsing here to identify all files that will be signed.
+        println(io, raw"""
+        FILES_TO_SIGN=()
+        # Parse arguments to figure out what files are being stripped,
+        # so we know what to re-sign after all is said and done.
+        get_files_to_sign()
+        {
+            for ARG_IDX in "${!ARGS[@]}"; do
+                # If `-o` is passed, that's the only file to sign, ignore
+                # everything else and finish off immediately.
+                if [[ "${ARGS[ARG_IDX]}" == "-o" ]] && (( ARG_IDX + 1 < ${#ARGS[@]} )); then
+                    FILES_TO_SIGN=( "${ARGS[ARG_IDX+1]}" )
+                    return
+                elif [[ "${ARGS[ARG_IDX]}" == "-o"* ]]; then
+                    filename="${ARGS[ARG_IDX}]}"
+                    FILES_TO_SIGN=( "${filename%%-o}" )
+                    return
+                fi
+
+                # Otherwise, we collect arguments we don't know what to do with,
+                # assuming they are files we should be signing.
+                if [[ "${ARGS[ARG_IDX]}" != -* ]]; then
+                    FILES_TO_SIGN+=( "${ARGS[ARG_IDX]}" )
+                fi
+            done
+        }
+        """)
+
+        # Tell `strip` not to complain about us invalidating a code signature, since
+        # we're gonna fix it up with `ldid` immediately afterward.
+        append_flags(io, :PRE, ["-no_code_signature_warning"])
+    end
+
+    function _strip_wrapper_post(io)
+        # On non-apple platforms, we don't need to do anything
+        if !Sys.isapple(p)
+            return
+        end
+
+        println(io, raw"""
+        # Re-sign all files listed in `FILES_TO_SIGN`
+        for file in "${FILES_TO_SIGN[@]}"; do
+            ldid -S "${file}"
+        done
+        """)
+    end
+
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
     gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     for tool in simple_tools
         make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)"; toolchain_prefix)
     end
+
+    # `ld` is a simple tool, except that it can be wrapped with `ccache`:
+    make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix)
+
+    # `strip` needs complicated option parsing if we're on macOS
+    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
@@ -687,33 +1138,6 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
         make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper, toolchain_prefix)
     end
-end
-
-
-"""
-    clang_wrappers(toolchain::CToolchain, dir::String)
-
-Generate wrapper scripts (using `compiler_wrapper()`) into `dir` to launch
-tools like `gcc`, `g++`, etc... from `GCC_jll` with appropriate flags
-interposed.
-"""
-function clang_wrappers(toolchain::CToolchain, dir::String)
-    p = toolchain.platform.target
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
-
-    function _clang_wrapper(io)
-        append_flags(io, :PRE, [
-            # Set the `target` for `clang` so it generates the right kind of code
-            "--target=$(gcc_target_triplet(p))",
-            # Set the sysroot
-            "--sysroot=$(toolchain_prefix)/$(gcc_target_triplet(p))/sys-root",
-            # Set the GCC toolchain location
-            "--gcc-toolchain=$(toolchain_prefix)",
-        ])
-    end
-
-    make_tool_wrappers(toolchain, dir, "clang", "$(gcc_target_triplet(p))-clang"; wrapper=_clang_wrapper)
-    make_tool_wrappers(toolchain, dir, "clang++", "$(gcc_target_triplet(p))-clang++"; wrapper=_clang_wrapper)
 end
 
 

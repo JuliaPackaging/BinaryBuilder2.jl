@@ -1,0 +1,34 @@
+#!/bin/bash
+# This fake `sw_vers` wrapper is required to get `CMake` to work properly
+# We may add more functionality in the future.
+# See https://www.unix.com/man-page/osx/1/sw_vers/ for reference
+
+set -euo pipefail
+
+if [[ ! -v MACOSX_DEPLOYMENT_TARGET ]]; then
+    echo "sw_vers only supported when targeting macOS!" >&2
+    exit 1
+fi
+
+# version number <= and < (https://stackoverflow.com/a/4024263)
+verlte() {
+    printf '%s\n' "$1" "$2" | sort -C -V
+}
+verlt() {
+    ! verlte "$2" "$1"
+}
+
+if verlt "${MACOSX_DEPLOYMENT_TARGET}" "10.12"; then
+    PRODUCT_NAME="Mac OS X"
+else
+    PRODUCT_NAME="macOS"
+fi
+
+if [[ -z "$@" ]]; then
+    echo "ProductName:    ${PRODUCT_NAME}"
+    echo "ProductVersion: ${MACOSX_DEPLOYMENT_TARGET}"
+elif [[ "$@" == "-productName" ]]; then
+    echo "${PRODUCT_NAME}"
+elif [[ "$@" == "-productVersion" ]]; then
+    echo "${MACOSX_DEPLOYMENT_TARGET}"
+fi

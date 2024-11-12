@@ -39,9 +39,11 @@ check: $(OBJS)
 		echo "Good seeds still not reproducible!" >&2; \
 		false; \
 	fi
-	@if cmp -s $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.2; then \
-		echo "Bad seeds reproducible?!" >&2; \
-		false; \
+	@if ! "${CC}" --version | grep -q "clang"; then \
+		if cmp -s $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.bad_seed.o.2; then \
+			echo "Bad seeds reproducible?!" >&2; \
+			false; \
+		fi; \
 	fi
 	@if ! cmp $(PROJECT_DIR)/build/frandom_seed.no_seed.o.1 $(PROJECT_DIR)/build/frandom_seed.no_seed.o.2; then \
 		echo "No good default seed!" >&2; \

@@ -1,7 +1,7 @@
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include ../common.mk
 
-all: $(LIBSPLIT)
+all: $(OBJS)
 
 $(PROJECT_DIR)/build:
 	mkdir -p $@

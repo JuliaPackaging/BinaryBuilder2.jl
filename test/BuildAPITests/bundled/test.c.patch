@@ -1,0 +1,21 @@
+diff --git a/test.c b/test.c
+index b75f9b7..751abff 100644
+--- a/test.c
++++ b/test.c
+@@ -2,7 +2,7 @@
+ 
+ void foo(){
+     // This is where the magic happens
+-    printf("not so magical!\n");
++    printf("MAGIC!\n");
+ }
+ 
+ /*
+@@ -23,6 +23,6 @@ void foo(){
+ 
+ 
+ int main() {
+-    // Do something cool here
++    // Do something very cool here
+     foo();
+ }

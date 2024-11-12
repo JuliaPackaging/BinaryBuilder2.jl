@@ -123,7 +123,7 @@ append_flags(io::IO, flag_type::Symbol, flag::String) = append_flags(io, flag_ty
 
 
 """
-    compiler_wrapper(f::Function, io::IO, prog::String)
+    compiler_wrapper(pre_func::Function, [post_func::Function,] io::IO, prog::String)
 
 This utility function allows the automated construction of `bash` wrapper
 scripts for compiler executables.  It allows for easy composition of conditionals
@@ -148,7 +148,7 @@ An intermediate example of writing a wrapper for `clang` for `x86_64-linux-gnu`:
         end
     end
 """
-function compiler_wrapper(f::Function, io::IO, prog::String)
+function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog::String)
     # Start with standard header for all of our compiler wrappers
     println(io, """
     #!/bin/bash
@@ -165,7 +165,7 @@ function compiler_wrapper(f::Function, io::IO, prog::String)
     # if the special environment variable `BB_WRAPPERS_VERBOSE` is set, or if the special
     # environment variable `BB_WRAPPERS_DEBUG` is set.
     if [ "x\${BB_WRAPPERS_VERBOSE}" != "x" ] || [ "x\${BB_WRAPPERS_DEBUG}" != "x" ]; then
-        vrun() { echo -e "\\e[96m\$@\\e[0m" >&2; "\$@"; }
+        vrun() { printf "\\e[96m" >&2; printf "'%s' " "\$@" >&2; printf "\\e[0m\\n" >&2; "\$@"; }
     else
         vrun() { "\$@"; }
     fi
@@ -189,18 +189,29 @@ function compiler_wrapper(f::Function, io::IO, prog::String)
     """)
 
     # Invoke the callback to generate more pieces (flag munging/alteration, mostly)
-    f(io)
+    pre_func(io)
 
     println(io, """
 
     # Finally, run the actual command itself
     vrun "\${PROG[@]}" "\${PRE_FLAGS[@]}" "\${ARGS[@]}" "\${POST_FLAGS[@]}"
     """)
+
+    post_func(io)
 end
 
-function compiler_wrapper(f::Function, wrapper_path::String, prog::String)
+function compiler_wrapper(pre_func::Function, post_func::Function, wrapper_path::String, prog::String)
     open(wrapper_path; write=true) do io
-        compiler_wrapper(f, io, prog)
+        compiler_wrapper(pre_func, post_func, io, prog)
     end
     chmod(wrapper_path, 0o755)
+end
+
+# Default for `post_func`
+function compiler_wrapper(pre_func::Function, wrapper_path::String, prog::String)
+    return compiler_wrapper(pre_func, identity, wrapper_path, prog)
+end
+
+function compiler_wrapper(wrapper_path::String, prog::String)
+    return compiler_wrapper(identity, wrapper_path, prog)
 end

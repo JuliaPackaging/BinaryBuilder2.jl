@@ -13,7 +13,7 @@ end
 
 # We're gonna make use of a C toolchain for lots of these tests
 platform = CrossPlatform(BBHostPlatform() => HostPlatform())
-toolchain = CToolchain(platform; default_ctoolchain = true, host_ctoolchain = true)
+toolchain = CToolchain(platform; use_ccache=false)
 
 # Use some bundled C source code from our test suite
 libplus_c_path = joinpath(dirname(@__DIR__), "source", "libplus.c")

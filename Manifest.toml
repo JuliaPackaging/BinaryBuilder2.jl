@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.10.4"
+julia_version = "1.10.5"
 manifest_format = "2.0"
-project_hash = "2e8b82ab63d0da0f695bc6b3232a6f661054e165"
+project_hash = "e8fa8539de1d25505ce676f72bd5a4c6e1a4c5bf"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -51,16 +51,22 @@ uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
 
 [[deps.BinaryBuilderToolchains]]
-deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "NetworkOptions", "Pkg", "Reexport", "Scratch"]
+deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "NetworkOptions", "Pkg", "Reexport", "SHA", "Scratch"]
 path = "BinaryBuilderToolchains.jl"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
-version = "0.1.1"
+version = "0.2.0"
+
+[[deps.Ccache_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Zlib_jll", "Zstd_jll"]
+git-tree-sha1 = "ff8d49ca66b9731888e3a7dcdda74b5342a5a6fc"
+uuid = "c6bc53e4-e6d8-51d9-af6d-d7969aa08f60"
+version = "4.9.1+0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
-git-tree-sha1 = "b1c55339b7c6c350ee89f2c1604299660525b248"
+git-tree-sha1 = "8ae8d32e09f0dcf42a36b90d4e17f5dd2e4c4215"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "4.15.0"
+version = "4.16.0"
 
     [deps.Compat.extensions]
     CompatLinearAlgebraExt = "LinearAlgebra"
@@ -138,7 +144,7 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "282d4920f56cb8c39f0a0baa5a834db2e78cc991"
+path = "/home/sabae/.julia/dev/JLLPrefixes"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 version = "0.3.11"
 
@@ -281,6 +287,12 @@ deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 version = "1.10.0"
 
+[[deps.PrecompileTools]]
+deps = ["Preferences"]
+git-tree-sha1 = "5aa36f7049a63a1528fe8f7c3f2113413ffd4e1f"
+uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+version = "1.2.1"
+
 [[deps.Preferences]]
 deps = ["TOML"]
 git-tree-sha1 = "9306f6085165d270f7e3db02af26a400d580f5c6"
@@ -322,7 +334,7 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-git-tree-sha1 = "0f7b398a74a9fd40e7286f4ae352ba959fe52151"
+path = "/home/sabae/.julia/dev/Sandbox"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
 version = "2.0.2"
 
@@ -345,16 +357,15 @@ uuid = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
 version = "2.1.0"
 
 [[deps.StructIO]]
-deps = ["Test"]
-git-tree-sha1 = "010dc73c7146869c042b49adcdb6bf528c12e859"
+git-tree-sha1 = "c581be48ae1cbf83e899b14c07a807e1787512cc"
 uuid = "53d494c1-5632-5724-8f4c-31dff12d585f"
-version = "0.3.0"
+version = "0.3.1"
 
 [[deps.StyledStrings]]
-deps = ["TOML"]
-git-tree-sha1 = "8e2a8d6d7c749419d8b9a7f9ca85f7a74640cc57"
+deps = ["PrecompileTools", "TOML"]
+git-tree-sha1 = "711c9650010c95814911c2005ea04e70e70e65ed"
 uuid = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
-version = "1.0.2"
+version = "1.0.3"
 
 [[deps.TOML]]
 deps = ["Dates"]

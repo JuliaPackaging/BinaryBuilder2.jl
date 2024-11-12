@@ -16,7 +16,7 @@ products = [
     ExecutableProduct("\${bindir}/clang++", :clangxx),
 ]
 
-function clang_spec_generator(host, platform)
+function clang_build_spec_generator(host, platform)
     specs = [
         BuildTargetSpec(
             "build",
@@ -139,7 +139,6 @@ EOF
 
     # No bindings
     CMAKE_FLAGS+=(-DLLVM_BINDINGS_LIST=)
-    CMAKE_FLAGS+=("-DRUNTIMES_BUILD_ALLOW_DARWIN=TRUE")
     CMAKE_FLAGS+=(-DBUILD_SHARED_LIBS:BOOL=ON)
 
     # Turn off docs
@@ -204,5 +203,5 @@ EOF
     platforms,
     products,
     host,
-    spec_generator = clang_spec_generator,
+    build_spec_generator = clang_build_spec_generator,
 )

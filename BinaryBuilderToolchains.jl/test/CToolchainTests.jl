@@ -11,8 +11,8 @@ using BinaryBuilderToolchains: get_vendor
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     mktempdir() do ccache_dir
-        for use_ccache in (true, false)
-            toolchain = CToolchain(platform; use_ccache)
+        for use_ccache in (false, true), vendor in (:auto, :gcc, :clang)
+            toolchain = CToolchain(platform; vendor, use_ccache)
             @test get_vendor(toolchain) ∈ (:gcc, :clang)
             if get_vendor(toolchain) == :gcc
                 @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
@@ -21,8 +21,8 @@ using BinaryBuilderToolchains: get_vendor
             end
 
             # Download the toolchain, make sure it runs
-            @info("CToolchain tests", vendor=:auto, use_ccache)
-            with_toolchains([toolchain]) do prefix, env
+            @info("CToolchain tests", vendor, use_ccache)
+            with_toolchains([toolchain, HostToolsToolchain(BBHostPlatform())]) do prefix, env
                 env["CCACHE_DIR"] = ccache_dir
                 toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
             end
@@ -30,8 +30,15 @@ using BinaryBuilderToolchains: get_vendor
     end
 
     # Do the same, but with `GCCBootstrap`
-    toolchain = CToolchain(platform; vendor = :bootstrap, use_ccache=false)
-    @info("CToolchain tests", vendor=:bootstrap, use_ccache=false)
+    toolchain = CToolchain(platform; vendor=:gcc_bootstrap, use_ccache=false)
+    @info("CToolchain tests", vendor=:gcc_bootstrap, use_ccache=false)
+    with_toolchains([toolchain]) do prefix, env
+        toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
+    end
+
+    # Do the same again, but with `LLVMBootstrap_Clang`
+    toolchain = CToolchain(platform; vendor=:clang_bootstrap, use_ccache=false)
+    @info("CToolchain tests", vendor=:clang_bootstrap, use_ccache=false)
     with_toolchains([toolchain]) do prefix, env
         toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
     end
@@ -116,7 +123,7 @@ using BinaryBuilderToolchains: get_vendor
     # Ensure that `$CC --version` at least works for all of our supported platforms
     @info("Running `\$CC --version` for $(length(supported_platforms(CToolchain))) platforms")
     for target in supported_platforms(CToolchain)
-        for vendor in (:auto, :bootstrap)
+        for vendor in (:auto, :gcc, :clang, :bootstrap)
             toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor, use_ccache=false)
             with_toolchains([toolchain]) do prefix, env
                 for tool_name in ("CC", "LD", "AS")
@@ -131,8 +138,17 @@ using BinaryBuilderToolchains: get_vendor
             end
         end
     end
+
+    # Ensure that `strip` works for macOS without needing to resign
+    macos_cp = CrossPlatform(BBHostPlatform() => Platform("aarch64", "macos"))
+    toolchains = [HostToolsToolchain(macos_cp), CToolchain(macos_cp)]
+    with_toolchains(toolchains) do prefix, env
+        cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
+            @test success(setenv(Cmd(["/bin/bash", "-c", "make check"]), env))
+        end
+    end
 end
 
 @warn "TODO: test macos version min?"
-@warn "TODO: test clang against libgcc!"
+@warn "TODO: test clang against libcxx and compiler_rt!"
 @warn "TODO: test dlltool determinism"

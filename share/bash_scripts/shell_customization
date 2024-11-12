@@ -2,5 +2,9 @@
 
 alias ll='ls -la'
 
-# Grep should generally color things
-export GREP_OPTIONS='--color=auto'
+alias grep="$(which grep) --color=auto"
+
+# Helper to make and then enter a new directory
+mkcd() {
+    mkdir "$1" && cd "$1"
+}
