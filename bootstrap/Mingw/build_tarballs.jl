@@ -57,9 +57,11 @@ build_tarballs(;
 
     make
     make install
+    mv ${prefix}/usr/* ${prefix}/
+    rmdir ${prefix}/usr
     """,
     products = [
-        FileProduct(["usr/lib/libmsvcrt.a"], :libmsvcrt_a),
+        FileProduct(["lib/libmsvcrt.a"], :libmsvcrt_a),
     ],
     # We're only building for the host, since this is a bootstrap
     platforms = [
