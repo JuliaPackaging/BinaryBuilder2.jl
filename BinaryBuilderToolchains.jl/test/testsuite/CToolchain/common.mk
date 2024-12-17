@@ -3,20 +3,20 @@ override USE_CCACHE=0
 export USE_CCACHE
 
 # Inherit some things from the environment, setting dumb defaults otherwise
-target ?= x86_64-linux-gnu
+CC_TARGET ?= x86_64-linux-gnu
 CPPFLAGS ?=
 CFLAGS ?= -g -O2
 LDFLAGS ?=
 
 # Set up rpath flags for the different targets
-ifneq (,$(findstring mingw,$(target)))
+ifneq (,$(findstring mingw,$(CC_TARGET)))
 define rpath
 -L$(PROJECT_BUILD)/$(1)
 endef
 exeext ?= .exe
 dlext ?= dll
 else
-ifneq (,$(findstring darwin,$(target)))
+ifneq (,$(findstring darwin,$(CC_TARGET)))
 define rpath
 -Wl,-rpath,@loader_path/$(1) -L$(PROJECT_BUILD)/$(1)
 endef

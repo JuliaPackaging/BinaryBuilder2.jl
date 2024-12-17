@@ -10,6 +10,7 @@ $(PROJECT_DIR)/build:
 $(HELLO): hello.c | $(PROJECT_DIR)/build
 	$(CC) -o $@ $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $^
 	$(STRIP) $@
+compile: $(HELLO)
 
 clean:
 	rm -rf $(PROJECT_DIR)/build
@@ -20,5 +21,4 @@ run: $(HELLO)
 check: $(HELLO)
 	@[ "$$($(HELLO))" = "Hello, World!" ]
 
-print-%:
-	echo "$*=$($*)"
+.PHONY: compile

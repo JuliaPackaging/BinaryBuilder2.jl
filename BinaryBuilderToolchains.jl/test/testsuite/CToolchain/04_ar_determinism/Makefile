@@ -64,6 +64,8 @@ $(eval $(call index_libsplit,PASS_RANLIB_LIBS,-DD))
 clean:
 	rm -rf $(PROJECT_DIR)/build
 
+compile: $(PASS_AR_LIBS) $(FAIL_AR_LIBS) $(PASS_RANLIB_LIBS) $(FAIL_RANLIB_LIBS)
+
 run: check
 check: $(PASS_AR_LIBS) $(FAIL_AR_LIBS) $(PASS_RANLIB_LIBS) $(FAIL_RANLIB_LIBS)
 	@# First, we check that all passing libs are identical
@@ -96,5 +98,4 @@ check: $(PASS_AR_LIBS) $(FAIL_AR_LIBS) $(PASS_RANLIB_LIBS) $(FAIL_RANLIB_LIBS)
 	check_libs "$(PASS_AR_LIBS)" "$(FAIL_AR_LIBS)" "$(firstword $(PASS_AR_LIBS))"; \
 	check_libs "$(PASS_RANLIB_LIBS)" "$(FAIL_RANLIB_LIBS)" "$(firstword $(PASS_RANLIB_LIBS))"; \
 
-print-%:
-	@echo "$*=$($*)"
+.PHONY: compile

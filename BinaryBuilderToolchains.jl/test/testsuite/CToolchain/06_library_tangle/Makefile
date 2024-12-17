@@ -14,6 +14,7 @@ $$(lib$(1)_path): lib$(1).c | $$(lib$(1)_deps) $(PROJECT_DIR)/build
 	$$(CC) -shared -o $$@ $$(CPPFLAGS) $$(CFLAGS) -L./build $(patsubst %,-l%,$(2)) $$< -fPIC
 
 lib$(1)_path: $$(lib$(1)_path) $$(lib$(1)_deps)
+compile: $$(lib$(1)_path)
 endef
 
 $(eval $(call build_lib,qux,))
@@ -29,5 +30,3 @@ run: $(libfoo_path)
 check: $(libfoo_path)
 	@[ -f $(libfoo_path) ]
 
-print-%:
-	echo "$*=$($*)"

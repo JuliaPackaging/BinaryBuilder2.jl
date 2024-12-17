@@ -30,6 +30,8 @@ $(PROJECT_DIR)/build/frandom_seed.no_seed.o.%: frandom_seed.c | $(PROJECT_DIR)/b
 	$(CC) -c -flto -o $(PROJECT_DIR)/build/temp.o $(CPPFLAGS) $(CFLAGS) $<
 	mv $(PROJECT_DIR)/build/temp.o $@
 
+compile: $(OBJS)
+
 clean:
 	rm -rf $(PROJECT_DIR)/build
 
@@ -49,3 +51,5 @@ check: $(OBJS)
 		echo "No good default seed!" >&2; \
 		false; \
 	fi
+
+.PHONY: compile

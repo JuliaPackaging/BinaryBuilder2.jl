@@ -325,7 +325,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform;
             repo=Pkg.Types.GitRepo(
                 #rev="bb2/GCC",
-                rev="36a3c2374c0e546ae3bc9223e3de6cb4b0d55371",
+                rev="88e6f751a3cc9437f08a42e614233620bba91b15",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version
@@ -579,6 +579,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
             env["$(envvar_prefix)WINDRES"] = "$(tool_prefix)windres"
             env["$(envvar_prefix)WINMC"] = "$(tool_prefix)winmc"
         end
+        env["$(envvar_prefix)CC_TARGET"] = triplet(gcc_platform(toolchain.platform.target))
     end
 
     # We can have multiple wrapper prefixes, we always use the longest one
@@ -616,7 +617,7 @@ writing, this only excludes the case where `clang` has been invoked as an
 assembler via the `-x assembler` flag.
 """
 function compile_flagmatch(f::Function, io::IO)
-    flagmatch(f, io, [!flag"-x assembler", !flag"-v"r])
+    flagmatch(f, io, [!flag"-x assembler", !flag"-v"])
 end
 
 """
@@ -796,7 +797,13 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 @warn("TODO: determine if this flag prepending is actually needed", maxlog=1)
                 libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
                 append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
-            end            
+            end
+
+            # gcc doesn't invoke our `ld` wrappers, it hits the executables directly,
+            # so we have to insert this here as well
+            if Sys.iswindows(p)
+                append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
+            end
 
             # Add on `-fsanitize-memory` if our platform has a santization tag applied
             @warn("TODO: add sanitize compile flags!", maxlog=1)
@@ -848,7 +855,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     end
 
     # gcc, g++
-    gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
 
@@ -870,7 +877,8 @@ interposed.
 """
 function clang_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
-    gcc_triplet = gcc_target_triplet(p)
+    # Purposefully not using `gcc_target_triplet()` because we want the distinction between the two arms
+    gcc_triplet = triplet(gcc_platform(p))
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
 
     function _clang_wrapper(io; is_clangxx::Bool = false)
@@ -883,15 +891,40 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         append_flags(io, :PRE, [
             # Set the `target` for `clang` so it generates the right kind of code
             "--target=$(gcc_triplet)",
-            # Set the sysroot
-            "--sysroot=$(toolchain_prefix)/$(gcc_triplet)",
         ])
+
+        # Set the sysroot.  Annoyingly, clang doesn't find mingw with a triplet-specific sysroot.
+        if Sys.iswindows(p)
+            append_flags(io, :PRE, [
+                "--sysroot=$(toolchain_prefix)",
+            ])
+        else
+            append_flags(io, :PRE, [
+                # Set the GCC install dir; this is required on some platforms because
+                # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
+                "--sysroot=$(toolchain_prefix)/$(gcc_triplet)",
+                "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
+            ])
+        end
+
+        compile_flagmatch(io) do io
+            if Sys.iswindows(p) && arch(p) == "i686"
+                # Ensure that we're using SJLJ exceptions on 32-bit windows, to match our mingw builds.
+                append_flags(io, :PRE, ["-fsjlj-exceptions"])
+            end
+        end
 
         link_flagmatch(io) do io
             append_flags(io, :PRE, [
                 # Set the runtime library
                 "--rtlib=$(get_compiler_runtime_str(toolchain))",
             ])
+
+            # clang doesn't invoke the `ld` wrapper, it invokes the binary directly,
+            # so we have to include this here as well.
+            if Sys.iswindows(p)
+                append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
+            end
         end
 
         if is_clangxx
@@ -957,6 +990,20 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     end
 
     function _ld_wrapper(io)
+        if Sys.iswindows(p)
+            _warn_nondeterministic_definition(io, "uses the '--insert-timestamps' flag which embeds timestamps")
+
+            # Warn if someone has asked for timestamps
+            flagmatch(io, [flag"--insert-timestamps"]) do io
+                println(io, "warn_nondeterministic")
+            end
+
+            # Default to not using timestamps
+            flagmatch(io, [!flag"--insert-timestamps", !flag"--no-insert-timestamps"]) do io
+                append_flags(io, :PRE, "--no-insert-timestamp")
+            end
+        end
+
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
         if toolchain.use_ccache
             println(io, """
@@ -968,23 +1015,27 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
     end
 
+    # Many of our tools have nondeterministic
+    function _warn_nondeterministic_definition(io, nondeterminism_description="uses flags that cause nondeterministic output!")
+        println(io, raw"""
+        NONDETERMINISTIC=0
+        warn_nondeterministic() {
+            if [[ "${NONDETERMINISTIC}" != "1" ]]; then
+                echo "Non-reproducibility alert: This '$0' invocation $(nondeterminism_description)." >&2
+                echo "$0 flags: ${ARGS[@]}" >&2
+                echo "Continuing build, but please repent." >&2
+            fi
+            NONDETERMINISTIC=1
+        }
+        """)
+    end
 
     # `ar` and `ranlib` have special treatment due to determinism requirements.
     # Additionally, we use the `llvm-` prefixed tools on macOS.
     function _ar_wrapper(io)
         # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
         # `ar` accepts many forms of its arguments, and we want to catch all of them.
-        println(io, raw"""
-        NONDETERMINISTIC=0
-        warn_nondeterministic() {
-            if [[ "${NONDETERMINISTIC}" != "1" ]]; then
-                echo "Non-reproducibility alert: This 'ar' invocation uses the '-U' flag which embeds timestamps." >&2
-                echo "ar flags: ${ARGS[@]}" >&2
-                echo "Continuing build, but please repent." >&2
-            fi
-            NONDETERMINISTIC=1
-        }
-        """)
+        _warn_nondeterministic_definition(io, "uses the '-U' flag which embeds timestamps")
 
         # We'll start with the easy stuff; `-U` by itself, as any argument!
         flagmatch(io, [flag"-U"]) do io
@@ -1036,24 +1087,31 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         """)
     end
 
-    function _ranlib_wrapper(io)
+    # Multiple tools (`ranlib`, `strip`) have a `-U` or `-D` option that switches them
+    # from nondeterministic mode to determinstic mode.  We, of course, _always_ want
+    # deterministic mode, and so do some common option parsing here. `ar` is a special
+    # case due to handling the `-u` flag, which is why it has all that extra logic above.
+    function _simple_U_D_determinism(io)
+        _warn_nondeterministic_definition(io, "uses the '-U' flag which embeds UIDs and timestamps")
         # Warn the user if they provide `-U` in their build script
         flagmatch(io, [flag"-[^-]*U.*"r]) do io
-            println(io, raw"""
-            echo "Non-reproducibility alert: This 'ranlib' invocation uses the '-U' flag which embeds timestamps." >&2
-            echo "ranlib flags: ${ARGS[@]}" >&2
-            echo "Continuing build, but please repent." >&2
-            """)
+            println(io, "warn_nondeterministic")
         end
 
         # If there's no `-U`, and we haven't already provided `-D`, insert it!
-        flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"]) do io
+        flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"r]) do io
             append_flags(io, :PRE, "-D")
         end
     end
 
+    function _ranlib_wrapper(io)
+        _simple_U_D_determinism(io)
+    end
+
     function _strip_wrapper_pre(io)
-        # On non-apple platforms, we don't need to do anything
+        _simple_U_D_determinism(io)
+
+        # On non-apple platforms, there's nothing else to be done!
         if !Sys.isapple(p)
             return
         end
@@ -1110,7 +1168,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     end
 
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
-    gcc_triplet = toolchain.vendor == :bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     for tool in simple_tools
         make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)"; toolchain_prefix)
     end

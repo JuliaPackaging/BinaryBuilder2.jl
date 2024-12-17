@@ -156,6 +156,7 @@ function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog:
 
     WRAPPER_DIR="\$( cd -- "\$( dirname -- "\$( realpath "\${BASH_SOURCE[0]}" )" )" &> /dev/null && pwd )"
 
+    BB_WRAPPERS_VERBOSE_FD="\${BB_WRAPPERS_VERBOSE_FD:-2}"
     if [ "x\${SUPER_VERBOSE}" != "x" ]; then
         echo -e "\\e[93mWARN: SUPER_VERBOSE is deprecated, use BB_WRAPPERS_VERBOSE instead!\\e[0m" >&2
         BB_WRAPPERS_VERBOSE="\${SUPER_VERBOSE}\"
@@ -165,7 +166,12 @@ function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog:
     # if the special environment variable `BB_WRAPPERS_VERBOSE` is set, or if the special
     # environment variable `BB_WRAPPERS_DEBUG` is set.
     if [ "x\${BB_WRAPPERS_VERBOSE}" != "x" ] || [ "x\${BB_WRAPPERS_DEBUG}" != "x" ]; then
-        vrun() { printf "\\e[96m" >&2; printf "'%s' " "\$@" >&2; printf "\\e[0m\\n" >&2; "\$@"; }
+        vrun() {
+            eval "printf \\"\\\\e[96m\\" >&\${BB_WRAPPERS_VERBOSE_FD}";
+            eval "printf \\"'%s' \\" \\"\\\$@\\" >&\${BB_WRAPPERS_VERBOSE_FD}";
+            eval "printf \\"\\\\e[0m\\n\\" >&\${BB_WRAPPERS_VERBOSE_FD}";
+            "\$@";
+        }
     else
         vrun() { "\$@"; }
     fi

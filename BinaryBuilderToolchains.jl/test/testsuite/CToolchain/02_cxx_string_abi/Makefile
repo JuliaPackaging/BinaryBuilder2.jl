@@ -16,6 +16,7 @@ libstring: $(LIBSTR)
 $(CXXABI): cxx_string_abi.cpp $(LIBSTR) | $(PROJECT_DIR)/build
 	$(CXX) -o $@ $(CPPFLAGS) $(CFLAGS) $< -L$(dir $(LIBSTR)) $(call rpath,.) -lstring $(LDFLAGS)
 cxx_string_abi: $(CXXABI)
+compile: $(CXXABI)
 
 clean:
 	rm -rf $(PROJECT_DIR)/build
@@ -26,4 +27,4 @@ run: $(CXXABI)
 check: $(CXXABI)
 	@[ "$$($(CXXABI))" = "This is outrageous, it's unfair! Take a seat, young Skywalker." ]
 
-.PHONY: libstring cxx_string_abi
+.PHONY: libstring cxx_string_abi compile

@@ -6,9 +6,11 @@ all:
 $(PROJECT_DIR)/build:
 	@mkdir -p $@
 
-COUNT_DRACULA := $(PROJECT_DIR)/build/count_dracula
+COUNT_DRACULA := $(PROJECT_DIR)/build/count_dracula$(exeext)
 $(COUNT_DRACULA): count_dracula.c | $(PROJECT_DIR)/build
-	@$(CC) -o $@ $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS)
+	@$(CC) -o $@ $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS) 3>&2
+
+export BB_WRAPPERS_VERBOSE_FD = 3
 
 # Figure out if we're using GNU Binutils strip or CCTools strip
 ifneq (,$(findstring GNU,$(shell $(STRIP) --version 2>/dev/null)))
@@ -23,16 +25,17 @@ RUN_IDX := $(shell echo "$(RUN_IDX) + 1" | bc)
 TARGET_$(RUN_IDX)_PATH := $$(PROJECT_DIR)/build/count_dracula.stripped$(subst $(SPACE),,$(1))
 $$(TARGET_$(RUN_IDX)_PATH).direct: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
 	@cp $$^ $$@
-	@$$(STRIP) $(1) $$@ >$$@.log 2>$$@.log
+	@sleep 1
+	@$$(STRIP) $(1) $$@ 3>&2 >$$@.logn 2>$$@.log
 
 $$(TARGET_$(RUN_IDX)_PATH).multidirect: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
 	@cp $$^ $$@
 	@cp $$^ $$@.1
 	@cp $$^ $$@.2
-	@$$(STRIP) $(1) $$@ $$@.1 $$@.2 >$$@.log 2>$$@.log
+	@$$(STRIP) $(1) $$@ $$@.1 $$@.2 3>&2 >$$@.log 2>$$@.log
 
 $$(TARGET_$(RUN_IDX)_PATH).indirect: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
-	@$$(STRIP) -o $$@ $(1) $$^ >$$@.log 2>$$@.log
+	@$$(STRIP) -o $$@ $(1) $$^ 3>&2 >$$@.log 2>$$@.log
 
 $$(TARGET_$(RUN_IDX)_PATH)-check: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(RUN_IDX)_PATH).multidirect $$(TARGET_$(RUN_IDX)_PATH).indirect
 	@# Test for determinism
@@ -60,6 +63,7 @@ $$(TARGET_$(RUN_IDX)_PATH)-check: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(
 .PHONY: $$(TARGET_$(RUN_IDX)_PATH)-check
 all: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(RUN_IDX)_PATH).indirect
 check: $$(TARGET_$(RUN_IDX)_PATH)-check
+compile: $$(TARGET_$(RUN_IDX)_PATH)-check
 endef
 
 # No options should always work :)

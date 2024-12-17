@@ -120,15 +120,27 @@ using BinaryBuilderToolchains: get_vendor
         end
     end
 
-    # Ensure that `$CC --version` at least works for all of our supported platforms
+    # Ensure that `make compile-all` works for all toolchains
     @info("Running `\$CC --version` for $(length(supported_platforms(CToolchain))) platforms")
     for target in supported_platforms(CToolchain)
-        for vendor in (:auto, :gcc, :clang, :bootstrap)
+        for vendor in (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
             toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor, use_ccache=false)
             with_toolchains([toolchain]) do prefix, env
-                for tool_name in ("CC", "LD", "AS")
-                    @testset "$(triplet(target)) - $(vendor) - $(tool_name)" begin
-                        p, output = capture_output(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                @testset "$(triplet(target)) - $(vendor)" begin
+                    # First, run `$CC --version` for everything
+                    for tool_name in ("CC", "LD", "AS")
+                        @testset "$(tool_name)" begin
+                            p, output = capture_output(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                            if !success(p)
+                                println(output)
+                            end
+                            @test success(p)
+                        end
+                    end
+
+                    # Next, run `make compile-all`
+                    cd(joinpath(@__DIR__, "testsuite", "CToolchain")) do
+                        p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
                         if !success(p)
                             println(output)
                         end
@@ -144,7 +156,7 @@ using BinaryBuilderToolchains: get_vendor
     toolchains = [HostToolsToolchain(macos_cp), CToolchain(macos_cp)]
     with_toolchains(toolchains) do prefix, env
         cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
-            @test success(setenv(Cmd(["/bin/bash", "-c", "make check"]), env))
+            @test success(setenv(Cmd(["/bin/bash", "-c", "make clean; make check"]), env))
         end
     end
 end

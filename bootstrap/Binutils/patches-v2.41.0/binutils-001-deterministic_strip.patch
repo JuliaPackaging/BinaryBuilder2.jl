@@ -1,0 +1,18 @@
+diff --git a/bfd/coffcode.h b/bfd/coffcode.h
+index 62720255b7f..4bdd4bd7ab0 100644
+--- a/bfd/coffcode.h
++++ b/bfd/coffcode.h
+@@ -5669,7 +5669,12 @@ coff_bigobj_swap_filehdr_out (bfd *abfd, void * in, void * out)
+   memcpy (filehdr_out->ClassID, header_bigobj_classid, 16);
+   H_PUT_16 (abfd, filehdr_in->f_magic, filehdr_out->Machine);
+   H_PUT_32 (abfd, filehdr_in->f_nscns, filehdr_out->NumberOfSections);
+-  H_PUT_32 (abfd, filehdr_in->f_timdat, filehdr_out->TimeDateStamp);
++  int header_timestamp = filehdr_in->f_timdat;
++  if ((abfd->flags & BFD_DETERMINISTIC_OUTPUT) != 0) {
++    header_timestamp = 0;
++  }
++  H_PUT_32 (abfd, header_timestamp, filehdr_out->TimeDateStamp);
++
+   PUT_FILEHDR_SYMPTR (abfd, filehdr_in->f_symptr,
+ 		      filehdr_out->PointerToSymbolTable);
+   H_PUT_32 (abfd, filehdr_in->f_nsyms, filehdr_out->NumberOfSymbols);
