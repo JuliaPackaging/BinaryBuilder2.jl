@@ -39,6 +39,7 @@ done
     --program-prefix="${target}-" \
     --disable-werror \
     --enable-new-dtags \
+    --enable-deterministic-archives \
     --disable-gprofng
 
 # Force `make` to use `/bin/true` instead of `makeinfo` so that we don't

@@ -73,4 +73,34 @@ include("common.jl")
             build_check_compiler(hello_world_path, "HOST_CMAKE", false, env)
         end
     end
+
+    # Next, ensure that we can compile all tests on all platforms
+    @info("Running cmake tests for $(length(supported_platforms(CToolchain))) platforms")
+    for target in supported_platforms(CMakeToolchain)
+        target_platform = CrossPlatform(BBHostPlatform() => target)
+        for vendor in (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
+            c_toolchain = CToolchain(target_platform; vendor, use_ccache=false)
+            cmake_toolchain = CMakeToolchain(target_platform)
+            hosttools_toolchain = HostToolsToolchain(target_platform)
+            with_toolchains([c_toolchain, cmake_toolchain, hosttools_toolchain]) do prefix, env
+                @testset "$(triplet(target)) - $(vendor)" begin
+                    # First, run `$CMAKE --version`
+                    p, output = capture_output(setenv(`bash -c "\$CMAKE --version"`, env))
+                    if !success(p)
+                        println(output)
+                    end
+                    @test success(p)
+
+                    # Next, run `make compile-all`
+                    cd(joinpath(@__DIR__, "testsuite", "CMakeToolchain")) do
+                        p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
+                        if !success(p)
+                            println(output)
+                        end
+                        @test success(p)
+                    end
+                end
+            end
+        end
+    end
 end

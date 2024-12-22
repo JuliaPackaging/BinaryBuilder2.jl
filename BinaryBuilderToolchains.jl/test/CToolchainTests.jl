@@ -121,11 +121,12 @@ using BinaryBuilderToolchains: get_vendor
     end
 
     # Ensure that `make compile-all` works for all toolchains
-    @info("Running `\$CC --version` for $(length(supported_platforms(CToolchain))) platforms")
+    @info("Running `\$CC` tests for $(length(supported_platforms(CToolchain))) platforms")
     for target in supported_platforms(CToolchain)
+        target_platform = CrossPlatform(BBHostPlatform() => target)
         for vendor in (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
-            toolchain = CToolchain(CrossPlatform(BBHostPlatform() => target); vendor, use_ccache=false)
-            with_toolchains([toolchain]) do prefix, env
+            toolchain = CToolchain(target_platform; vendor, use_ccache=false)
+            with_toolchains([toolchain, HostToolsToolchain(target_platform)]) do prefix, env
                 @testset "$(triplet(target)) - $(vendor)" begin
                     # First, run `$CC --version` for everything
                     for tool_name in ("CC", "LD", "AS")

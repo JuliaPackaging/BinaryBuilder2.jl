@@ -181,3 +181,8 @@ function toolchain_env(toolchain::CMakeToolchain, deployed_prefix::String)
     end
     return env
 end
+
+# We just sub off to our underlying CToolchain here.
+function supported_platforms(::Type{CMakeToolchain}; experimental::Bool = false)
+    return supported_platforms(CToolchain; experimental)
+end

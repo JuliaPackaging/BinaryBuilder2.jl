@@ -325,7 +325,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform;
             repo=Pkg.Types.GitRepo(
                 #rev="bb2/GCC",
-                rev="88e6f751a3cc9437f08a42e614233620bba91b15",
+                rev="9d7845d0fe787d7a15635e3a9fbd5b6c787229ca",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version
@@ -799,12 +799,6 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
             end
 
-            # gcc doesn't invoke our `ld` wrappers, it hits the executables directly,
-            # so we have to insert this here as well
-            if Sys.iswindows(p)
-                append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
-            end
-
             # Add on `-fsanitize-memory` if our platform has a santization tag applied
             @warn("TODO: add sanitize compile flags!", maxlog=1)
             #sanitize_compile_flags!(p, flags)
@@ -836,7 +830,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
             # Do not embed timestamps, for reproducibility:
             # https://github.com/JuliaPackaging/BinaryBuilder.jl/issues/1232
-            if Sys.iswindows(p) && gcc_version ≥ v"5"
+            if Sys.iswindows(p)
                 append_flags(io, :POST, "-Wl,--no-insert-timestamp")
             end
 
@@ -882,30 +876,25 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
 
     function _clang_wrapper(io; is_clangxx::Bool = false)
+        # Calculate the sysroot.  Annoyingly, clang doesn't find mingw with a triplet-specific sysroot,
+        # and it doesn't find glibc _without_ a triplet-specific sysroot.
+        clang_sysroot = Sys.iswindows(p) ? "$(toolchain_prefix)" : "$(toolchain_prefix)/$(gcc_triplet)"
+
         # Teach `clang` how to respond to `-print-sysroot`.  This is needed for our CMake scripts.
         flagmatch(io, [flag"-print-sysroot"]) do io
-            println(io, "echo \"$(toolchain_prefix)/$(gcc_triplet)\"")
+            println(io, "echo \"$(clang_sysroot)\"")
             println(io, "exit 0")
         end
 
         append_flags(io, :PRE, [
             # Set the `target` for `clang` so it generates the right kind of code
             "--target=$(gcc_triplet)",
+            # Set the sysroot so it can find things like glibc, mingw, etc...
+            "--sysroot=$(clang_sysroot)",
+            # Set the GCC install dir; this is required on some platforms because
+            # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
+            "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
         ])
-
-        # Set the sysroot.  Annoyingly, clang doesn't find mingw with a triplet-specific sysroot.
-        if Sys.iswindows(p)
-            append_flags(io, :PRE, [
-                "--sysroot=$(toolchain_prefix)",
-            ])
-        else
-            append_flags(io, :PRE, [
-                # Set the GCC install dir; this is required on some platforms because
-                # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
-                "--sysroot=$(toolchain_prefix)/$(gcc_triplet)",
-                "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
-            ])
-        end
 
         compile_flagmatch(io) do io
             if Sys.iswindows(p) && arch(p) == "i686"

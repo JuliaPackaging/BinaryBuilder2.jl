@@ -12,6 +12,7 @@ $(PROJECT_DIR)/build/Makefile: $(PROJECT_DIR)/CMakeLists.txt | $(PROJECT_DIR)/bu
 
 $(HELLO): $(PROJECT_DIR)/hello.c $(PROJECT_DIR)/build/Makefile
 	$(MAKE) -C $(PROJECT_DIR)/build
+compile: $(HELLO)
 
 clean:
 	rm -rf $(PROJECT_DIR)/build

@@ -18,6 +18,7 @@ $(LIBSTR): $(PROJECT_DIR)/build/Makefile
 
 $(CXXABI): $(PROJECT_DIR)/build/Makefile $(LIBSTR)
 	$(MAKE) -C$(PROJECT_DIR)/build cxx_string_abi
+compile: $(CXXABI)
 
 clean:
 	rm -rf $(PROJECT_DIR)/build

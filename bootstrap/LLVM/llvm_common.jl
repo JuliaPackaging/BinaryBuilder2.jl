@@ -1,15 +1,25 @@
 using BinaryBuilder2, Pkg
 using BinaryBuilder2: BuildTargetSpec, get_target_spec_by_name
 
+# The build host
 host = Platform(arch(HostPlatform()), "linux")
 
-platforms = []
-for host in [Platform("x86_64", "linux"), Platform("aarch64", "linux")]
-    append!(platforms, [
-        CrossPlatform(host => AnyPlatform()),
-    ])
+function llvm_platforms(;is_bootstrap::Bool = false)
+    platforms = CrossPlatform[]
+    # If this is a bootstrap build, only build for these hosts
+    if is_bootstrap
+        for host in [Platform("x86_64", "linux"), Platform("aarch64", "linux")]
+            push!(platforms, CrossPlatform(host => AnyPlatform()))
+        end
+    else
+        for host in supported_platforms()
+            push!(platforms, CrossPlatform(host => AnyPlatform()))
+        end
+    end
+    return platforms
 end
 
+# BuildSpec generator for Clang/libLLVM
 function clang_build_spec_generator(host, platform)
     specs = [
         BuildTargetSpec(
@@ -72,6 +82,7 @@ function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlat
         "RISCV",
         "WebAssembly",
     ]
+    # TODO: It would be nice to have a better way to generate this.
     llvm_libs = [
         string.(llvm_arches, ("AsmParser",))...,
         string.(llvm_arches, ("CodeGen",))...,
@@ -221,7 +232,7 @@ install_license ${WORKSPACE}/srcdir/llvm-project/LICENSE.TXT
 rm -f $(which uname)
 
 # Create fake `xcrun` wrapper and `PlistBuddy` wrappers, to make detection of aarch64 support work
-mkdir -p /usr/libexec
+mkdir -p /usr/libexec /usr/local/bin
 cp ${WORKSPACE}/srcdir/bundled/xcrun /usr/local/bin/xcrun
 cp ${WORKSPACE}/srcdir/bundled/PlistBuddy /usr/libexec/PlistBuddy
 chmod +x /usr/local/bin/xcrun /usr/libexec/PlistBuddy

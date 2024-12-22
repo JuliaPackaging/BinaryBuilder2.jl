@@ -25,7 +25,6 @@ RUN_IDX := $(shell echo "$(RUN_IDX) + 1" | bc)
 TARGET_$(RUN_IDX)_PATH := $$(PROJECT_DIR)/build/count_dracula.stripped$(subst $(SPACE),,$(1))
 $$(TARGET_$(RUN_IDX)_PATH).direct: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
 	@cp $$^ $$@
-	@sleep 1
 	@$$(STRIP) $(1) $$@ 3>&2 >$$@.logn 2>$$@.log
 
 $$(TARGET_$(RUN_IDX)_PATH).multidirect: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build

@@ -13,34 +13,34 @@ build_tarballs(;
     CMAKE_FLAGS+=(-DCMAKE_BUILD_TYPE=Release)
 
     # Only build clang (we rely on libgcc_s)
-    CMAKE_FLAGS+=(-DLLVM_ENABLE_PROJECTS='clang;lld')
-
-    # No bindings
-    CMAKE_FLAGS+=(-DLLVM_BINDINGS_LIST=)
-    CMAKE_FLAGS+=(-DBUILD_SHARED_LIBS:BOOL=ON -DLLVM_BUILD_LLVM_DYLIB:BOOL=ON)
-    #CMAKE_FLAGS+=(-DLLVM_ENABLE_LTO=Full)
-
-    # Turn off docs
-    CMAKE_FLAGS+=(-DLLVM_INCLUDE_DOCS=OFF -DLLVM_INCLUDE_EXAMPLES=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF)
-
-    # Turn off XML2
-    CMAKE_FLAGS+=(-DLLVM_ENABLE_LIBXML2=OFF)
-
-    # Hint to find Zlib
-    export LDFLAGS="-L${host_prefix}/lib -Wl,-rpath-link,${host_prefix}/lib"
-    export LD_LIBRARY_PATH="${host_prefix}/lib"
-    CMAKE_FLAGS+=(-DZLIB_ROOT="${host_prefix}")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_BUILTINS=ON")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_LIBFUZZER=OFF")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_MEMPROF=OFF")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_PROFILE=OFF")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_SANITIZERS=OFF")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_XRAY=OFF")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_DEFAULT_TARGET_TRIPLE=${target}")
 
     # Build!
-    $BUILD_CMAKE ${LLVM_SRCDIR} ${CMAKE_FLAGS[@]}
+    $CMAKE ${WORKSPACE}/srcdir/llvm-project/compiler-rt ${CMAKE_FLAGS[@]}
     make -j${nproc}
 
     # Install!
     make install -j${nproc} #VERBOSE=1
     """,
-    platforms,
+    platforms=supported_platforms(),
     host,
-    build_spec_generator = clang_build_spec_generator,
-    extract_spec_generator = (build, plat) -> clang_extract_spec_generator(build, plat; is_bootstrap=true),
-    jll_extraction_map = clang_extraction_map(;is_bootstrap=true)
+    # We need python, and we need to build with clang
+    host_dependencies = [JLLSource("Python_jll")],
+    target_dependencies = [
+        JLLSource(
+            "Zlib_jll";
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+    ],
+    host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
+    target_toolchains = [CToolchain(;vendor=:clang_bootstrap, lock_microarchitecture=false), CMakeToolchain()],
 )
