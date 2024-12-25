@@ -891,10 +891,22 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             "--target=$(gcc_triplet)",
             # Set the sysroot so it can find things like glibc, mingw, etc...
             "--sysroot=$(clang_sysroot)",
-            # Set the GCC install dir; this is required on some platforms because
-            # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
-            "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
         ])
+
+        if is_clangxx
+            append_flags(io, :PRE, [
+                # Set the C++ runtime library, but only in clang++
+                "--stdlib=$(get_cxx_runtime_str(toolchain))",
+            ])
+        end
+
+        if get_compiler_runtime(toolchain) == :libgcc_s || get_cxx_runtime(toolchain) == :libstdcxx
+            append_flags(io, :PRE, [
+                # Set the GCC install dir; this is required on some platforms because
+                # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
+                "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
+            ])
+        end
 
         compile_flagmatch(io) do io
             if Sys.iswindows(p) && arch(p) == "i686"
@@ -914,13 +926,6 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             if Sys.iswindows(p)
                 append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
             end
-        end
-
-        if is_clangxx
-            append_flags(io, :PRE, [
-                # Set the C++ runtime library, but only in clang++
-                "--stdlib=$(get_cxx_runtime_str(toolchain))",
-            ])
         end
 
         add_microarchitectural_flags(io, toolchain)
