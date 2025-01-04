@@ -1,9 +1,11 @@
 using BinaryBuilder2, Pkg
-using BinaryBuilder2: BuildTargetSpec, get_target_spec_by_name
+using BinaryBuilder2: BuildTargetSpec, get_target_spec_by_name, get_default_target_spec, ExtractSpec, get_package_result
 
 # The build host
 host = Platform(arch(HostPlatform()), "linux")
 
+# Check to see if the user has asked for a "bootstrap" build, which
+# builds clang only for a few targets, using GCC instead of clang.
 function llvm_platforms(;is_bootstrap::Bool = false)
     platforms = CrossPlatform[]
     # If this is a bootstrap build, only build for these hosts

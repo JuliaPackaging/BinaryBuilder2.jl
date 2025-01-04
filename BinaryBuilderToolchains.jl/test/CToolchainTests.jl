@@ -10,9 +10,17 @@ using BinaryBuilderToolchains: get_vendor
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
+
     mktempdir() do ccache_dir
-        for use_ccache in (false, true), vendor in (:auto, :gcc, :clang)
-            toolchain = CToolchain(platform; vendor, use_ccache)
+        compiler_configurations = [
+            Dict(:vendor => :auto, :compiler_runtime => :auto, :cxx_runtime => :auto, ),
+            Dict(:vendor => :gcc, :compiler_runtime => :libgcc, :cxx_runtime => :libstdcxx),
+            Dict(:vendor => :clang, :compiler_runtime => :libgcc, :cxx_runtime => :libstdcxx),
+            Dict(:vendor => :clang, :compiler_runtime => :libgcc, :cxx_runtime => :libcxx),
+            Dict(:vendor => :clang, :compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx),
+        ]
+        for use_ccache in (false, true), config in compiler_configurations
+            toolchain = CToolchain(platform; use_ccache, config...)
             @test get_vendor(toolchain) ∈ (:gcc, :clang)
             if get_vendor(toolchain) == :gcc
                 @test !isempty(filter(jll -> jll.package.name == "GCC_jll", toolchain.deps))
@@ -21,10 +29,17 @@ using BinaryBuilderToolchains: get_vendor
             end
 
             # Download the toolchain, make sure it runs
-            @info("CToolchain tests", vendor, use_ccache)
+            println()
+            @info("CToolchain tests", use_ccache, config...)
             with_toolchains([toolchain, HostToolsToolchain(BBHostPlatform())]) do prefix, env
                 env["CCACHE_DIR"] = ccache_dir
-                toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
+                # We build with _all_ of the C++ stdlib choices here, so we need to ensure that
+                # we have the appropriate libraries on our `LD_LIBRARY_PATH` for testing, so
+                # that we can properly attempt to run them.
+                with_cxx_csls(;env) do env
+                    toolchain_tests(prefix, env, platform, "CToolchain";
+                                    do_cxxabi_tests=config[:cxx_runtime] == :libstdcxx)
+                end
             end
         end
     end
@@ -77,7 +92,7 @@ using BinaryBuilderToolchains: get_vendor
             host_version = 1
             target_version = 2
             for (toolchains, install_prefix, cc, libfoo_version) in (
-                    ([host_ctoolchain,   hosttools_toolchain], host_prefix,   "\${HOST_CC}",  host_version),
+                    ([host_ctoolchain,   hosttools_toolchain], host_prefix,   "\${HOST_CC}", host_version),
                     ([target_ctoolchain, hosttools_toolchain], target_prefix, "\${CC}",      target_version))
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do

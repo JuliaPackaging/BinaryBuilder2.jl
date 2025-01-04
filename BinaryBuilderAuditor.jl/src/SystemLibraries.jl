@@ -47,7 +47,10 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
         csl_libs = [
             "libgcc_s.so.1",
         ]
-        return soname ∈ vcat(loaders, c_runtimes, cxx_runtimes, csl_libs)
+        llvmunwind_libs = [
+            "libunwind.so.1",
+        ]
+        return soname ∈ vcat(loaders, c_runtimes, cxx_runtimes, csl_libs, llvmunwind_libs)
     elseif os(platform) == "macos"
         ignore_libs = [
             "libbsm.0.dylib",

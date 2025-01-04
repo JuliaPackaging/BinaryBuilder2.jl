@@ -38,7 +38,7 @@ build_tarballs(;
     # Install!
     make install -j${nproc} #VERBOSE=1
     """,
-    platforms,
+    platforms = llvm_platforms(;is_bootstrap=true),
     host,
     build_spec_generator = clang_build_spec_generator,
     extract_spec_generator = (build, plat) -> clang_extract_spec_generator(build, plat; is_bootstrap=true),

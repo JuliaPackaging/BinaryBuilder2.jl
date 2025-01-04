@@ -49,7 +49,7 @@ struct CToolchain <: AbstractToolchain
                         lock_microarchitecture = true,
                         use_ccache = true,
                         gcc_version = VersionSpec("9"),
-                        llvm_version = VersionSpec("*"),
+                        llvm_version = VersionSpec("17"),
                         binutils_version = v"2.38.0+4",
                         glibc_version = :oldest,
                         compiler_runtime = :auto,
@@ -65,7 +65,7 @@ struct CToolchain <: AbstractToolchain
         valid_vendors = (:auto, :gcc, :clang, :bootstrap, :gcc_bootstrap, :clang_bootstrap)
         _check_valid(vendor, valid_vendors, "vendor")
 
-        valid_cxx_runtimes = (:auto, :libcxx, :libstdxx)
+        valid_cxx_runtimes = (:auto, :libcxx, :libstdcxx)
         _check_valid(cxx_runtime, valid_cxx_runtimes, "cxx_runtime")
 
         valid_compiler_runtimes = (:auto, :libgcc, :compiler_rt)
@@ -359,6 +359,21 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=get_simple_vendor(vendor),
         ),
     ]
+
+    compiler_rt_libs = [
+        JLLSource(
+            "LLVMCompilerRT_jll",
+            platform.target;
+            uuid=Base.UUID("4e17d02c-6bf5-513e-be62-445f41c75a11"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/LLVMCompilerRT_jll.jl",
+            ),
+            version=v"17.0.7",
+            # TODO: This should be more automatic!
+            target="clang/lib/clang/17",
+        )
+    ]
     libstdcxx_libs = [
         JLLSource(
             "libstdcxx_jll",
@@ -370,6 +385,30 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             ),
             version=v"9.4.0",
             target=get_simple_vendor(vendor),
+        ),
+    ]
+    libcxx_libs = [
+        JLLSource(
+            "LLVMLibcxx_jll",
+            platform.target;
+            uuid=Base.UUID("899a7460-a157-599b-96c7-ccb58ef9beb5"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
+            ),
+            version=v"17.0.1",
+            target=joinpath(sysroot_path, "usr"),
+        ),
+        JLLSource(
+            "LLVMLibunwind_jll",
+            platform.target;
+            uuid=Base.UUID("871c935c-5660-55ad-bb68-d1283357316b"),
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCC",
+                source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
+            ),
+            version=v"17.0.1",
+            target=joinpath(sysroot_path, "usr"),
         ),
     ]
     
@@ -476,11 +515,22 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 binutils_jlls...,
             ])
         end
-        if get_compiler_runtime(compiler_runtime, platform) == :libgcc
+        comp_runtime = get_compiler_runtime(compiler_runtime, platform)
+        cxx_runtime = get_cxx_runtime(cxx_runtime, platform)
+
+        # libstdc++ depends on libgcc, we don't support the libstdc++ on top of compiler-rt right now.
+        if comp_runtime == :libgcc || cxx_runtime == :libstdcxx
             append!(deps, gcc_support_libs)
         end
-        if get_cxx_runtime(cxx_runtime, platform) == :libstdcxx
+
+        if comp_runtime == :compiler_rt
+            append!(deps, compiler_rt_libs)
+        end
+        if cxx_runtime == :libstdcxx
             append!(deps, libstdcxx_libs)
+        end
+        if cxx_runtime == :libcxx
+           append!(deps, libcxx_libs)
         end
     else
         throw(ArgumentError("Invalid vendor '$(vendor)'!"))
@@ -894,10 +944,14 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         ])
 
         if is_clangxx
-            append_flags(io, :PRE, [
-                # Set the C++ runtime library, but only in clang++
-                "--stdlib=$(get_cxx_runtime_str(toolchain))",
-            ])
+            # It's extremely rare, but some packages (such as `libc++` itself) manually set
+            # the `--stdlib` flag, so let's let them do their thing.
+            flagmatch(io, [!flag"--stdlib", !flag"--nostdlib++"]) do io
+                append_flags(io, :PRE, [
+                    # Set the C++ runtime library, but only in clang++
+                    "--stdlib=$(get_cxx_runtime_str(toolchain))",
+                ])
+            end
         end
 
         if get_compiler_runtime(toolchain) == :libgcc_s || get_cxx_runtime(toolchain) == :libstdcxx
@@ -942,6 +996,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
 
     make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "clang-scan-deps", "clang-scan-deps"; toolchain_prefix)
     if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
         make_tool_wrappers(toolchain, dir, "cc", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
         make_tool_wrappers(toolchain, dir, "c++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)

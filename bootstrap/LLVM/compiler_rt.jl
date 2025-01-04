@@ -5,15 +5,13 @@ build_tarballs(;
     src_version = llvm_version,
     sources = llvm_sources,
     script = llvm_script_prefix * raw"""
-    CMAKE_FLAGS=()
-    CMAKE_FLAGS+=('-DLLVM_TARGETS_TO_BUILD:STRING=X86;ARM;AArch64;PowerPC;RISCV;WebAssembly')
-
     # Install to `prefix`, and make a release build
     CMAKE_FLAGS+=("-DCMAKE_INSTALL_PREFIX=${prefix}")
     CMAKE_FLAGS+=(-DCMAKE_BUILD_TYPE=Release)
 
-    # Only build clang (we rely on libgcc_s)
+    # Specify exactly which pieces of compiler-rt we want
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_BUILTINS=ON")
+    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_CRT=ON")
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_LIBFUZZER=OFF")
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_MEMPROF=OFF")
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_PROFILE=OFF")

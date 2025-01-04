@@ -1,10 +1,11 @@
 High-priority list:
- - Teach universes to pull down General registry from fork, scan registered JLLs and build map of buildcache hashes to JLL versions.
-   - JLLGenerator needs to encode build hashes.
-     - Top-level BB hash, for quick-reject
-     - Top-level package hash (all extract hashes combined)
-   - at top of build_tarballs() calculate package hash, check with buildcache for matching JLL version.
- - Don't use git registries until we're ready to register into them
+ - Replace general registry rebasing with a separate registry that gets added as a "patch registry" of General!
+   - Teach universes to pull down General registry from fork, scan registered JLLs and build map of buildcache hashes to JLL versions.
+     - JLLGenerator needs to encode build hashes.
+       - Top-level BB hash, for quick-reject
+       - Top-level package hash (all extract hashes combined)
+     - at top of build_tarballs() calculate package hash, check with buildcache for matching JLL version.
+   - Don't use git registries until we're ready to register into them
  - Auto-remove extractions that exist in dependencies
  - Fix sandbox docker with overlays
    - docker run --security-opt apparmor:unconfined --cap-add=sys_admin -ti -v $(pwd)/mount_test:/mount_test -v storage:/storage alpine
@@ -12,11 +13,16 @@ High-priority list:
    - mkdir -p /storage/upper /storage/work /tmp/merged; mount -t overlay overlay -o lowerdir=/mount_test,upperdir=/storage/upper,workdir=/storage/work /tmp/merged
 
 
-
+- Add Binutils 2.28 (first version with `--push-state`?)
+  - `--enable-compressed-debug-sections=all`: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
+- Create enormous bootstrapping script to build everything to ensure it's all working.
+  - GCCBootstrap
+  - Binutils
+  - GCC
+  - ClangBootstrap
+  - Clang
+  - Libcxx, etc...
 - Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
-- Build GCC, Binutils, Glibc, etc.. via GCCBootstrap
-  - Build Clang via GCCBootstrap
-  - Look into this: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
 - Expand GCCBootstrap for Windows
   - Ensure that we have the patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)
 - Build GCC <-> Glibc baked header diff tarballs
