@@ -1,5 +1,5 @@
 using Test, BinaryBuilder2, Pkg
-using BinaryBuilder2: parse_build_tarballs_args
+using BinaryBuilder2: parse_build_tarballs_args, universes_dir
 using Base.BinaryPlatforms
 
 @testset "BuildMeta" begin
@@ -63,6 +63,7 @@ using Base.BinaryPlatforms
         @test !meta.register
 
         # Now, provide parameters for all sorts of stuff
+        universe_name = "BB2_test_universe-$(time())"
         meta = BuildMeta(;
             target_list=[
                 Platform("x86_64", "linux"),
@@ -73,7 +74,7 @@ using Base.BinaryPlatforms
             dry_run=Symbol[],
             json_output=Base.stdout,
             deploy_org="JuliaBinaryWrappers",
-            universe_name="foo",
+            universe_name,
             register=true,
         )
         @test isempty(meta.builds)
@@ -87,8 +88,11 @@ using Base.BinaryPlatforms
         @test isempty(meta.dry_run)
         @test meta.json_output == Base.stdout
         @test meta.register
-        @test meta.universe.name == "foo"
+        @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
+
+        # Always try to clean up the universe, so we don't leak it.
+        cleanup(meta.universe)
 
         # Next, test some errors
         @test_throws ArgumentError BuildMeta(;debug_modes=["foo"])
@@ -102,7 +106,7 @@ using Base.BinaryPlatforms
             "--meta-json=$(json_path)",
             "--deploy=JuliaBinaryWrappers",
             "--register",
-            "--universe=foo",
+            "--universe=$(universe_name)",
             "x86_64-linux-gnu,x86_64-linux-musl,i686-linux-gnu"
         ])
         @test isempty(meta.builds)
@@ -116,7 +120,7 @@ using Base.BinaryPlatforms
         @test isa(meta.json_output, IOStream)
         @test meta.json_output.name == "<file $(json_path)>"
         @test meta.register
-        @test meta.universe.name == "foo"
+        @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
     end
 end

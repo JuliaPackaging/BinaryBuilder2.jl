@@ -244,8 +244,6 @@ function build_tarballs(src_name::String,
             # all extra dependencies will be availalbe in `package_results`.
             extra_deps = PackageSpec[]
             for dep in get_jll_deps(jll_extraction_map[jll_name])
-                @show package_results
-                @show dep
                 push!(extra_deps, PackageSpec(
                     only(filter(pr -> pr.config.name == dep, package_results))
                 ))

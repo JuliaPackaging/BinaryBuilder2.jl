@@ -1,4 +1,5 @@
 using Test, BinaryBuilderToolchains, BinaryBuilderSources, Base.BinaryPlatforms, Scratch
+using HistoricalStdlibVersions
 
 # Enable this for lots of JLLPrefixes output
 const verbose = false
@@ -58,13 +59,29 @@ const verbose = false
     # Because the platform we define as a host can have things like `julia_version`
     # embedded within it if we use `HostPlatform()` rather than `BBHostPlatform()`,
     # let's just make sure that it does something reasonable:
-    julia_v1_10_host_platform = BBHostPlatform()
-    julia_v1_10_host_platform["julia_version"] = "1.10.2"
-    julia_v1_10_host_toolchain = HostToolsToolchain(CrossPlatform(julia_v1_10_host_platform => BBHostPlatform()))
+    function stdlibs_for_version(version::VersionNumber)
+        idx = findlast(((v, d),) -> v <= version, HistoricalStdlibVersions.STDLIBS_BY_VERSION)
+        return HistoricalStdlibVersions.STDLIBS_BY_VERSION[idx][2]
+    end
+    function stdlibinfo_for_version(name::String, version::VersionNumber)
+        stdlibs = stdlibs_for_version(version)
+        return only(filter(info -> info.name == name, collect(values(stdlibs))))
+    end
+
+    julia_v1_11_host_platform = BBHostPlatform()
+    julia_v1_11_host_platform["julia_version"] = "1.11.0"
+    julia_v1_11_libcurl_stdlib_info = stdlibinfo_for_version(
+        "LibCURL_jll",
+        VersionNumber(julia_v1_11_host_platform["julia_version"]),
+    )
+    julia_v1_11_libcurl_version = julia_v1_11_libcurl_stdlib_info.version
+    julia_v1_11_host_toolchain = HostToolsToolchain(CrossPlatform(julia_v1_11_host_platform => BBHostPlatform()))
     
     # Test that we get `CURL_jll` `v7``, not `v8`
-    julia_v1_10_curl = only(filter(d -> d.package.name == "CURL_jll", julia_v1_10_host_toolchain.deps))
+    julia_v1_11_curl = only(filter(d -> d.package.name == "CURL_jll", julia_v1_11_host_toolchain.deps))
     free_curl = only(filter(d -> d.package.name == "CURL_jll", toolchain.deps))
-    @test julia_v1_10_curl.package.version.major == 7
-    @test free_curl.package.version.major == 8
+    @test julia_v1_11_curl.package.version.major == julia_v1_11_libcurl_version.major
+    @test julia_v1_11_curl.package.version.minor == julia_v1_11_libcurl_version.minor
+    @test free_curl.package.version.major >= julia_v1_11_libcurl_version.major
+    @test free_curl.package.version.major > julia_v1_11_libcurl_version.minor
 end

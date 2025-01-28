@@ -30,7 +30,7 @@ end
 function gh_user()
     get!(gh_cache, "user") do
         auth_lines = split(readchomp(`$(gh()) auth status`), "\n")
-        name_match = only(filter(!isnothing, [match(r"Logged in to [^ ]+ as ([^ ]+)", l) for l in auth_lines]))
+        name_match = only(filter(!isnothing, [match(r"Logged in to [^ ]+ account ([^ ]+) \(", l) for l in auth_lines]))
         return name_match.captures[1]
     end
 end
