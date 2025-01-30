@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0-DEV"
 manifest_format = "2.0"
-project_hash = "1e27398fd1c0c7d70118c846e83411851c2684be"
+project_hash = "22b0cea6bc21f11cf9401efdfc4149999d2f287f"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -167,7 +167,7 @@ version = "1.7.0"
 
 [[deps.JuliaSyntaxHighlighting]]
 deps = ["StyledStrings"]
-uuid = "dc6e5ff7-fb65-4e79-a425-ec3bc9c03011"
+uuid = "ac6e5ff7-fb65-4e79-a425-ec3bc9c03011"
 version = "1.12.0"
 
 [[deps.KeywordArgumentExtraction]]
@@ -274,9 +274,9 @@ uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 version = "3.0.15+2"
 
 [[deps.OrderedCollections]]
-git-tree-sha1 = "12f1439c4f986bb868acda6ea33ebc78e19b95ad"
+git-tree-sha1 = "cc4054e898b852042d7b503313f7ad03de99c3dd"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.7.0"
+version = "1.8.0"
 
 [[deps.OutputCollectors]]
 deps = ["StyledStrings"]
@@ -347,9 +347,9 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-git-tree-sha1 = "0f7b398a74a9fd40e7286f4ae352ba959fe52151"
+git-tree-sha1 = "9650e78e3af6053018deac121f67fe8208bebcb1"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
-version = "2.0.2"
+version = "2.1.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -420,9 +420,9 @@ version = "1.11.0"
 
 [[deps.UserNSSandbox_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "d69d0c21b9d350df4729eb33b6fbaf1777ea8872"
+git-tree-sha1 = "79dc57555c873394aa67457f9c6022068da7b04a"
 uuid = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
-version = "2024.6.23+0"
+version = "2025.1.28+0"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]

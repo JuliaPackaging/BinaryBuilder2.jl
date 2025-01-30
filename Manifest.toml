@@ -2,7 +2,7 @@
 
 julia_version = "1.11.3"
 manifest_format = "2.0"
-project_hash = "0a974c63798560bcf7144f0b2933f044d5663c42"
+project_hash = "c2c0a9de51da846604f145b00627e6050ebdafbd"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -269,9 +269,9 @@ uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
 version = "3.0.15+3"
 
 [[deps.OrderedCollections]]
-git-tree-sha1 = "12f1439c4f986bb868acda6ea33ebc78e19b95ad"
+git-tree-sha1 = "cc4054e898b852042d7b503313f7ad03de99c3dd"
 uuid = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
-version = "1.7.0"
+version = "1.8.0"
 
 [[deps.OutputCollectors]]
 deps = ["StyledStrings"]
@@ -342,9 +342,9 @@ version = "0.7.0"
 
 [[deps.Sandbox]]
 deps = ["EnumX", "LazyArtifacts", "Libdl", "Preferences", "Random", "SHA", "Scratch", "TOML", "Tar", "Tar_jll", "UserNSSandbox_jll"]
-path = "/home/sabae/.julia/dev/Sandbox"
+git-tree-sha1 = "9650e78e3af6053018deac121f67fe8208bebcb1"
 uuid = "9307e30f-c43e-9ca7-d17c-c2dc59df670d"
-version = "2.0.2"
+version = "2.1.0"
 
 [[deps.Scratch]]
 deps = ["Dates"]
@@ -415,9 +415,9 @@ version = "1.11.0"
 
 [[deps.UserNSSandbox_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "d69d0c21b9d350df4729eb33b6fbaf1777ea8872"
+git-tree-sha1 = "79dc57555c873394aa67457f9c6022068da7b04a"
 uuid = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
-version = "2024.6.23+0"
+version = "2025.1.28+0"
 
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
