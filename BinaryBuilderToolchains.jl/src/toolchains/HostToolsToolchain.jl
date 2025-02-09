@@ -59,6 +59,7 @@ struct HostToolsToolchain <: AbstractToolchain
             "CURL_jll",
             "Git_jll",
             "rsync_jll",
+            "MozillaCACerts_jll",
 
             # Compression tools
             "Tar_jll",
@@ -198,6 +199,14 @@ function toolchain_sources(toolchain::HostToolsToolchain)
         end
         if any(jll.package.name == "Ninja" for jll in toolchain.deps)
             compiler_wrapper(identity, joinpath(out_dir, "ninja"), "$(toolchain_prefix)/bin/ninja")
+        end
+        if any(jll.package.name == "CURL_jll" for jll in toolchain.deps)
+            compiler_wrapper(joinpath(out_dir, "curl"), "$(toolchain_prefix)/bin/curl") do io
+                println(io, """
+                # Ensure CURL can find its certificates
+                export CURL_CA_BUNDLE=\"$(toolchain_prefix)/etc/certs/ca-certificates.crt\"
+                """)
+            end
         end
     end)
 
