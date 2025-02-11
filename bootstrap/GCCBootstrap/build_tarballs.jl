@@ -129,6 +129,11 @@ build_tarballs(;
         done
         mv "${NF}_ipv6/ip6t_HL.h" "${NF}_ipv6/ip6t_HL_.h"
     fi
+
+    # Parent all the installed licenses under `GCCBootstrap`
+    mkdir -p ${prefix}/share/GCCBootstrap_licenses
+    mv ${prefix}/share/licenses/* ${prefix}/share/GCCBootstrap_licenses/
+    mv ${prefix}/share/GCCBootstrap_licenses ${prefix}/share/licenses/GCCBootstrap
     """,
     platforms,
     products,

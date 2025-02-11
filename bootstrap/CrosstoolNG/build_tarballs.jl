@@ -7,8 +7,8 @@ build_tarballs(;
     src_name = "CrosstoolNG",
     src_version = v"1.25.0",
     sources = [
-        ArchiveSource("http://crosstool-ng.org/download/crosstool-ng/crosstool-ng-1.25.0.tar.xz",
-                        "68162f342243cd4189ed7c1f4e3bb1302caa3f2cbbf8331879bd01fe06c60cd3"),
+        ArchiveSource("https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.25.0/crosstool-ng-1.25.0.tar.xz",
+                      "68162f342243cd4189ed7c1f4e3bb1302caa3f2cbbf8331879bd01fe06c60cd3"),
         DirectorySource(joinpath(@__DIR__, "./bundled")),
     ],
     target_dependencies = [

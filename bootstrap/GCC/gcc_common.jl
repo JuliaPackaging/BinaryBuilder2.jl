@@ -282,8 +282,8 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 FileProduct([raw"${target}/${lib64}/libstdc++.a"], :libstdcxx_a),
                 LibraryProduct([raw"${target}/${lib64}/libstdc++"], :libstdcxx),
             ],
-            get_target_spec_by_name(build, "host"),
-            platform.target,
+            get_target_spec_by_name(build, "host");
+            platform = platform.target,
         ),
         "GCC_support_libraries" => ExtractSpec(
             raw"""
@@ -301,8 +301,8 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                     :libgcc_s
                 ),
             ],
-            get_target_spec_by_name(build, "host"),
-            platform.target,
+            get_target_spec_by_name(build, "host");
+            platform = platform.target,
         ),
         "GCC_crt_objects" => ExtractSpec(
             raw"""
@@ -313,8 +313,8 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 FileProduct([raw"lib/gcc/${target}/${gcc_version}/crtend.o"], :crtend_o),
                 FileProduct([raw"lib/gcc/${target}/${gcc_version}/libgcc.a"], :libgcc_a),
             ],
-            get_target_spec_by_name(build, "host"),
-            platform.target,
+            get_target_spec_by_name(build, "host");
+            platform = platform.target,
         ),
         "GCC" => ExtractSpec(
             raw"""
@@ -328,7 +328,7 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 ExecutableProduct("\${target}-gcc", :gcc),
                 ExecutableProduct("\${target}-g++", :gxx),
             ],
-            get_target_spec_by_name(build, "host"),
+            get_target_spec_by_name(build, "host");
             platform,
         ),
     )
