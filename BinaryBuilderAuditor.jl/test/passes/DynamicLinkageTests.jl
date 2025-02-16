@@ -124,17 +124,34 @@ end
             run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib/plus -lplus`, env))
         end
 
-        scan = scan_files(prefix, HostPlatform(), [LibraryProduct("lib/plus/libplus", :libplus)])
-        pass_results = Dict{String,Vector{PassResult}}()
-        ensure_sonames!(scan, pass_results)
-        jll_lib_products = resolve_dynamic_links!(
-            scan,
-            pass_results,
-            Dict{Symbol,Vector{JLLLibraryProduct}}(),
-        )
-        rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
-        @test success(pass_results)
+        function run_scan_and_rpaths()
+            scan = scan_files(prefix, HostPlatform(), [LibraryProduct("lib/plus/libplus", :libplus)])
+            pass_results = Dict{String,Vector{PassResult}}()
+            ensure_sonames!(scan, pass_results)
+            jll_lib_products = resolve_dynamic_links!(
+                scan,
+                pass_results,
+                Dict{Symbol,Vector{JLLLibraryProduct}}(),
+            )
+            rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
+            @test success(pass_results)
+        end
+        run_scan_and_rpaths()
 
+        readmeta(libmult_path) do ohs
+            @test only(rpaths(RPath(only(ohs)))) == "\$ORIGIN/plus"
+        end
+
+        # Next, tweak `libmult` to have an extra empty rpath entry, and ensure that it gets removed:
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib/plus -lplus -Wl,-rpath,`, env))
+        end
+
+        readmeta(libmult_path) do ohs
+            @test any(isempty.(rpaths(RPath(only(ohs)))))
+        end
+
+        run_scan_and_rpaths()
         readmeta(libmult_path) do ohs
             @test only(rpaths(RPath(only(ohs)))) == "\$ORIGIN/plus"
         end

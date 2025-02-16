@@ -206,11 +206,14 @@ function normalize_rpaths(rpaths::Vector{String}, platform::AbstractPlatform, pr
         origin = "@loader_path"
     end
 
+    # Drop empty entries
+    rpaths = filter(!isempty, rpaths)
+
     rpaths = map(rpaths) do rpath
         # If we have an absolute rpath, if it starts with `prefix`, rewrite it to be relative.
         if isabspath(rpath)
             if startswith(rpath, prefix)
-                target = relpath(replace(rpath, prefix => ""), obj_path)
+                target = relpath(rpath, dirname(joinpath(prefix, obj_path)))
                 rpath = joinpath(origin, target)
             else
                 # Do nothing in this case, just leave it be, could be a weird system library or something
