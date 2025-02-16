@@ -1,5 +1,6 @@
 module BinaryBuilderToolchains
 using Base.BinaryPlatforms, BinaryBuilderSources, Reexport
+using PrecompileTools: @setup_workload, @compile_workload
 using Pkg.Types: VersionSpec
 
 # These are so useful to anyone who's using us, just reexport them.
@@ -42,5 +43,23 @@ include("toolchains/HostToolsToolchain.jl")
 include("toolchains/CMakeToolchain.jl")
 include("PkgUtils.jl")
 include("InteractiveUtils.jl")
+
+@setup_workload begin
+    targets = [
+        Platform("x86_64", "windows"),
+        Platform("armv7l", "linux"; libc=:musl),
+        Platform("aarch64", "macos"),
+    ]
+    platforms = [CrossPlatform(BBHostPlatform() => target) for target in targets]
+    @compile_workload begin
+        for platform in platforms
+            with_toolchains([
+                CMakeToolchain(platform),
+                CToolchain(platform),
+                HostToolsToolchain(platform)]) do prefix, env
+            end
+        end
+    end
+end
 
 end # module
