@@ -19,7 +19,7 @@ uuid = "654d7472-7548-7361-4832-74694762694c"
 version = "0.1.1"
 
 [[deps.BinaryBuilderPlatformExtensions]]
-deps = ["OrderedCollections", "Reexport"]
+deps = ["OrderedCollections", "PrecompileTools", "Reexport"]
 path = "../../BinaryBuilderPlatformExtensions.jl"
 uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
@@ -113,6 +113,12 @@ version = "1.7.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.42.0+1"
+
+[[deps.PrecompileTools]]
+deps = ["Preferences"]
+git-tree-sha1 = "5aa36f7049a63a1528fe8f7c3f2113413ffd4e1f"
+uuid = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
+version = "1.2.1"
 
 [[deps.Preferences]]
 deps = ["TOML"]
