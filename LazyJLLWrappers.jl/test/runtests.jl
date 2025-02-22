@@ -101,7 +101,6 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
             include(joinpath(example_jllinfos_path, "PlatformAugmentedHelloWorldC_jll.jl")),
             """
             @test PlatformAugmentedHelloWorldC_jll.is_available()
-            @show PlatformAugmentedHelloWorldC_jll.platform
             @test PlatformAugmentedHelloWorldC_jll.platform["augment"] == "other"
             """;
             extra_envs = Dict("HELLO_WORLD_C_PLATFORM_AUGMENT" => "broken"),
