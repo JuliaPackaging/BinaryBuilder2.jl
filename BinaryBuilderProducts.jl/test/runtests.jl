@@ -2,6 +2,61 @@ using BinaryBuilderProducts, Test, BinaryBuilderSources, JLLGenerator
 using JLLGenerator: rtld_symbols, rtld_flags
 
 @testset "BinaryBuilderProducts" begin
+    function test_xz_products(dir, as, env; kwargs...)
+        # Download and unpack that JLL build, then define a set of products on it:
+        prepare(as)
+        deploy(as, dir)
+
+        # We're going to generate a whole bunch of products based on these three values
+        true_products = [
+            (ExecutableProduct, "\${bindir}/xzdec", :xzdec),
+            (LibraryProduct, "\${shlibdir}/liblzma", :liblzma),
+            # Also test that if someone puts a `dlext` at the end, it still works
+            (LibraryProduct, "\${shlibdir}/liblzma.\${dlext}", :liblzma),
+            (FileProduct, "\${libdir}/liblzma.a", :liblzma_a),
+        ]
+
+        test_products = Pair{AbstractProduct,Bool}[]
+        for (ProductType, path, varname) in true_products
+            # Test a single value, which should get expanded into a vector automatically
+            push!(test_products, ProductType(path, varname) => true)
+
+            # Test a vector with a bad first element
+            bad_path = "$(path)_bad"
+            push!(test_products, ProductType([bad_path, path], Symbol("$(varname)_bad")) => true)
+
+            # Test default product directory guessing (This only works because the
+            # Executable and Library products of our test JLL are in the standard dirs)
+            if ProductType ∈ (ExecutableProduct, LibraryProduct)
+                push!(test_products, ProductType(basename(path), varname) => true)
+            end
+
+            # Test a failing path
+            push!(test_products, ProductType(bad_path, Symbol("$(varname)_bad")) => false)
+        end
+
+        # Ensure that for each product, we correctly locate or not
+        for (product, pass) in test_products
+            product_subpath = locate(product, dir; env, kwargs...)
+            if (product_subpath !== nothing) != pass
+                if pass
+                    @error("Unable to locate $(product.varname)", dir, product.paths)
+                else
+                    @error("Located $(product.varname)", dir, product.paths)
+                end
+            end
+            @test (product_subpath !== nothing) == pass
+            if product_subpath !== nothing
+                @test isfile(joinpath(dir, product_subpath))
+            end
+
+            # Ensure that we can create a JLLProduct from this:
+            if pass
+                @test JLLGenerator.AbstractJLLProduct(product, dir; env, kwargs...) !== nothing
+            end
+        end
+    end
+
     # We'll test with the `XZ_jll` tarball, which contains three of our products
     artifacts_downloads = Dict(
         "x86_64-linux-gnu" => ArchiveSource(
@@ -39,58 +94,11 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 "bb_full_target" => target,
             )
             mktempdir() do dir
-                # Download and unpack that JLL build, then define a set of products on it:
-                prepare(as)
-                deploy(as, dir)
+                test_xz_products(dir, as, env)
 
-                # We're going to generate a whole bunch of products based on these three values
-                true_products = [
-                    (ExecutableProduct, "\${bindir}/xzdec", :xzdec),
-                    (LibraryProduct, "\${shlibdir}/liblzma", :liblzma),
-                    # Also test that if someone puts a `dlext` at the end, it still works
-                    (LibraryProduct, "\${shlibdir}/liblzma.\${dlext}", :liblzma),
-                    (FileProduct, "\${libdir}/liblzma.a", :liblzma_a),
-                ]
-
-                test_products = Pair{AbstractProduct,Bool}[]
-                for (ProductType, path, varname) in true_products
-                    # Test a single value, which should get expanded into a vector automatically
-                    push!(test_products, ProductType(path, varname) => true)
-
-                    # Test a vector with a bad first element
-                    bad_path = "$(path)_bad"
-                    push!(test_products, ProductType([bad_path, path], Symbol("$(varname)_bad")) => true)
-
-                    # Test default product directory guessing (This only works because the
-                    # Executable and Library products of our test JLL are in the standard dirs)
-                    if ProductType ∈ (ExecutableProduct, LibraryProduct)
-                        push!(test_products, ProductType(basename(path), varname) => true)
-                    end
-
-                    # Test a failing path
-                    push!(test_products, ProductType(bad_path, Symbol("$(varname)_bad")) => false)
-                end
-
-                # Ensure that for each product, we correctly locate or not
-                for (product, pass) in test_products
-                    product_subpath = locate(product, dir; env)
-                    if (product_subpath !== nothing) != pass
-                        if pass
-                            @error("Unable to locate $(product.varname)", dir, product.paths)
-                        else
-                            @error("Located $(product.varname)", dir, product.paths)
-                        end
-                    end
-                    @test (product_subpath !== nothing) == pass
-                    if product_subpath !== nothing
-                        @test isfile(joinpath(dir, product_subpath))
-                    end
-
-                    # Ensure that we can create a JLLProduct from this:
-                    if pass
-                        @test JLLGenerator.AbstractJLLProduct(product, dir; env) !== nothing
-                    end
-                end
+                # Do a test where `bb_full_target` is wrong, but we pass the right platform in to `locate()`:
+                env["bb_full_target"] = "any"
+                test_xz_products(dir, as, env; platform=parse(Platform, target))
             end
         end
     end

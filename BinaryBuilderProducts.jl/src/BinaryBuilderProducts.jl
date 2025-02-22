@@ -63,7 +63,7 @@ account templating via `env`, as well as applying `add_default_product_dir()` to
 that can have their leading directory dropped (e.g. `ExecutableProduct` and
 `LibraryProduct`).
 """
-function path_prefix_transformation(T::Type{<:AbstractProduct}, path, prefix, env)
+function path_prefix_transformation(T::Type{<:AbstractProduct}, path, prefix, platform, env)
     # Finally, put this relative to `prefix`
     return joinpath(
         prefix,
@@ -77,7 +77,7 @@ function path_prefix_transformation(T::Type{<:AbstractProduct}, path, prefix, en
                 template(path, env),
                 env_checked_get(env, "prefix"),
             ),
-            parse(AbstractPlatform, env_checked_get(env, "bb_full_target")),
+            platform,
         )
     )
 end

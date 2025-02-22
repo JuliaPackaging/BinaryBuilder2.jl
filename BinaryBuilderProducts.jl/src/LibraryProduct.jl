@@ -87,14 +87,14 @@ function locate(lp::LibraryProduct, prefix::String;
                 platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))
     @debug("Locating LibraryProduct", lp)
     for path in lp.paths
-        path = path_prefix_transformation(LibraryProduct, path, prefix, env)
+        path = path_prefix_transformation(LibraryProduct, path, prefix, platform, env)
         libname = basename(path)
         try
             libname = first(parse_dl_name_version(libname, os(platform)))
         catch
         end
         rel_path = prefix_remove(path, prefix)
-        @debug("Trying", rel_path, libname)
+        @debug("Trying", rel_path, libname, platform)
 
         # Skip non-existant directories
         path_dir = dirname(path)

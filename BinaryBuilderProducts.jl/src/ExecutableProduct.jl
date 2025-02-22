@@ -37,7 +37,7 @@ function locate(ep::ExecutableProduct, prefix::String;
                 platform::AbstractPlatform = parse(Platform, env_checked_get(env, "bb_full_target")))
     @debug("Locating ExecutableProduct", ep)
     for path in ep.paths
-        path = path_prefix_transformation(ExecutableProduct, path, prefix, env)
+        path = path_prefix_transformation(ExecutableProduct, path, prefix, platform, env)
 
         # On windows, we always slap an .exe onto the end if it doesn't already
         # exist, as Windows won't execute files that don't have a .exe at the end.
