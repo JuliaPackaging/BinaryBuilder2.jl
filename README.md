@@ -6,6 +6,6 @@ The `BinaryBuilder2.jl` package itself is the top-level project that includes al
 
 ## Current status
 
-Status as of April 2024 is that BinaryBuilder2 is still under heavy development and lacks full feature platform support.
-Current development target is for full feature parity with original `BinaryBuilder.jl` by JuliaCon 2024.
+Status as of Feburary 2025 is that BinaryBuilder2 is still under heavy development and lacks full feature platform support.
+Current development target is for full feature parity with original `BinaryBuilder.jl` by JuliaCon 2025.
 See `TODO.md` for the current worklist to be completed.
