@@ -311,6 +311,7 @@ The `dry_run` keyword argument exists as a convenient way to override the `dry_r
 parameter inside of `meta`.
 """
 function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString; dry_run::Bool = false)
+    build_tarballs_path = abspath(build_tarballs_path)
     # If `dry_run` is set, we need to toggle `dry_run` in `meta`, but only
     # for the duration of this call:
     old_dry_run = copy(meta.dry_run)
@@ -319,8 +320,15 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
         push!.((meta.dry_run,), (:build, :extract, :package))
     end
     try
-        with_default_meta(meta) do
-            Core.include(Module(), build_tarballs_path)
+        cd(dirname(build_tarballs_path)) do
+            with_default_meta(meta) do
+                m = Module()
+                Core.eval(m, quote
+                    eval(x) = Core.eval($m, x)
+                    include(f) = Core.include($m, f)
+                end)
+                Core.include(m, build_tarballs_path)
+            end
         end
     finally
         empty!(meta.dry_run)
