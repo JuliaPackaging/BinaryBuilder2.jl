@@ -702,7 +702,7 @@ function make_tool_wrappers(toolchain, output_dir, tool, tool_target;
 end
 
 """
-    march_check(io, toolchain)
+    add_microarchitectural_flags(io, toolchain)
 
 Insert into your compiler wrapper definition near the top to error out if the user
 supplies a `-march` flag when `lock_microarchitecture` has been set to `true`.
@@ -769,10 +769,20 @@ function add_user_flags(io, toolchain)
     end
 end
 
+"""
+    add_macos_flags(io, toolchain)
+
+This adds flags like `-mmacosx-version-min`, depending on our `os_version`
+embedded within a triplet.  If there is no such tag embedded within the
+triplet, it is not added.  This method also adds some compiler-flag-based
+workarounds for GCC brokenness.
+"""
 function add_macos_flags(io, toolchain)
     if Sys.isapple(toolchain.platform.target)
-        if os_version(toolchain.platform.target) === nothing
-            @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(toolchain.platform.target), maxlog=1)
+        macos_ver = macos_version(toolchain.platform.target)
+        if macos_ver === nothing
+            @warn("TODO: macOS builds should always denote their `os_version`!",
+                  platform=triplet(toolchain.platform.target), maxlog=1)
         end
     
         compile_flagmatch(io) do io
@@ -784,16 +794,39 @@ function add_macos_flags(io, toolchain)
                 end
             end
             
-            # Always compile for a particular minimum macOS verison
-            #append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
+            # Always compile for a particular minimum macOS version
+            if macos_ver !== nothing
+                append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
+            end
         end
 
         link_flagmatch(io) do io
             # When we use `install_name_tool` to alter dylib IDs and whatnot, we need
             # to have extra space in the MachO headers so we can expand names, if necessary.
             append_flags(io, :POST, "-Wl,-headerpad_max_install_names")
-            #append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_version(toolchain.platform.target))")
+
+            # Always compile for a particular minimum macOS version
+            if macos_ver !== nothing
+                append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_version(toolchain.platform.target))")
+            end
         end
+    end
+end
+
+function add_ccache_preamble(io, toolchain)
+    if toolchain.use_ccache
+        # Build hash of compiler JLLs that we will feed to `ccache` to identify our
+        # specific compiler set, to key our `ccache` cache correctly.
+        compiler_treehash = bytes2hex(sha256(
+            join([dep.package.tree_hash for dep in toolchain.deps])
+        ))
+
+        println(io, """
+        # If `ccache` is available, use it!
+        if which ccache >/dev/null; then
+            PROG=( ccache "compiler_check=string:$(compiler_treehash)" "\${PROG[@]}" )
+        fi
+        """)
     end
 end
 
@@ -816,17 +849,6 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             break
         end
     end
-
-    # Build hash of compiler JLLs that we will feed to `ccache` to identify our
-    # specific compiler set:
-    compiler_treehash = ""
-    for jll_name in ("GCCBootstrap", "GCC", "GCC_support_libraries", "GCC_crt_objects", "Binutils")
-        jll = get_jll(toolchain, string(jll_name, "_jll"))
-        if jll !== nothing
-            compiler_treehash = string(compiler_treehash, jll.package.tree_hash)
-        end
-    end
-    compiler_treehash = bytes2hex(sha256(compiler_treehash))
 
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
@@ -887,15 +909,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             @warn("TODO: sanitize_link_flags()", maxlog=1)
         end
 
-        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
-        if toolchain.use_ccache
-            println(io, """
-            # If `ccache` is available, use it!
-            if which ccache >/dev/null; then
-                PROG=( ccache "compiler_check=string:$(compiler_treehash)" "\${PROG[@]}" )
-            fi
-            """)
-        end
+        add_ccache_preamble(io, toolchain)
     end
 
     # gcc, g++
@@ -992,6 +1006,9 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
                 @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
             end
         end
+
+        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
+        add_ccache_preamble(io, toolchain)
     end
 
     make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
@@ -1054,14 +1071,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         end
 
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
-        if toolchain.use_ccache
-            println(io, """
-            # If `ccache` is available, use it!
-            if which ccache >/dev/null; then
-                PROG=( ccache "\${PROG[@]}" )
-            fi
-            """)
-        end
+        add_ccache_preamble(io, toolchain)
     end
 
     # Many of our tools have nondeterministic
