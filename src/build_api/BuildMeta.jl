@@ -260,7 +260,7 @@ struct BuildMeta <: AbstractBuildMeta
     ## Options that get toggled by the user through `ARGS`; see `BUILD_HELP`
     # `target_list` provides a default set of platforms to build for,
     # it defaults to `supported_platforms()`.
-    target_list::Vector{Platform}
+    target_list::Vector{AbstractPlatform}
     verbose::Bool
     debug_modes::Set{String}
 
@@ -278,7 +278,7 @@ struct BuildMeta <: AbstractBuildMeta
     json_output::Union{Nothing,IO}
     register::Bool
 
-    function BuildMeta(;target_list::Vector{Platform} = Platform[],
+    function BuildMeta(;target_list::Vector{<:AbstractPlatform} = AbstractPlatform[],
                         universe_name::Union{AbstractString,Nothing} = nothing,
                         deploy_org::Union{AbstractString,Nothing} = nothing,
                         verbose::Bool = false,
@@ -316,7 +316,7 @@ struct BuildMeta <: AbstractBuildMeta
             Dict{BuildConfig,BuildResult}(),
             Dict{ExtractConfig,ExtractResult}(),
             Dict{PackageConfig,PackageResult}(),
-            target_list,
+            Vector{AbstractPlatform}(target_list),
             verbose,
             debug_modes,
             universe,
