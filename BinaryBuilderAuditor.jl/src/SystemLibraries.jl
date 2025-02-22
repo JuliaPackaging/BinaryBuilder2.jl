@@ -143,6 +143,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "wsock32.dll",
             "psapi.dll",
             "bcrypt.dll",
+            "version.dll",
         ]
 
         csl_libs = [
