@@ -46,6 +46,7 @@ function make_BuildError(message, result)
     # `result` from the exception can be tricky.
     if isinteractive() && !isdefined(Main, :meta)
         @warn("build_tarballs() errored out; `meta` exported for use in the REPL")
+        Core.eval(Main, :(global meta))
         Main.meta = AbstractBuildMeta(result)
     end
     return BuildError(message, result)
