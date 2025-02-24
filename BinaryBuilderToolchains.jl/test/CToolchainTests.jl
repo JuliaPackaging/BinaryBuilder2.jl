@@ -4,8 +4,6 @@ using BinaryBuilderToolchains: path_appending_merge
 # Enable this for lots of JLLPrefixes output
 const verbose = false
 
-include("common.jl")
-
 using BinaryBuilderToolchains: get_vendor
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
