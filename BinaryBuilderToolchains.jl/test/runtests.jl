@@ -1,5 +1,6 @@
 using Test, BinaryBuilderToolchains
 
+include("common.jl")
 include("PkgUtilsTests.jl")
 include("WrapperUtilsTests.jl")
 include("CToolchainTestJLLs.jl")

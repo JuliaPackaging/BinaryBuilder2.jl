@@ -1,8 +1,6 @@
 using Test, BinaryBuilderToolchains
 using BinaryBuilderToolchains: path_appending_merge
 
-include("common.jl")
-
 @testset "CMakeToolchain" begin
     platform = CrossPlatform(BBHostPlatform() => BBHostPlatform())
     toolchains = [
