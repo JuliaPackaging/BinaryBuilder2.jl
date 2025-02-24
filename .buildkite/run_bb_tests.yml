@@ -1,6 +1,10 @@
 steps:
   - label: ":julia: :linux: ${ARCH?} Julia ${JULIA_VERSION?}"
     plugins:
+      - staticfloat/metahook:
+          post-checkout: |
+            git config --global user.email "buildkite@julialang.org"
+            git config --global user.name "Buildkite"
       - JuliaCI/julia#v1:
           version: "${JULIA_VERSION?}"
           arch: "${ARCH?}"
