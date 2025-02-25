@@ -1,6 +1,5 @@
 using BinaryBuilder2
 
-@show pwd()
 include("gcc_common.jl")
 
 for version in (v"9.4.0",) #keys(gcc_version_sources)

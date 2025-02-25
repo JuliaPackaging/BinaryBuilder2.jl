@@ -176,8 +176,12 @@ elif [[ "${target}" == *-mingw* ]]; then
 
     # Mingw just always looks in `mingw/` instead of `usr/`, so we symlink it:
     mkdir -p ${host_prefix}/${target}
-    ln -s usr ${host_prefix}/${target}/mingw
-    ln -s usr ${target_prefix}/${target}/mingw
+    ln -s . ${target_prefix}/${target}/mingw
+
+    # Go ahead and do this for 
+    if [[ "${host}" == *-mingw-* ]]; then
+        ln -s . ${host_prefix}/${target}/mingw
+    fi
 
 elif [[ "${target}" == *-darwin* ]]; then
     # GCC doesn't turn LTO on by default for some reason.
@@ -426,6 +430,10 @@ function gcc_build_spec_generator(host, platform)
         push!(target_sources, JLLSource(
             "Mingw_jll",
             platform.target;
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap",
+                source="https://github.com/staticfloat/Mingw_jll.jl"
+            ),
             target=target_str,
         ))
     else

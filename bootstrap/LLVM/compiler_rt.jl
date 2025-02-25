@@ -5,10 +5,6 @@ build_tarballs(;
     src_version = llvm_version,
     sources = llvm_sources,
     script = llvm_script_prefix * raw"""
-    # Install to `prefix`, and make a release build
-    CMAKE_FLAGS+=("-DCMAKE_INSTALL_PREFIX=${prefix}")
-    CMAKE_FLAGS+=(-DCMAKE_BUILD_TYPE=Release)
-
     # Specify exactly which pieces of compiler-rt we want
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_BUILTINS=ON")
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_CRT=ON")
@@ -19,12 +15,10 @@ build_tarballs(;
     CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_XRAY=OFF")
     CMAKE_FLAGS+=("-DCOMPILER_RT_DEFAULT_TARGET_TRIPLE=${target}")
 
-    # Build!
-    $CMAKE ${WORKSPACE}/srcdir/llvm-project/compiler-rt ${CMAKE_FLAGS[@]}
-    make -j${nproc}
-
-    # Install!
-    make install -j${nproc} #VERBOSE=1
+    # configure, build, install!
+    ${CMAKE} ${WORKSPACE}/srcdir/llvm-project/compiler-rt ${CMAKE_FLAGS[@]}
+    ninja
+    ninja install
     """,
     platforms=supported_platforms(),
     host,
@@ -39,6 +33,6 @@ build_tarballs(;
             ),
         ),
     ],
-    host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
-    target_toolchains = [CToolchain(;vendor=:clang_bootstrap, lock_microarchitecture=false), CMakeToolchain()],
+    host_toolchains = [CToolchain(;vendor=:clang), CMakeToolchain(), HostToolsToolchain()],
+    target_toolchains = [CToolchain(;vendor=:clang, lock_microarchitecture=false), CMakeToolchain()],
 )

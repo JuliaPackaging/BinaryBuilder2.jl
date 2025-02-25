@@ -29,7 +29,8 @@ run_build_tarballs(ctng_meta, "CrosstoolNG/build_tarballs.jl")
 run_build_tarballs(meta, "GCCBootstrap/build_tarballs.jl")
 
 GCC_TOOLS=[
-    "Zlib", # Build Zlib again, this time targeting everything
+    # Build Zlib again, this time targeting everything
+    "Zlib",
 
     # Platform header/library bundles
     "LinuxKernelHeaders",
@@ -49,7 +50,15 @@ for tool in GCC_TOOLS
     run_build_tarballs(meta, "$(tool)/build_tarballs.jl")
 end
 
-# Next, build `clang`, then use it to compile `compiler_rt` and `libcxx`
+
+# Build tblgen and ClangBootstrap for the current host
+run_build_tarballs(ctng_meta, "LLVM/tblgen.jl")
+clangbootstrap_target = CrossPlatform(BBHostPlatform() => AnyPlatform())
+clangbootstrap_meta = BuildMeta(;target_list=[clangbootstrap_target], parsed_args...)
+run_build_tarballs(clangbootstrap_meta, "LLVM/clang_bootstrap.jl")
+
+# Next, use ClangBootstrap to build actual `clang` for all platforms, then use it to compile `compiler_rt`,
+# and then use clang+compiler_rt to build `libcxx`!
 LLVM_TOOLS=[
     "clang",
     "compiler_rt",

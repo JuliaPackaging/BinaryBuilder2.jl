@@ -5,10 +5,6 @@ build_tarballs(;
     src_version = llvm_version,
     sources = llvm_sources,
     script = llvm_script_prefix * raw"""
-    # Install to `prefix`, and make a release build
-    CMAKE_FLAGS+=("-DCMAKE_INSTALL_PREFIX=${prefix}")
-    CMAKE_FLAGS+=("-DCMAKE_BUILD_TYPE=Release")
-
     # Configure libcxx
     CMAKE_FLAGS+=("-DLIBCXX_INCLUDE_BENCHMARKS=OFF")
     CMAKE_FLAGS+=("-DLIBCXX_HAS_ATOMIC_LIB=NO")
@@ -29,7 +25,6 @@ build_tarballs(;
         CMAKE_FLAGS+=( "-DLIBCXXABI_HAS_WIN32_THREAD_API=ON" )
     fi
 
-    
     CMAKE_FLAGS+=( "-DLIBCXXABI_USE_COMPILER_RT=ON" )
     CMAKE_FLAGS+=( "-DLIBCXXABI_USE_LLVM_UNWINDER=ON" )
     CMAKE_FLAGS+=( "-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON" )
@@ -41,14 +36,11 @@ build_tarballs(;
     CMAKE_FLAGS+=( "-DLIBUNWIND_ENABLE_SHARED=ON" )
     CMAKE_FLAGS+=( "-DLIBUNWIND_ENABLE_STATIC=ON" )
 
-    # Turn off things we don't care about
-    CMAKE_FLAGS+=( "-DLIBCXX_INCLUDE_BENCHMARKS=OFF" )
-    CMAKE_FLAGS+=( "-DLLVM_INCLUDE_TESTS=OFF" )
-
+    # configure, build, install!
     mkcd build
-    $CMAKE ${WORKSPACE}/srcdir/llvm-project/runtimes "${CMAKE_FLAGS[@]}"
-    make -j${nproc}
-    make install -j${nproc}
+    ${CMAKE} ${WORKSPACE}/srcdir/llvm-project/runtimes "${CMAKE_FLAGS[@]}"
+    ninja
+    ninja install
     """,
     platforms=supported_platforms(),
     host,
