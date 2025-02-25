@@ -1001,12 +1001,6 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         add_user_flags(io, toolchain)
         add_macos_flags(io, toolchain)
 
-        if Sys.isapple(p)
-            if os_version(p) === nothing
-                @warn("TODO: macOS builds should always denote their `os_version`!", platform=triplet(p), maxlog=1)
-            end
-        end
-
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
         add_ccache_preamble(io, toolchain)
     end
