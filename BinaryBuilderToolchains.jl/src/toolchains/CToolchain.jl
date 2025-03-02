@@ -298,7 +298,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/ClangBootstrap",
+                    rev="main",
                     source="https://github.com/staticfloat/CCTools_jll.jl",
                 ),
                 # eventually, include a resolved version
@@ -310,7 +310,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform.host;
                 uuid=Base.UUID("defda0c2-6d1f-5f19-8ead-78afca958a10"),
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/ClangBootstrap",
+                    rev="main",
                     source="https://github.com/staticfloat/libtapi_jll.jl",
                 ),
                 # eventually, include a resolved version
@@ -366,7 +366,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("4e17d02c-6bf5-513e-be62-445f41c75a11"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/LLVMCompilerRT_jll.jl",
             ),
             version=v"17.0.7",
@@ -393,7 +393,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("899a7460-a157-599b-96c7-ccb58ef9beb5"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
             ),
             version=v"17.0.1",
@@ -404,7 +404,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("871c935c-5660-55ad-bb68-d1283357316b"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
             ),
             version=v"17.0.1",
@@ -480,8 +480,18 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     "Clang_jll",
                     platform;
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCC",
+                        rev="main",
                         source="https://github.com/staticfloat/Clang_jll.jl",
+                    ),
+                    version=v"17.0.7",
+                    target="clang",
+                ),
+                JLLSource(
+                    "libLLVM_jll",
+                    platform;
+                    repo=Pkg.Types.GitRepo(
+                        rev="main",
+                        source="https://github.com/staticfloat/libLLVM_jll.jl",
                     ),
                     version=v"17.0.7",
                     target="clang",
@@ -495,7 +505,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     platform;
                     uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/ClangBootstrap",
+                        rev="main",
                         source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
                     ),
                     version=v"17.0.0",
@@ -506,7 +516,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     platform;
                     uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/ClangBootstrap",
+                        rev="main",
                         source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
                     ),
                     version=v"17.0.0",
