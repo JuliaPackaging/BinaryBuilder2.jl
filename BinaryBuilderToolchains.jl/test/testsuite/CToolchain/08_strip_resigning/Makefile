@@ -21,7 +21,7 @@ endif
 
 RUN_IDX := 0
 define run_strip
-RUN_IDX := $(shell echo "$(RUN_IDX) + 1" | bc)
+RUN_IDX := $(shell bash -c "echo $$(($(RUN_IDX) + 1))")
 TARGET_$(RUN_IDX)_PATH := $$(PROJECT_DIR)/build/count_dracula.stripped$(subst $(SPACE),,$(1))
 $$(TARGET_$(RUN_IDX)_PATH).direct: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
 	@cp $$^ $$@
