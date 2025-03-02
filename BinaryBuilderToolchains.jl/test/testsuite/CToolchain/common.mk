@@ -31,11 +31,12 @@ endif
 
 # Define some compiler defaults (they are typically overridden by `export`'ed
 # variables in the BB shell)
-CC ?= $(target)-cc
-CXX ?= $(target)-c++
-AR ?= $(target)-ar
-RANLIB ?= $(target)-ranlib
-OBJCOPY ?= $(target)-objcopy
+CC ?= $(CC_TARGET)-cc
+CXX ?= $(CC_TARGET)-c++
+AR ?= $(CC_TARGET)-ar
+RANLIB ?= $(CC_TARGET)-ranlib
+OBJCOPY ?= $(CC_TARGET)-objcopy
+STRIP ?= $(CC_TARGET)-strip
 
 # Magic variables
 SPACE:=$(eval) $(eval)
