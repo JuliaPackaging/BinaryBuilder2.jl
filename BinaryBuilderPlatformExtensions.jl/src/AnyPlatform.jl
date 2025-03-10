@@ -23,7 +23,7 @@ function Base.parse(::Type{AbstractPlatform}, p::AbstractString)
     if p == "any"
         return AnyPlatform()
     else
-        parse(Platform, p; validate_strict=true)
+        parse(Platform, p; validate_strict=false)
     end
 end
 
