@@ -1,4 +1,5 @@
-using ObjectFile, BinaryBuilderProducts, Patchelf_jll
+using ObjectFile, BinaryBuilderProducts
+using BinaryBuilderToolchains: path_appending_merge
 using Base.Filesystem: StatStruct
 
 export ScanResult, scan_files
@@ -7,6 +8,10 @@ struct ScanResult
     prefix::String
     prefix_alias::String
     platform::AbstractPlatform
+
+    # Toolchain that contains things like `patchelf`, `install_name_tool`, etc...
+    toolchain::AuditorToolchain
+    toolchain_prefix::String
 
     # List of all files contained within the prefix
     files::Dict{String,StatStruct}
@@ -105,9 +110,10 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         end
 
         # If something doesn't have an SONAME, we default to `basename(rel_path)`
+        # On macOS, we take an absolute path here to be the same as no SONAME. :)
         # This will be fixed by `ensure_sonames!()`.
         soname = get_soname(oh)
-        if soname === nothing
+        if soname === nothing || (Sys.isapple(platform) && isabspath(soname))
             if !Sys.iswindows(platform)
                 push!(missing_sonames, rel_path)
             end
@@ -138,10 +144,19 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         library_product_map[relpath_search(symlinks, lib_located_path)] = lib
     end
 
+    # Create toolchain for our third-party tools
+    at = AuditorToolchain(CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)))
+    at_srcs = toolchain_sources(at)
+    prepare(at_srcs)
+    at_prefix = mktempdir()
+    deploy(at_srcs, at_prefix)
+
     return ScanResult(
         prefix,
         prefix_alias,
         platform,
+        at,
+        at_prefix,
         all_files,
         binary_objects,
         soname_locator,
@@ -175,6 +190,11 @@ function relpath_search(symlinks::Dict{String,String}, rel_path::AbstractString)
     return rel_path
 end
 
+# After this function runs, `patchelf()` and `install_name_tool()` won't work.
+function cleanup_toolchains!(scan::ScanResult)
+    rm(scan.toolchain_prefix; force=true, recursive=true)
+end
+
 Base.relpath(scan::ScanResult, rel_path::AbstractString) = relpath_search(scan.symlinks, rel_path)
 Base.abspath(scan::ScanResult, rel_path::AbstractString) = joinpath(scan.prefix, relpath(scan, rel_path))
 
@@ -190,4 +210,20 @@ function patchelf_flags(p::AbstractPlatform)
     return flags
 end
 
-Patchelf_jll.patchelf(scan::ScanResult, cmd::Cmd) = `$(patchelf()) $(patchelf_flags(scan.platform)) $(cmd)`
+function patchelf_path(scan::ScanResult)
+    return joinpath(scan.toolchain_prefix, "bin", patchelf_filename(scan.toolchain))
+end
+
+function patchelf(scan::ScanResult, cmd::Cmd)
+    env = path_appending_merge(ENV, toolchain_env(scan.toolchain, scan.toolchain_prefix))
+    addenv(`$(patchelf_path(scan)) $(patchelf_flags(scan.platform)) $(cmd)`, env)
+end
+
+function install_name_tool_path(scan::ScanResult)
+    return joinpath(scan.toolchain_prefix, "bin", install_name_tool_filename(scan.toolchain))
+end
+
+function install_name_tool(scan::ScanResult, cmd::Cmd)
+    env = path_appending_merge(ENV, toolchain_env(scan.toolchain, scan.toolchain_prefix))
+    addenv(`$(install_name_tool_path(scan)) $(cmd)`, env)
+end

@@ -5,6 +5,7 @@ export audit!, AuditResult
 
 include("Utils.jl")
 include("SystemLibraries.jl")
+include("AuditorToolchain.jl")
 include("Scanning.jl")
 include("AuditResult.jl")
 include("LdScriptParser.jl")
@@ -58,6 +59,9 @@ function audit!(prefix::String,
     if verbose
         print_results(pass_results)
     end
+
+    # Cleanup temporary directories containing toolchains
+    cleanup_toolchains!(scan)
 
     return AuditResult(
         scan,

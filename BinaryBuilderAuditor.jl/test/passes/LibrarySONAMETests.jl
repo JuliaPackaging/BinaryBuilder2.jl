@@ -1,9 +1,9 @@
 using Test, BinaryBuilderAuditor, Base.BinaryPlatforms, ObjectFile, BinaryBuilderToolchains
 using BinaryBuilderAuditor: ensure_sonames!, get_soname
 
-function make_libfoo(prefix)
+function make_libfoo(prefix, target)
     # We will create a library without an SONAME by using the BB toolchain package
-    platform = CrossPlatform(BBHostPlatform() => HostPlatform())
+    platform = CrossPlatform(BBHostPlatform() => target)
     toolchain = CToolchain(platform; use_ccache=false)
 
     # Use some bundled C source code from our test suite
@@ -19,36 +19,48 @@ function make_libfoo(prefix)
 end
 
 @testset "ensure_sonames" begin
-    mktempdir() do prefix
-        libfoo_path = make_libfoo(prefix)
+    for target in (Platform("x86_64", "linux"), Platform("aarch64", "macos"))
+        mktempdir() do prefix
+            libfoo_path = make_libfoo(prefix, target)
 
-        # Ensure that the library has no SONAME
-        @test isfile(joinpath(libfoo_path))
-        @test readmeta(ohs -> get_soname(only(ohs)), libfoo_path) === nothing
+            # Ensure that the library has no SONAME
+            @test isfile(libfoo_path)
+            curr_soname = readmeta(ohs -> get_soname(only(ohs)), libfoo_path)
+            if Sys.islinux(target)
+                @test curr_soname === nothing
+            elseif Sys.isapple(target)
+                @test curr_soname == abspath(libfoo_path)
+            end
 
-        # Run our audit pass on this prefix
-        scan = scan_files(prefix, HostPlatform())
-        pass_results = Dict{String,Vector{PassResult}}()
-        ensure_sonames!(scan, pass_results)
+            # Run our audit pass on this prefix
+            scan = scan_files(prefix, target)
+            pass_results = Dict{String,Vector{PassResult}}()
+            ensure_sonames!(scan, pass_results)
 
-        @test isfile(joinpath(libfoo_path))
-        @test readmeta(ohs -> get_soname(only(ohs)), libfoo_path) == basename(libfoo_path)
-        @test success(pass_results)
-    end
-
-    mktempdir() do prefix
-        # Do this a second time, but this time set it to read-only, so we are unable to set the SONAME properly
-        libfoo_path = make_libfoo(prefix)
-        scan = scan_files(prefix, HostPlatform())
-        pass_results = Dict{String,Vector{PassResult}}()
-        open(libfoo_path; write=true) do io
-            println(io, "I am mangling the beginning of a library here")
+            @test isfile(joinpath(libfoo_path))
+            curr_soname = readmeta(ohs -> get_soname(only(ohs)), libfoo_path)
+            if Sys.islinux(target)
+                @test curr_soname == basename(libfoo_path)
+            elseif Sys.isapple(target)
+                @test curr_soname == "@rpath/$(basename(libfoo_path))"
+            end
+            @test success(pass_results)
         end
-        ensure_sonames!(scan, pass_results)
-        @test !success(pass_results)
-        io = IOBuffer()
-        print_results(pass_results; io)
-        @test occursin("Failed to set SONAME:", String(take!(io)))
-        @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in pass_results["ensure_sonames!"])
+
+        mktempdir() do prefix
+            # Do this a second time, but this time mangle the library so our manipulation fails
+            libfoo_path = make_libfoo(prefix, target)
+            scan = scan_files(prefix, target)
+            pass_results = Dict{String,Vector{PassResult}}()
+            open(libfoo_path; write=true) do io
+                println(io, "I am mangling the beginning of a library here")
+            end
+            ensure_sonames!(scan, pass_results)
+            @test !success(pass_results)
+            io = IOBuffer()
+            print_results(pass_results; io)
+            @test occursin("Failed to set SONAME:", String(take!(io)))
+            @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in pass_results["ensure_sonames!"])
+        end
     end
 end

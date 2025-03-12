@@ -1,4 +1,4 @@
-using ObjectFile, Patchelf_jll
+using ObjectFile
 
 
 """
@@ -26,9 +26,9 @@ function ensure_sonames!(scan::ScanResult, pass_results::Dict{String,Vector{Pass
         soname = basename(rel_path)
         abs_path = abspath(scan, rel_path)
         if Sys.isapple(scan.platform)
-            cmd = `-id $(soname) $(abs_path)`
+            cmd = install_name_tool(scan, `-id @rpath/$(soname) $(abs_path)`)
         elseif Sys.islinux(scan.platform) || Sys.isbsd(scan.platform)
-            cmd = `$(patchelf()) $(patchelf_flags(scan.platform)) --set-soname $(soname) $(abs_path)`
+            cmd = patchelf(scan, `--set-soname $(soname) $(abs_path)`)
         end
 
         proc, output = capture_output(cmd)
