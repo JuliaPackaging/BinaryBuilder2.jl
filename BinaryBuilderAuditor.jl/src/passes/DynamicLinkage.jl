@@ -52,6 +52,7 @@ function resolve_dynamic_links!(scan::ScanResult,
         # we created above, use that to construct a `JLLLibraryDep`
         jll_deps = JLLLibraryDep[]
         for lib_dep_soname in lib_deps
+            lib_dep_soname = basename(lib_dep_soname)
             # Skip system libraries that we don't want to track, because
             # we don't redistribute them.
             if is_system_library(lib_dep_soname, scan.platform)
@@ -105,6 +106,7 @@ function resolve_dynamic_links!(scan::ScanResult,
     # These returned products have all of their dependencies resolved as
     # JLLLibraryDep objects, either pointing at other libraries wtihin this
     # JLL, or to libraries from other JLLs.
+    sort!(jll_lib_products; by=jll->jll.varname)
     return jll_lib_products
 end
 
@@ -157,11 +159,12 @@ function rpaths_consistent!(scan::ScanResult,
         if !isdynamic(oh)
             continue
         end
-        for soname in [path(dl) for dl in DynamicLinks(oh)]
+        for soname in [basename(path(dl)) for dl in DynamicLinks(oh)]
             # Don't try to insert RPATHs for system libraries
             if is_system_library(soname, scan.platform)
                 continue
             end
+
             # Map through symlink forwards
             soname = get(scan.soname_forwards, soname, soname)
 
@@ -179,22 +182,44 @@ function rpaths_consistent!(scan::ScanResult,
         # to the originating object, (append all of our auto-detected RPATHs
         # onto the end of the RPATHs that already exist in the object)
         all_rpaths = String[String(x) for x in vcat(obj_rpaths, collect(dep_relpaths))]
-        obj_rpaths = normalize_rpaths(all_rpaths, scan.platform, scan.prefix, rel_path)
+        all_rpaths = normalize_rpaths(all_rpaths, scan.platform, scan.prefix, rel_path)
+
+        function run_and_log(cmd::Cmd, fatal::Bool, operation::String)
+            proc, output = capture_output(cmd)
+            if success(proc)
+                push_result!(pass_results, "rpaths_consistent!", :success, rel_path, operation)
+            else
+                push_result!(pass_results, "rpaths_consistent!", fatal ? :fail : :warn, rel_path, "Failed to $(operation): $(output)")
+            end
+        end
 
         # Now, add them into the actual object
         abs_path = abspath(scan, rel_path)
-        rpath_str = join(obj_rpaths, ':')
+        rpath_str = join(all_rpaths, ':')
         if Sys.isapple(scan.platform)
-            error("TODO: Implement this with install_name_tool")
-        elseif Sys.islinux(scan.platform) || Sys.isbsd(scan.platform)
-            cmd = patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`)
-        end
+            # Remove all rpaths from the object:
+            for rpath in obj_rpaths
+                run_and_log(
+                    install_name_tool(scan, `-delete_rpath $(rpath) $(abs_path)`),
+                    false,
+                    "Delete RPATH '$(rpath)'",
+                )
+            end
 
-        proc, output = capture_output(cmd)
-        if !success(proc)
-            push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Failed to set RPATH '$(rpath_str)': $(output)")
+            # Build up our new rpath:
+            for rpath in all_rpaths
+                run_and_log(
+                    install_name_tool(scan, `-add_rpath $(rpath) $(abs_path)`),
+                    true,
+                    "Add RPATH '$(rpath)'",
+                )
+            end
         else
-            push_result!(pass_results, "rpaths_consistent!", :success, rel_path, "Set RPATH '$(rpath_str)'")
+            run_and_log(
+                patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`),
+                true,
+                "Set RPATH '$(rpath_str)'",
+            )
         end
     end
 end

@@ -1,6 +1,7 @@
 using Base.BinaryPlatforms
 
 function is_system_library(soname::AbstractString, platform::AbstractPlatform)
+    soname = basename(soname)
     if os(platform) == "linux"
         loaders = [
             # dynamic loaders
@@ -169,7 +170,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libkvm.so.7",
             "libutil.so.9",
         ]
-        return soname ∈ sdk_libs
+        return lowercase(soname) ∈ sdk_libs
     else
         return false
     end
