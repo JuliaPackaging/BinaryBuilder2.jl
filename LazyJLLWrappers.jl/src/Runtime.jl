@@ -14,3 +14,22 @@ function get_julia_libpaths()
     end
     return JULIA_LIBDIRS
 end
+
+"""
+    filter_non_lazy_libraries(libs::Vector)
+
+If we have a LazyJLLWrapper-using JLL that uses a non-lazy JLL, this
+method filters out attempting to add those non-`LazyLibrary` library
+objects to our `LazyLibrary`'s deps field.  Not only will this cause
+a type error, it's also unnecessary, because those `JLLWrapper`-using
+JLLs always eagerly load all of their libraries.
+"""
+function filter_non_lazy_libraries(libs::Vector)
+    lazy_libraries = LazyLibrary[]
+    for lib in libs
+        if isa(lib, LazyLibrary)
+            push!(lazy_libraries, lib)
+        end
+    end
+    return lazy_libraries
+end

@@ -32,7 +32,7 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
             var_name, LazyLibrary, quote
                 LazyLibrary(
                     $(lazy_path_var_name),
-                    dependencies = [$(mod_dot_name.(product["deps"])...)],
+                    dependencies = LazyJLLWrappers.filter_non_lazy_libraries([$(mod_dot_name.(product["deps"])...)]),
                     flags = $(Expr(:call, :|, [Expr(:., :Libdl, QuoteNode(f)) for f in Symbol.(product["flags"])]...)),
                 )
             end; isconst=true,

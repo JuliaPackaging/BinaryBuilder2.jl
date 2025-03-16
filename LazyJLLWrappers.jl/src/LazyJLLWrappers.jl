@@ -1,8 +1,8 @@
 module LazyJLLWrappers
 
 export LazyArtifactPath, @generate_jll_from_toml
-
 using Libdl
+
 if VERSION >= v"1.6.0"
     using TOML, Artifacts, Preferences, Base.BinaryPlatforms
 else

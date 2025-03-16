@@ -1,4 +1,4 @@
-# Julia 1.5 and lower have terrible `BinaryPlatforms` suipport
+# Julia 1.5 and lower have terrible `BinaryPlatforms` support
 if !isdefined(BinaryPlatforms, :AbstractPlatform)
     const AbstractPlatform = Platform
 end
