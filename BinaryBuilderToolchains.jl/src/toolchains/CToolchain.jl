@@ -1264,7 +1264,7 @@ end
 
 
 function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
-    # Maybe make this inspect the supported platforms GCC_jll or something like that?
+    # Maybe make this inspect the supported platforms of GCC_jll or something like that?
     return [
         Platform("x86_64", "linux"),
         Platform("i686", "linux"),
