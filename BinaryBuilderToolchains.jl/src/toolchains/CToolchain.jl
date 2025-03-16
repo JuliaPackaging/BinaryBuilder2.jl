@@ -1280,5 +1280,8 @@ function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
 
         Platform("x86_64", "windows"),
         Platform("i686", "windows"),
+
+        Platform("x86_64", "macos"),
+        Platform("aarch64", "macos"),
     ]
 end
