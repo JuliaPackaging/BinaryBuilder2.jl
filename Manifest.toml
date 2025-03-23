@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.3"
+julia_version = "1.11.4"
 manifest_format = "2.0"
-project_hash = "c2c0a9de51da846604f145b00627e6050ebdafbd"
+project_hash = "2dd6df3145bbd9d433a40b7b7bc9c8978dbc0fe8"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -23,7 +23,7 @@ uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
 [[deps.BinaryBuilderAuditor]]
-deps = ["BinaryBuilderProducts", "BinaryBuilderToolchains", "JLLGenerator", "ObjectFile", "Patchelf_jll", "StyledStrings"]
+deps = ["BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "JLLGenerator", "ObjectFile", "Pkg", "StyledStrings"]
 path = "BinaryBuilderAuditor.jl"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
 version = "0.1.0"
@@ -285,12 +285,6 @@ version = "1.0.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.42.0+1"
-
-[[deps.Patchelf_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "ad1cab3e8273c912f722f40779e20f3e29d58f1f"
-uuid = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
-version = "0.18.0+0"
 
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "Random", "SHA", "TOML", "Tar", "UUIDs", "p7zip_jll"]
