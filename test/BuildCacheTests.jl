@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, SHA, MultiHashParsing, BinaryBuilderAuditor.Patchelf_jll
+using Test, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!
 
 @testset "BuildCache" begin

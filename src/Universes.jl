@@ -1,4 +1,4 @@
-using Pkg.Registry: RegistrySpec
+using Pkg.Registry: RegistrySpec, RegistryInstance, uuids_from_name
 using Artifacts
 using JLLGenerator
 using Random, TOML
@@ -10,16 +10,13 @@ import TreeArchival
 using Scratch, Pkg, Dates
 using gh_cli_jll
 import Sandbox: cleanup
+using Logging
 
 export Universe, in_universe
 
-const updated_registries = Set{Base.UUID}()
-
-function update_and_checkout_registries!(registries::Vector{RegistrySpec},
-                                         depot_path::String;
-                                         branch_name::Union{Nothing,String} = nothing,
-                                         cache_dir::String = joinpath(source_download_cache(), "registry_clones"),
-                                         force::Bool = false)
+function update_registries!(registries::Vector{RegistrySpec},
+                            depot_path::String;
+                            verbose::Bool = false)
     # For each registry, update it and then check it out into the given `depot_path`
     # if it does not already exist there.
     mkpath(joinpath(depot_path, "registries"))
@@ -30,45 +27,39 @@ function update_and_checkout_registries!(registries::Vector{RegistrySpec},
         registry_update_log = TOML.parsefile(registry_update_toml_path)
     end
 
+    Pkg.Registry.download_registries(verbose ? stdout : devnull, registries, depot_path)
+    
     for reg in registries
-        reg_checkout_path = joinpath(depot_path, "registries", reg.name)
-        if force
-            rm(reg_checkout_path; recursive=true, force=true)
-        end
-
-        reg_clone_path = joinpath(cache_dir, reg.name)
-        # Only hit the network if we haven't updated this registry this session
-        if force || reg.uuid ∉ updated_registries
-            clone!(reg.url, reg_clone_path)
-            push!(updated_registries, reg.uuid)
-        end
-
-        # If the registry is not checked out locally, check it out
-        head_commit = only(log(reg_clone_path; limit=1))
-        reg_branch_name = branch_name !== nothing ? branch_name : head_branch(reg_clone_path)
-        if !isdir(reg_checkout_path)
-            checkout!(reg_clone_path, reg_checkout_path, head_commit)
-
-        # If it is checked out, do a rebase on top of that head commit
-        # so our jazz is on top.  If it fails, warn the user
-        else
-            if !success(rebase!(reg_checkout_path, head_commit))
-                @warn("Attempted to rebase registry, but ran into merge conflicts, you may not have the latest versions of everything!  Use `BinaryBuilder2.reset_timeline!(universe)` to reset!", reg.name)
-            end
-        end
-        # Make sure we're on the right branch name
-        branch!(reg_checkout_path, reg_branch_name)
-
-        # We arbitrarily add a month onto here, making the optimistic assertion that we will
-        # never have a build that takes more than a month.
+        # We arbitrarily add a month onto here, making the (hopefully well-founded) assertion
+        # that we will never have a build that takes more than a month.
         registry_update_log[string(reg.uuid)] = now() + Month(1)
     end
+    # Also don't ever try to update our local registry
+    registry_update_log[string(_BB2_LOCAL_REGISTRY_UUID)] = now() + Month(1)
 
     # Tell Pkg not to try to update any of these registries, ever.  We'll always be the one to do so.
     mkpath(dirname(registry_update_toml_path))
     open(registry_update_toml_path; write=true) do io
         TOML.print(io, registry_update_log)
     end
+
+    # Finally, load each registry into a `RegistryInstance` for future use:
+    return [RegistryInstance(registry_path(depot_path, reg.name)) for reg in registries]
+end
+
+const _BB2_LOCAL_REGISTRY_UUID = Base.UUID("79727473-6967-6552-6c61-636f4c324242")
+function create_local_registry(depot_path::String)
+    local_reg_spec = Pkg.Registry.RegistrySpec(;
+            name = "BB2LocalRegistry",
+            uuid = _BB2_LOCAL_REGISTRY_UUID,
+            path = joinpath(depot_path, "registries", "BB2LocalRegistry") ,
+        )
+    if !isdir(local_reg_spec.path)
+        with_logger(NullLogger()) do
+            LocalRegistry.create_registry(local_reg_spec.path, local_reg_spec.path; push=false)
+        end
+    end
+    return local_reg_spec
 end
 
 """
@@ -83,6 +74,7 @@ struct Universe
     name::Union{Nothing,String}
     depot_path::String
     registries::Vector{RegistrySpec}
+    registry_instances::Vector{RegistryInstance}
     persistent::Bool
 
     # `deploy_org` here refers to a Github organization/user to deploy to.
@@ -98,7 +90,7 @@ struct Universe
     function Universe(name::Union{Nothing,AbstractString} = nothing;
                       depot_dir::AbstractString = universes_dir(),
                       deploy_org::Union{Nothing,AbstractString} = nothing,
-                      registries::Vector{RegistrySpec} = Pkg.Registry.DEFAULT_REGISTRIES,
+                      registries::Vector{RegistrySpec} = copy(Pkg.Registry.DEFAULT_REGISTRIES),
                       registry_url::Union{Nothing,AbstractString} = nothing,
                       persistent::Bool = false,
                       kwargs...)
@@ -114,29 +106,25 @@ struct Universe
         depot_path = abspath(depot_path)
 
         # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
-        try
-            for dir_name in ("artifacts", "packages")
-                shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), dir_name)
-                mkpath(shared_dir)
-                if !ispath(joinpath(depot_path, dir_name))
-                    symlink(
-                        shared_dir,
-                        joinpath(depot_path, dir_name);
-                        dir_target = true,
-                    )
-                end
+        for dir_name in ("artifacts", "packages")
+            shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), dir_name)
+            mkpath(shared_dir)
+            if !ispath(joinpath(depot_path, dir_name))
+                symlink(
+                    shared_dir,
+                    joinpath(depot_path, dir_name);
+                    dir_target = true,
+                )
             end
-        catch
-            rethrow()
         end
 
-        # Ensure the registries are up to date, with our commits replayed on top
-        @auto_extract_kwargs update_and_checkout_registries!(
-            registries,
-            depot_path;
-            branch_name = name === nothing ? nothing : "bb2/$(name)",
-            kwargs...,
-        )
+        # Ensure the upstream registries are up to date
+        registry_instances = update_registries!(registries, depot_path)
+
+        # Create our own, empty registry we'll register things into.
+        local_reg_spec = create_local_registry(depot_path)
+        insert!(registries, 1, local_reg_spec)
+        insert!(registry_instances, 1, RegistryInstance(local_reg_spec.path))
 
         if deploy_org !== nothing
             # Authenticate to GitHub, then ensure that we are either deploying to our
@@ -153,6 +141,7 @@ struct Universe
             name === nothing ? nothing : string(name),
             depot_path,
             registries,
+            registry_instances,
             persistent,
             deploy_org,
             string(registry_url),
@@ -262,45 +251,79 @@ function environment_path(u::Universe)
     touch(joinpath(env_path, "Project.toml"))
 end
 
-function registry_path(u::Universe, registry::RegistrySpec)
-    return joinpath(u.depot_path, "registries", registry.name)
+function registry_path(depot_path::String, reg_name::String)
+    toml_path = joinpath(depot_path, "registries", string(reg_name, ".toml"))
+    if isfile(toml_path)
+        return toml_path
+    else
+        return joinpath(depot_path, "registries", reg_name)
+    end
 end
 
-function registry_package_lookup(f::Function, registry_path::String, pkg_name::String)
-    reg_toml_path = joinpath(registry_path, "Registry.toml")
-    reg_data = Base.parsed_toml(reg_toml_path)
-    for (uuid, data) in reg_data["packages"]
-        if data["name"] == pkg_name
-            return f(joinpath(registry_path, data["path"]))
+function registry_path(u::Universe, registry::RegistrySpec)
+    return registry_path(u.depot_path, registry.name)
+end
+
+# It would be nice if `Pkg.Registry` just exported something like this
+function Pkg.Registry.parsefile(reg_inst::RegistryInstance, path::String)
+    return Pkg.Registry.parsefile(reg_inst.in_memory_registry, reg_inst.path, path)
+end
+
+function registry_package_lookup(f::Function, u::Universe, pkg_name::String, pkg_file::String; registries = u.registry_instances)
+    for reg_inst in registries
+        pkg_uuids = uuids_from_name(reg_inst, pkg_name)
+        if isempty(pkg_uuids)
+            continue
+        end
+
+        # I don't think this should ever really have more than one, let's just
+        # error if that happens so that we can think about what to actually do.
+        pkg_uuid = only(pkg_uuids)
+        pkg_subpath = joinpath(reg_inst.pkgs[pkg_uuid].path, pkg_file)
+
+        pkg_data = Pkg.Registry.parsefile(reg_inst, pkg_subpath)
+        if pkg_data !== nothing
+            f(pkg_data)
         end
     end
-    return nothing
-end
-
-function registry_package_lookup(f::Function, u::Universe, pkg_name::String)
-    registry_package_lookup(registry_path(u, first(u.registries)), pkg_name) do pkg_path
-        return f(pkg_path)
-    end
 end
 
 """
-    get_package_repo(u::Universe, pkg_name::String)
+    get_package_repo(uni::Universe, pkg_name::String)
 
 Given a package name, return the repository url for that package by looking
-through the set of registries within `u`.
+through the set of registries within `uni`.  In the event that multiple
+unique repository URLs are found for a single package, print a warning, but
+arbitrarily choose the first as the true URL.
 """
-function get_package_repo(u::Universe, pkg_name::String)
-    registry_package_lookup(u, pkg_name) do pkg_path
-        pkg_project_toml_path = joinpath(pkg_path, "Package.toml")
-        return TOML.parsefile(pkg_project_toml_path)["repo"]
+function get_package_repo(uni::Universe, pkg_name::String; kwargs...)
+    repos = String[]
+    registry_package_lookup(uni, pkg_name, "Package.toml"; kwargs...) do d
+        push!(repos, d["repo"])
     end
+    repos = unique(repos)
+    if length(repos) > 1
+        @warn("Multiple package repositories found for '$(pkg_name)', arbitrarily using one!", repos)
+    end
+    if isempty(repos)
+        return nothing
+    end
+    return first(repos)
 end
 
-function get_package_versions(u::Universe, pkg_name::String)
-    registry_package_lookup(u, pkg_name) do pkg_path
-        pkg_versions_toml_path = joinpath(pkg_path, "Versions.toml")
-        return parse.(VersionNumber, collect(keys(TOML.parsefile(pkg_versions_toml_path))))
+"""
+    get_package_versions(uni::Universe, pkg_name::String)
+
+Given a package name, return the list of versions for that package by looking
+through the set of registries within `uni`.  Combines the set of all versions
+across all registries in `uni`.
+"""
+function get_package_versions(uni::Universe, pkg_name::String; kwargs...)
+    versions = VersionNumber[]
+    registry_package_lookup(uni, pkg_name, "Versions.toml"; kwargs...) do d
+        append!(versions, parse.(VersionNumber, collect(keys(d))))
     end
+    return versions
 end
 
 """
@@ -331,15 +354,6 @@ function prune!(u::Universe)
             end
         end
     end
-end
-
-@ensure_all_kwargs_consumed function update_and_checkout_registries!(u::Universe; kwargs...)
-    return @auto_extract_kwargs update_and_checkout_registries!(
-        u.registries,
-        u.depot_path;
-        branch_name = u.name === nothing ? nothing : "bb2/$(u.name)",
-        kwargs...,
-    )
 end
 
 function dev_bb2_packages(uni::Universe)
@@ -388,8 +402,12 @@ Reset a universe back to its pristine state.  Removes all previous registrations
 and clears the environment of the dev'ed JLLs.
 """
 function reset_timeline!(u::Universe)
-    # Reset registry
-    update_and_checkout_registries!(u; force=true)
+    # Update registries to the latest
+    u.registry_instances = update_registries!(u.depot_path, u.registries)
+
+    # Clear out our local registry and recreate it
+    rm(joinpath(u.depot_path, "registries", "BB2LocalRegistry"); force=true, recursive=true)
+    create_local_registry(u.depot_path)
 
     # Clear environment
     rm(joinpath(u.depot_path, "environments", "binarybuilder"); force=true, recursive=true)
@@ -547,7 +565,9 @@ function init_jll_repo(u::Universe, jll_name::String)
     #    -> Create a new repo, clone it, and push back up to it
     #  - The remote JLL repository does not exist and we are not deploying
     #    -> Create a local bare repo
-    jll_repo_url = get_package_repo(u, "$(jll_name)_jll")
+
+    # Note that we search for the "upstream" repo URL here only in our non-BB2Local registry
+    jll_repo_url = get_package_repo(u, "$(jll_name)_jll"; registries=u.registry_instances[2:end])
     jll_bare_repo = joinpath(source_download_cache(), "jll_clones", "$(jll_name)_jll")
 
     # This is the case if this was previously registered within this
@@ -588,6 +608,35 @@ function init_jll_repo(u::Universe, jll_name::String)
         end
     end
     return jll_repo_url, jll_bare_repo
+end
+
+const fetched_registries = Set{Base.UUID}()
+function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::String;
+                            cache_dir::String = joinpath(source_download_cache(), "registry_clones"),
+                            force::Bool = false)
+    reg_checkout_path = joinpath(uni.depot_path, "deploy_registries", reg.name)
+    if force
+        rm(reg_checkout_path; recursive=true, force=true)
+    end
+
+    reg_clone_path = joinpath(cache_dir, reg.name)
+    # Only hit the network if we haven't fetched this registry this session
+    if force || reg.uuid ∉ fetched_registries
+        clone!(reg.url, reg_clone_path)
+        push!(fetched_registries, reg.uuid)
+    end
+
+    if !isdir(reg_checkout_path)
+        # Check out the head commit to that path
+        head_commit = only(log(reg_clone_path; limit=1))
+        reg_branch_name = branch_name !== nothing ? branch_name : head_branch(reg_clone_path)
+        checkout!(reg_clone_path, reg_checkout_path, head_commit)
+
+        # Make sure we're on the right branch name
+        branch!(reg_checkout_path, reg_branch_name)
+    end
+
+    return reg_checkout_path
 end
 
 """
@@ -650,25 +699,41 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         Pkg.develop(;path=jll_path)
     end
 
-    # Finally, register it into the universe's registry
+    # Finally, register it into the universe's local BB2 registry
     reg_path = registry_path(u, first(u.registries))
     LocalRegistry.register(
         jll_path;
         registry=reg_path,
         commit=true,
         push=false,
-        repo=jll_repo_url,
+        # We add `.git` here to better match what is already in the General repository
+        repo="$(jll_repo_url).git",
     )
+
+    # Reload our cached RegistryInstance
+    u.registry_instances[1] = RegistryInstance(reg_path)
 
     # Push the registry branch up
     if u.deploy_org !== nothing
-        reg = first(u.registries)
-        reg_org_repo = "$(u.deploy_org)/$(reg.name)"
+        # If we're deploying, we actually need to re-register into our target registry (usually `General`)
+        # In order to do that, we also need to make a clone of General, so let's do that here:
+        target_reg = first(u.registries[2:end])
+        target_reg_path = get_registry_clone(u, target_reg, uni_branch_name)
+
+        LocalRegistry.register(
+            jll_path;
+            registry=target_reg_path,
+            commit=true,
+            push=false,
+            repo=jll_repo_url,
+        )
+
+        reg_org_repo = "$(u.deploy_org)/$(target_reg.name)"
         if !gh_repo_exists(reg_org_repo)
             gh_fork(reg.url, u.deploy_org)
         end
-        remote_url!(reg_path, u.deploy_org, "https://github.com/$(reg_org_repo)")
-        push!(reg_path, u.deploy_org; force=true)
+        remote_url!(target_reg_path, u.deploy_org, "https://github.com/$(reg_org_repo)")
+        push!(target_reg_path, u.deploy_org; force=true)
     end
 end
 
