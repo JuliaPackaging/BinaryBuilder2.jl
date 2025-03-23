@@ -5,7 +5,8 @@ using Pkg.Types: VersionSpec
 """
     HostToolsToolchain
 
-This toolchain contains a large number of useful host tools, such as 
+This toolchain contains a large number of useful host tools, such as make,
+ninja, perl, patchelf, tar, gzip, strace, libtree, git, and more!
 """
 struct HostToolsToolchain <: AbstractToolchain
     platform::Platform
