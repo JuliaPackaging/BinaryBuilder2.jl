@@ -11,21 +11,22 @@ build_tarballs(;
     ],
     script = raw"""
     cd $WORKSPACE/srcdir/zlib*
-    CONFIGURE_FLAGS=()
-    MAKE_FLAGS=()
-    if [[ ${target} == *mingw* ]]; then
-        CONFIGURE_FLAGS+=( --sharedlibdir=${bindir} )
-        MAKE_FLAGS+=( SHAREDLIB=libz.dll SHAREDLIBM=libz-1.dll SHAREDLIBV=libz-1.2.11.dll LDSHAREDLIBC= )
-    fi
+    mkcd build
+
+    $CMAKE -DCMAKE_INSTALL_PREFIX=${prefix} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DUNIX=true \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        ..
     
-    ./configure --prefix=${prefix} "${CONFIGURE_FLAGS[@]}"
-    make install -j${nproc} "${MAKE_FLAGS[@]}"
+    make install -j${nproc}
+    install_license ../README
     """,
     products = [
         LibraryProduct("libz", :libz),
     ],
-    host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
-    target_toolchains = [CToolchain(;vendor=:bootstrap)],
+    host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain(), CMakeToolchain()],
+    target_toolchains = [CToolchain(;vendor=:bootstrap), CMakeToolchain()],
     platforms = [
         Platform("x86_64", "linux"),
         Platform("i686", "linux"),
@@ -42,5 +43,8 @@ build_tarballs(;
 
         Platform("x86_64", "windows"),
         Platform("i686", "windows"),
+
+        Platform("x86_64", "macos"),
+        Platform("aarch64", "macos"),
     ],
 )
