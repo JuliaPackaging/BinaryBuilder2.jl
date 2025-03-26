@@ -840,6 +840,18 @@ function add_ccache_preamble(io, toolchain)
     end
 end
 
+function get_gcc_version(toolchain::CToolchain)
+    gcc_version = nothing
+    for name in ("GCC", "GCCBootstrap")
+        jll = get_jll(toolchain, string(name, "_jll"))
+        if jll !== nothing
+            gcc_version = jll.package.version
+            break
+        end
+    end
+    return gcc_version
+end
+
 
 """
     gcc_wrappers(toolchain::CToolchain, dir::String)
@@ -851,17 +863,9 @@ however if `toolchain.default_ctoolchain` is set, also generates the generic
 wrapper names `cc`, `gcc`, `c++`, etc...
 """
 function gcc_wrappers(toolchain::CToolchain, dir::String)
-    gcc_version = v"0.0.0"
-    for name in ("GCC", "GCCBootstrap")
-        jll = get_jll(toolchain, string(name, "_jll"))
-        if jll !== nothing
-            gcc_version = jll.package.version
-            break
-        end
-    end
-
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
+    gcc_version = something(get_gcc_version(toolchain), v"0")
 
     function _gcc_wrapper(io)
         add_microarchitectural_flags(io, toolchain)
@@ -1028,16 +1032,17 @@ end
 function binutils_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/$(get_simple_vendor(toolchain))"
+    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    gcc_version = get_gcc_version(toolchain)
 
-    # Most tools don't need anything fancy; just `compiler_wrapper()`
+    # These tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = [
-        "as",
-        "nm",
         "objcopy",
         "objdump",
     ]
     @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
     @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
+    # Apple has some extra simple tools
     if Sys.isapple(p)
         append!(simple_tools, [
             "dsymutil",
@@ -1045,17 +1050,18 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             "lipo",
             "otool",
         ])
+    else
+        # Everyone except for `macOS` has a `readelf` command.
+        append!(simple_tools, [
+            "readelf",
+        ])
     end
+
+    # Windows has some extra simple tools
     if Sys.iswindows(p)
         append!(simple_tools, [
             "windres",
             "winmc",
-        ])
-    end
-    if !Sys.isapple(p)
-        # Amusingly, windows binutils does have a `readelf`.
-        append!(simple_tools, [
-            "readelf",
         ])
     end
 
@@ -1091,6 +1097,25 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             NONDETERMINISTIC=1
         }
         """)
+    end
+
+    # Some tools can load an LTO plugin.  We make sure this happens by passing in
+    # `--plugin` automatically if the plugin exists.  This is not necessary on newer
+    # binutils builds which properly install a symlink in `lib/bfd_plugins/`, but
+    # doesn't hurt anything, so we just always do it.
+    function lto_plugin_args(io::IO)
+        if !isa(gcc_version, VersionNumber)
+            return
+        end
+
+        # We have the version glob here because our patch version may not actually
+        # correspond to the true patch version.  It would be nice to inspect the
+        # JLL.toml for the GCC build and determine the true `src_version here,
+        # but that's an incredibly low-priority TODO.
+        plugin_path = "`compgen -G \"$(toolchain_prefix)/libexec/gcc/$(gcc_triplet)/$(gcc_version.major).$(gcc_version.minor)*/liblto_plugin.so\"`"
+        bash_if_statement(io, "-f $(plugin_path)") do io
+            append_flags(io, :POST, "--plugin=$(plugin_path)")
+        end
     end
 
     # `ar` and `ranlib` have special treatment due to determinism requirements.
@@ -1148,6 +1173,9 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             fi
         fi
         """)
+
+        # If we've got a `liblto_plugin`, load it in:
+        lto_plugin_args(io)
     end
 
     # Multiple tools (`ranlib`, `strip`) have a `-U` or `-D` option that switches them
@@ -1169,6 +1197,14 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     function _ranlib_wrapper(io)
         _simple_U_D_determinism(io)
+
+        # ranlib can take in `--plugin`
+        lto_plugin_args(io)
+    end
+
+    function _nm_wrapper(io)
+        # nm can take in `--plugin`
+        lto_plugin_args(io)
     end
 
     function _strip_wrapper_pre(io)
@@ -1230,14 +1266,31 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         """)
     end
 
+    function _as_wrapper(io)
+        if Sys.isapple(p)
+            # Warn if someone has asked for timestamps
+            flagmatch(io, [!flag"-arch"]) do io
+                append_flags(io, :PRE, ["-arch", arch(p)])
+            end
+        end
+
+        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
+        add_ccache_preamble(io, toolchain)
+    end
+
     # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
-    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
     for tool in simple_tools
         make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)"; toolchain_prefix)
     end
 
     # `ld` is a simple tool, except that it can be wrapped with `ccache`:
     make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix)
+
+    # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
+    make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)
+
+    # `nm` is a simple tool, except that it can take in `--plugin` for LTO
+    make_tool_wrappers(toolchain, dir, "nm", "$(gcc_triplet)-nm"; wrapper=_nm_wrapper, toolchain_prefix)
 
     # `strip` needs complicated option parsing if we're on macOS
     make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)

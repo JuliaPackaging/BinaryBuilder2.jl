@@ -33,6 +33,32 @@ function indent(x::String, amount::Int = 4)
     return join([string(" "^amount, l) for l in split(strip(x), '\n')], "\n")
 end
 
+function bash_if_statement(f::Function, io::IO, conditions::Vector{String})
+    # First, run the given callback; if nothing is generated, don't emit anything.
+    # This dodges the issue that `bash` doesn't like empty `if` statements. :(
+    sub_io = IOBuffer()
+    f(sub_io)
+    sub_str = String(take!(sub_io))
+    if isempty(sub_str)
+        return
+    end
+
+    print(io, "if ")
+    first = true
+    for condition in conditions
+        if !first
+            print(io, " && \\\n    ")
+        end
+        print(io, "[[ ", condition, " ]]")
+        first = false
+    end
+    println(io, "; then")
+    println(io, indent(sub_str))
+    println(io, "fi")
+end
+bash_if_statement(f::Function, io::IO, condition::String) = bash_if_statement(f, io, [condition])
+
+
 
 """
     flagmatch(f::Function, flags::Vector{FlagString})
@@ -56,29 +82,22 @@ Multiple flags passed into `flagmatch()` result in multiple conditionals,
 combined via the `&&` bash operator.
 """
 function flagmatch(f::Function, io::IO, flags::Vector{FlagString}; match_target::String = "\${ARGS[@]}")
-    # First, run the given callback; if nothing is generated, don't emit anything.
-    # This dodges the issue that `bash` doesn't like empty `if` statements. :(
-    sub_io = IOBuffer()
-    f(sub_io)
-    sub_str = String(take!(sub_io))
-
-    if !isempty(sub_str)
-        print(io, "if ")
-        first = true
-        for flag in flags
-            if !first
-                print(io, " && \\\n   ")
-            end
-            negation = flag.positive ? "" : "!"
-            comparison = flag.isregex ? "=~" : "=="
-            needle = flag.isregex ? "[[:space:]]$(flag.s)[[:space:]]" : "*' $(flag.s) '*"
-            print(io, "[[ $(negation) \" $(match_target) \" $(comparison) $(needle) ]]")
-            first = false
-        end
-        println(io, "; then")
-        println(io, indent(sub_str))
-        println(io, "fi")
+    function make_condition(flag::FlagString, match_target::String)
+        negation = flag.positive ? "" : "! "
+        comparison = flag.isregex ? "=~" : "=="
+        needle = flag.isregex ? "[[:space:]]$(flag.s)[[:space:]]" : "*' $(flag.s) '*"
+        return string(
+            negation,
+            "\" ",
+            match_target,
+            " \" ",
+            comparison,
+            " ",
+            needle
+        )
     end
+    conditions = make_condition.(flags, (match_target,))
+    return bash_if_statement(f, io, conditions)
 end
 
 """
