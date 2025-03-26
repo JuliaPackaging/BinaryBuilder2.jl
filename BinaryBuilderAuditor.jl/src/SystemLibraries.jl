@@ -107,7 +107,10 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "systemconfiguration",
             "videotoolbox",
         ]
-        return lowercase(soname) ∈ ignore_libs
+        csl_libs = [
+            "libgcc_s.1.dylib",
+        ]
+        return lowercase(soname) ∈ vcat(ignore_libs, csl_libs)
     elseif os(platform) == "windows"
         runtime_libs = [
             # Core runtime libs
