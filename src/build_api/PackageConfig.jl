@@ -275,22 +275,39 @@ function package!(config::PackageConfig)
         end
     end
 
-    builds = vcat(
-        ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
-    )
-    jll = JLLInfo(;
-        name = config.name,
-        version = config.version,
-        builds,
-        julia_compat = config.julia_compat,
-    )
+    # Merge all our timer outputs into a single, final, timer output.
+    to = TimerOutput()
+    for (_, extractions) in config.named_extractions
+        for extraction in extractions
+            merge!(to, extraction.config.to)
+        end
+    end
 
-    # Register this JLL out into our universe
-    register_jll!(meta.universe, jll; verbose=meta.verbose)
+    @timeit to "package" begin
+        builds = vcat(
+            ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+        )
+        jll = JLLInfo(;
+            name = config.name,
+            version = config.version,
+            builds,
+            julia_compat = config.julia_compat,
+        )
+
+        @timeit to "register_jll!" begin
+            # Register this JLL out into our universe
+            register_jll!(meta.universe, jll; verbose=meta.verbose)
+        end
+    end
+
+    # Finalize the timer by stopping the clock, and inserting complements
+    TimerOutputs.disable_timer!(to)
+    TimerOutputs.complement!(to)
 
     result = PackageResult(
         config,
         :success,
+        to,
     )
     meta.packagings[config] = result
     return result

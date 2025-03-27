@@ -7,17 +7,22 @@ struct PackageResult
     # Overall status of the packaging.  One of :successful, :failed or :skipped
     status::Symbol
 
+    # Final TimerOutput object
+    to::TimerOutput
+
     # If we deployed this somewhere, record where
     deploy_url::Union{Nothing,String}
     deploy_rev::Union{Nothing,String}
 
     function PackageResult(config::PackageConfig,
                            status::Symbol,
+                           to::TimerOutput,
                            deploy_url::Union{Nothing,String} = nothing,
                            deploy_rev::Union{Nothing,String} = nothing)
         return new(
             config,
             status,
+            to,
             deploy_url,
             deploy_rev,
         )
@@ -29,6 +34,7 @@ function PackageResult_skipped(config::PackageConfig)
     return PackageResult(
         config,
         :skipped,
+        TimerOutput(),
     )
 end
 
