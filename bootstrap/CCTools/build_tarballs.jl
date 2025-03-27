@@ -168,6 +168,7 @@ build_tarballs(;
     products = [
         ExecutableProduct(raw"${target}-ld", :ld),
         ExecutableProduct(raw"${target}-lipo", :lipo),
+        ExecutableProduct(raw"${target}-install_name_tool", :install_name_tool),
     ],
     build_spec_generator = cctools_build_spec_generator,
     meta,
