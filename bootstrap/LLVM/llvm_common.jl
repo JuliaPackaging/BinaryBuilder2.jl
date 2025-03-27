@@ -24,12 +24,14 @@ end
 # BuildSpec generator for Clang/libLLVM
 function clang_build_spec_generator(;is_bootstrap::Bool = false)
     vendor = is_bootstrap ? :gcc_bootstrap : :clang_bootstrap
+    compiler_runtime = :libgcc
+
     return (host, platform) -> begin
         specs = [
             BuildTargetSpec(
                 "build",
                 CrossPlatform(host => host),
-                [CToolchain(;vendor), CMakeToolchain(), HostToolsToolchain()],
+                [CToolchain(;vendor, compiler_runtime), CMakeToolchain(), HostToolsToolchain()],
                 [
                     JLLSource("Python_jll"),
                     JLLSource(
@@ -46,7 +48,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
             BuildTargetSpec(
                 "host",
                 CrossPlatform(host => platform.host),
-                [CToolchain(;vendor), CMakeToolchain()],
+                [CToolchain(;vendor, compiler_runtime), CMakeToolchain()],
                 [
                     # Disable this for now
                     #=
