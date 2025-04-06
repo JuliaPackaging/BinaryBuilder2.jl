@@ -1045,7 +1045,6 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     # Apple has some extra simple tools
     if Sys.isapple(p)
         append!(simple_tools, [
-            "dsymutil",
             "install_name_tool",
             "lipo",
             "otool",
@@ -1311,6 +1310,11 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
         end
         make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper, toolchain_prefix)
+    end
+
+    if Sys.isapple(p)
+        # dsymutil is just called `dsymutil`
+        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix)
     end
 end
 
