@@ -79,6 +79,9 @@ struct HostToolsToolchain <: AbstractToolchain
             "XZ_jll",
             "Zlib_jll",
 
+            # Editors
+            "Vim_jll",
+
             # Misc. tools
             "strace_jll",
             "libtree_jll",
@@ -221,6 +224,20 @@ function toolchain_sources(toolchain::HostToolsToolchain)
                 export CURL_CA_BUNDLE=\"$(toolchain_prefix)/etc/certs/ca-certificates.crt\"
                 """)
             end
+        end
+        if any(jll.package.name == "Vim_jll" for jll in toolchain.deps)
+            # Teach `vim` how to find `defaults.vim`
+            for name in ("vim", "vimdiff", "vimtutor")
+                compiler_wrapper(joinpath(out_dir, name), "$(toolchain_prefix)/bin/$(name)") do io
+                    println(io, """
+                    # Ensure vim tools can find their data files
+                    export VIMRUNTIME=\"\$(compgen -G \"$(toolchain_prefix)/share/vim/*/\")\"
+                    """)
+                end
+            end
+
+            # Also create a `vi` symlink
+            symlink("vim", joinpath(out_dir, "vi"))
         end
     end)
 
