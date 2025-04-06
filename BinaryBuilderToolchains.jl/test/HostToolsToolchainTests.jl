@@ -85,3 +85,5 @@ const verbose = false
     @test free_curl.package.version.major >= julia_v1_11_libcurl_version.major
     @test free_curl.package.version.major > julia_v1_11_libcurl_version.minor
 end
+
+@warn("TODO: Write tests to check that `libstdc++` overriding is working!")

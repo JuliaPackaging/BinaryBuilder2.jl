@@ -5,8 +5,16 @@ using Pkg.Types: VersionSpec
 """
     HostToolsToolchain
 
-This toolchain contains a large number of useful host tools, such as make,
-ninja, perl, patchelf, tar, gzip, strace, libtree, git, and more!
+This toolchain contains a large number of useful host tools, such as
+`ninja`, `file`, `ccache`, `gawk`, `patch`, `vim`, `curl`, etc...
+Basically anything that doesn't care about the target triplet gets
+put into here.
+
+This toolchain also provides the files and environment variables to
+override the compiler support libraries (such as `libstdc++.so`)
+within a build environment such that it can run the latest and
+greatest binaries built from e.g. GCC 14.  It does this by setting
+`LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`/`PATH`.
 """
 struct HostToolsToolchain <: AbstractToolchain
     platform::Platform
@@ -74,6 +82,9 @@ struct HostToolsToolchain <: AbstractToolchain
             # Misc. tools
             "strace_jll",
             "libtree_jll",
+
+            # Runtime libraries (e.g. libstdc++.so)
+            "CompilerSupportLibraries_jll",
         ]
 
         deps = AbstractSource[]
@@ -94,6 +105,8 @@ struct HostToolsToolchain <: AbstractToolchain
         end
 
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
+        # Explicitly set `julia_version` to `nothing` unless instructed otherwise
+        # via `platform`.
         jll_deps = JLLSource[d for d in deps if isa(d, JLLSource)]
         julia_version = nothing
         if haskey(tags(platform), "julia_version")
@@ -236,6 +249,19 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
 
     # Use the bundled CA root file
     env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")
+
+    # Apply LD_LIBRARY_PATH for CSL
+    if Sys.iswindows()
+        varname = "PATH"
+        pathsep = ";"
+    elseif Sys.isapple()
+        varname = "DYLD_FALLBACK_LIBRARY_PATH"
+        pathsep = ":"
+    else
+        varname = "LD_LIBRARY_PATH"
+        pathsep = ":"
+    end
+    insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname, pathsep)
     return env
 end
 
@@ -244,6 +270,7 @@ function platform(toolchain::HostToolsToolchain)
 end
 
 function supported_platforms(::Type{HostToolsToolchain}; experimental::Bool = false)
+    # Theoretically we can support way more than this, but let's just be conservative.
     return [
         Platform("x86_64", "linux"),
         Platform("aarch64", "linux"),
