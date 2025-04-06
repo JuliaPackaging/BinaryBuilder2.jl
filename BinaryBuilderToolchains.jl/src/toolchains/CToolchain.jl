@@ -416,20 +416,38 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # If we're asking for a bootstrap toolchain, give just that and nothing else,
     # which is why we `return` from within here.
     if vendor == :gcc_bootstrap
-        push!(deps, JLLSource(
-            "GCCBootstrap_jll",
-            platform;
-            repo=Pkg.Types.GitRepo(
-                # When we push up a new build of `GCCBootstrap_jll`, we always built it
-                # for the host we're actually doing the bootstrap from.  Because of this,
-                # we only get a single host architecture at a time.  That's fine, but
-                # it means that we need to choose branches named by the host platform.
-                rev="bb2/GCCBootstrap-$(triplet(platform.host))",
-                source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
-            ),
-            version=v"9.4.0",
-            target="gcc",
-        ))
+        if Sys.isapple(platform.target)
+            append!(deps, [
+                JLLSource(
+                    "GCCBootstrapMacOS_jll",
+                    platform;
+                    uuid = Base.UUID("117daf6b-c727-5bed-b063-6a70e57c2a0e"),
+                    repo=Pkg.Types.GitRepo(
+                        rev="bb2/GCCBootstrap-$(triplet(platform.host))",
+                        source="https://github.com/staticfloat/GCCBootstrapMacOS_jll.jl"
+                    ),
+                    version=v"14.2.0",
+                    target="gcc",
+                ),
+                binutils_jlls...,
+                libc_jlls...,
+            ])
+        else
+            push!(deps, JLLSource(
+                "GCCBootstrap_jll",
+                platform;
+                repo=Pkg.Types.GitRepo(
+                    # When we push up a new build of `GCCBootstrap_jll`, we always built it
+                    # for the host we're actually doing the bootstrap from.  Because of this,
+                    # we only get a single host architecture at a time.  That's fine, but
+                    # it means that we need to choose branches named by the host platform.
+                    rev="bb2/GCCBootstrap-$(triplet(platform.host))",
+                    source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
+                ),
+                version=v"9.4.0",
+                target="gcc",
+            ))
+        end
         return deps
     end
 
@@ -572,7 +590,7 @@ function toolchain_sources(toolchain::CToolchain)
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
     # our compiler wrappers!
     push!(sources, GeneratedSource(;target="wrappers") do out_dir
-        if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll")
+        if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapMacOS_jll")
             gcc_wrappers(toolchain, out_dir)
         end
         if installing_jll("Clang_jll") || installing_jll("LLVMBootstrap_Clang_jll")
