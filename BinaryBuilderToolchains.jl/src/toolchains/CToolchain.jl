@@ -411,6 +411,34 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=joinpath(sysroot_path, "usr"),
         ),
     ]
+
+    # These JLLs get installed not only when we're actually asking for
+    # `:clang_bootstrap`, but also when we're asking for `:gcc_bootstrap`
+    # on macOS, because `gcc` -> `as` -> `clang -intergrated-as`.  :(
+    clang_bootstrap_jlls = [
+        JLLSource(
+            "LLVMBootstrap_Clang_jll",
+            platform;
+            uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
+            ),
+            version=v"17.0.0",
+            target="clang",
+        ),
+        JLLSource(
+            "LLVMBootstrap_libLLVM_jll",
+            platform;
+            uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
+            ),
+            version=v"17.0.0",
+            target="clang",
+        ),
+    ]
     
 
     # If we're asking for a bootstrap toolchain, give just that and nothing else,
@@ -429,6 +457,10 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     version=v"14.2.0",
                     target="gcc",
                 ),
+
+                # binutils actually needs `clang` to act as assembler...
+                clang_bootstrap_jlls...,
+
                 binutils_jlls...,
                 libc_jlls...,
             ])
@@ -518,28 +550,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             ])
         else
             append!(deps, [
-                JLLSource(
-                    "LLVMBootstrap_Clang_jll",
-                    platform;
-                    uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
-                    repo=Pkg.Types.GitRepo(
-                        rev="main",
-                        source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
-                    ),
-                    version=v"17.0.0",
-                    target="clang",
-                ),
-                JLLSource(
-                    "LLVMBootstrap_libLLVM_jll",
-                    platform;
-                    uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
-                    repo=Pkg.Types.GitRepo(
-                        rev="main",
-                        source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
-                    ),
-                    version=v"17.0.0",
-                    target="clang",
-                ),
+                clang_bootstrap_jlls...,
                 binutils_jlls...,
             ])
         end
@@ -740,7 +751,9 @@ the toolchain is locked to.  For more details, see `expand_microarchitectures()`
 function add_microarchitectural_flags(io, toolchain)
     # Fail out noisily if `-march` is set, but we're locking microarchitectures.
     if toolchain.lock_microarchitecture
-        flagmatch(io, [flag"-march=.*"r]) do io
+        # Don't do the `-march` check if we're being invoked with `-integrated-as`
+        # which only happens when `as` invokes `clang`, targeting macOS
+        flagmatch(io, [!flag"-integrated-as", flag"-march=.*"r]) do io
             println(io, """
             echo "BinaryBuilder: Cannot force an architecture via -march (check lock_microarchitecture setting)" >&2
             exit 1
@@ -1312,15 +1325,23 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     # `strip` needs complicated option parsing if we're on macOS
     make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)
 
+
+    # Used by llvm tools like `llvm-ar` if we're on macOS
+    if Sys.isapple(p)
+        llvm_toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
+    else
+        llvm_toolchain_prefix = toolchain_prefix
+    end
+
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
-    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix=llvm_toolchain_prefix)
 
     ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
-    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix=llvm_toolchain_prefix)
 
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
-    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix=llvm_toolchain_prefix)
 
     # dlltool needs some determinism fixes as well
     if Sys.iswindows(p)
