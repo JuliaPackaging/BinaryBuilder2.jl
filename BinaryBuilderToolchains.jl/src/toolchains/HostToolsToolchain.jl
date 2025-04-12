@@ -227,7 +227,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
         end
         if any(jll.package.name == "Vim_jll" for jll in toolchain.deps)
             # Teach `vim` how to find `defaults.vim`
-            for name in ("vim", "vimdiff", "vimtutor")
+            for name in ("vim", "vimdiff")
                 compiler_wrapper(joinpath(out_dir, name), "$(toolchain_prefix)/bin/$(name)") do io
                     println(io, """
                     # Ensure vim tools can find their data files

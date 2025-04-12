@@ -5,6 +5,7 @@ using BinaryBuilderToolchains: path_appending_merge
 const verbose = false
 
 using BinaryBuilderToolchains: get_vendor
+const htt_toolchain = HostToolsToolchain(BBHostPlatform())
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
@@ -29,7 +30,7 @@ using BinaryBuilderToolchains: get_vendor
             # Download the toolchain, make sure it runs
             println()
             @info("CToolchain tests", use_ccache, config...)
-            with_toolchains([toolchain, HostToolsToolchain(BBHostPlatform())]) do prefix, env
+            with_toolchains([toolchain, htt_toolchain]) do prefix, env
                 env["CCACHE_DIR"] = ccache_dir
                 # We build with _all_ of the C++ stdlib choices here, so we need to ensure that
                 # we have the appropriate libraries on our `LD_LIBRARY_PATH` for testing, so
@@ -45,14 +46,14 @@ using BinaryBuilderToolchains: get_vendor
     # Do the same, but with `GCCBootstrap`
     toolchain = CToolchain(platform; vendor=:gcc_bootstrap, use_ccache=false)
     @info("CToolchain tests", vendor=:gcc_bootstrap, use_ccache=false)
-    with_toolchains([toolchain]) do prefix, env
+    with_toolchains([toolchain, htt_toolchain]) do prefix, env
         toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
     end
 
     # Do the same again, but with `LLVMBootstrap_Clang`
     toolchain = CToolchain(platform; vendor=:clang_bootstrap, use_ccache=false)
     @info("CToolchain tests", vendor=:clang_bootstrap, use_ccache=false)
-    with_toolchains([toolchain]) do prefix, env
+    with_toolchains([toolchain, htt_toolchain]) do prefix, env
         toolchain_tests(prefix, env, platform, "CToolchain"; do_cxxabi_tests=true)
     end
 
@@ -83,15 +84,12 @@ using BinaryBuilderToolchains: get_vendor
                 use_ccache=false,
             )
 
-            # We'll need things like `make` etc...
-            hosttools_toolchain = HostToolsToolchain(platform)
-
             # Use each toolchain to build a `libfoo` with a different version embedded within:
             host_version = 1
             target_version = 2
             for (toolchains, install_prefix, cc, libfoo_version) in (
-                    ([host_ctoolchain,   hosttools_toolchain], host_prefix,   "\${HOST_CC}", host_version),
-                    ([target_ctoolchain, hosttools_toolchain], target_prefix, "\${CC}",      target_version))
+                    ([host_ctoolchain,   htt_toolchain], host_prefix,   "\${HOST_CC}", host_version),
+                    ([target_ctoolchain, htt_toolchain], target_prefix, "\${CC}",      target_version))
                 with_toolchains(toolchains) do prefix, env
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation", "libfoo")) do
                         @test success(setenv(Cmd(["/bin/bash", "-c", "make install CC=$(cc) prefix=$(install_prefix) VERSION=$(libfoo_version)"]), env))
@@ -105,7 +103,7 @@ using BinaryBuilderToolchains: get_vendor
 
             # Next, within a single shell with _both_ toolchains installed, verify that the
             # include path searched by the preprocessor and linker is correct:
-            with_toolchains([host_ctoolchain, hosttools_toolchain]) do _, host_env
+            with_toolchains([host_ctoolchain, htt_toolchain]) do _, host_env
                 with_toolchains([target_ctoolchain]) do _, target_env
                     env = path_appending_merge(host_env, target_env)
                     cd(joinpath(@__DIR__, "testsuite", "CToolchainHostIsolation")) do
@@ -139,12 +137,12 @@ using BinaryBuilderToolchains: get_vendor
         target_platform = CrossPlatform(BBHostPlatform() => target)
         for vendor in (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
             toolchain = CToolchain(target_platform; vendor, use_ccache=false)
-            with_toolchains([toolchain, HostToolsToolchain(target_platform)]) do prefix, env
+            with_toolchains([toolchain, htt_toolchain]) do prefix, env
                 @testset "$(triplet(target)) - $(vendor)" begin
                     # First, run `$CC --version` for everything
                     for tool_name in ("CC", "LD", "AS")
                         @testset "$(tool_name)" begin
-                            p, output = capture_output(setenv(`bash -c "\$$(tool_name) --version"`, env))
+                            p, output = capture_output(setenv(`bash -c "\$$(tool_name) --version || \$$(tool_name) -v"`, env))
                             if !success(p)
                                 println(output)
                             end
@@ -167,7 +165,7 @@ using BinaryBuilderToolchains: get_vendor
 
     # Ensure that `strip` works for macOS without needing to resign
     macos_cp = CrossPlatform(BBHostPlatform() => Platform("aarch64", "macos"))
-    toolchains = [HostToolsToolchain(macos_cp), CToolchain(macos_cp)]
+    toolchains = [CToolchain(macos_cp), htt_toolchain]
     with_toolchains(toolchains) do prefix, env
         cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
             @test success(setenv(Cmd(["/bin/bash", "-c", "make clean; make check"]), env))
