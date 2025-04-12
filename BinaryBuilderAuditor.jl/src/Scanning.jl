@@ -119,6 +119,12 @@ function scan_files(prefix::String, platform::AbstractPlatform,
             end
             soname = basename(rel_path)
         end
+
+        # If this is an apple platform, and the dylib ID is something like
+        # `@rpath/libfoo.dylib`, just keep track of `libfoo.dylib`.
+        if Sys.isapple(platform) && startswith(soname, "@")
+            soname = basename(soname)
+        end
         soname_locator[soname] = rel_path
     end
 
