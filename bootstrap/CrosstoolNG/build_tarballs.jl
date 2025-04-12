@@ -5,10 +5,10 @@ host_linux = Platform(arch(HostPlatform()), "linux")
 
 build_tarballs(;
     src_name = "CrosstoolNG",
-    src_version = v"1.25.0",
+    src_version = v"1.27.0",
     sources = [
-        ArchiveSource("https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.25.0/crosstool-ng-1.25.0.tar.xz",
-                      "68162f342243cd4189ed7c1f4e3bb1302caa3f2cbbf8331879bd01fe06c60cd3"),
+        ArchiveSource("https://github.com/crosstool-ng/crosstool-ng/releases/download/crosstool-ng-1.27.0/crosstool-ng-1.27.0.tar.xz",
+                      "0506ab98fa0ad6d263a555feeb2c7fff9bc24a434635d4b0cdff9137fe5b4477"),
         DirectorySource(joinpath(@__DIR__, "./bundled")),
     ],
     target_dependencies = [
@@ -57,6 +57,7 @@ build_tarballs(;
     # Build crosstool-ng
     # The extra CFLAGS here are because the `kconfig/` directory of `crosstool-ng` doesn't
     # pay attention to the actual location of `ncurses`, it just directly looks for `panel.h`
+    ./bootstrap
     CFLAGS="-I${includedir}/ncursesw" ./configure --prefix=${prefix}
     make -j${nproc} V=1
     make -j${nproc} install
