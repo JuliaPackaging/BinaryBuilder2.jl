@@ -6,8 +6,8 @@ set -euo pipefail
 cat <<-EOF
 CT_CONFIG_VERSION=4
 
-# Always build GCC v9.X
-CT_GCC_V_9=y
+# Always build GCC v14.X
+CT_GCC_V_14=y
 
 # Disable progress bar, it fills up our logs:
 CT_LOG_PROGRESS_BAR=n
@@ -127,7 +127,7 @@ case "${target}" in
     *mingw*)
         echo "CT_LIBC_MINGW_W64=y"
         echo "CT_THREADS_POSIX=y"
-        echo "CT_MINGW_W64_V_V9_0=y"
+        echo "CT_MINGW_W64_V_V12_0=y"
         ;;
     *)
         echo "ERROR: Unhandled libc '${target}'" >&2
