@@ -31,22 +31,6 @@ cd ${WORKSPACE}/srcdir/glibc-*/
 # Install license
 install_license COPYING*
 
-# Some things need /lib64, others just need /lib
-case ${target} in
-    x86_64*)
-        lib64=lib64
-        ;;
-    aarch64*)
-        lib64=lib64
-        ;;
-    ppc64*)
-        lib64=lib64
-        ;;
-    *)
-        lib64=lib
-        ;;
-esac
-
 # Update configure scripts to work well with `musl`
 update_configure_scripts
 
