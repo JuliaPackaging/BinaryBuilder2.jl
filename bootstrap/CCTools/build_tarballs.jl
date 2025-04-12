@@ -144,9 +144,15 @@ build_tarballs(;
     sources = [
         GitSource("https://github.com/tpoechtrager/cctools-port",
                   "2a3e1c2a6ff54a30f898b70cfb9ba1692a55fad7"),
+        DirectorySource("./patches"; target="patches"),
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/cctools-port/cctools
+
+    for patch in ${WORKSPACE}/srcdir/patches/*.patch; do
+        atomic_patch -p2 ${patch}
+    done
+
     install_license ./APPLE_LICENSE
     install_license ./COPYING
     
