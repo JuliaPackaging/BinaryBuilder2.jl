@@ -1302,6 +1302,9 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
             flagmatch(io, [!flag"-arch"]) do io
                 append_flags(io, :PRE, ["-arch", arch(p)])
             end
+
+            # Tell the `as` executable how to find the corresponding clang
+            println(io, "export CCTOOLS_CLANG_AS_EXECUTABLE='$(gcc_triplet)-clang'")
         end
 
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
@@ -1343,17 +1346,17 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
     make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix=llvm_toolchain_prefix)
 
+    if Sys.isapple(p)
+        # dsymutil is just called `dsymutil`
+        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix=llvm_toolchain_prefix)
+    end
+
     # dlltool needs some determinism fixes as well
     if Sys.iswindows(p)
         function _dlltool_wrapper(io)
             append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
         end
         make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper, toolchain_prefix)
-    end
-
-    if Sys.isapple(p)
-        # dsymutil is just called `dsymutil`
-        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix)
     end
 end
 
