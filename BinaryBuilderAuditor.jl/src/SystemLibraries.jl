@@ -35,6 +35,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libpthread.so.0",
             "libresolv.so.2",
             "libutil.so.1",
+            "libatomic.so.1",
         ]
 
         # It's arguable these should require `CompilerSupportLibraries_jll`
