@@ -297,8 +297,7 @@ function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String 
     # Ensure the `config` has been prepared
     prepare(config; verbose)
 
-    # This is the temporary directory into which we will unpack/deploy sources,
-    # run the actual build itself, etc...
+    # Assemble mounts into this dictionary
     mounts = Dict{String,MountInfo}(
         "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
         "/var/cache/ccache" => MountInfo(ccache_cache(), MountType.ReadWrite),
