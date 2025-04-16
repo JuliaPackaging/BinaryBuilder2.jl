@@ -108,21 +108,21 @@ const gcc_version_sources = Dict{VersionNumber,Vector}(
         ArchiveSource("https://mirrors.kernel.org/gnu/gmp/gmp-6.1.2.tar.xz",
                       "87b565e89a9a684fe4ebeeddb8399dce2599f9c9049854ca8c0dfbdea0e21912"),
     ],
-    v"14.1.0" => [
-        ArchiveSource("https://mirrors.kernel.org/gnu/gcc/gcc-14.1.0/gcc-14.1.0.tar.xz",
-                      "e283c654987afe3de9d8080bc0bd79534b5ca0d681a73a11ff2b5d3767426840"),
+    v"14.2.0" => [
+        ArchiveSource("https://mirrors.kernel.org/gnu/gcc/gcc-14.2.0/gcc-14.2.0.tar.xz",
+                      "a7b39bc69cbf9e25826c5a60ab26477001f7c08d85cec04bc0e29cabed6f3cc9"),
         ArchiveSource("https://mirrors.kernel.org/gnu/mpfr/mpfr-4.1.0.tar.xz",
                       "0c98a3f1732ff6ca4ea690552079da9c597872d30e96ec28414ee23c95558a7f",
-                      target="gcc-14.1.0"),
+                      target="gcc-14.2.0"),
         ArchiveSource("https://mirrors.kernel.org/gnu/mpc/mpc-1.2.1.tar.gz",
                       "17503d2c395dfcf106b622dc142683c1199431d095367c6aacba6eec30340459",
-                      target="gcc-14.1.0"),
+                      target="gcc-14.2.0"),
         ArchiveSource("https://gcc.gnu.org/pub/gcc/infrastructure/isl-0.24.tar.bz2",
                       "fcf78dd9656c10eb8cf9fbd5f59a0b6b01386205fe1934b3b287a0a1898145c0",
-                      target="gcc-14.1.0"),
+                      target="gcc-14.2.0"),
         ArchiveSource("https://mirrors.kernel.org/gnu/gmp/gmp-6.2.1.tar.xz",
                       "fd4829912cddd12f84181c3451cc752be224643e87fac497b69edddadc49b4f2",
-                      target="gcc-14.1.0"),
+                      target="gcc-14.2.0"),
     ],
 )
 
@@ -130,12 +130,9 @@ const gcc_version_sources = Dict{VersionNumber,Vector}(
 script = raw"""
 cd ${WORKSPACE}/srcdir
 
-# Move all `target` dependencies over to the `host` prefix,
-# because we need those deps available in the `host` prefix
-
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
-if [[ "${target}" != *mingw* ]]; then
+if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]]; then
     lib64="lib${target_nbits%32}"
 else
     lib64="lib"
@@ -150,6 +147,14 @@ done
 
 # Initialize GCC_CONF_ARGS
 GCC_CONF_ARGS=()
+
+## If we're doing a bootstrapping build (GCC does not, GCCBootstrapMacOS does)
+# add in the appropriate configure arguments:
+if [[ "${GCC_ENABLE_BOOTSTRAP:-false}" == "true" ]]; then
+    GCC_CONF_ARGS+=( --enable-bootstrap )
+else
+    GCC_CONF_ARGS+=( --disable-bootstrap )
+fi
 
 ## Architecture-dependent arguments
 # Choose a default arch, and on arm*hf targets, pass `--with-float=hard` explicitly
@@ -194,6 +199,16 @@ elif [[ "${target}" == *-darwin* ]]; then
     # that are available only starting in later macOS versions such as `clock_gettime` or `mkostemp`
     export ac_cv_func_clock_gettime=no
     export ac_cv_func_mkostemp=no
+
+    # Force GCC to use its own libiconv, don't use Apple's
+    ICONV_PATHS=(
+        /opt/target-*
+        ${target_prefix}
+    )
+    if [[ "${host}" == *-darwin* ]]; then
+        ICONV_PATHS+=( /opt/host-* )
+    fi
+    find ${ICONV_PATHS[@]} -name iconv.h -o -name libiconv\* | xargs rm -fv
 fi
 
 # Get rid of version numbers at the end of GCC deps
@@ -228,8 +243,11 @@ for TOOL in CC CPP CXX AS AR NM LD RANLIB; do
     export ${TOOL}_FOR_TARGET=${!TARGET_NAME}
 
     # These target tool autodetections do not work
-    export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
+    #export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
 done
+
+# libcc1 fails with an error about `-rdynamic` unless we defien this
+export gcc_cv_nm="${NM_FOR_TARGET}"
 
 # Make sure the tools that GCC itself wants to use ("ld", "as", "dysmutil") are available
 # not just as "host-ld" or "host-as", etc... Otherwise, the `collect2` we generate looks
@@ -252,7 +270,6 @@ $WORKSPACE/srcdir/gcc-*/configure \
     --target="${target}" \
     --disable-multilib \
     --disable-werror \
-    --disable-bootstrap \
     --enable-threads=posix \
     --enable-languages=c,c++ \
     --with-build-sysroot="${target_prefix}/${target}" \
@@ -275,6 +292,16 @@ install_license ${WORKSPACE}/srcdir/gcc-*/COPYING*
 """
 
 function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatform)
+    gcc_crt_object_names = ["libgcc.a"]
+    if Sys.isapple(platform.target)
+        append!(gcc_crt_object_names, ["crttms.o", "crt3.o"])
+    else
+        append!(gcc_crt_object_names, ["crtbegin.o", "crtend.o"])
+    end
+    gcc_crt_object_products = [
+        FileProduct([string(raw"lib/gcc/${target}/${gcc_version}/", name)],
+                    Symbol(replace(name, "." => "_"))) for name in gcc_crt_object_names
+    ]
     return Dict(
         "libstdcxx" => ExtractSpec(
             raw"""
@@ -312,11 +339,7 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
             raw"""
             extract ${prefix}/lib/gcc/${target}/${gcc_version}
             """,
-            [
-                FileProduct([raw"lib/gcc/${target}/${gcc_version}/crtbegin.o"], :crtbegin_o),
-                FileProduct([raw"lib/gcc/${target}/${gcc_version}/crtend.o"], :crtend_o),
-                FileProduct([raw"lib/gcc/${target}/${gcc_version}/libgcc.a"], :libgcc_a),
-            ],
+            gcc_crt_object_products,
             get_target_spec_by_name(build, "host");
             platform = platform.target,
         ),
@@ -369,14 +392,25 @@ target_platforms = [
 
     Platform("x86_64", "windows"),
     Platform("i686", "windows"),
+
+    Platform("x86_64", "macos"),
+    Platform("aarch64", "macos"),
 ]
 
-platforms = vcat(
-    # Build cross-gcc from `host => target`
-    (CrossPlatform(host, target) for host in host_platforms, target in target_platforms if host != target)...,
-    # Build native gcc for all targets as well
-    (CrossPlatform(target, target) for target in target_platforms)...,
-)
+function gcc_platforms(version::VersionNumber)
+    platforms = vcat(
+        # Build cross-gcc from `host => target`
+        (CrossPlatform(host, target) for host in host_platforms, target in target_platforms if host != target)...,
+        # Build native gcc for all targets as well
+        (CrossPlatform(target, target) for target in target_platforms)...,
+    )
+    # aarch64-apple-darwin can't be targeted by GCC versions before
+    # Iain Sandoe's legendary porting effort.
+    if version < v"12"
+        filter!(p -> !(os(p) == "macos" && arch(p) == "aarch64"), platforms)
+    end
+    return platforms
+end
 
 function gcc_build_spec_generator(host, platform)
     target_str = triplet(gcc_platform(platform.target))
@@ -436,6 +470,17 @@ function gcc_build_spec_generator(host, platform)
             ),
             target=target_str,
         ))
+    elseif os(platform.target) == "macos"
+        push!(target_sources, JLLSource(
+            "macOSSDK_jll",
+            platform.target;
+            uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/macOSSDK_jll.jl"
+            ),
+            target=target_str,
+        ))
     else
         throw(ArgumentError("Don't know how to install libc sources for $(triplet(platform.target))"))
     end
@@ -444,21 +489,21 @@ function gcc_build_spec_generator(host, platform)
         BuildTargetSpec(
             "build",
             CrossPlatform(host => host),
-            [CToolchain(; vendor=:bootstrap, lock_microarchitecture), HostToolsToolchain()],
+            [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture), HostToolsToolchain()],
             [],
             Set([:host]),
         ),
         BuildTargetSpec(
             "host",
             CrossPlatform(host => platform.host),
-            [CToolchain(; vendor=:bootstrap, lock_microarchitecture)],
+            [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture)],
             [],
             Set([:default]),
         ),
         BuildTargetSpec(
             "target",
             CrossPlatform(host => platform.target),
-            [CToolchain(; vendor=:bootstrap, lock_microarchitecture)],
+            [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture)],
             target_sources,
             Set([]),
         ),

@@ -2,7 +2,7 @@ using BinaryBuilder2
 
 include("gcc_common.jl")
 
-for version in (v"9.4.0",) #keys(gcc_version_sources)
+for version in (v"14.2.0",) #keys(gcc_version_sources)
     build_tarballs(;
         src_name = "GCC",
         src_version = version,
@@ -11,7 +11,7 @@ for version in (v"9.4.0",) #keys(gcc_version_sources)
             DirectorySource("./patches-v$(version)"; follow_symlinks=true, target="patches"),
         ],
         script, 
-        platforms,
+        platforms = gcc_platforms(version),
         products = [
             FileProduct("bin", :bindir),
             ExecutableProduct("\${target}-gcc", :gcc),

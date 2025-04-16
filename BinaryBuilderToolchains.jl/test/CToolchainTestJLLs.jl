@@ -6,10 +6,10 @@ cxx_csl_libs = [
         BBHostPlatform();
         uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
         repo=Pkg.Types.GitRepo(
-            rev="bb2/GCC",
+            rev="main",
             source="https://github.com/staticfloat/libstdcxx_jll.jl",
         ),
-        version=v"9.4.0",
+        version=v"14.2.0",
     ),
     JLLSource(
         "LLVMLibcxx_jll",

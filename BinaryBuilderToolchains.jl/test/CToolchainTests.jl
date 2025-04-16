@@ -151,12 +151,14 @@ const htt_toolchain = HostToolsToolchain(BBHostPlatform())
                     end
 
                     # Next, run `make compile-all`
-                    cd(joinpath(@__DIR__, "testsuite", "CToolchain")) do
-                        p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
-                        if !success(p)
-                            println(output)
+                    @testset "make compile-all" begin
+                        cd(joinpath(@__DIR__, "testsuite", "CToolchain")) do
+                            p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
+                            if !success(p)
+                                println(output)
+                            end
+                            @test success(p)
                         end
-                        @test success(p)
                     end
                 end
             end

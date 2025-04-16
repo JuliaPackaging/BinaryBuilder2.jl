@@ -341,10 +341,10 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("465c4c53-7f13-5720-b733-07d6cbd50c3b"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/GCC_support_libraries_jll.jl",
             ),
-            version=v"9.4.0",
+            version=v"14.2.0",
             target=get_simple_vendor(vendor),
         ),
         JLLSource(
@@ -352,10 +352,10 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("7bc14925-bf4e-535d-80f2-90698dc22d13"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/GCC_crt_objects_jll.jl",
             ),
-            version=v"9.4.0",
+            version=v"14.2.0",
             target=get_simple_vendor(vendor),
         ),
     ]
@@ -380,10 +380,10 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
-            version=v"9.4.0",
+            version=v"14.2.0",
             target=get_simple_vendor(vendor),
         ),
     ]
@@ -476,7 +476,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     rev="bb2/GCCBootstrap-$(triplet(platform.host))",
                     source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
                 ),
-                version=v"9.4.0",
+                version=v"14.2.0",
                 target="gcc",
             ))
         end
@@ -511,12 +511,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
+                    rev="main",
                     source="https://github.com/staticfloat/GCC_jll.jl",
                 ),
                 # eventually, include a resolved version
                 # but for now, we're locked to this specific version
-                version=v"9.4.0",
+                version=v"14.2.0",
                 target="gcc",
             ),
             gcc_support_libs...,
