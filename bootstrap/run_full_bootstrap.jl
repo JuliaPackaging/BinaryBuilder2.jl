@@ -28,20 +28,25 @@ run_build_tarballs(ctng_meta, "CrosstoolNG/build_tarballs.jl")
 @info("Building GCCBootstrap...")
 run_build_tarballs(meta, "GCCBootstrap/build_tarballs.jl")
 
+# Build GCCBootstrapMacOS
+@info("Building GCCBootstrapMacOS...")
+run_build_tarballs(meta, "macOSSDK/build_tarballs.jl")
+run_build_tarballs(meta, "CCTools/build_tarballs.jl")
+run_build_tarballs(meta, "GCCBootstrapMacOS/build_tarballs.jl")
+
 GCC_TOOLS=[
     # Build Zlib again, this time targeting everything
     "Zlib",
 
     # Platform header/library bundles
     "LinuxKernelHeaders",
-    "macOSSDK",
     "Mingw",
     "Musl",
     "Glibc",
 
     # Binutils
-    "CCTools",
     "Binutils",
+
     # The big kahuna
     "GCC",
 ]
@@ -50,12 +55,10 @@ for tool in GCC_TOOLS
     run_build_tarballs(meta, "$(tool)/build_tarballs.jl")
 end
 
-
 # Build tblgen and ClangBootstrap for the current host
 run_build_tarballs(ctng_meta, "LLVM/tblgen.jl")
 clangbootstrap_target = CrossPlatform(BBHostPlatform() => AnyPlatform())
-clangbootstrap_meta = BuildMeta(;target_list=[clangbootstrap_target], parsed_args...)
-run_build_tarballs(clangbootstrap_meta, "LLVM/clang_bootstrap.jl")
+run_build_tarballs(meta, "LLVM/clang_bootstrap.jl")
 
 # Next, use ClangBootstrap to build actual `clang` for all platforms, then use it to compile `compiler_rt`,
 # and then use clang+compiler_rt to build `libcxx`!
