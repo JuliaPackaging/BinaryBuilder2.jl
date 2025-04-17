@@ -1308,7 +1308,9 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
         if Sys.isapple(p)
             # Warn if someone has asked for timestamps
             flagmatch(io, [!flag"-arch"]) do io
-                append_flags(io, :PRE, ["-arch", arch(p)])
+                # macOS likes to use `arm64`, not `aarch64`:
+                arch_str = arch(p) == "aarch64" ? "arm64" : arch(p)
+                append_flags(io, :PRE, ["-arch", arch_str])
             end
 
             # Tell the `as` executable how to find the corresponding clang
