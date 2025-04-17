@@ -3,11 +3,11 @@ include ../common.mk
 
 all:
 
-$(PROJECT_DIR)/build:
+$(PROJECT_DIR_BUILD):
 	@mkdir -p $@
 
-COUNT_DRACULA := $(PROJECT_DIR)/build/count_dracula$(exeext)
-$(COUNT_DRACULA): count_dracula.c | $(PROJECT_DIR)/build
+COUNT_DRACULA := $(PROJECT_DIR_BUILD)/count_dracula$(exeext)
+$(COUNT_DRACULA): count_dracula.c | $(PROJECT_DIR_BUILD)
 	@$(CC) -o $@ $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS) 3>&2
 
 export BB_WRAPPERS_VERBOSE_FD = 3
@@ -22,20 +22,25 @@ endif
 RUN_IDX := 0
 define run_strip
 RUN_IDX := $(shell bash -c "echo $$(($(RUN_IDX) + 1))")
-TARGET_$(RUN_IDX)_PATH := $$(PROJECT_DIR)/build/count_dracula.stripped$(subst $(SPACE),,$(1))
-$$(TARGET_$(RUN_IDX)_PATH).direct: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
-	@cp $$^ $$@
-	@$$(STRIP) $(1) $$@ 3>&2 >$$@.logn 2>$$@.log
+TARGET_$(RUN_IDX)_PATH := $$(PROJECT_DIR_BUILD)/count_dracula.stripped$(subst $(SPACE),,$(1))
 
-$$(TARGET_$(RUN_IDX)_PATH).multidirect: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
+# Direct stripping
+$$(TARGET_$(RUN_IDX)_PATH).direct: $$(COUNT_DRACULA) | $(PROJECT_DIR_BUILD)
+	@cp $$^ $$@
+	@$$(STRIP) $(1) $$@ 3>&2 >$$@.log 2>$$@.log
+
+# Direct stripping of multiple files
+$$(TARGET_$(RUN_IDX)_PATH).multidirect: $$(COUNT_DRACULA) | $(PROJECT_DIR_BUILD)
 	@cp $$^ $$@
 	@cp $$^ $$@.1
 	@cp $$^ $$@.2
 	@$$(STRIP) $(1) $$@ $$@.1 $$@.2 3>&2 >$$@.log 2>$$@.log
 
-$$(TARGET_$(RUN_IDX)_PATH).indirect: $$(COUNT_DRACULA) | $(PROJECT_DIR)/build
+# Indirect stripping (e.g. output is not the same as input)
+$$(TARGET_$(RUN_IDX)_PATH).indirect: $$(COUNT_DRACULA) | $(PROJECT_DIR_BUILD)
 	@$$(STRIP) -o $$@ $(1) $$^ 3>&2 >$$@.log 2>$$@.log
 
+# Checking for determinism
 $$(TARGET_$(RUN_IDX)_PATH)-check: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(RUN_IDX)_PATH).multidirect $$(TARGET_$(RUN_IDX)_PATH).indirect
 	@# Test for determinism
 	@if ! cmp $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(RUN_IDX)_PATH).indirect; then \
@@ -62,6 +67,9 @@ $$(TARGET_$(RUN_IDX)_PATH)-check: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(
 .PHONY: $$(TARGET_$(RUN_IDX)_PATH)-check
 all: $$(TARGET_$(RUN_IDX)_PATH).direct $$(TARGET_$(RUN_IDX)_PATH).indirect
 check: $$(TARGET_$(RUN_IDX)_PATH)-check
+
+# We allow running this `check` target for `compile`,
+# since we just manually inspect the outputs, we don't actually try to run anything.
 compile: $$(TARGET_$(RUN_IDX)_PATH)-check
 endef
 
@@ -85,21 +93,11 @@ $(eval $(call run_strip,-x -r -u))
 $(eval $(call run_strip,-xru))
 endif
 
-# Also add a special test for stripping multiple files at once:
-MO_OUT := $(PROJECT_DIR)/build/count_dracula.stripped-multiout.direct
-$(MO_OUT): $(COUNT_DRACULA) | $(PROJECT_DIR)/build
-	@cp $^ $(MO_OUT).0
-	@cp $^ $(MO_OUT).1
-	@cp $^ $(MO_OUT).2
-	@$$(STRIP) $(1) $$@ >$$@.log 2>$$@.log
-
-
-
 clean:
-	rm -rf $(PROJECT_DIR)/build
+	rm -rf $(PROJECT_DIR_BUILD)
 
 run: check
-	$$(PROJECT_DIR)/build/count_dracula.stripped
+	$$(PROJECT_DIR_BUILD)/count_dracula.stripped
 
 print-%:
 	@echo "$*=$($*)"

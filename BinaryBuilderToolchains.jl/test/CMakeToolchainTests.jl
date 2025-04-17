@@ -1,6 +1,9 @@
 using Test, BinaryBuilderToolchains
 using BinaryBuilderToolchains: path_appending_merge
 
+# testsuite outputs go here:
+ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir()
+
 @testset "CMakeToolchain" begin
     platform = CrossPlatform(BBHostPlatform() => BBHostPlatform())
     toolchains = [

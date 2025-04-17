@@ -14,6 +14,7 @@ const verbose = false
     # We include a host-targeted C toolchain here, because our `autotools` test requires one.
     c_toolchain = CToolchain(platform; use_ccache=false)
     with_toolchains([toolchain, c_toolchain]) do prefix, env
+        env["TESTSUITE_OUTPUT_DIR"] = mktempdir()
         host_tools = [
             # Build tools
             "automake", "aclocal", "autoconf",

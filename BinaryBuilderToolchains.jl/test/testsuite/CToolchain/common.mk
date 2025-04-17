@@ -8,6 +8,11 @@ CPPFLAGS ?=
 CFLAGS ?= -g -O2
 LDFLAGS ?=
 
+# The test suite should define a temporary directory to hold the build products,
+# but if they don't, we default to in-tree `build` directories.
+TESTSUITE_OUTPUT_DIR ?= $(dir $(PROJECT_DIR))
+PROJECT_DIR_BUILD := $(TESTSUITE_OUTPUT_DIR)/$(notdir $(PROJECT_DIR))/build
+
 # Set up rpath flags for the different targets
 ifneq (,$(findstring mingw,$(CC_TARGET)))
 define rpath

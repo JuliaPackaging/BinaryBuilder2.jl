@@ -6,6 +6,9 @@ const verbose = false
 
 using BinaryBuilderToolchains: get_vendor
 const htt_toolchain = HostToolsToolchain(BBHostPlatform())
+
+# testsuite outputs go here:
+ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
 @testset "CToolchain" begin
     # Use native compilers so that we can run the output.
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())

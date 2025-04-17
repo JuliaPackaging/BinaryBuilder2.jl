@@ -1,6 +1,6 @@
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
-# Clone down an HTTPS repository as our test
+# Get an HTTPS site to prove that all our environment variables are working
 run:
 	curl -sfL https://julialang.org -o /dev/null
 

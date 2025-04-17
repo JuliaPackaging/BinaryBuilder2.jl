@@ -1,27 +1,27 @@
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 include ../../CToolchain/common.mk
 
-CXXABI := $(PROJECT_DIR)/build/cxx_string_abi$(exeext)
-LIBSTR := $(PROJECT_DIR)/build/libstring.$(dlext)
+CXXABI := $(PROJECT_DIR_BUILD)/cxx_string_abi$(exeext)
+LIBSTR := $(PROJECT_DIR_BUILD)/libstring.$(dlext)
 
 all: $(CXXABI)
 
-$(PROJECT_DIR)/build:
+$(PROJECT_DIR_BUILD):
 	mkdir -p $@
 
-$(PROJECT_DIR)/build/Makefile: $(PROJECT_DIR)/CMakeLists.txt | $(PROJECT_DIR)/build
-	$(CMAKE) -B$(PROJECT_DIR)/build -S$(PROJECT_DIR) >$(PROJECT_DIR)/build/cmake_log.txt
+$(PROJECT_DIR_BUILD)/Makefile: $(PROJECT_DIR)/CMakeLists.txt | $(PROJECT_DIR_BUILD)
+	$(CMAKE) -B$(PROJECT_DIR_BUILD) -S$(PROJECT_DIR) >$(PROJECT_DIR_BUILD)/cmake_log.txt
 
-$(LIBSTR): $(PROJECT_DIR)/build/Makefile
+$(LIBSTR): $(PROJECT_DIR_BUILD)/Makefile
 	@# Note that we say `string` here, because cmake automatically puts `lib` on libraries.
-	$(MAKE) -C$(PROJECT_DIR)/build string
+	$(MAKE) -C$(PROJECT_DIR_BUILD) string
 
-$(CXXABI): $(PROJECT_DIR)/build/Makefile $(LIBSTR)
-	$(MAKE) -C$(PROJECT_DIR)/build cxx_string_abi
+$(CXXABI): $(PROJECT_DIR_BUILD)/Makefile $(LIBSTR)
+	$(MAKE) -C$(PROJECT_DIR_BUILD) cxx_string_abi
 compile: $(CXXABI)
 
 clean:
-	rm -rf $(PROJECT_DIR)/build
+	rm -rf $(PROJECT_DIR_BUILD)
 
 run: $(CXXABI)
 	@$(CXXABI)

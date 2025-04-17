@@ -1,6 +1,7 @@
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
+include ../../CToolchain/common.mk
 
-REPO := $(PROJECT_DIR)/dltest
+REPO := $(PROJECT_DIR_BUILD)/dltest
 all: $(REPO)
 
 # Clone down an HTTPS repository as our test

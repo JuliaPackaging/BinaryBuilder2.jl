@@ -3,15 +3,15 @@ include ../common.mk
 
 all: $(OBJS)
 
-$(PROJECT_DIR)/build:
+$(PROJECT_DIR_BUILD):
 	mkdir -p $@
 
-$(PROJECT_DIR)/build/libsplit%.o: libsplit%.c | $(PROJECT_DIR)/build
+$(PROJECT_DIR_BUILD)/libsplit%.o: libsplit%.c | $(PROJECT_DIR_BUILD)
 	$(CC) -c -o $@ $(CPPFLAGS) $(CFLAGS) $^
 
-OBJS += $(PROJECT_DIR)/build/libsplit1.o
-OBJS += $(PROJECT_DIR)/build/libsplit2.o
-OBJS += $(PROJECT_DIR)/build/libsplit3.o
+OBJS += $(PROJECT_DIR_BUILD)/libsplit1.o
+OBJS += $(PROJECT_DIR_BUILD)/libsplit2.o
+OBJS += $(PROJECT_DIR_BUILD)/libsplit3.o
 
 # Test assembling libsplit with `-r -U`, and `-U -r`, and `rU` and `Ur`
 # and `-rU` and `-Ur`.  All six should give similar (broken) results,
@@ -20,16 +20,16 @@ OBJS += $(PROJECT_DIR)/build/libsplit3.o
 # Helper function to define build rules for one of our (many)
 # libsplit variants, and append it to a list of libraries
 define gen_libsplit
-$$(PROJECT_DIR)/build/libsplit$(subst $(SPACE),,$(2)).a: $$(OBJS)
+$$(PROJECT_DIR_BUILD)/libsplit$(subst $(SPACE),,$(2)).a: $$(OBJS)
 	$$(AR) $(2) $$@ $$^ >$$@.log 2>$$@.log
-$(1) += $$(PROJECT_DIR)/build/libsplit$(subst $(SPACE),,$(2)).a
+$(1) += $$(PROJECT_DIR_BUILD)/libsplit$(subst $(SPACE),,$(2)).a
 endef
 
 define index_libsplit
-$$(PROJECT_DIR)/build/libsplit-indexed$(subst $(SPACE),,$(2)).a: $$(PROJECT_DIR)/build/libsplit-r-D.a
+$$(PROJECT_DIR_BUILD)/libsplit-indexed$(subst $(SPACE),,$(2)).a: $$(PROJECT_DIR_BUILD)/libsplit-r-D.a
 	@cp "$$<" "$$@"
 	$$(RANLIB) $(2) $$@ >$$@.log 2>$$@.log
-$(1) += $$(PROJECT_DIR)/build/libsplit-indexed$(subst $(SPACE),,$(2)).a
+$(1) += $$(PROJECT_DIR_BUILD)/libsplit-indexed$(subst $(SPACE),,$(2)).a
 endef
 
 $(eval $(call gen_libsplit,FAIL_AR_LIBS,-r -U))
@@ -62,7 +62,7 @@ $(eval $(call index_libsplit,PASS_RANLIB_LIBS,-D))
 $(eval $(call index_libsplit,PASS_RANLIB_LIBS,-DD))
 
 clean:
-	rm -rf $(PROJECT_DIR)/build
+	rm -rf $(PROJECT_DIR_BUILD)
 
 compile: $(PASS_AR_LIBS) $(FAIL_AR_LIBS) $(PASS_RANLIB_LIBS) $(FAIL_RANLIB_LIBS)
 
