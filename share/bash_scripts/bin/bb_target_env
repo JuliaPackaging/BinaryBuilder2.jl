@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Copy all `HOST*` environment variables to `*`, e.g. `HOSTCC` -> `CC`, `HOSTLD` -> `LD`, etc...
+# Copy all `TARGET*` environment variables to `*`, e.g. `TARGETCC` -> `CC`, `TARGETLD` -> `LD`, etc...
 TARGET="${1}"
 shift 1
 
