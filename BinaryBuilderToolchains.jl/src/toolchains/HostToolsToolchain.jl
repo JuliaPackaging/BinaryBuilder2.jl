@@ -174,7 +174,8 @@ function toolchain_sources(toolchain::HostToolsToolchain)
                 # Fix relocatability issues
                 println(io, """
                 export GIT_EXEC_PATH=\"$(toolchain_prefix)/libexec/git-core\"
-                export GIT_SSL_CAPATH=\"$(toolchain_prefix)/etc/certs\"
+                export GIT_SSL_CAPATH=\"\${SSL_CERT_DIR}\"
+                export GIT_SSL_CAINFO=\"\${SSL_CERT_FILE}\"
                 export GIT_TEMPLATE_DIR=\"$(toolchain_prefix)/share/git-core/templates\"
                 """)
             end
@@ -266,6 +267,7 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
 
     # Use the bundled CA root file
     env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")
+    env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", "ca-certificates.crt")
 
     # Apply LD_LIBRARY_PATH for CSL
     if Sys.iswindows()
