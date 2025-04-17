@@ -439,7 +439,30 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target="clang",
         ),
     ]
-    
+
+    # Same story here, but for `:gcc` on macOS
+    clang_jlls = [
+        JLLSource(
+            "Clang_jll",
+            platform;
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/Clang_jll.jl",
+            ),
+            version=v"17.0.7",
+            target="clang",
+        ),
+        JLLSource(
+            "libLLVM_jll",
+            platform;
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/libLLVM_jll.jl",
+            ),
+            version=v"17.0.7",
+            target="clang",
+        ),
+    ]
 
     # If we're asking for a bootstrap toolchain, give just that and nothing else,
     # which is why we `return` from within here.
@@ -458,9 +481,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     target="gcc",
                 ),
 
-                # binutils actually needs `clang` to act as assembler...
+                # binutils actually needs `clang` to act as assembler, so we include it here.
                 clang_bootstrap_jlls...,
-
                 binutils_jlls...,
                 libc_jlls...,
             ])
@@ -523,29 +545,15 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             libstdcxx_libs...,
             binutils_jlls...,
         ])
+
+        # binutils actually needs `clang` to act as assembler, so we include it here.
+        if Sys.isapple(platform.target)
+            append!(deps, clang_bootstrap_jlls)
+        end
     elseif vendor == :clang || vendor == :clang_bootstrap
         if vendor == :clang
             append!(deps, [
-                JLLSource(
-                    "Clang_jll",
-                    platform;
-                    repo=Pkg.Types.GitRepo(
-                        rev="main",
-                        source="https://github.com/staticfloat/Clang_jll.jl",
-                    ),
-                    version=v"17.0.7",
-                    target="clang",
-                ),
-                JLLSource(
-                    "libLLVM_jll",
-                    platform;
-                    repo=Pkg.Types.GitRepo(
-                        rev="main",
-                        source="https://github.com/staticfloat/libLLVM_jll.jl",
-                    ),
-                    version=v"17.0.7",
-                    target="clang",
-                ),
+                clang_jlls...,
                 binutils_jlls...,
             ])
         else
