@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.3"
+julia_version = "1.11.5"
 manifest_format = "2.0"
 project_hash = "2fdfbba0dad651d5e0fd91885d3878c3e32509f1"
 
@@ -14,9 +14,9 @@ version = "1.11.0"
 
 [[deps.Attr_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "5fd54e3b6af15fbe2d0116891b36da11800fb0b7"
+git-tree-sha1 = "b8747cda97b6cedbd8dc9fc6218e1d53ce8de32f"
 uuid = "1fd713ca-387f-5abc-8002-d8b8b1623b73"
-version = "2.5.2+0"
+version = "2.5.3+0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -76,9 +76,9 @@ version = "1.11.0"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "622cf78670d067c738667aaa96c553430b65e269"
+git-tree-sha1 = "446b23e73536f84e8037f5dce465e92275f6a308"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
-version = "1.5.7+0"
+version = "1.5.7+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]

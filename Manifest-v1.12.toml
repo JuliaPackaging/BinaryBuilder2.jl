@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.0-DEV"
+julia_version = "1.12.0-beta1"
 manifest_format = "2.0"
-project_hash = "cdfe2b9472493a34860c69a3b0ca1b4c4e5f639e"
+project_hash = "286ca3fa1fe7cfb7580191f7d63f3be8875f45d9"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -14,22 +14,22 @@ version = "1.11.0"
 
 [[deps.Attr_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "5fd54e3b6af15fbe2d0116891b36da11800fb0b7"
+git-tree-sha1 = "b8747cda97b6cedbd8dc9fc6218e1d53ce8de32f"
 uuid = "1fd713ca-387f-5abc-8002-d8b8b1623b73"
-version = "2.5.2+0"
+version = "2.5.3+0"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 version = "1.11.0"
 
 [[deps.BinaryBuilder2]]
-deps = ["Artifacts", "BinaryBuilderAuditor", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "Ccache_jll", "Dates", "Downloads", "Git", "HistoricalStdlibVersions", "JLLGenerator", "JLLPrefixes", "KeywordArgumentExtraction", "LazyJLLWrappers", "Libdl", "LocalRegistry", "MultiHashParsing", "ObjectFile", "OrderedCollections", "OutputCollectors", "Pkg", "Preferences", "Random", "Reexport", "RegistryTools", "SHA", "Sandbox", "Scratch", "StyledStrings", "TOML", "Test", "TimerOutputs", "TreeArchival", "UserNSSandbox_jll", "gh_cli_jll"]
+deps = ["Artifacts", "BinaryBuilderAuditor", "BinaryBuilderGitUtils", "BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "Ccache_jll", "Dates", "Downloads", "Git", "HistoricalStdlibVersions", "JLLGenerator", "JLLPrefixes", "KeywordArgumentExtraction", "LazyJLLWrappers", "Libdl", "LocalRegistry", "Logging", "MultiHashParsing", "ObjectFile", "OrderedCollections", "OutputCollectors", "Pkg", "Preferences", "Random", "Reexport", "RegistryTools", "SHA", "Sandbox", "Scratch", "StyledStrings", "TOML", "Test", "TimerOutputs", "TreeArchival", "UserNSSandbox_jll", "gh_cli_jll"]
 path = "."
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
 version = "2.0.0"
 
 [[deps.BinaryBuilderAuditor]]
-deps = ["BinaryBuilderProducts", "BinaryBuilderToolchains", "JLLGenerator", "ObjectFile", "Patchelf_jll", "StyledStrings"]
+deps = ["BinaryBuilderPlatformExtensions", "BinaryBuilderProducts", "BinaryBuilderSources", "BinaryBuilderToolchains", "JLLGenerator", "ObjectFile", "Pkg", "StyledStrings"]
 path = "BinaryBuilderAuditor.jl"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
 version = "0.1.0"
@@ -99,9 +99,9 @@ uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
 
 [[deps.EnumX]]
-git-tree-sha1 = "bdb1942cd4c45e3c678fd11569d5cccd80976237"
+git-tree-sha1 = "bddad79635af6aec424f53ed8aad5d7555dc6f00"
 uuid = "4e289a0a-7415-4d19-859d-a7e5c4648b56"
-version = "1.0.4"
+version = "1.0.5"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -264,9 +264,9 @@ version = "1.3.0"
 
 [[deps.ObjectFile]]
 deps = ["Reexport", "StructIO"]
-git-tree-sha1 = "dfcc26739b1ffa3ab51fb16f01ba7eb144f7bc50"
+git-tree-sha1 = "09b1fe6ff16e6587fa240c165347474322e77cf1"
 uuid = "d8793406-e978-5875-9003-1fc021f44a92"
-version = "0.4.3"
+version = "0.4.4"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -290,12 +290,6 @@ version = "1.0.0"
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
 version = "10.44.0+1"
-
-[[deps.Patchelf_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "ad1cab3e8273c912f722f40779e20f3e29d58f1f"
-uuid = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
-version = "0.18.0+0"
 
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "Random", "SHA", "TOML", "Tar", "UUIDs", "p7zip_jll"]
@@ -405,9 +399,9 @@ version = "1.11.0"
 
 [[deps.TimerOutputs]]
 deps = ["ExprTools", "Printf"]
-git-tree-sha1 = "3832505b94c1868baea47764127e6d36b5c9f29e"
+git-tree-sha1 = "f57facfd1be61c42321765d3551b3df50f7e09f6"
 uuid = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
-version = "0.5.27"
+version = "0.5.28"
 
     [deps.TimerOutputs.extensions]
     FlameGraphsExt = "FlameGraphs"
