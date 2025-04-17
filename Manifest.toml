@@ -176,7 +176,7 @@ uuid = "4af54fe1-eca0-43a8-85a7-787d91b784e3"
 version = "1.11.0"
 
 [[deps.LazyJLLWrappers]]
-deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML"]
+deps = ["Artifacts", "Libdl", "Pkg", "Preferences", "TOML", "Zlib_jll"]
 path = "LazyJLLWrappers.jl"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
 version = "1.0.3"
