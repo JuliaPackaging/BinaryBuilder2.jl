@@ -2,6 +2,8 @@ using Test, BinaryBuilder2, Pkg
 using BinaryBuilder2: parse_build_tarballs_args, universes_dir
 using Base.BinaryPlatforms
 
+# Ensure that, when testing, we do not attempt to authenticate to GitHub
+BinaryBuilder2.allow_github_authentication[] = false
 @testset "BuildMeta" begin
     @testset "parse_build_tarballs_args" begin
         # Ensure that we get very simple defaults for no args

@@ -14,6 +14,8 @@ using Logging
 
 export Universe, in_universe
 
+const allow_github_authentication::Ref{Bool} = Ref(true)
+
 function update_registries!(registries::Vector{RegistrySpec},
                             depot_path::String;
                             verbose::Bool = false)
@@ -129,9 +131,11 @@ struct Universe
         if deploy_org !== nothing
             # Authenticate to GitHub, then ensure that we are either deploying to our
             # user, or an organization we are a part of
-            ensure_gh_authenticated()
-            if deploy_org != gh_user() && deploy_org ∉ gh_orgs()
-                throw(ArgumentError("deploy target '$(deploy)' not a user/organization we have access to!"))
+            if allow_github_authentication[]
+                ensure_gh_authenticated()
+                if deploy_org != gh_user() && deploy_org ∉ gh_orgs()
+                    throw(ArgumentError("deploy target '$(deploy)' not a user/organization we have access to!"))
+                end
             end
         end
 
