@@ -120,6 +120,9 @@ function prepare(jlls::Vector{JLLSource};
         if jll.package.uuid === nothing
             if registries === nothing
                 registries = Pkg.Registry.reachable_registries(; depots=[depot])
+                if isempty(registries)
+                    error("No reachable registries in depot '$(depot)'?")
+                end
             end
             jll.package.uuid = Pkg.Types.registered_uuid(registries, jll.package.name)
             if jll.package.uuid === nothing
