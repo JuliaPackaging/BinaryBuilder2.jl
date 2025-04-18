@@ -285,7 +285,16 @@ function registry_package_lookup(f::Function, u::Universe, pkg_name::String, pkg
         pkg_uuid = only(pkg_uuids)
         pkg_subpath = joinpath(reg_inst.pkgs[pkg_uuid].path, pkg_file)
 
-        pkg_data = Pkg.Registry.parsefile(reg_inst, pkg_subpath)
+        # `parsefile()` does not gracefully deal with missing files, so we catch
+        # errors here and just skip over missing files.
+        pkg_data = try
+            Pkg.Registry.parsefile(reg_inst, pkg_subpath)
+        catch e
+            if !isa(e, SystemError)
+                rethrow(e)
+            end
+            nothing
+        end
         if pkg_data !== nothing
             f(pkg_data)
         end
@@ -406,8 +415,9 @@ Reset a universe back to its pristine state.  Removes all previous registrations
 and clears the environment of the dev'ed JLLs.
 """
 function reset_timeline!(u::Universe)
-    # Update registries to the latest
-    u.registry_instances = update_registries!(u.depot_path, u.registries)
+    # Update registries to the latest, but skip the first one since
+    # it's our local registry and it errors out if we try to update it.
+    u.registry_instances[2:end] .= update_registries!(u.registries[2:end], u.depot_path)
 
     # Clear out our local registry and recreate it
     rm(joinpath(u.depot_path, "registries", "BB2LocalRegistry"); force=true, recursive=true)

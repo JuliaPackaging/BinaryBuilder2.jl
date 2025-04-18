@@ -1,5 +1,5 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
-using BinaryBuilder2: register_jll!, get_package_versions
+using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
 
 @testset "Universes" begin
     # Create a universe holding just `General`
@@ -39,5 +39,9 @@ using BinaryBuilder2: register_jll!, get_package_versions
 
         hwc_versions = get_package_versions(uni, "HelloWorldC2_jll")
         @test sort(hwc_versions) == [v"1.3.0", v"1.4.0"]
+
+        # Test that `reset_timeline!` eliminates our registrations:
+        reset_timeline!(uni)
+        @test isempty(get_package_versions(uni, "HelloWorldC2_jll"))
     end
 end
