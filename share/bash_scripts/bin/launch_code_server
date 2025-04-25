@@ -1,0 +1,79 @@
+#!/bin/bash
+
+set -euo pipefail
+
+# Get the architecture from MACHTYPE:
+case "${MACHTYPE}" in
+    aarch64-*)
+        CS_ARCH="aarch64"
+        ;;
+    x86_64-*)
+        CS_ARCH="x86_64"
+        ;;
+esac
+
+# Download code_server JLL and just run it with some specific options
+CODE_SERVER_DIR="/tmp/code_server"
+CS_VERSION="4.99.2"
+BUILD_NUMBER="0"
+
+mkdir -p "${CODE_SERVER_DIR}"
+if [[ ! -f "${CODE_SERVER_DIR}/bin/code-server" ]]; then
+    echo "Downloading code-server..."
+    curl -#L "https://github.com/JuliaBinaryWrappers/code_server_jll.jl/releases/download/code_server-v${CS_VERSION}%2B${BUILD_NUMBER}/code_server.v${CS_VERSION}.${CS_ARCH}-linux-gnu.tar.gz" | tar -C "${CODE_SERVER_DIR}" -zx
+fi
+
+TAILSCALE_DIR="${CODE_SERVER_DIR}/tailscale"
+mkdir -p "${TAILSCALE_DIR}"
+if [[ ! -f "${TAILSCALE_DIR}/tailscale" ]]; then
+    echo "Downloading tailscale..."
+    case "${MACHTYPE}" in
+        aarch64-*)
+            TS_ARCH="arm64"
+            ;;
+        x86_64-*)
+            TS_ARCH="amd64"
+            ;;
+    esac
+    TS_VERSION="1.82.5"
+    curl -#L "https://pkgs.tailscale.com/stable/tailscale_${TS_VERSION}_${TS_ARCH}.tgz" | tar -C "${TAILSCALE_DIR}" -zx --strip-components=1
+
+fi
+
+# Start tailscaled
+if [[ ! -f "${TAILSCALE_DIR}/tailscaled.pid" ]]; then
+    echo "Launching tailscaled..."
+    "${TAILSCALE_DIR}/tailscaled" \
+        --tun=userspace-networking \
+        --state=mem: \
+        >>"${TAILSCALE_DIR}/tailscaled.log" 2>>"${TAILSCALE_DIR}/tailscaled.log" &
+fi
+
+echo "Logging in to tailscale..."
+"${TAILSCALE_DIR}/tailscale" login \
+    --hostname=${bb_build_identifier} \
+    --login-server=https://bb2-headscale.cflo.at \
+    --auth-key=530a716ebd6dbefb279d86453482d66a2928abefadc4e79b
+
+echo "Launching code-server..."
+echo "To connect, use one of:"
+echo "    http://localhost:8080"
+echo "    https://bb2.cflo.at/${bb_build_identifier}/"
+
+"${CODE_SERVER_DIR}/bin/code-server" \
+    --bind-addr=0.0.0.0:8080 \
+    --auth=none \
+    --disable-telemetry \
+    --disable-update-check \
+    --disable-workspace-trust \
+    --app-name "BB2 Debug UI" \
+    --welcome-text "Welcome to the BinaryBuilder2 debug interface" \
+    /workspace/srcdir >>"${CODE_SERVER_DIR}/code_server.log" 2>>"${CODE_SERVER_DIR}/code_server.log"
+
+echo "code-server exited, dumping logs:"
+echo
+for LOG_FILE in "${CODE_SERVER_DIR}/code_server.log" "${TAILSCALE_DIR}/tailscaled.log"; do
+    echo ">>>>>>> $(basename "${LOG_FILE}") <<<<<<<"
+    cat ${LOG_FILE}
+    echo; echo; echo
+done

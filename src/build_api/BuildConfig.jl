@@ -259,6 +259,16 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
         end
         buffer_data = take!(hash_buffer)
         config.content_hash[] = SHA1Hash(sha1(buffer_data))
+
+        # Add `bb_build_identifier` to our environment which is primarily used
+        # as the hostname in our vscode tunnel to `bb2.cflo.at`.
+        config.env["bb_build_identifier"] = string(
+            config.src_name,
+            "-v",
+            config.src_version,
+            "-",
+            bytes2hex(content_hash(config))[1:8],
+        )
     end
     return config.content_hash[]::SHA1Hash
 end
