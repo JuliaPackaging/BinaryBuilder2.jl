@@ -138,7 +138,7 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
     @info("Running `\$CC` tests for $(length(supported_platforms(CToolchain))) platforms")
     for target in supported_platforms(CToolchain)
         target_platform = CrossPlatform(BBHostPlatform() => target)
-        for vendor in (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
+        for vendor in vendors_to_test()
             toolchain = CToolchain(target_platform; vendor, use_ccache=false)
             with_toolchains([toolchain, htt_toolchain]) do prefix, env
                 @testset "$(triplet(target)) - $(vendor)" begin
