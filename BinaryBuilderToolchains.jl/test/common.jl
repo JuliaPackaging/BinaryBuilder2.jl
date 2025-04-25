@@ -8,6 +8,15 @@ function capture_output(cmd)
     return p, output
 end
 
+function vendors_to_test(curr_arch = arch(BBHostPlatform()))
+    # Only test the `*_bootstrap` vendors on x86_64, where I actually did the bootstrapping.
+    if curr_arch == "x86_64"
+        return (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
+    else
+        return (:auto, :gcc, :clang)
+    end
+end
+
 function toolchain_tests(prefix, env, platform, testsuite; do_cxxabi_tests::Bool = false)
     testsuite_path = joinpath(@__DIR__, "testsuite", testsuite)
     cd(testsuite_path) do
