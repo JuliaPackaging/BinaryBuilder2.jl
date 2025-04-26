@@ -20,7 +20,8 @@ clean-all: clean-$(1)
 cleancheck-all: cleancheck-$(1)
 endef
 
-SUBDIRS = $(sort $(notdir $(realpath $(dir $(shell find . -mindepth 2 -maxdepth 2 -name Makefile -type f)))))
+SUBDIRS := $(sort $(notdir $(realpath $(dir $(shell find . -mindepth 2 -maxdepth 2 -name Makefile -type f)))))
+SUBDIRS := $(filter-out $(EXCLUDED_DIRS),$(SUBDIRS))
 $(foreach DIR,$(SUBDIRS),$(eval $(call make_test_group,$(DIR))))
 
 print-%:
