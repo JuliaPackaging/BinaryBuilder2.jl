@@ -159,6 +159,11 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                             p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
                             if !success(p)
                                 println(output)
+
+                                # Tar up build products for later inspection
+                                tarball_path = joinpath(@__DIR__, "$(triplet(target))-$(vendor)-files.tar.gz")
+                                run(`tar -C $(ENV["TESTSUITE_OUTPUT_DIR"]) -czf $(tarball_path) .`)
+                                @info("Build products saved", tarball_path)
                             end
                             @test success(p)
                         end
