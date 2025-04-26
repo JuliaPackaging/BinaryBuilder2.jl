@@ -50,7 +50,7 @@ struct CToolchain <: AbstractToolchain
                         use_ccache = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("17"),
-                        binutils_version = v"2.38.0+4",
+                        binutils_version = v"2.41.0",
                         glibc_version = :oldest,
                         compiler_runtime = :auto,
                         cxx_runtime = :auto,
@@ -325,7 +325,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform;
             repo=Pkg.Types.GitRepo(
                 #rev="bb2/GCC",
-                rev="9d7845d0fe787d7a15635e3a9fbd5b6c787229ca",
+                rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version
