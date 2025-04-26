@@ -156,7 +156,12 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                     # Next, run `make compile-all`
                     @testset "make compile-all" begin
                         cd(joinpath(@__DIR__, "testsuite", "CToolchain")) do
-                            p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all"]), env))
+                            EXCLUDED_DIRS = String[]
+                            # the bootstrap GCC binutils doesn't have our deterministic strip patch
+                            if Sys.iswindows(target) && vendor == :gcc_bootstrap
+                                push!(EXCLUDED_DIRS, "08_strip_resigning")
+                            end
+                            p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all EXCLUDED_DIRS='$(join(EXCLUDED_DIRS, " "))'"]), env))
                             if !success(p)
                                 println(output)
 
