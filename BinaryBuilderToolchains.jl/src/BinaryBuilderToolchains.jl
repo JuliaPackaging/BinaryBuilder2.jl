@@ -46,6 +46,7 @@ include("InteractiveUtils.jl")
 
 @setup_workload begin
     targets = [
+        BBHostPlatform(),
         Platform("x86_64", "windows"),
         Platform("armv7l", "linux"; libc=:musl),
         Platform("aarch64", "macos"),
@@ -53,10 +54,16 @@ include("InteractiveUtils.jl")
     platforms = [CrossPlatform(BBHostPlatform() => target) for target in targets]
     @compile_workload begin
         for platform in platforms
-            with_toolchains([
-                CMakeToolchain(platform),
-                CToolchain(platform),
-                HostToolsToolchain(platform)]) do prefix, env
+            # try/catch when running on platforms other than the typical BB2 host platforms
+            # and where we have incomplete toolchain implementations
+            try
+                with_toolchains((p, e) -> nothing, [
+                    CMakeToolchain(platform),
+                    CToolchain(platform),
+                    HostToolsToolchain(platform)
+                ])
+            catch
+                @warn("Failed to precompile support for platform", platform)
             end
         end
     end
