@@ -26,10 +26,7 @@ run: $(UNCOMPRESSED) $(COMPRESSED)
 	@$(UNCOMPRESSED)
 	@$(COMPRESSED)
 
-check: $(UNCOMPRESSED) $(COMPRESSED)
-	@# Assert that the output of each is as expected
-	@[ "$$($(COMPRESSED) foo)" = "I was invoked with 2 arguments!" ]
-	@[ "$$($(UNCOMPRESSED))" = "I was invoked with 1 arguments!" ]
+compile: $(UNCOMPRESSED) $(COMPRESSED)
 	@$(OBJCOPY) --dump-section .$(DEBUG_SECTION)=$(PROJECT_DIR_BUILD)/uncompressed.$(DEBUG_SECTION) $(UNCOMPRESSED)
 	@$(OBJCOPY) --dump-section .$(DEBUG_SECTION)=$(PROJECT_DIR_BUILD)/compressed.$(DEBUG_SECTION) $(COMPRESSED)
 	@$(OBJCOPY) --dump-section .$(DEBUG_SECTION)=$(PROJECT_DIR_BUILD)/decompressed.$(DEBUG_SECTION) --decompress-debug-sections $(COMPRESSED)
@@ -43,6 +40,11 @@ check: $(UNCOMPRESSED) $(COMPRESSED)
 		echo "uncompressed and decompressed .$(DEBUG_SECTION) sections differ?!" >&2; \
 		exit 1; \
 	fi
+
+check: compile
+	@# Assert that the output of each is as expected
+	@[ "$$($(COMPRESSED) foo)" = "I was invoked with 2 arguments!" ]
+	@[ "$$($(UNCOMPRESSED))" = "I was invoked with 1 arguments!" ]
 
 print-%:
 	echo "$*=$($*)"
