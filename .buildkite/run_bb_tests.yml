@@ -20,3 +20,5 @@ steps:
       arch: "${ARCH?}"
     soft_fail: "${SOFT_FAIL}"
     timeout_in_minutes: 120
+    artifact_paths:
+      - "BinaryBuilderToolchains.jl/test/*-files.tar.gz"
