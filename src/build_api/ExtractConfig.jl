@@ -147,6 +147,7 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
+
 function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; verbose::Bool = AbstractBuildMeta(config).verbose, kwargs...)
     build_config = config.build.config
     meta = AbstractBuildMeta(config)

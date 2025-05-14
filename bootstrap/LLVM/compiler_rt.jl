@@ -28,11 +28,11 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
     ],
-    host_toolchains = [CToolchain(;vendor=:clang), CMakeToolchain(), HostToolsToolchain()],
-    target_toolchains = [CToolchain(;vendor=:clang, lock_microarchitecture=false), CMakeToolchain()],
+    host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
+    target_toolchains = [CToolchain(;vendor=:clang_bootstrap, lock_microarchitecture=false), CMakeToolchain()],
 )

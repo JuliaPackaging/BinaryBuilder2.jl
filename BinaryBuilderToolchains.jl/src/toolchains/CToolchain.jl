@@ -266,7 +266,11 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=sysroot_path,
         )]
     elseif os(platform.target) == "macos"
-        @warn("Take in `macos_version(platform.target)` and feed that to `macOSSDK_jll.jl` here", maxlog=1)
+        if macos_version(platform.target) !== nothing
+            if macos_version(platform.target) > v"11.1"
+                throw(ArgumentError("We need to upgrade our macOSSDK_jll to support such a new version: $(triplet(platform.target))"))
+            end
+        end
         libc_jlls = [JLLSource(
             "macOSSDK_jll",
             platform.target;
@@ -689,11 +693,23 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
 
     sdk_jll = get_jll(toolchain, "macOSSDK_jll")
     if sdk_jll !== nothing
-        env["MACOSX_DEPLOYMENT_TARGET"] = string(
-            sdk_jll.package.version.major,
-            ".",
-            sdk_jll.package.version.minor,
+        # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
+        # use the default deployment targets for the architecture being built:
+        function default_kernel_version(arch)
+            if arch == "x86_64"
+                return 14
+            elseif arch == "aarch64"
+                return 20
+            else
+                throw(ArgumentError("Unknown macOS architecture '$(arch)'!"))
+            end
+        end
+
+        kernel_version = something(
+            os_version(toolchain.platform.target),
+            default_kernel_version(arch(toolchain.platform.target))
         )
+        env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
     end
     
     return env
@@ -842,7 +858,7 @@ function add_macos_flags(io, toolchain)
                     append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
                 end
             end
-            
+
             # Always compile for a particular minimum macOS version
             if macos_ver !== nothing
                 append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
@@ -1058,6 +1074,24 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         add_ccache_preamble(io, toolchain)
     end
 
+    if Sys.isapple(p)
+        function _xcrun_wrapper(io)
+            flagmatch(io, [flag"--show-sdk-path"]) do io
+                println(io, raw"""
+                "${CC}" -print-sysroot
+                exit 0
+                """)
+            end
+            flagmatch(io, [flag"--show-sdk-version"]) do io
+                println(io, raw"""
+                echo "${MACOSX_DEPLOYMENT_TARGET}"
+                exit 0
+                """)
+            end
+        end
+        make_tool_wrappers(toolchain, dir, "xcrun", "exec"; wrapper=_xcrun_wrapper, toolchain_prefix)
+    end
+
     make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "clang-scan-deps", "clang-scan-deps"; toolchain_prefix)
@@ -1075,10 +1109,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     gcc_version = get_gcc_version(toolchain)
 
     # These tools don't need anything fancy; just `compiler_wrapper()`
-    simple_tools = [
-        "objcopy",
-        "objdump",
-    ]
+    simple_tools = String[]
     @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
     @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
     # Apple has some extra simple tools
@@ -1355,6 +1386,12 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
     make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix=llvm_toolchain_prefix)
+
+    objcopy_name = Sys.isapple(p) ? "llvm-objcopy" : "$(gcc_triplet)-objcopy"
+    make_tool_wrappers(toolchain, dir, "objcopy", objcopy_name; toolchain_prefix=llvm_toolchain_prefix)
+
+    objdump_name = Sys.isapple(p) ? "llvm-objdump" : "$(gcc_triplet)-objdump"
+    make_tool_wrappers(toolchain, dir, "objdump", objdump_name; toolchain_prefix=llvm_toolchain_prefix)
 
     if Sys.isapple(p)
         # dsymutil is just called `dsymutil`

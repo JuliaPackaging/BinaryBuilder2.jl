@@ -226,6 +226,56 @@ function JLLBuildLicenses(result::ExtractResult)
     return [JLLBuildLicense(f, String(read(joinpath(licenses_dir, package_name, f)))) for f in filenames]
 end
 
+
+
+"""
+    add_os_version(platform::AbstractPlatform, target_spec::BuildTargetSpec)
+
+Adds an `os_version` tag to `platform` according to the runtimes built against
+in `target_spec`.  Currently this is only done for macOS and FreeBSD but
+it is very possible this will be extended to glibc Linux in the future.
+
+This is done automatically as part of the `package!()` call.  There does not
+yet exist a way to opt out of this.
+"""
+function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
+    if os_version(platform) !== nothing
+        return platform
+    end
+
+    # Make a copy, since we actually modify `platform` here.
+    platform = parse(Platform, triplet(platform))
+
+    if Sys.isapple(platform)
+        libc_jll_name = "macOSSDK_jll"
+        version_map = macos_kernel_version
+    elseif Sys.isfreebsd(platform)
+        libc_jll_name = "freebsd_something_jll"
+        version_map = freebsd_kernel_version
+    else
+        # Other platforms don't do versioning yet
+        return platform
+    end
+
+    for toolchain in target_spec.toolchains
+        if !isa(toolchain, CToolchain)
+            continue
+        end
+
+        tenv = toolchain_env(toolchain, "")
+        # Get the version that the JLL corresponds to, and return!
+        platform["os_version"] = string(version_map(tenv["MACOSX_DEPLOYMENT_TARGET"]))
+        return platform
+    end
+
+    # Unable to find an OS version, that's fine!
+    return nothing
+end
+
+function add_os_version(cp::CrossPlatform, target_spec::BuildTargetSpec)
+    return CrossPlatform(add_os_version(cp.host, target_spec) => cp.target)
+end
+
 function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec})
     if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
@@ -237,7 +287,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
         deps = JLLPackageDependencies(result, extra_deps),
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = JLLSourceRecords(result),
-        platform = result.config.platform,
+        platform = add_os_version(result.config.platform, result.config.target_spec),
         name,
         # TODO: Add links to our eventual deployment target
         artifact = JLLArtifactBinding(
