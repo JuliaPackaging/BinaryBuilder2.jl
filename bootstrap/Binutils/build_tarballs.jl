@@ -103,7 +103,7 @@ for varname in tool_names
     push!(products, ExecutableProduct("\${bindir}/\${target}-$(tool_name)", varname))
 end
 
-for version in keys(binutils_version_sources)
+for version in (v"2.41",) #keys(binutils_version_sources)
     build_tarballs(;
         src_name = "Binutils",
         src_version = version,
