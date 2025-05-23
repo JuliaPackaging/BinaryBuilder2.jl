@@ -1,0 +1,90 @@
+commit d6af8dfa32b42c9956ddbe557d3bfecbd92c0462
+Author: Elliot Saba <staticfloat@gmail.com>
+Date:   Sun May 18 18:43:48 2025 +0000
+
+    Backport removal of no-whole-archive
+    
+    This configure check was removed in cf09d0b052cbbfbcabc3c3d78d485876b9b81f9c
+    and fails for newer GCC versions (Such as GCC 14) with the following error:
+    ```
+    conftest.c:1:1: error: return type defaults to 'int' [-Wimplicit-int]
+        1 | _start () {}
+          | ^~~~~~
+    conftest.c:3:1: error: return type defaults to 'int' [-Wimplicit-int]
+        3 | __throw () {}
+          | ^~~~~~~
+    ```
+    We backport its removal here.
+
+diff --git a/configure b/configure
+index 8c9413b14c..b14ebb63a1 100755
+--- a/configure
++++ b/configure
+@@ -7219,36 +7219,6 @@ _ACEOF
+ 
+ fi
+ 
+-{ $as_echo "$as_me:$LINENO: checking for ld --no-whole-archive" >&5
+-$as_echo_n "checking for ld --no-whole-archive... " >&6; }
+-if test "${libc_cv_ld_no_whole_archive+set}" = set; then
+-  $as_echo_n "(cached) " >&6
+-else
+-  cat > conftest.c <<\EOF
+-_start () {}
+-int __eh_pc;
+-__throw () {}
+-EOF
+-if { ac_try='${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS
+-			    -nostdlib -nostartfiles -Wl,--no-whole-archive
+-			    -o conftest conftest.c 1>&5'
+-  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+-  (eval $ac_try) 2>&5
+-  ac_status=$?
+-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); }; }; then
+-  libc_cv_ld_no_whole_archive=yes
+-else
+-  libc_cv_ld_no_whole_archive=no
+-fi
+-rm -f conftest*
+-fi
+-{ $as_echo "$as_me:$LINENO: result: $libc_cv_ld_no_whole_archive" >&5
+-$as_echo "$libc_cv_ld_no_whole_archive" >&6; }
+-if test $libc_cv_ld_no_whole_archive = yes; then
+-  no_whole_archive=-Wl,--no-whole-archive
+-fi
+-
+ { $as_echo "$as_me:$LINENO: checking for gcc -fexceptions" >&5
+ $as_echo_n "checking for gcc -fexceptions... " >&6; }
+ if test "${libc_cv_gcc_exceptions+set}" = set; then
+diff --git a/configure.in b/configure.in
+index 098adf4d35..f2c8491590 100644
+--- a/configure.in
++++ b/configure.in
+@@ -1945,26 +1945,6 @@ if test $libc_cv_asm_cfi_directives = yes; then
+   AC_DEFINE(HAVE_ASM_CFI_DIRECTIVES)
+ fi
+ 
+-AC_CACHE_CHECK(for ld --no-whole-archive, libc_cv_ld_no_whole_archive, [dnl
+-cat > conftest.c <<\EOF
+-_start () {}
+-int __eh_pc;
+-__throw () {}
+-EOF
+-dnl No \ in command here because it ends up inside ''.
+-if AC_TRY_COMMAND([${CC-cc} $CFLAGS $CPPFLAGS $LDFLAGS
+-			    -nostdlib -nostartfiles -Wl,--no-whole-archive
+-			    -o conftest conftest.c 1>&AS_MESSAGE_LOG_FD]); then
+-  libc_cv_ld_no_whole_archive=yes
+-else
+-  libc_cv_ld_no_whole_archive=no
+-fi
+-rm -f conftest*])
+-if test $libc_cv_ld_no_whole_archive = yes; then
+-  no_whole_archive=-Wl,--no-whole-archive
+-fi
+-AC_SUBST(no_whole_archive)dnl
+-
+ AC_CACHE_CHECK(for gcc -fexceptions, libc_cv_gcc_exceptions, [dnl
+ cat > conftest.c <<\EOF
+ _start () {}
