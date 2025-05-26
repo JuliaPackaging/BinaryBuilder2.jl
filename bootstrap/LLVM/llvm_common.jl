@@ -117,8 +117,8 @@ function clang_buildscript(src_version::VersionNumber)
         CMAKE_FLAGS+=(-DLLVM_SHLIB_SYMBOL_VERSION:STRING="JL_LLVM_${LLVM_MAJ_VER}.${LLVM_MIN_VER}")
 
         if [[ "${host}" == *mingw* ]]; then
-            CMAKE_CPP_FLAGS+=(-remap -D__USING_SJLJ_EXCEPTIONS__ -D__CRT__NO_INLINE -pthread -DMLIR_CAPI_ENABLE_WINDOWS_DLL_DECLSPEC -Dmlir_arm_sme_abi_stubs_EXPORTS)
-            CMAKE_C_FLAGS+=(-pthread -DMLIR_CAPI_ENABLE_WINDOWS_DLL_DECLSPEC)
+            CMAKE_CPP_FLAGS+=(-remap -D__USING_SJLJ_EXCEPTIONS__ -D__CRT__NO_INLINE -pthread -DMLIR_CAPI_ENABLE_WINDOWS_DLL_DECLSPEC -Dmlir_arm_sme_abi_stubs_EXPORTS -femulated-tls)
+            CMAKE_C_FLAGS+=(-pthread -DMLIR_CAPI_ENABLE_WINDOWS_DLL_DECLSPEC -femulated-tls)
             CMAKE_FLAGS+=(-DCOMPILER_RT_BUILD_SANITIZERS=OFF)
         fi
 
@@ -190,11 +190,10 @@ install_license ${WORKSPACE}/srcdir/llvm-project/LICENSE.TXT
 # Disable uname wrapper, because it makes LLVM build confused
 rm -f $(which uname)
 
-# Create fake `xcrun` wrapper and `PlistBuddy` wrappers, to make detection of aarch64 support work
+# Create fake `PlistBuddy` wrapper to make detection of aarch64 support work
 mkdir -p /usr/libexec /usr/local/bin
-cp ${WORKSPACE}/srcdir/bundled/xcrun /usr/local/bin/xcrun
 cp ${WORKSPACE}/srcdir/bundled/PlistBuddy /usr/libexec/PlistBuddy
-chmod +x /usr/local/bin/xcrun /usr/libexec/PlistBuddy
+chmod +x /usr/libexec/PlistBuddy
 
 # Apply patches to source
 pushd "${WORKSPACE}/srcdir/llvm-project"
@@ -249,7 +248,7 @@ CMAKE_FLAGS+=(-DLLVM_ENABLE_LIBXML2=OFF)
 
 # Manually point to `zlib`, because it doesn't find it automatically properly.
 export LDFLAGS="-L ${host_shlibdir}"
-if [[ "${target}" != *mingw* ]]; then
+if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]]; then
     export LDFLAGS="${LDFLAGS} -Wl,-rpath,${host_shlibdir} -Wl,-rpath-link,${host_shlibdir}"
 fi
 
