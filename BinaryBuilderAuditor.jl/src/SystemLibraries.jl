@@ -110,6 +110,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
         ]
         csl_libs = [
             "libgcc_s.1.dylib",
+            "libgcc_s.1.1.dylib",
         ]
         return lowercase(soname) ∈ vcat(ignore_libs, csl_libs)
     elseif os(platform) == "windows"

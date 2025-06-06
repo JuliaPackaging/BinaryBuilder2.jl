@@ -263,9 +263,11 @@ function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
         end
 
         tenv = toolchain_env(toolchain, "")
-        # Get the version that the JLL corresponds to, and return!
-        platform["os_version"] = string(version_map(tenv["MACOSX_DEPLOYMENT_TARGET"]))
-        return platform
+        if haskey(tenv, "MACOSX_DEPLOYMENT_TARGET")
+            # Get the version that the JLL corresponds to, and return!
+            platform["os_version"] = string(version_map(tenv["MACOSX_DEPLOYMENT_TARGET"]))
+            return platform
+        end
     end
 
     # Unable to find an OS version, that's fine!

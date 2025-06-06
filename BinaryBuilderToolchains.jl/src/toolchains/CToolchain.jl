@@ -691,8 +691,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         set_envvars(env_prefix, wrapper_prefix)
     end
 
-    sdk_jll = get_jll(toolchain, "macOSSDK_jll")
-    if sdk_jll !== nothing
+    if Sys.isapple(toolchain.platform.target)
         # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
         # use the default deployment targets for the architecture being built:
         function default_kernel_version(arch)
@@ -1029,7 +1028,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         if is_clangxx
             # It's extremely rare, but some packages (such as `libc++` itself) manually set
             # the `--stdlib` flag, so let's let them do their thing.
-            flagmatch(io, [!flag"--stdlib", !flag"--nostdlib++"]) do io
+            flagmatch(io, [!flag"--stdlib=.*"r, !flag"--nostdlib++"]) do io
                 append_flags(io, :PRE, [
                     # Set the C++ runtime library, but only in clang++
                     "--stdlib=$(get_cxx_runtime_str(toolchain))",
@@ -1155,12 +1154,12 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     # Many of our tools have nondeterministic
     function _warn_nondeterministic_definition(io, nondeterminism_description="uses flags that cause nondeterministic output!")
-        println(io, raw"""
+        println(io, """
         NONDETERMINISTIC=0
         warn_nondeterministic() {
-            if [[ "${NONDETERMINISTIC}" != "1" ]]; then
-                echo "Non-reproducibility alert: This '$0' invocation $(nondeterminism_description)." >&2
-                echo "$0 flags: ${ARGS[@]}" >&2
+            if [[ "\${NONDETERMINISTIC}" != "1" ]]; then
+                echo "Non-reproducibility alert: This '\$0' invocation $(nondeterminism_description)." >&2
+                echo "\$0 flags: \${ARGS[@]}" >&2
                 echo "Continuing build, but please repent." >&2
             fi
             NONDETERMINISTIC=1
