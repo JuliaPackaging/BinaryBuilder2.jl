@@ -24,9 +24,13 @@ end
 # BuildSpec generator for Clang/libLLVM
 function clang_build_spec_generator(;is_bootstrap::Bool = false)
     vendor = is_bootstrap ? :gcc_bootstrap : :clang_bootstrap
-    compiler_runtime = :libgcc
 
     return (host, platform) -> begin
+        # This is a canadian cross, our `platform.target` is always `any`
+        compiler_runtime = :libgcc
+        if os(host_if_crossplatform(platform)) ∈ ("macos", "freebsd")
+            compiler_runtime = :compiler_rt
+        end
         specs = [
             BuildTargetSpec(
                 "build",
@@ -63,7 +67,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                     JLLSource(
                         "Zlib_jll";
                         repo=Pkg.Types.GitRepo(
-                            rev="bb2/GCC",
+                            rev="main",
                             source="https://github.com/staticfloat/Zlib_jll.jl"
                         ),
                     ),
@@ -241,6 +245,9 @@ CMAKE_FLAGS+=(
     -DLLVM_INCLUDE_EXAMPLES=OFF
     -DLLVM_INCLUDE_BENCHMARKS=OFF
     -DLIBCXX_INCLUDE_BENCHMARKS=OFF
+    -DLLVM_ENABLE_LIBEDIT=OFF
+    -DLLVM_ENABLE_TERMINFO=OFF
+    -DLLVM_HAVE_LIBXAR=OFF
 )
 
 # Turn off XML2
@@ -248,9 +255,20 @@ CMAKE_FLAGS+=(-DLLVM_ENABLE_LIBXML2=OFF)
 
 # Manually point to `zlib`, because it doesn't find it automatically properly.
 export LDFLAGS="-L ${host_shlibdir}"
-if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]]; then
-    export LDFLAGS="${LDFLAGS} -Wl,-rpath,${host_shlibdir} -Wl,-rpath-link,${host_shlibdir}"
+
+# We use this script fragment both in a cross-compile context (where `${host}` is the
+# system the compilers are compiling for) and in a normal context (where `${target}` is
+# the system the compilers are compiling for).
+if [[ -n "${build_prefix:-}" ]]; then
+    if [[ "${host}" != *mingw* ]] && [[ "${host}" != *darwin* ]]; then
+        export LDFLAGS="${LDFLAGS} -Wl,-rpath,${host_shlibdir} -Wl,-rpath-link,${host_shlibdir}"
+    fi
+else
+    if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]]; then
+        export LDFLAGS="${LDFLAGS} -Wl,-rpath,${target_shlibdir} -Wl,-rpath-link,${target_shlibdir}"
+    fi
 fi
+
 
 CMAKE_FLAGS+=(
     -DZLIB_ROOT="${host_prefix}"
