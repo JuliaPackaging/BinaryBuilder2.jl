@@ -117,7 +117,7 @@ for version in (v"2.41",) #keys(binutils_version_sources)
                 "Zlib_jll";
                 # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCC",
+                    rev="main",
                     source="https://github.com/staticfloat/Zlib_jll.jl"
                 ),
             ),
