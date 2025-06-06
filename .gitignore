@@ -1,3 +1,4 @@
 .vscode/
 LocalPreferences.toml
 .buildkite/logs/
+.aider*
