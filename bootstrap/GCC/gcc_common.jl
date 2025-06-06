@@ -148,14 +148,6 @@ done
 # Initialize GCC_CONF_ARGS
 GCC_CONF_ARGS=()
 
-## If we're doing a bootstrapping build (GCC does not, GCCBootstrapMacOS does)
-# add in the appropriate configure arguments:
-if [[ "${GCC_ENABLE_BOOTSTRAP:-false}" == "true" ]]; then
-    GCC_CONF_ARGS+=( --enable-bootstrap )
-else
-    GCC_CONF_ARGS+=( --disable-bootstrap )
-fi
-
 ## Architecture-dependent arguments
 # Choose a default arch, and on arm*hf targets, pass `--with-float=hard` explicitly
 if [[ "${target}" == arm*hf ]]; then
@@ -243,10 +235,10 @@ for TOOL in CC CPP CXX AS AR NM LD RANLIB; do
     export ${TOOL}_FOR_TARGET=${!TARGET_NAME}
 
     # These target tool autodetections do not work
-    #export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
+    export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
 done
 
-# libcc1 fails with an error about `-rdynamic` unless we defien this
+# libcc1 fails with an error about `-rdynamic` unless we define this
 export gcc_cv_nm="${NM_FOR_TARGET}"
 
 # Make sure the tools that GCC itself wants to use ("ld", "as", "dysmutil") are available
@@ -269,6 +261,7 @@ $WORKSPACE/srcdir/gcc-*/configure \
     --host="${host}" \
     --target="${target}" \
     --disable-multilib \
+    --disable-bootstrap \
     --disable-werror \
     --enable-threads=posix \
     --enable-languages=c,c++ \

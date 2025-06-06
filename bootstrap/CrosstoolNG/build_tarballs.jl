@@ -16,7 +16,7 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),

@@ -266,7 +266,11 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=sysroot_path,
         )]
     elseif os(platform.target) == "macos"
-        @warn("Take in `macos_version(platform.target)` and feed that to `macOSSDK_jll.jl` here", maxlog=1)
+        if macos_version(platform.target) !== nothing
+            if macos_version(platform.target) > v"11.1"
+                throw(ArgumentError("We need to upgrade our macOSSDK_jll to support such a new version: $(triplet(platform.target))"))
+            end
+        end
         libc_jlls = [JLLSource(
             "macOSSDK_jll",
             platform.target;
@@ -282,7 +286,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Mingw_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
+                rev="main",
                 source="https://github.com/staticfloat/Mingw_jll.jl",
             ),
             target=sysroot_path,
@@ -324,8 +328,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Binutils_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                #rev="bb2/GCC",
-                rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
+                rev="main",
+                #rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version
@@ -511,7 +515,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LinuxKernelHeaders_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
             ),
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
@@ -687,13 +691,24 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         set_envvars(env_prefix, wrapper_prefix)
     end
 
-    sdk_jll = get_jll(toolchain, "macOSSDK_jll")
-    if sdk_jll !== nothing
-        env["MACOSX_DEPLOYMENT_TARGET"] = string(
-            sdk_jll.package.version.major,
-            ".",
-            sdk_jll.package.version.minor,
+    if Sys.isapple(toolchain.platform.target)
+        # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
+        # use the default deployment targets for the architecture being built:
+        function default_kernel_version(arch)
+            if arch == "x86_64"
+                return 14
+            elseif arch == "aarch64"
+                return 20
+            else
+                throw(ArgumentError("Unknown macOS architecture '$(arch)'!"))
+            end
+        end
+
+        kernel_version = something(
+            os_version(toolchain.platform.target),
+            default_kernel_version(arch(toolchain.platform.target))
         )
+        env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
     end
     
     return env
@@ -842,7 +857,7 @@ function add_macos_flags(io, toolchain)
                     append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
                 end
             end
-            
+
             # Always compile for a particular minimum macOS version
             if macos_ver !== nothing
                 append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
@@ -1013,7 +1028,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         if is_clangxx
             # It's extremely rare, but some packages (such as `libc++` itself) manually set
             # the `--stdlib` flag, so let's let them do their thing.
-            flagmatch(io, [!flag"--stdlib", !flag"--nostdlib++"]) do io
+            flagmatch(io, [!flag"--stdlib=.*"r, !flag"--nostdlib++"]) do io
                 append_flags(io, :PRE, [
                     # Set the C++ runtime library, but only in clang++
                     "--stdlib=$(get_cxx_runtime_str(toolchain))",
@@ -1058,6 +1073,24 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         add_ccache_preamble(io, toolchain)
     end
 
+    if Sys.isapple(p)
+        function _xcrun_wrapper(io)
+            flagmatch(io, [flag"--show-sdk-path"]) do io
+                println(io, raw"""
+                "${CC}" -print-sysroot
+                exit 0
+                """)
+            end
+            flagmatch(io, [flag"--show-sdk-version"]) do io
+                println(io, raw"""
+                echo "${MACOSX_DEPLOYMENT_TARGET}"
+                exit 0
+                """)
+            end
+        end
+        make_tool_wrappers(toolchain, dir, "xcrun", "exec"; wrapper=_xcrun_wrapper, toolchain_prefix)
+    end
+
     make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "clang-scan-deps", "clang-scan-deps"; toolchain_prefix)
@@ -1075,10 +1108,7 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
     gcc_version = get_gcc_version(toolchain)
 
     # These tools don't need anything fancy; just `compiler_wrapper()`
-    simple_tools = [
-        "objcopy",
-        "objdump",
-    ]
+    simple_tools = String[]
     @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
     @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
     # Apple has some extra simple tools
@@ -1124,12 +1154,12 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     # Many of our tools have nondeterministic
     function _warn_nondeterministic_definition(io, nondeterminism_description="uses flags that cause nondeterministic output!")
-        println(io, raw"""
+        println(io, """
         NONDETERMINISTIC=0
         warn_nondeterministic() {
-            if [[ "${NONDETERMINISTIC}" != "1" ]]; then
-                echo "Non-reproducibility alert: This '$0' invocation $(nondeterminism_description)." >&2
-                echo "$0 flags: ${ARGS[@]}" >&2
+            if [[ "\${NONDETERMINISTIC}" != "1" ]]; then
+                echo "Non-reproducibility alert: This '\$0' invocation $(nondeterminism_description)." >&2
+                echo "\$0 flags: \${ARGS[@]}" >&2
                 echo "Continuing build, but please repent." >&2
             fi
             NONDETERMINISTIC=1
@@ -1355,6 +1385,12 @@ function binutils_wrappers(toolchain::CToolchain, dir::String)
 
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
     make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix=llvm_toolchain_prefix)
+
+    objcopy_name = Sys.isapple(p) ? "llvm-objcopy" : "$(gcc_triplet)-objcopy"
+    make_tool_wrappers(toolchain, dir, "objcopy", objcopy_name; toolchain_prefix=llvm_toolchain_prefix)
+
+    objdump_name = Sys.isapple(p) ? "llvm-objdump" : "$(gcc_triplet)-objdump"
+    make_tool_wrappers(toolchain, dir, "objdump", objdump_name; toolchain_prefix=llvm_toolchain_prefix)
 
     if Sys.isapple(p)
         # dsymutil is just called `dsymutil`

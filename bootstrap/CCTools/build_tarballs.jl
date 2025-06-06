@@ -46,7 +46,7 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
@@ -92,7 +92,7 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
@@ -120,7 +120,7 @@ function cctools_build_spec_generator(host, platform)
                     "Zlib_jll";
                     # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCC",
+                        rev="main",
                         source="https://github.com/staticfloat/Zlib_jll.jl"
                     ),
                 ),

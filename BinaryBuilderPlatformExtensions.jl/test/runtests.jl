@@ -211,6 +211,18 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
     end
 end
 
+@testset "macos_version" begin
+    @test macos_version(Platform("x86_64", "macos")) === nothing
+    @test macos_version(Platform("x86_64", "macos"; os_version="14")) === "10.10"
+    @test macos_version(Platform("x86_64", "macos"; os_version="20")) === "11.0"
+    for idx in 12:24
+        p = Platform("aarch64", "macos"; os_version=string(idx))
+        @test macos_version(p) !== nothing
+        @test macos_kernel_version(p) == idx
+        @test macos_kernel_version(macos_version(p)) == idx
+    end
+end
+
 @testset "nbits" begin
     for p in [Platform("i686", "linux"), Platform("i686", "windows"), Platform("armv7l", "linux")]
         @test nbits(p) == 32

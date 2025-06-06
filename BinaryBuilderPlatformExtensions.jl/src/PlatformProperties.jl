@@ -1,4 +1,4 @@
-export macos_version, nbits, proc_family, exeext, dlext
+export macos_version, macos_kernel_version, nbits, proc_family, exeext, dlext
 
 function macos_version(kernel_version::Integer)
     # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
@@ -13,9 +13,35 @@ function macos_version(kernel_version::Integer)
         19 => "10.15",
         20 => "11.0",
         21 => "12.0",
+        22 => "13.0",
+        23 => "14.0",
+        24 => "15.0",
     )
     return get(kernel_to_macos, kernel_version, nothing)
 end
+macos_version(v::VersionNumber) = macos_version(v.major)
+
+"""
+    macos_kernel_version(v::VersionNumber)
+
+Return the kernel version from a macOS VersionNumber, e.g. when given
+`10.10`` return `14`.  If given a VersionNumber outside of what we
+understand, return the closest valid number.
+"""
+function macos_kernel_version(v::VersionNumber)
+    if v.major < 10
+        return 12
+    elseif v.major == 10
+        if v.minor <= 8
+            return 12
+        else
+            return min(12 + (v.minor - 8), 19)
+        end
+    else
+        return 20 + (v.major - 11)
+    end
+end
+macos_kernel_version(s::String) = macos_kernel_version(VersionNumber(s))
 
 """
     macos_version(p::AbstractPlatform)
@@ -36,6 +62,16 @@ function macos_version(p::AbstractPlatform)
         return nothing
     end
     return macos_version(os_version(p))
+end
+
+function macos_kernel_version(p::AbstractPlatform)
+    if os(p) != "macos"
+        return nothing
+    end
+    if os_version(p) === nothing
+        return nothing
+    end
+    return Int(os_version(p).major)
 end
 
 

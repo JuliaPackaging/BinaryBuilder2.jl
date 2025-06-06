@@ -110,9 +110,17 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
         ]
         csl_libs = [
             "libgcc_s.1.dylib",
+            "libgcc_s.1.1.dylib",
         ]
         return lowercase(soname) ∈ vcat(ignore_libs, csl_libs)
     elseif os(platform) == "windows"
+        # Windows has a symbol versioning scheme that stores the version in a DLL symbol-forwarding
+        # library that really just forwards on to ucrt as a backend [0].  We ignore all of these.
+        # [0]: https://mingwpy.github.io/ucrt.html
+        if startswith(lowercase(soname), "api-ms-win-crt-")
+            return true
+        end
+
         runtime_libs = [
             # Core runtime libs
             "ntdll.dll",

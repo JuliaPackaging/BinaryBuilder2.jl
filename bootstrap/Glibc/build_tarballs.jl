@@ -49,6 +49,11 @@ fi
 # Always use `/lib`, no more `/lib64`
 GLIBC_CONFIGURE_OVERRIDES+=( libc_cv_slibdir=/lib libdir="/lib" )
 
+# Our newer compilers balk at some of this old glibc code.
+# `-Wno-implicit-int` is to fix `__start()` not having `int` before it breaking configure tests.
+# `-fcommon` is to enable the old default behavior of GCC <= 10 merging `__cache_line_size`
+GLIBC_CONFIGURE_OVERRIDES+=( CFLAGS="-g -O2 -fcommon -Wno-implicit-int -Wno-implicit-function-declaration -Wno-builtin-declaration-mismatch -Wno-array-parameter -Wno-int-conversion" )
+
 rm -rf ${WORKSPACE}/srcdir/glibc_build
 mkdir -p ${WORKSPACE}/srcdir/glibc_build
 cd ${WORKSPACE}/srcdir/glibc_build
@@ -58,7 +63,7 @@ ${WORKSPACE}/srcdir/glibc-*/configure \
     --host=${target} \
     --disable-multilib \
     --disable-werror \
-    ${GLIBC_CONFIGURE_OVERRIDES[@]}
+    "${GLIBC_CONFIGURE_OVERRIDES[@]}"
 
 make -j${nproc}
 make install install_root="${prefix}"

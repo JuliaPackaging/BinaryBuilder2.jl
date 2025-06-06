@@ -10,14 +10,7 @@ for version in (v"14.2.0",)
             gcc_version_sources[version]...,
             DirectorySource("./patches-v$(version)"; follow_symlinks=true, target="patches"),
         ],
-        script = string(
-            """
-            # By setting `GCC_ENABLE_BOOTSTRAP=true`, we opt-in to
-            # a bootstrapped GCC build and disable trying to use the target CToolchain
-            GCC_ENABLE_BOOTSTRAP=true
-            """,
-            script,
-        ),
+        script,
         platforms = [
             CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "macos")),
             CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "macos")),
