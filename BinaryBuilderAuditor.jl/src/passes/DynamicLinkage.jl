@@ -8,7 +8,7 @@ function resolve_dynamic_links!(scan::ScanResult,
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
     for (jll_name, libs) in dep_libs
         for lib in libs
-            dep_soname_map[lib.soname] = (Symbol(string(jll_name, "_jll")), lib.varname)
+            dep_soname_map[basename(lib.soname)] = (Symbol(string(jll_name, "_jll")), lib.varname)
         end
     end
 
@@ -147,7 +147,7 @@ function rpaths_consistent!(scan::ScanResult,
     soname_locator = copy(scan.soname_locator)
     for (_, libs) in dep_libs
         for lib in libs
-            soname_locator[lib.soname] = lib.path
+            soname_locator[basename(lib.soname)] = lib.path
         end
     end
 
