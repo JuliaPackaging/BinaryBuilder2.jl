@@ -286,7 +286,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Mingw_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
+                rev="main",
                 source="https://github.com/staticfloat/Mingw_jll.jl",
             ),
             target=sysroot_path,
@@ -328,8 +328,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Binutils_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                #rev="bb2/GCC",
-                rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
+                rev="main",
+                #rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version
@@ -515,7 +515,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LinuxKernelHeaders_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="main",
                 source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
             ),
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
