@@ -6,7 +6,7 @@ export gcc_platform, gcc_target_triplet
 Strip out any tags that are not the basic annotations like `libc` and `call_abi`.
 """
 function gcc_platform(p::Platform)
-    keeps = ("libc", "call_abi", "os_version")
+    keeps = ("libc", "call_abi")
     filtered_tags = Dict{Symbol,String}(Symbol(k) => v for (k, v) in tags(p) if k ∈ keeps)
     return Platform(arch(p)::String, os(p)::String; filtered_tags...)
 end

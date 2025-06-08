@@ -247,11 +247,9 @@ CMAKE_FLAGS+=(
     -DLIBCXX_INCLUDE_BENCHMARKS=OFF
     -DLLVM_ENABLE_LIBEDIT=OFF
     -DLLVM_ENABLE_TERMINFO=OFF
+    -DLLVM_ENABLE_LIBXML2=OFF
     -DLLVM_HAVE_LIBXAR=OFF
 )
-
-# Turn off XML2
-CMAKE_FLAGS+=(-DLLVM_ENABLE_LIBXML2=OFF)
 
 # Manually point to `zlib`, because it doesn't find it automatically properly.
 export LDFLAGS="-L ${host_shlibdir}"

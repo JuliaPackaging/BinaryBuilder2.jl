@@ -24,7 +24,9 @@ function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
     noabspath!(target)
     return JLLSource(
         package,
-        platform,
+        # Make sure our artifact matching happens as if we're a host platform,
+        # e.g. `os_version` gets interpreted as a lower bound, etc...
+        HostPlatform(platform),
         string(target),
         String[],
     )
