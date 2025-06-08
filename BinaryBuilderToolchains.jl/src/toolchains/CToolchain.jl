@@ -266,12 +266,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=sysroot_path,
         )]
     elseif os(platform.target) == "macos"
-        if macos_version(platform.target) !== nothing
-            if macos_version(platform.target) > v"11.1"
-                throw(ArgumentError("We need to upgrade our macOSSDK_jll to support such a new version: $(triplet(platform.target))"))
-            end
-        end
-        libc_jlls = [JLLSource(
+        macos_sdk_jll = JLLSource(
             "macOSSDK_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
@@ -280,7 +275,13 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             ),
             version=v"11.1",
             target=sysroot_path,
-        )]
+        )
+        if macos_version(platform.target) !== nothing
+            if VersionNumber(macos_version(platform.target)) > macos_sdk_jll.package.version
+                throw(ArgumentError("We need to upgrade our macOSSDK_jll to support such a new version: $(triplet(platform.target))"))
+            end
+        end
+        libc_jlls = [macos_sdk_jll]
     elseif os(platform.target) == "windows"
         libc_jlls = [JLLSource(
             "Mingw_jll",
@@ -685,7 +686,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
 
     # We can have multiple wrapper prefixes, we always use the longest one
     # as that's typically the most specific.
-    wrapper_prefixes = replace.(toolchain.wrapper_prefixes, ("\${triplet}" => triplet(toolchain.platform.target),))
+    wrapper_prefixes = replace.(toolchain.wrapper_prefixes, ("\${triplet}" => triplet(gcc_platform(toolchain.platform.target)),))
     wrapper_prefix = wrapper_prefixes[argmax(length.(wrapper_prefixes))]
     for env_prefix in toolchain.env_prefixes
         set_envvars(env_prefix, wrapper_prefix)
@@ -754,7 +755,7 @@ function make_tool_wrappers(toolchain, output_dir, tool, tool_target;
                             post_func::Function = identity,
                             toolchain_prefix::String = "\$(dirname \"\${WRAPPER_DIR}\")")
     for wrapper_prefix in toolchain.wrapper_prefixes
-        tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), tool)
+        tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(gcc_platform(toolchain.platform.target))), tool)
         compiler_wrapper(wrapper,
             post_func,
             joinpath(output_dir, "$(tool_prefixed)"),
