@@ -206,7 +206,12 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
         install_path = joinpath(prefix, target)
         mkpath(install_path)
         paths = unique(vcat((jll.artifact_paths for jll in target_jlls)...))
-        deploy_artifact_paths(install_path, unique(vcat((jll.artifact_paths for jll in target_jlls)...)))
+        try
+            deploy_artifact_paths(install_path, paths)
+        catch
+            @error("Failed to deploy", install_path, paths)
+            rethrow()
+        end
     end
 end
 

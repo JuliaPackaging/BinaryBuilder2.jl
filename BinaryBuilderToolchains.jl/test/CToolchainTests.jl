@@ -157,6 +157,10 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                     @testset "make compile-all" begin
                         cd(joinpath(@__DIR__, "testsuite", "CToolchain")) do
                             EXCLUDED_DIRS = String[]
+                            # macOS doesn't do debug sections, so there's no compressing them.
+                            if Sys.isapple(target)
+                                push!(EXCLUDED_DIRS, "07_compressed_debug_sections")
+                            end
                             # the bootstrap GCC binutils doesn't have our deterministic strip patch
                             if Sys.iswindows(target) && vendor == :gcc_bootstrap
                                 push!(EXCLUDED_DIRS, "08_strip_resigning")

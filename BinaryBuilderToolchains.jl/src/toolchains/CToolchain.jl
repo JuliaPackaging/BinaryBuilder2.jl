@@ -582,7 +582,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             append!(deps, libstdcxx_libs)
         end
         if cxx_runtime == :libcxx
-           append!(deps, libcxx_libs)
+            # We don't add these on macOS because the SDK actually comes with these libraries available.
+            # We still build them for completeness, and in the event that we actually want to use newer
+            # libraries, although I'm not sure why we would want that.
+            if os(platform.target) != "macos"
+                append!(deps, libcxx_libs)
+            end
         end
     else
         throw(ArgumentError("Invalid vendor '$(vendor)'!"))
