@@ -1,4 +1,4 @@
-using Scratch
+using Scratch, LazyJLLWrappers
 
 export with_toolchains, runshell
 
@@ -56,6 +56,51 @@ function path_appending_merge(env, others...; appending_keys::Set{String}=defaul
     return env
 end
 
+function with_cxx_csls(f::Function, env)
+    cxx_csl_libs = [
+        JLLSource(
+            "libstdcxx_jll",
+            BBHostPlatform();
+            uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/libstdcxx_jll.jl",
+            ),
+        ),
+        JLLSource(
+            "LLVMLibcxx_jll",
+            BBHostPlatform();
+            uuid=Base.UUID("899a7460-a157-599b-96c7-ccb58ef9beb5"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
+            ),
+        ),
+        JLLSource(
+            "LLVMLibunwind_jll",
+            BBHostPlatform();
+            uuid=Base.UUID("871c935c-5660-55ad-bb68-d1283357316b"),
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
+            ),
+        ),
+    ]
+    mktempdir() do prefix
+        prepare(cxx_csl_libs)
+        deploy(cxx_csl_libs, prefix)
+        libpath = string(
+            joinpath(prefix, "lib"),
+            LazyJLLWrappers.pathsep,
+            joinpath(prefix, triplet(BBHostPlatform()), "lib"),
+            LazyJLLWrappers.pathsep,
+            joinpath(prefix, triplet(BBHostPlatform()), "lib64"),
+        )
+        env = LazyJLLWrappers.adjust_ENV!(env, "", libpath, false, true)
+        f(env)
+    end
+end
+
 
 """
     with_toolchains(f::Function, toolchains::Vector{AbstractToolchain};
@@ -84,9 +129,11 @@ function with_toolchains(f::Function, toolchains::Vector{<:AbstractToolchain};
                          deploy_dir::Union{Nothing,String} = nothing,
                          env = ENV,
                          verbose::Bool = false)
+    # Collect the sources from the toolchains
+    srcs = reduce(vcat, toolchain_sources.(toolchains))
+
     # Prepare all sources.  We do this in one `prepare()` invocation, as
     # there can be efficiency benefits, especially when `deploy()`'ing later.
-    srcs = reduce(vcat, toolchain_sources.(toolchains))
     prepare(srcs; verbose)
 
     function deploy_and_run(prefix)
@@ -98,7 +145,9 @@ function with_toolchains(f::Function, toolchains::Vector{<:AbstractToolchain};
             toolchain_env.(toolchains, (prefix,))...,
             filter_env_vars(env),
         ])
-        f(prefix, env)
+        with_cxx_csls(env) do env
+            f(prefix, env)
+        end
     end
 
     # If no `deploy_dir` was given, generate a temporary one that exists only
