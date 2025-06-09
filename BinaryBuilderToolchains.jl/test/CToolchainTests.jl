@@ -35,13 +35,8 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
             @info("CToolchain tests", use_ccache, config...)
             with_toolchains([toolchain, htt_toolchain]) do prefix, env
                 env["CCACHE_DIR"] = ccache_dir
-                # We build with _all_ of the C++ stdlib choices here, so we need to ensure that
-                # we have the appropriate libraries on our `LD_LIBRARY_PATH` for testing, so
-                # that we can properly attempt to run them.
-                with_cxx_csls(;env) do env
-                    toolchain_tests(prefix, env, platform, "CToolchain";
-                                    do_cxxabi_tests=config[:cxx_runtime] == :libstdcxx)
-                end
+                toolchain_tests(prefix, env, platform, "CToolchain";
+                                do_cxxabi_tests=config[:cxx_runtime] == :libstdcxx)
             end
         end
     end

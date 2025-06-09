@@ -62,8 +62,8 @@ include("InteractiveUtils.jl")
                     CToolchain(platform),
                     HostToolsToolchain(platform)
                 ])
-            catch
-                @warn("Failed to precompile support for platform", platform)
+            catch e
+                @warn("Failed to precompile support for platform", platform, e)
             end
         end
     end

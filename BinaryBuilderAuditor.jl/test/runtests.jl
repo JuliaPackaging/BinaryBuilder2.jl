@@ -6,7 +6,6 @@ include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
 include("passes/DynamicLinkageTests.jl")
 
-
 @testset "audit!" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchain = CToolchain(platform; use_ccache=false)
