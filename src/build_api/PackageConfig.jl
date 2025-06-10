@@ -273,7 +273,7 @@ function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
     # Unable to find an OS version, that's fine!
     return platform
 end
-
+add_os_version(any::AnyPlatform, ::BuildTargetSpec) = any
 function add_os_version(cp::CrossPlatform, target_spec::BuildTargetSpec)
     return CrossPlatform(add_os_version(cp.host, target_spec) => cp.target)
 end
