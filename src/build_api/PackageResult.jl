@@ -63,3 +63,19 @@ function BinaryBuilderSources.PackageSpec(result::PackageResult)
         repo=Pkg.Types.GitRepo(;source=result.deploy_url, rev=result.deploy_rev),
     )
 end
+
+function collect_extractions(result::PackageResult)
+    ret = ExtractResult[]
+    for (name, ers) in result.config.named_extractions
+        append!(ret, ers)
+    end
+    return ret
+end
+
+function collect_builds(result::PackageResult)
+    ret = BuildResult[]
+    for extract_result in collect_extractions(result)
+        push!(ret, extract_result.config.build)
+    end
+    return ret
+end
