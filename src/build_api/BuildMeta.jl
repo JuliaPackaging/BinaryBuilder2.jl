@@ -380,4 +380,39 @@ function get_build_result(meta::BuildMeta, src_name::String)
     return meta.builds[only(filter(criteria, keys(meta.builds)))]
 end
 
+import BinaryBuilderToolchains: indent
+
+function Base.show(io::IO, meta::BuildMeta)
+    println(io, "BuildMeta")
+    println(io, indent(string(meta.universe), 2))
+
+    println(io, "  Builds:")
+    # Start from packagings, work backward to extractions, then builds
+    # Collect based on build config source name
+    for (pc, pr) in meta.packagings
+        extractions = collect_extractions(pr)
+        builds = collect_builds(pr)
+
+        function layer_report(name, vals)
+            num_total = length(vals)
+            num_successful = length(filter(v -> v.status == :success, vals))
+            if num_successful == num_total
+                color = :green
+            elseif num_successful >= 1
+                color = :yellow
+            else
+                color = :red
+            end
+            return styled"{$(color):[$(num_successful)/$(num_total)] $(name)}"
+        end
+
+        println(io, annotatedstring(
+            styled"    - $(pc.name)-$(pc.version) ",
+            layer_report("builds", builds)), " => ",
+            layer_report("extractions", extractions), " => ",
+            layer_report("packagings", [pr])
+        )
+    end
+end
+
 # TODO: Add serialization tools for all of these structures
