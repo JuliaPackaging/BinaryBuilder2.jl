@@ -51,7 +51,7 @@ prepare(ds::DirectorySource; verbose::Bool = false) = nothing
 
 Simple recursive `cp()` wrapper that creates directories in `dst` as they are
 encountered in `src`.  Errors out if a directory in `src` already exists as a
-file in `dst`.  Note; both `sr`
+file in `dst`.  Note; both `src` and `dst` are assumed to be directories.
 """
 function cptree(src::String, dst::String, follow_symlinks::Bool)
     mkpath(dst)
