@@ -172,6 +172,18 @@ function cleanup(uni::Universe)
     end
 end
 
+function Base.show(io::IO, uni::Universe)
+    println(io, "Universe$(uni.name === nothing ? "" : " $(uni.name)")")
+    println(io, "  Registries:")
+    for reg in uni.registries
+        println(io, "   - $(reg.name) [$(reg.uuid)]")
+    end
+    println(io, "  Depot Path: $(uni.depot_path)")
+    if uni.deploy_org !== nothing
+        println(io, "  Deploy target: https://github.com/$(uni.deploy_org)")
+    end
+end
+
 Artifacts.artifact_path(u::Universe, hash::Base.SHA1) = joinpath(u.depot_path, "artifacts", bytes2hex(hash.bytes))
 Artifacts.artifact_path(u::Universe, hash::SHA1Hash) = artifact_path(u, Base.SHA1(hash))
 Artifacts.artifact_path(hash::SHA1Hash) = artifact_path(Base.SHA1(hash))
