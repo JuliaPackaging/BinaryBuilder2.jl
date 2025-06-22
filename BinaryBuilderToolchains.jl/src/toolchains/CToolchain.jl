@@ -630,8 +630,6 @@ function toolchain_sources(toolchain::CToolchain)
         end
     end)
 
-    @warn("TODO: Generate xcrun shim", maxlog=1)
-
     # Note that we eliminate the illegal "version" fields from our PackageSpec
     jll_deps = copy(toolchain.deps)
     #@warn("TODO: do I need to filter these out here?", maxlog=1)
