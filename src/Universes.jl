@@ -165,9 +165,11 @@ struct Universe
     end
 end
 
-function cleanup(uni::Universe)
+function cleanup(uni::Universe; silent::Bool = false)
     if !uni.persistent && isdir(uni.depot_path)
-        @info("Cleaning up universe", depot_path=uni.depot_path)
+        if !silent
+            @info("Cleaning up universe", depot_path=uni.depot_path)
+        end
         rm(uni.depot_path; force=true, recursive=true)
     end
 end
