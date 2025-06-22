@@ -188,32 +188,7 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     # Dry run settings
     dry_run, dry_run_csv = extract_flag!(ARGS, "--dry-run", "all")
     if dry_run
-        # Parse the given set of categories
-        dry_run_categories = Symbol.(split(dry_run_csv, ","))
-
-        # Ensure that we only have valid values in these dry run categories
-        valid_categories = [:build, :extract, :package, :all]
-        for d in dry_run_categories
-            if d ∉ valid_categories
-                throw(ArgumentError("Invalid dry_run setting '$(d)'; value values are: $(valid_categories)"))
-            end
-        end
-
-        # If `:all` was passed, just set the parsed values to all valid possibilities
-        if :all ∈ dry_run_categories
-            dry_run_categories = valid_categories
-        else
-            # If `:build` was passed, that implies `:extract` and `:package`,
-            # just like `:extract` implies `:package`.
-            if :build ∈ dry_run_categories
-                push!(dry_run_categories, :extract)
-            end
-
-            if :extract in dry_run_categories
-                push!(dry_run_categories, :package)
-            end
-        end
-        parsed_kwargs[:dry_run] = sort(collect(Set(dry_run_categories)))
+        parsed_kwargs[:dry_run] = Set(Symbol.(split(dry_run_csv, ",")))
     end
 
     parsed_kwargs[:disable_cache] = check_flag!(ARGS, "--disable-cache")
@@ -285,16 +260,48 @@ struct BuildMeta <: AbstractBuildMeta
                         debug_modes = Set{String}(),
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
                         disable_cache::Bool = false,
-                        dry_run::Vector{Symbol} = Symbol[],
+                        dry_run = Set{Symbol}(),
                         register::Bool = false,
                        )
         if !isa(debug_modes, Set)
             debug_modes = Set(debug_modes)
         end
+        if !isa(dry_run, Set)
+            dry_run = Set(dry_run)
+        end
+
+        # This is used to list out the valid values for arguments in error messages
+        example_list(vals) = return join([string(" - ", v) for v in vals], "\n")
+
+        valid_debug_modes = [
+            "build-start",   "build-error",   "build-stop",
+            "extract-start", "extract-error", "extract-stop",
+        ]
         for mode in debug_modes
-            if mode ∉ Set(["build-start",   "build-error",   "build-stop",
-                           "extract-start", "extract-error", "extract-stop"])
-                throw(ArgumentError("Invalid debug mode`: \"$(mode)\".  try `build-start`, `build-stop`, `extract-error`, etc..."))
+            if mode ∉ valid_debug_modes
+                throw(ArgumentError("Invalid debug mode: \"$(mode)\".  Try one of the following:\n$(example_list(valid_debug_modes))"))
+            end
+        end
+
+        # If `:all` was passed, just set the parsed values to all valid possibilities
+        valid_dry_runs = Set([:build, :extract, :package, :all])
+        for dr in dry_run
+            if dr ∉ valid_dry_runs
+                throw(ArgumentError("Invalid dry_run category \"$(dr)\".  Try one of the following:\n$(example_list(valid_dry_runs))"))
+            end
+        end
+
+        if :all ∈ dry_run
+            dry_run = valid_dry_runs
+        else
+            # If `:build` was passed, that implies `:extract` and `:package`,
+            # just like `:extract` implies `:package`.
+            if :build ∈ dry_run
+                push!(dry_run, :extract)
+            end
+
+            if :extract in dry_run
+                push!(dry_run, :package)
             end
         end
 

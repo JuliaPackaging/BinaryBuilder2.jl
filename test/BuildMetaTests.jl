@@ -1,5 +1,5 @@
 using Test, BinaryBuilder2, Pkg
-using BinaryBuilder2: parse_build_tarballs_args, universes_dir
+using BinaryBuilder2: parse_build_tarballs_args
 using Base.BinaryPlatforms
 
 # Ensure that, when testing, we do not attempt to authenticate to GitHub
@@ -73,7 +73,7 @@ BinaryBuilder2.allow_github_authentication[] = false
             ],
             verbose=true,
             debug_modes=["build-stop"],
-            dry_run=Symbol[],
+            dry_run=Symbol[:all],
             json_output=Base.stdout,
             deploy_org="JuliaBinaryWrappers",
             universe_name,
@@ -87,7 +87,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test os(meta.target_list[2]) == "windows"
         @test meta.verbose
         @test meta.debug_modes == Set(["build-stop"])
-        @test isempty(meta.dry_run)
+        @test meta.dry_run == Set([:build, :extract, :package, :all])
         @test meta.json_output == Base.stdout
         @test meta.register
         @test meta.universe.name == universe_name
