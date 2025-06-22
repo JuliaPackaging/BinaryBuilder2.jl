@@ -447,8 +447,8 @@ AbstractBuildMeta(packagings::Dict{PackageConfig,<:Union{Nothing,PackageResult}}
 
 function runshell(platform::CrossPlatform;
                   target_specs::Vector = apply_spec_plan(make_target_spec_plan(), platform.host, platform.target),
+                  meta = BuildMeta(),
                   kwargs...)
-    meta = BuildMeta()
     config = BuildConfig(
         meta,
         "test",
@@ -464,5 +464,5 @@ function runshell(platform::CrossPlatform;
         cleanup(meta.universe)
     end
 end
-runshell(platform::Platform) = runshell(CrossPlatform(BBHostPlatform() => platform))
-runshell(triplet::String) = runshell(parse(Platform, triplet))
+runshell(platform::Platform; kwargs...) = runshell(CrossPlatform(BBHostPlatform() => platform); kwargs...)
+runshell(triplet::String; kwargs...) = runshell(parse(Platform, triplet); kwargs...)

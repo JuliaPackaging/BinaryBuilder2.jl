@@ -9,7 +9,7 @@ struct PackageConfig
     # The JLL version this package will be published under
     version::VersionNumber
 
-    # A mapping of name to list of successful extractions.  Most builds only have a
+    # A mapping of name to list of extractions.  Most builds only have a
     # single entry in this dictionary, but advanced builds may have a default variant,
     # a debug variant, etc...
     named_extractions::Dict{String,Vector{ExtractResult}}
