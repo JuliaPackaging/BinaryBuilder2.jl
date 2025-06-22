@@ -109,7 +109,7 @@ end
                     verbose::Bool = false)
 
 Call `f(prefix, env)` with the given `toolchains` deployed and ready to go
-within `deploy_root`.  Use this to quickley set up the given toolchains for
+within `deploy_dir`.  Use this to quickly set up the given toolchains for
 usage with `run()` commands as follows:
 
     with_toolchains(toolchains) do prefix, env
