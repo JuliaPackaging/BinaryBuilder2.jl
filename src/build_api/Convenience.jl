@@ -189,7 +189,7 @@ function build_tarballs(src_name::String,
             if build_result.status == :failed
                 build_error = make_BuildError("Build script failed", build_result)
             elseif build_result.status == :errored
-                build_error = make_BuildError("Unknown error", build_result)
+                build_error = make_BuildError("Unknown build error", build_result)
             else
                 build_error = make_BuildError("Unexpected BuildResult status :$(build_result.status)", build_result)
             end
@@ -203,7 +203,7 @@ function build_tarballs(src_name::String,
                 if extract_result.status == :failed
                     build_error = make_BuildError("Extract script failed", extract_result)
                 elseif extract_result.status == :errored
-                    build_error = make_BuildError("Unknown error", extract_result)
+                    build_error = make_BuildError("Unknown extraction error", extract_result)
                 else
                     build_error = make_BuildError("Unexpected ExtractResult status :$(extract_result.status)", extract_result)
                 end
@@ -259,7 +259,7 @@ function build_tarballs(src_name::String,
             if package_jll
                 package_result = package!(package_config)
                 if package_result.status ∉ acceptable_statuses
-                    build_error = make_BuildError("Unknown error", package_result)
+                    build_error = make_BuildError("Unknown packaging error", package_result)
                     # break out of `for` loop
                     break
                 end
