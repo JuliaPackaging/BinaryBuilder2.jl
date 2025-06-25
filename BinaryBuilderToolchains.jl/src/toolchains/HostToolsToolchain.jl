@@ -134,7 +134,7 @@ end
 function toolchain_sources(toolchain::HostToolsToolchain)
     sources = AbstractSource[]
 
-    push!(sources, GeneratedSource(;target="etc/certs") do out_dir
+    push!(sources, CachedGeneratedSource("HostToolchainCertificates"; target="etc/certs") do out_dir
         src = ca_roots_path()
         if isdir(src)
             cp(src, out_dir; force=true, follow_symlinks=true)
@@ -143,7 +143,15 @@ function toolchain_sources(toolchain::HostToolsToolchain)
         end
     end)
 
-    push!(sources, GeneratedSource(;target="wrappers") do out_dir
+    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
+    cache_key = string(
+        "HostTools-",
+        bytes2hex(sha256(string(
+            triplet(toolchain.platform),
+            BinaryBuilderSources.jll_cache_name.(toolchain.deps, (registries,)),
+        ))),
+    )
+    push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
         toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
         if any(jll.package.name == "Tar_jll" for jll in toolchain.deps)
             # Forcibly insert --no-same-owner into every tar invocation,

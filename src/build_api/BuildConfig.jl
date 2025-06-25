@@ -303,14 +303,20 @@ function prepare(config::BuildConfig; verbose::Bool = false)
     end
 end
 
-function deploy(config::BuildConfig; verbose::Bool = false, deploy_root::String = mktempdir(builds_dir()))
+function deploy(config::BuildConfig; verbose::Bool = false)
     # Ensure the `config` has been prepared
     prepare(config; verbose)
+
+    deploy_root = builds_dir(string(
+        config.src_name, "-",
+        config.src_version, "-",
+        bytes2hex(content_hash(config)),
+    ))
 
     # Assemble mounts into this dictionary
     mounts = Dict{String,MountInfo}(
         "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
-        "/var/cache/ccache" => MountInfo(ccache_cache(), MountType.ReadWrite),
+        "/var/cache/ccache" => MountInfo(ccache_cache("ccache"), MountType.ReadWrite),
     )
 
     @timeit config.to "deploy" begin
@@ -416,7 +422,6 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
 end
 
 function build!(config::BuildConfig;
-                deploy_root::String = mktempdir(builds_dir()),
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
                 disable_cache::Bool = false,
                 debug_modes = AbstractBuildMeta(config).debug_modes,
@@ -454,7 +459,7 @@ function build!(config::BuildConfig;
 
     # Write build script out into a logfile
     build_log_io = IOBuffer()
-    mounts = deploy(config; verbose, deploy_root)
+    mounts = deploy(config; verbose)
     sandbox_config, collector = sandbox_and_collector(
         build_log_io, config, mounts;
         verbose,

@@ -90,7 +90,7 @@ struct Universe
     registry_url::Union{Nothing,String}
 
     function Universe(name::Union{Nothing,AbstractString} = nothing;
-                      depot_dir::AbstractString = universes_dir(),
+                      depot_path::Union{Nothing,AbstractString} = nothing,
                       deploy_org::Union{Nothing,AbstractString} = nothing,
                       registries::Vector{RegistrySpec} = copy(Pkg.Registry.DEFAULT_REGISTRIES),
                       registry_url::Union{Nothing,AbstractString} = nothing,
@@ -100,25 +100,20 @@ struct Universe
         if isempty(registries)
             throw(ArgumentError("Must pass at least one registry to `Universe()`!"))
         end
-        depot_path = joinpath(
-            depot_dir,
-            something(name, string(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"), "-", randstring(4))),
-        )
-        mkpath(depot_path)
+
+        # If `depot_path` is not given, default to the `universes_dir()`.
+        if depot_path === nothing
+            # The directory name is either the given name, or a timestamped-random string
+            universe_dir_name = something(
+                name,
+                string(Dates.format(now(), "yyyy-mm-dd-HH-MM-SS"), "-", randstring(4)),
+            )
+            depot_path = universes_dir(universe_dir_name)
+        end
         depot_path = abspath(depot_path)
 
         # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
-        for dir_name in ("artifacts", "packages")
-            shared_dir = joinpath(BinaryBuilderSources.default_jll_source_depot(), dir_name)
-            mkpath(shared_dir)
-            if !ispath(joinpath(depot_path, dir_name))
-                symlink(
-                    shared_dir,
-                    joinpath(depot_path, dir_name);
-                    dir_target = true,
-                )
-            end
-        end
+        BinaryBuilderSources.make_thin_depot!(depot_path)
 
         # Ensure the upstream registries are up to date
         registry_instances = update_registries!(registries, depot_path)
@@ -596,7 +591,7 @@ function init_jll_repo(u::Universe, jll_name::String)
 
     # Note that we search for the "upstream" repo URL here only in our non-BB2Local registry
     jll_repo_url = get_package_repo(u, "$(jll_name)_jll"; registries=u.registry_instances[2:end])
-    jll_bare_repo = joinpath(source_download_cache(), "jll_clones", "$(jll_name)_jll")
+    jll_bare_repo = source_download_cache("$(jll_name)_jll")
 
     # This is the case if this was previously registered within this
     # universe when it did not exist previously.  In this case, nuke it.
@@ -640,7 +635,7 @@ end
 
 const fetched_registries = Set{Base.UUID}()
 function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::String;
-                            cache_dir::String = joinpath(source_download_cache(), "registry_clones"),
+                            cache_dir::String = source_download_cache("registry_clones"),
                             force::Bool = false)
     reg_checkout_path = joinpath(uni.depot_path, "deploy_registries", reg.name)
     if force

@@ -33,12 +33,16 @@ end
 
 Returns the full path to the local clone that will be written to in `prepare(gs)`
 """
-function download_cache_path(gs::GitSource, download_cache::String = source_download_cache())
-    return joinpath(download_cache, bytes2hex(sha256(gs.url)))
+function download_cache_path(gs::GitSource)
+    return source_download_cache(string(
+        basename(gs.url),
+        "-",
+        bytes2hex(sha256(gs.url)),
+    ))
 end
 
-function verify(gs::GitSource, download_cache::String = source_download_cache())
-    repo_path = download_cache_path(gs, download_cache)
+function verify(gs::GitSource)
+    repo_path = download_cache_path(gs)
     if !isdir(repo_path)
         @debug("Verification fast-fail; repository nonexistent", source=gs, repo_path)
         return false
@@ -60,8 +64,7 @@ function retarget(gs::GitSource, new_target::String)
 end
 
 function prepare(gs::GitSource; verbose::Bool = false)
-    download_cache = source_download_cache()
-    repo_path = download_cache_path(gs, download_cache)
+    repo_path = download_cache_path(gs)
     clone!(gs.url, repo_path; commit=gs.hash, verbose)
 
     # If we can't verify after cloning/fetching, we have the wrong hash
@@ -72,11 +75,10 @@ function prepare(gs::GitSource; verbose::Bool = false)
 end
 
 function deploy(gs::GitSource, prefix::String)
-    download_cache = source_download_cache()
-    checkprepared!("deploy", gs, download_cache)
+    checkprepared!("deploy", gs)
 
     # We check the git repository out into the given target
-    repo_path = download_cache_path(gs, download_cache)
+    repo_path = download_cache_path(gs)
     target_path = joinpath(prefix, gs.target)
     mkpath(dirname(target_path))
     checkout!(repo_path, target_path, gs.hash)
@@ -85,8 +87,7 @@ end
 function content_hash(gs::GitSource)
     # Even though we don't have to have anything on-disk to return
     # `gs.hash`, we still verify to ensure that the treehash exists.
-    download_cache = source_download_cache()
-    checkprepared!("content_hash", gs, download_cache)
+    checkprepared!("content_hash", gs)
 
     return gs.hash
 end

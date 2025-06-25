@@ -69,9 +69,8 @@ We store the cache as `\$(short_hash(fas.url))-\$(fas.hash)`, so that when
 users update a URL but forget to update the hash, they don't accidentally
 build with the old cached values.
 """
-function download_cache_path(fas::FileArchiveSource, download_cache::String = source_download_cache())
-    return joinpath(
-        download_cache,
+function download_cache_path(fas::FileArchiveSource)
+    return source_download_cache(
         string(
             bytes2hex(sha256(fas.url)[end-8:end]),
             "-",
@@ -80,9 +79,9 @@ function download_cache_path(fas::FileArchiveSource, download_cache::String = so
     )
 end
 
-function verify(fas::FileArchiveSource, download_cache::String = source_download_cache())
+function verify(fas::FileArchiveSource)
     # If the file does not exist at all, fail verification
-    source_path = download_cache_path(fas, download_cache)
+    source_path = download_cache_path(fas)
     if !isfile(source_path)
         @debug("Verification fast-fail; file nonexistent", source=fas, source_path)
         return false
@@ -120,61 +119,56 @@ end
 
 function prepare(fas::FileArchiveSource; verbose::Bool = false)
     # Only download if verification fails
-    download_cache = source_download_cache()
-    if !verify(fas, download_cache)
-        download_target = download_cache_path(fas, download_cache)
+    if !verify(fas)
+        download_target = download_cache_path(fas)
 
         # Ensure the directory that should hold this source exists, otherwise `download()` fails
         mkpath(dirname(download_target))
         Downloads.download(fas.url, download_target)
 
         # If we still don't verify properly, throw an error
-        if !verify(fas, download_cache)
+        if !verify(fas)
             throw(ArgumentError("Invalid hash"))
         end
     end
 end
 
 function deploy(as::ArchiveSource, prefix::String)
-    download_cache = source_download_cache()
-    checkprepared!("deploy", as, download_cache)
+    checkprepared!("deploy", as)
 
     # We unpack the archive into the desired location
     unarchive(
-        download_cache_path(as, download_cache),
+        download_cache_path(as),
         joinpath(prefix, as.target);
         overwrite=true,
     )
 end
 
 function deploy(fs::FileSource, prefix::String)
-    download_cache = source_download_cache()
-    checkprepared!("deploy", fs, download_cache)
+    checkprepared!("deploy", fs)
 
     # We just copy the file into the desired location
     target_path = joinpath(prefix, fs.target)
     mkpath(dirname(target_path))
-    cp(download_cache_path(fs, download_cache), target_path)
+    cp(download_cache_path(fs), target_path)
 end
 
 
 function content_hash(as::ArchiveSource)
-    download_cache = source_download_cache()
-    checkprepared!("content_hash", as, download_cache)
+    checkprepared!("content_hash", as)
 
     # Note that we pass `ignore_unstable_formats` through here,
     # which will bubble up a `@warn` to the user if they use `.zip`
     # files as their source files.
-    return SHA1Hash(treehash(download_cache_path(as, download_cache);
+    return SHA1Hash(treehash(download_cache_path(as);
                              ignore_unstable_formats=true))
 end
 
 
 function content_hash(fs::FileSource)
-    download_cache = source_download_cache()
-    checkprepared!("content_hash", fs, download_cache)
+    checkprepared!("content_hash", fs)
     # We re-use `Pkgs`'s `blob_hash` here:
-    path = download_cache_path(fs, download_cache)
+    path = download_cache_path(fs)
     return SHA1Hash(TreeArchival.blob_hash(SHA1_CTX, path))
 end
 

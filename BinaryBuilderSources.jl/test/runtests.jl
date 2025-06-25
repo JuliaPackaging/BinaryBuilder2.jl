@@ -1,13 +1,18 @@
 using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg
-using BinaryBuilderSources: verify, download_cache_path, source_download_cache
+using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 
 function with_temp_storage_locations(f::Function)
-    old_source_download_cache = source_download_cache()
-    try
-        source_download_cache(mktempdir())
-        f()
-    finally
-        source_download_cache(old_source_download_cache)
+    old_source_download_cache = BinaryBuilderSources._source_download_cache[]
+    old_generated_source_cache = BinaryBuilderSources._generated_source_cache[]
+    mktempdir() do dir
+        try
+            BinaryBuilderSources._source_download_cache[] = name -> joinpath(dir, "source_download", name)
+            BinaryBuilderSources._generated_source_cache[] = name -> joinpath(dir, "generated_sources", name)
+            f()
+        finally
+            BinaryBuilderSources._source_download_cache[] = old_source_download_cache
+            BinaryBuilderSources._generated_source_cache[] = old_generated_source_cache
+        end
     end
 end
 
@@ -271,15 +276,21 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
 
         @testset "GeneratedSource" begin
             mktempdir() do build_dir; cd(build_dir) do
+                num_times_generated = 0
                 function generate_dir(dir)
                     open(joinpath(dir, "foo"); write=true) do io
                         println(io, "I am foo!")
                     end
                     symlink("foo", joinpath(dir, "link_to_foo"))
+                    num_times_generated += 1
                 end
-                gs = GeneratedSource(generate_dir)
+
+                gs = GeneratedSource(generate_dir, "generate_test")
                 @test gs.ds.target == ""
                 @test gs.ds.follow_symlinks == false
+                @test !isfile(joinpath(gs.ds.source, "foo"))
+                @test !islink(joinpath(gs.ds.source, "link_to_foo"))
+                @test num_times_generated == 0
 
                 # Run the generation
                 prepare(gs)
@@ -287,6 +298,22 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 @test isfile(joinpath(gs.ds.source, "foo"))
                 @test islink(joinpath(gs.ds.source, "link_to_foo"))
                 @test content_hash(gs) == "74d740b14685c131d2b0caa431be3557d51eaa53"
+                @test num_times_generated == 1
+
+                # Even if we delete one of the files, re-preparing doesn't do anything
+                rm(joinpath(gs.ds.source, "foo"))
+                prepare(gs)
+                @test !isfile(joinpath(gs.ds.source, "foo"))
+                @test islink(joinpath(gs.ds.source, "link_to_foo"))
+                @test num_times_generated == 1
+
+                # But if we delete the whole directory, it does something:
+                rm(gs.ds.source; recursive=true, force=true)
+                prepare(gs)
+                @test isfile(joinpath(gs.ds.source, "foo"))
+                @test islink(joinpath(gs.ds.source, "link_to_foo"))
+                @test content_hash(gs) == "74d740b14685c131d2b0caa431be3557d51eaa53"
+                @test num_times_generated == 2
 
                 # Deploy works
                 mktempdir() do prefix
@@ -296,7 +323,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 end
 
                 # target works:
-                gs = GeneratedSource(generate_dir; target="bar/baz")
+                gs = GeneratedSource(generate_dir, "target_test"; target="bar/baz")
                 prepare(gs)
                 @test gs.ds.target == "bar/baz"
                 @test gs.ds.follow_symlinks == false
@@ -332,7 +359,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             prepare([bzip2_dep, zstd_dep])
             @test !isempty(bzip2_dep.artifact_paths)
             @test !isempty(zstd_dep.artifact_paths)
-            depot_artifacts_dir = joinpath(source_download_cache(), "jllsource_depot", "artifacts")
+            depot_artifacts_dir = joinpath(source_download_cache("jllsource_depot"), "artifacts")
             @test all(startswith.(bzip2_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test all(startswith.(zstd_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test content_hash(bzip2_dep) != content_hash(zstd_dep)
