@@ -62,7 +62,7 @@ end
 function clone!(url::String, repo_path::String;
                 commit::Union{Nothing,HashOrString} = nothing,
                 verbose::Bool = false)
-    if isdir(repo_path)
+    if ispath(joinpath(repo_path, "HEAD"))
         if verbose
             @info("Using cached git repository", url, repo_path)
         end
