@@ -365,6 +365,9 @@ function strip_jll_suffix(name)
     end
     return name
 end
+
+# Convenience accessor to get a PackageResult from a BuildMeta:
+Base.getindex(meta::BuildMeta, name::String) = get_package_result(meta, name)
 function get_package_result(meta::BuildMeta, name::String)
     criteria(config) = config.name == strip_jll_suffix(name)
     return meta.packagings[only(filter(criteria, keys(meta.packagings)))]
