@@ -140,6 +140,15 @@ function toolchain_sources(toolchain::CMakeToolchain)
         end
     end
 
+    cache_key = string(
+        "CMake-",
+        bytes2hex(sha256(string(
+            triplet(toolchain.platform),
+            toolchain.clang_use_lld ? "true" : "false",
+            toolchain.env_prefixes...,
+            toolchain.wrapper_prefixes...,
+        ))),
+    )
     return [
         JLLSource(
             "CMake_jll",
@@ -147,7 +156,7 @@ function toolchain_sources(toolchain::CMakeToolchain)
             version=VersionSpec("3.30.2"),
             target="cmake",
         ),
-        GeneratedSource(;target="wrappers") do out_dir
+        CachedGeneratedSource(cache_key; target="wrappers") do out_dir
             for wrapper_prefix in toolchain.wrapper_prefixes
                 tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(toolchain.platform.target)), "cmake")
                 compiler_wrapper(

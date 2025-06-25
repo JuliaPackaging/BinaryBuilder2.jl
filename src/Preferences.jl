@@ -6,39 +6,49 @@
 #      where `ccache` stores its objects, etc...  By default, these are all stored
 #      in scratchspaces in your main Julia depot (usually `~/.julia`)
 
-using Scratch, Preferences
+using ScratchSpaceGarbageCollector, Scratch, Preferences, Dates
 
 # Used by `with_storage_locations()` in the test suite
-const storage_locations = Dict{Symbol, Function}()
+const storage_locations = Dict{Symbol,Ref{Arena}}()
 
-macro define_storage_location(name, default, sub_module = nothing)
-    refvar = Symbol(string("_", name))
+macro define_storage_location(name, sub_module = nothing)
+    arena_name = Symbol(string(name, "_arena"))
+    initializer = Symbol(string("init_", name))
     return quote
-        # A caching variable so that we don't have to lookup preferences and scratch
-        # spaces too often, as those should not change within a session
-        const $(esc(refvar)) = Ref{String}()
+        const $(esc(arena_name)) = Ref{Arena}()
+        function $(esc(initializer))()
+            # Load values from preferences
+            max_age = @load_preference($(string(esc(name), "_max_age_hours")), "240")
+            depot_path = @load_preference($(string(esc(name),"_depot")), first(Base.DEPOT_PATH))
 
-        Base.@__doc__ function $(esc(name))()
-            global $(esc(refvar))
-            if !isassigned($(esc(refvar)))
-                return $(esc(name))(@load_preference($(string(name)), $(esc(default))))
-            end
-            return $(esc(refvar))[]
-        end
+            # Initialize our arena
+            $(esc(arena_name))[] = Arena(
+                @pkg_uuid(),
+                $(string(name)),
+                [MaxAgePolicy(Hour(parse(Int, max_age)))];
+                depot_path,
+            )
 
-        function $(esc(name))(new_value::String)
-            $(esc(refvar))[] = new_value
+            # Set submodule functions to point to our function, if necessary.
             if $(esc(sub_module)) !== nothing
-                getproperty($(esc(sub_module)), $(QuoteNode(name)))(new_value)
-            else
-                return $(esc(refvar))[]
+                getproperty($(esc(sub_module)), $(QuoteNode(Symbol(string("_", name)))))[] = $(esc(name))
             end
+        end
+        push!(init_hooks, $(esc(initializer)))
+
+        Base.@__doc__ function $(esc(name))(subpath::String)
+            # This can happen e.g. in precompile workloads
+            if !isassigned($(esc(arena_name)))
+                $(esc(initializer))()
+            end
+            return @get_scratch!($(esc(arena_name))[], subpath)
         end
 
         # Add this storage location to our mapping of storage locations
-        storage_locations[Symbol($(string(name)))] = $(esc(name))
+        storage_locations[Symbol($(string(name)))] = $(esc(arena_name))
     end
 end
+
 
 """
     source_download_cache()
@@ -47,7 +57,9 @@ Returns the path of the directory used to store downloaded sources, e.g. where
 `AbstractSource`s get stored when you call `prepare()`.  This can be set
 through the `source_download_cache` preference.
 """
-@define_storage_location source_download_cache @get_scratch!("source_download_cache") BinaryBuilderSources
+@define_storage_location source_download_cache BinaryBuilderSources
+
+
 
 """
     ccache_cache()
@@ -55,7 +67,7 @@ through the `source_download_cache` preference.
 Returns the path of the directory used to store `ccache` state.  This can be
 set through the `ccache_cache` preference.
 """
-@define_storage_location ccache_cache @get_scratch!("ccache_cache")
+@define_storage_location ccache_cache
 
 """
     builds_dir()
@@ -63,7 +75,7 @@ set through the `ccache_cache` preference.
 Returns the path of the directory used to store in-progress build files.  This can
 be set through the `builds_dir` preference.
 """
-@define_storage_location builds_dir @get_scratch!("builds")
+@define_storage_location builds_dir
 
 """
     universes_dir()
@@ -73,4 +85,4 @@ depots used to store registries and environments listing just-built JLLs.  Unive
 can be useful to have around for local testing, but are ultimately ephemeral.  This
 can be set through the `universes_dir` preference.
 """
-@define_storage_location universes_dir @get_scratch!("universes")
+@define_storage_location universes_dir

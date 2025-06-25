@@ -36,6 +36,15 @@ All toolchains must define the following methods:
 """
 abstract type AbstractToolchain; end
 
+# content hash used to key things like our GeneratedSource's
+import TreeArchival
+const bbt_code_hash = bytes2hex(TreeArchival.treehash(@__DIR__))
+
+function CachedGeneratedSource(f::Function, name::String; target::String)
+    return GeneratedSource(f, string(name, "-", bbt_code_hash); target)
+end
+
+
 include("WrapperUtils.jl")
 include("PathUtils.jl")
 include("toolchains/CToolchain.jl")

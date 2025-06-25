@@ -16,6 +16,7 @@ PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.1.0"
@@ -25,10 +26,10 @@ JLLPrefixes = "0.3.5"
 PrecompileTools = "1.2.1"
 Reexport = "1.2.2"
 Scratch = "1.2"
+TreeArchival = "0.1.0"
 julia = "1.9"
 
 [extras]
-
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]

@@ -124,10 +124,16 @@ include("GeneratedSource.jl")
 include("GitSource.jl")
 include("JLLSource.jl")
 
+# This is purposefully a Ref{Function} so that it can be replaced by `BinaryBuilder2`,
+# which will replace it with an `Arena` object from `ScratchSpaceGarbageCollector`.
+# Would be nice to replace this with something stronger (TypedCallable?) so that we
+# can enforce a return type guarantee.
+_source_download_cache = Ref{Function}(name -> joinpath(@get_scratch!("source_download_cache"), name))
+_generated_source_cache = Ref{Function}(name -> joinpath(@get_scratch!("generated_source_cache"), name))
+_jll_resolve_cache = Ref{Function}(name -> joinpath(@get_scratch!("jll_resolve_cache"), name))
 
-# These values purposefully mirror those of BinaryBuilder2, which will automatically keep them in-sync
-_source_download_cache = Ref{String}(@get_scratch!("source_download_cache"));
-source_download_cache() = _source_download_cache[]
-source_download_cache(new_path::String) = _source_download_cache[] = new_path
+source_download_cache(name::String) = _source_download_cache[](name)
+generated_source_cache(name::String) = _generated_source_cache[](name)
+jll_resolve_cache(name::String) = _jll_resolve_cache[](name)
 
 end # module

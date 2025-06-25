@@ -1,5 +1,8 @@
 module BinaryBuilder2
 
+# A way for various pieces of BB2 to run things at `__init__` time
+const init_hooks = Function[]
+
 using Reexport
 @reexport using TreeArchival
 @reexport using MultiHashParsing
@@ -32,4 +35,17 @@ include("build_api/Convenience.jl")
 include("Compat.jl")
 include("Maintenance.jl")
 include("precompile.jl")
+
+
+function __init__()
+    for hook in init_hooks
+        try
+            hook()
+        catch e
+            @error("Init hook failed!", e)
+        end
+    end
 end
+
+
+end # module

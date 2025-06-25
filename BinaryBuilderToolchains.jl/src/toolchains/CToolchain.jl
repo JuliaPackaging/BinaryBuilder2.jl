@@ -616,9 +616,27 @@ function toolchain_sources(toolchain::CToolchain)
     sources = AbstractSource[]
 
     installing_jll(name) = get_jll(toolchain, name) !== nothing
+    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
-    # our compiler wrappers!
-    push!(sources, GeneratedSource(;target="wrappers") do out_dir
+    # our compiler wrappers.  We store it with a cache key that is sensitive
+    # to basically all inputs, so that it can be cached.
+    cache_key = string(
+        "CToolchain-",
+        bytes2hex(sha256(string(
+            triplet(toolchain.platform),
+            toolchain.lock_microarchitecture ? "true" : "false",
+            toolchain.use_ccache ? "true" : "false",
+            toolchain.compiler_runtime,
+            toolchain.cxx_runtime,
+            toolchain.vendor,
+            toolchain.env_prefixes...,
+            toolchain.wrapper_prefixes...,
+            toolchain.extra_cflags...,
+            toolchain.extra_ldflags...,
+            BinaryBuilderSources.jll_cache_name.(toolchain.deps, (registries,)),
+        )))
+    )
+    push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
         if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapMacOS_jll")
             gcc_wrappers(toolchain, out_dir)
         end
@@ -630,11 +648,7 @@ function toolchain_sources(toolchain::CToolchain)
         end
     end)
 
-    # Note that we eliminate the illegal "version" fields from our PackageSpec
-    jll_deps = copy(toolchain.deps)
-    #@warn("TODO: do I need to filter these out here?", maxlog=1)
-    #filter_illegal_versionspecs!([jll.package for jll in jll_deps])
-    append!(sources, jll_deps)
+    append!(sources, toolchain.deps)
     return sources
 end
 

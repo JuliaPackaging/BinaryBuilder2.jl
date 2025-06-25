@@ -4,19 +4,24 @@ using BinaryBuilder2: storage_locations, make_target_spec_plan
 
 # A helper function to set storage locations, mostly for testing
 function with_storage_locations(f::Function, mappings::Dict{Symbol,String})
-    old_mappings = Dict{Symbol,String}()
+    old_mappings = Dict{Symbol,Arena}()
 
     # First, ensure that all the mappings are kosher
     for var in keys(mappings)
         if !haskey(storage_locations, var)
             error("Invalid storage location variable '$(var)'")
         end
+        old_mappings[var] = storage_locations[var]
     end
 
     # Next, save the old values and set the new values:
     for (var, new_value) in mappings
-        old_mappings[var] = storage_locations[var]()
-        storage_locations[var](new_value)
+        storage_locations[var][] = Arena(
+            old_mappings[var].uuid,
+            old_mappings[var].name,
+            old_mappings[var].policies;
+            depot_path=new_value,
+        )
     end
 
     # Invoke `f()`
@@ -25,7 +30,7 @@ function with_storage_locations(f::Function, mappings::Dict{Symbol,String})
     finally
         # Restore the old values
         for (var, old_value) in old_mappings
-            storage_locations[var](old_value)
+            storage_locations[var][] = old_value
         end
     end
 end

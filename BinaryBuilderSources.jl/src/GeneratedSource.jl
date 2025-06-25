@@ -1,29 +1,28 @@
-using TreeArchival
+using TreeArchival, Random
 
 export GeneratedSource
 
 """
-    GeneratedSource(generator::Function; target = "")
+    GeneratedSource(generator::Function, name::String; target = "")
 
 Call a function with a directory as its argument, allowing the function to
 dynamically generate the source that will be deployed within the build
 environment.  `GeneratedSource` is implemented as a wrapper around
-`DirectorySource`.
+`DirectorySource`.  The `name` argument must be globally unique as the
+generator function will not run again if the `name` is shared with
+another `GeneratedSource`.  This allows for caching beyond the current
+Julia session.
 """
 struct GeneratedSource <: AbstractSource
     generator::Function
     ds::DirectorySource
-    prepared::Ref{Bool}
 end
 
-function GeneratedSource(generator::Function; target::String = "", output_dir::String = mktempdir())
+function GeneratedSource(generator::Function, name::String = randstring(8); target::String = "")
     noabspath!(target)
     return GeneratedSource(
         generator,
-        # We have to tell `DirectorySource` to trust that we'll create
-        # `output_dir` just in time.
-        DirectorySource(output_dir; target, allow_missing_dir=true),
-        Ref{Bool}(false),
+        DirectorySource(generated_source_cache(name); target, allow_missing_dir=true),
     )
 end
 
@@ -32,11 +31,12 @@ verify(gs::GeneratedSource) = isdir(gs.ds.source)
 
 function retarget(gs::GeneratedSource, new_target::String)
     noabspath!(new_target)
-    return GeneratedSource(gs.generator, retarget(gs.ds, new_target), Ref{Bool}(false))
+    return GeneratedSource(gs.generator, retarget(gs.ds, new_target))
 end
 
 function prepare(gs::GeneratedSource; verbose::Bool = false)
-    if gs.prepared[]
+    if verify(gs)
+        @debug("Not preparing", gs)
         return
     end
 
@@ -46,8 +46,8 @@ function prepare(gs::GeneratedSource; verbose::Bool = false)
 
     # As of the time of this writing, `DirectorySource` has no `prepare()` function,
     # but let's be forward-thinking in case we end up adding something here.
+    @debug("Preparing", gs)
     prepare(gs.ds; verbose)
-    gs.prepared[] = true
 end
 
 # Deployment for us is just deploying our wrapped `DirectorySource`
