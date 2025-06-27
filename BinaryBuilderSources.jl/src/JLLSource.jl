@@ -328,7 +328,7 @@ end
 # JLLSources are in a directory together.
 function content_hash(jll::JLLSource)
     checkprepared!("content_hash", jll)
-    
+
     entries = [(basename(apath), hex2bytes(basename(apath)), TreeArchival.mode_dir) for apath in jll.artifact_paths]
     return SHA1Hash(TreeArchival.tree_node_hash(SHA.SHA1_CTX, entries))
 end
