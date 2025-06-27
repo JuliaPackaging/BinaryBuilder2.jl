@@ -68,7 +68,7 @@ function rename_wrapper_prefixes(name::String, flags::Set{Symbol}, pw::Platforml
         wrapper_prefixes = String[]
         # env_prefixes control the naming of environment variables that point to our wrappers
         env_prefixes = String[]
-        
+
         # if `name` is "host", this makes a "host-x86_64-linux-gnu-gcc" wrapper.
         push!(wrapper_prefixes, string(name, "-\${triplet}-"))
         push!(wrapper_prefixes, "\${triplet}-")
@@ -89,6 +89,7 @@ function rename_wrapper_prefixes(name::String, flags::Set{Symbol}, pw::Platforml
     end
     return pw
 end
+rename_wrapper_prefixes(name::String, flags::Set{Symbol}, host::HostToolsToolchain) = host
 
 function alter_toolchain(target_prefix::String, pw::PlatformlessWrapper{CToolchain})
     # Alter this object to contain extra flags, prefixes, etc...
