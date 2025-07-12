@@ -159,7 +159,9 @@ function prepare(jlls::Vector{JLLSource};
         for (prefix, jlls_slice) in platform_jlls_by_prefix
             art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
             for jll in jlls_slice
-                pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
+                pkgs = [pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid]
+                isempty(pkgs) && error("No artifacts found for JLL $(jll.package.name)!")
+                pkg = only(pkgs)
                 # Update `jll.package` with things from `pkg`
                 if pkg.version != Pkg.Types.VersionSpec()
                     jll.package.version = pkg.version
@@ -219,7 +221,7 @@ end
 # JLLSources are in a directory together.
 function content_hash(jll::JLLSource)
     checkprepared!("content_hash", jll)
-    
+
     entries = [(basename(apath), hex2bytes(basename(apath)), TreeArchival.mode_dir) for apath in jll.artifact_paths]
     return SHA1Hash(TreeArchival.tree_node_hash(SHA.SHA1_CTX, entries))
 end
