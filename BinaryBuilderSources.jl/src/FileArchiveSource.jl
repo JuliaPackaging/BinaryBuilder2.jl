@@ -70,12 +70,9 @@ users update a URL but forget to update the hash, they don't accidentally
 build with the old cached values.
 """
 function download_cache_path(fas::FileArchiveSource)
-    return source_download_cache(
-        string(
-            bytes2hex(sha256(fas.url)[end-8:end]),
-            "-",
-            bytes2hex(fas.hash),
-        ),
+    return joinpath(
+        source_download_cache(bytes2hex(sha256(fas.url)[end-8:end])),
+        bytes2hex(fas.hash),
     )
 end
 
@@ -93,6 +90,7 @@ function verify(fas::FileArchiveSource)
     # If there is no cached hash file or it is stale, re-hash the file here
     # Note that `stat()` of a nonexistant file returns `0`.
     if stat(hash_cache_path).mtime < stat(source_path).mtime
+        @debug("Re-hashing", source=fas, source_path, hash_cache_path)
         check_hash = open(io -> hash_like(fas.hash, io), source_path; read=true)
         if check_hash != fas.hash 
             # Verification failed!
@@ -151,6 +149,12 @@ function deploy(fs::FileSource, prefix::String)
     target_path = joinpath(prefix, fs.target)
     mkpath(dirname(target_path))
     cp(download_cache_path(fs), target_path)
+end
+
+# We key only off of the hash of the source
+function spec_hash(fas::FileArchiveSource; kwargs...)
+    # The extra `sha1()` here is because `fas.hash` could be a different kind of hash.
+    return SHA1Hash(sha1(bytes2hex(fas.hash)))
 end
 
 

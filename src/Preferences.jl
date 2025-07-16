@@ -36,7 +36,7 @@ macro define_storage_location(name, sub_module = nothing)
         end
         push!(init_hooks, $(esc(initializer)))
 
-        Base.@__doc__ function $(esc(name))(subpath::String)
+        Base.@__doc__ function $(esc(name))(subpath::AbstractString)
             # This can happen e.g. in precompile workloads
             if !isassigned($(esc(arena_name)))
                 $(esc(initializer))()

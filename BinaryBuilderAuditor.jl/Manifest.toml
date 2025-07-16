@@ -41,13 +41,13 @@ uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
 
 [[deps.BinaryBuilderSources]]
-deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "SHA", "Scratch", "TreeArchival"]
+deps = ["BinaryBuilderGitUtils", "Dates", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "Random", "SHA", "Scratch", "TreeArchival"]
 path = "../BinaryBuilderSources.jl"
 uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
 
 [[deps.BinaryBuilderToolchains]]
-deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "LazyJLLWrappers", "NetworkOptions", "Pkg", "PrecompileTools", "Reexport", "SHA", "Scratch"]
+deps = ["Artifacts", "BinaryBuilderPlatformExtensions", "BinaryBuilderSources", "HistoricalStdlibVersions", "JLLPrefixes", "LazyJLLWrappers", "NetworkOptions", "Pkg", "PrecompileTools", "Reexport", "SHA", "Scratch", "TreeArchival"]
 path = "../BinaryBuilderToolchains.jl"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
 version = "0.2.0"

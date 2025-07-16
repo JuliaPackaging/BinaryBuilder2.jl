@@ -2,7 +2,7 @@
 
 julia_version = "1.11.5"
 manifest_format = "2.0"
-project_hash = "f76c97559b4c5bbc08a298c479b2505e03e3b8a6"
+project_hash = "3676fb91021d825e1bc8130dfea38704c137d7bc"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -35,7 +35,7 @@ uuid = "213f2928-4d72-6f46-7461-4c705f634367"
 version = "0.1.0"
 
 [[deps.BinaryBuilderSources]]
-deps = ["BinaryBuilderGitUtils", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "SHA", "Scratch", "TreeArchival"]
+deps = ["BinaryBuilderGitUtils", "Dates", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "Random", "SHA", "Scratch", "TreeArchival"]
 path = "../BinaryBuilderSources.jl"
 uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"

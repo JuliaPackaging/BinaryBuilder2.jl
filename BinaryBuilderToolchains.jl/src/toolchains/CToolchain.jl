@@ -616,25 +616,24 @@ function toolchain_sources(toolchain::CToolchain)
     sources = AbstractSource[]
 
     installing_jll(name) = get_jll(toolchain, name) !== nothing
-    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
     # our compiler wrappers.  We store it with a cache key that is sensitive
     # to basically all inputs, so that it can be cached.
     cache_key = string(
+        triplet(toolchain.platform),
+        toolchain.lock_microarchitecture ? "true" : "false",
+        toolchain.use_ccache ? "true" : "false",
+        toolchain.compiler_runtime,
+        toolchain.cxx_runtime,
+        toolchain.vendor,
+        toolchain.env_prefixes...,
+        toolchain.wrapper_prefixes...,
+        toolchain.extra_cflags...,
+        toolchain.extra_ldflags...,
+    )
+    cache_key = string(
         "CToolchain-",
-        bytes2hex(sha256(string(
-            triplet(toolchain.platform),
-            toolchain.lock_microarchitecture ? "true" : "false",
-            toolchain.use_ccache ? "true" : "false",
-            toolchain.compiler_runtime,
-            toolchain.cxx_runtime,
-            toolchain.vendor,
-            toolchain.env_prefixes...,
-            toolchain.wrapper_prefixes...,
-            toolchain.extra_cflags...,
-            toolchain.extra_ldflags...,
-            BinaryBuilderSources.jll_cache_name.(toolchain.deps, (registries,)),
-        )))
+        bytes2hex(sha1(cache_key))
     )
     push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
         if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapMacOS_jll")

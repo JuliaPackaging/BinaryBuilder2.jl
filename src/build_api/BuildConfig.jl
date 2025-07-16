@@ -257,8 +257,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
                 println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
             end
         end
-        buffer_data = take!(hash_buffer)
-        config.content_hash[] = SHA1Hash(sha1(buffer_data))
+        config.content_hash[] = SHA1Hash(sha1(take!(hash_buffer)))
 
         # Add `bb_build_identifier` to our environment which is primarily used
         # as the hostname in our vscode tunnel to `bb2.cflo.at`.
@@ -267,7 +266,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
             "-v",
             config.src_version,
             "-",
-            bytes2hex(content_hash(config))[1:8],
+            bytes2hex(config.content_hash[])[1:8],
         )
     end
     return config.content_hash[]::SHA1Hash
@@ -284,6 +283,8 @@ metadir_prefix() = "/workspace/metadir"
 function prepare(config::BuildConfig; verbose::Bool = false)
     @timeit config.to "prepare" begin
         universe = config.meta.universe
+        depot = depot_path(universe)
+        registries = Pkg.Registry.reachable_registries(; depots=[depot])
         for (prefix, deps) in config.source_trees
             # We install different source trees in different environments.
             @timeit config.to prefix begin
@@ -296,7 +297,7 @@ function prepare(config::BuildConfig; verbose::Bool = false)
                     # in the rest of the build.
                     cp(dirname(environment_path(universe)), project_dir; force=true)
                     # This verbose needs like a `verbose = verbose_level >= 2` or something
-                    prepare(deps; verbose=false, project_dir, depot=depot_path(universe))
+                    prepare(deps; verbose=false, project_dir, registries, depot, to=config.to)
                 end
             end
         end
@@ -307,29 +308,23 @@ function deploy(config::BuildConfig; verbose::Bool = false)
     # Ensure the `config` has been prepared
     prepare(config; verbose)
 
-    deploy_root = builds_dir(string(
-        config.src_name, "-",
-        config.src_version, "-",
-        bytes2hex(content_hash(config)),
-    ))
-
     # Assemble mounts into this dictionary
     mounts = Dict{String,MountInfo}(
         "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
         "/var/cache/ccache" => MountInfo(ccache_cache("ccache"), MountType.ReadWrite),
     )
 
+    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
     @timeit config.to "deploy" begin
         for (idx, (prefix, srcs)) in enumerate(config.source_trees)
-            # Strip leading slashes so that `joinpath()` works as expected,
-            # prefix with `idx` so that we can overlay multiple disparate folders
-            # onto eachother in the sandbox, without clobbering each directory on
-            # the host side.
-            host_path = joinpath(deploy_root, string(idx, "-", lstrip(prefix, '/')))
+            host_path = builds_dir(string(
+                idx, "-",
+                bytes2hex(sha1(string(bytes2hex.(spec_hash.(srcs; registries))))),
+            ))
             mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
 
             # Avoid deploying a second time if we're coming at this a second time
-            if !isdir(host_path)
+            if !isdir(host_path) || isempty(readdir(host_path))
                 mkpath(host_path)
                 @timeit config.to prefix deploy(srcs, host_path)
             end

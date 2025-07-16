@@ -1,11 +1,11 @@
-using BinaryBuilder2, Test
+using BinaryBuilder2, Test, Random
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
 end
 
 @testset "Multi-stage build test" begin
-    meta = BuildMeta(; verbose=false, disable_cache=true)
+    meta = BuildMeta(; verbose=true, disable_cache=true)
     # First, build `libstring` from the BBToolchains testsuite
     libstring_build_config = BuildConfig(
         meta,
