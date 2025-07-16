@@ -10,7 +10,7 @@ import TreeArchival
 using Scratch, Pkg, Dates
 using gh_cli_jll
 import Sandbox: cleanup
-using Logging
+using Logging, LoggingExtras
 
 export Universe, in_universe
 
@@ -693,7 +693,7 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         src_branch = head_branch(jll_bare_repo)
     end
 
-    checkout!(jll_bare_repo, jll_path, src_branch)
+    checkout!(jll_bare_repo, jll_path, src_branch; verbose)
     if u.name !== nothing
         branch!(jll_path, uni_branch_name)
     end
@@ -719,19 +719,23 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     in_universe(u) do env
         # Next, add that JLL to the universe's environment
-        Pkg.develop(;path=jll_path)
+        Pkg.develop(;path=jll_path, io=verbose ? stdout : devnull)
     end
 
     # Finally, register it into the universe's local BB2 registry
     reg_path = registry_path(u, first(u.registries))
-    LocalRegistry.register(
-        jll_path;
-        registry=reg_path,
-        commit=true,
-        push=false,
-        # We add `.git` here to better match what is already in the General repository
-        repo="$(jll_repo_url).git",
-    )
+
+    # This `with_logger()` will quash the unconditional `@info()` that LocalRegistry spits out
+    with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
+        LocalRegistry.register(
+            jll_path;
+            registry=reg_path,
+            commit=true,
+            push=false,
+            # We add `.git` here to better match what is already in the General repository
+            repo="$(jll_repo_url).git",
+        )
+    end
 
     # Reload our cached RegistryInstance
     u.registry_instances[1] = RegistryInstance(reg_path)
@@ -743,13 +747,15 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         target_reg = first(u.registries[2:end])
         target_reg_path = get_registry_clone(u, target_reg, uni_branch_name)
 
-        LocalRegistry.register(
-            jll_path;
-            registry=target_reg_path,
-            commit=true,
-            push=false,
-            repo=jll_repo_url,
-        )
+        with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
+            LocalRegistry.register(
+                jll_path;
+                registry=target_reg_path,
+                commit=true,
+                push=false,
+                repo=jll_repo_url,
+            )
+        end
 
         reg_org_repo = "$(u.deploy_org)/$(target_reg.name)"
         if !gh_repo_exists(reg_org_repo)

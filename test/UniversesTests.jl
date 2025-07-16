@@ -4,7 +4,7 @@ using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
 @testset "Universes" begin
     # Create a universe holding just `General`
     mktempdir() do dir
-        uni = Universe("bb2_tests"; depot_dir=dir)
+        uni = Universe("bb2_tests"; depot_path=dir)
         
         # Register a JLL into it; we'll use HelloWorldC_jll from JLLGenerator contrib directory,
         # but we'll name it `HelloWorldC2_jll` so that it is created as a new entry in the registry
@@ -25,7 +25,7 @@ using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
         end
 
         # Re-create `uni`, ensure that our build of `hwc_jll` still exists:
-        uni = Universe("bb2_tests"; depot_dir=dir)
+        uni = Universe("bb2_tests"; depot_path=dir)
         @test get_package_versions(uni, "HelloWorldC2_jll") == [v"1.3.0"]
 
         # Register a second version of HelloWorldC2_jll, to ensure that we can stack multiple builds,

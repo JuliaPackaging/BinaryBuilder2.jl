@@ -88,4 +88,7 @@ function content_hash(ds::DirectorySource)
     return hash
 end
 
+# Beacuse there's nothing to prepare, we can just directly use `content_hash`.
+spec_hash(ds::DirectorySource; kwargs...) = content_hash(ds)
+
 source(ds::DirectorySource) = ds.source

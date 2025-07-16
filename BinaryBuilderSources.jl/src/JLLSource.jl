@@ -1,4 +1,4 @@
-using TreeArchival
+using TreeArchival, TimerOutputs
 
 using Base.BinaryPlatforms, JLLPrefixes, Pkg, Dates
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
@@ -122,12 +122,13 @@ end
 # This is different from `content_hash()` in that it represents all the _inputs_
 # for this `JLLSource`, but not the _output_ of resolution.  This is used to
 # build a mapping from inputs to outputs for caching.
-function jll_cache_name(jll::JLLSource, registries)
+function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInstance})
     pkg = jll.package
-    hash = bytes2hex(sha256(string(
+    return SHA1Hash(sha1(string(
         # These pieces of information are meant to be sensitive to anything that
         # could cause us to resolve to a different `artifact_path`, regardless of
         # changes to the registry.
+        pkg.name,
         pkg.version != Pkg.Types.VersionSpec() ? string(pkg.version) : "",
         something(pkg.path, ""),
         something(pkg.tree_hash, ""),
@@ -137,7 +138,9 @@ function jll_cache_name(jll::JLLSource, registries)
         # And then we add in registry information to be sensitive to that as well.
         bytes2hex.([reg.tree_info.bytes for reg in registries if reg.tree_info !== nothing])...,
     )))
-    return string(jll.package.name, "-", hash)
+end
+function jll_cache_name(jll::JLLSource, registries::Vector{Pkg.Registry.RegistryInstance})
+    return string(jll.package.name, "-", bytes2hex(spec_hash(jll; registries)))
 end
 
 """
@@ -153,12 +156,13 @@ function prepare(jlls::Vector{JLLSource};
                  depot::String = default_jll_source_depot(),
                  verbose::Bool = false,
                  force::Bool = false,
-                 registry_refresh_interval::TimePeriod = Hour(1))
+                 registries::Vector{Pkg.Registry.RegistryInstance} = Pkg.Registry.reachable_registries(; depots=[depot]),
+                 registry_refresh_interval::TimePeriod = Hour(1),
+                 to::TimerOutput = TimerOutput())
     # Split JLLs by platform:
     jlls_by_platform_by_prefix = Dict{AbstractPlatform,Dict{String,Vector{JLLSource}}}()
 
     # Look up our extant registries immediately, and mark if they're out of date.
-    registries = Pkg.Registry.reachable_registries(; depots=[depot])
     if isempty(registries)
         # This should never happen, because `default_jll_source_depot()` should
         # automatically fill it out, so this only happens if someone gives us something weird.
@@ -240,7 +244,9 @@ function prepare(jlls::Vector{JLLSource};
     # two different versions of the same JLL to different prefixes.
     for (platform, platform_jlls_by_prefix) in jlls_by_platform_by_prefix
         for (prefix, jlls_slice) in platform_jlls_by_prefix
-            art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
+            @timeit to "collect_artifact_paths" begin
+                art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
+            end
             for jll in jlls_slice
                 @debug("Prepared", jll, cache_key=jll_cache_paths[jll])
                 pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
@@ -269,7 +275,7 @@ function prepare(jlls::Vector{JLLSource};
         open(jll_cache_paths[jll]; write=true) do io
             truncate(io, 0)
             for art_path in jll.artifact_paths
-                println(io, art_path)
+                println(io, realpath(art_path))
             end
         end
     end

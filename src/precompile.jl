@@ -2,7 +2,6 @@ using PrecompileTools
 
 @setup_workload begin
     @compile_workload begin
-        # Make this not dry_run once I can run with pipes at precompile time
         meta = BuildMeta(;verbose=false)
 
         # Warm up the `build_tarballs()` loop.  Because we're, complete with deploying C toolchains and whatnot.
@@ -18,7 +17,7 @@ using PrecompileTools
         )
 
         # Warm up the `runshell` machinery
-        runshell(BBHostPlatform(); meta, shell=`/bin/true`, verbose=true)
+        runshell(BBHostPlatform(); meta, shell=`/bin/true`)
 
         # Clean up silently
         cleanup(meta.universe; silent=true)

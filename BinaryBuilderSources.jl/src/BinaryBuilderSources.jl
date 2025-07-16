@@ -1,5 +1,5 @@
 module BinaryBuilderSources
-using Scratch
+using Scratch, Pkg, TimerOutputs
 
 export AbstractSource
 
@@ -18,13 +18,15 @@ All `AbstractSource`` objects must support the following operations:
 
 * prepare(::AbstractSource)
 * deploy(::AbstractSource, prefix::String)
+* spec_hash(::AbstractSource; kwargs...)::SHA1Hash
 * content_hash(::AbstractSource)::SHA1Hash
 * target(::AbstractSource)::String
 * retarget(::AbstractSource, new_target::String)::AbstractSource
 * source(::AbstractSource)::String
 
 Note that you must manually call `prepare()` before you call `deploy()`
-or `content_hash()` upon an `AbstractSource`.
+or `content_hash()` upon an `AbstractSource`, whereas you do not need to
+call `prepare()` before you call `spec_hash()`.
 
 We define fallthrough methods for batch-preparing and deploying abstract
 sources, but homogenous batches of certain sources (e.g. `JLLSource`s) may
@@ -34,7 +36,7 @@ applied to them before `prepare()` is even called.
 """
 abstract type AbstractSource; end
 
-export prepare, deploy, content_hash, target, retarget, source
+export prepare, deploy, spec_hash, content_hash, target, retarget, source
 
 """
     checkprepared!(me::String, x::AbstractSource)
@@ -68,12 +70,14 @@ function prepare(sources::Vector{<:AbstractSource};
                  verbose::Bool = false,
                  force::Bool = false,
                  depot::String = default_jll_source_depot(),
-                 project_dir::String = mktempdir())
+                 registries::Vector{Pkg.Registry.RegistryInstance} = Pkg.Registry.reachable_registries(; depots=[depot]),
+                 project_dir::String = mktempdir(),
+                 to::TimerOutput = TimerOutput())
     # Special-case JLL sources, as we get a material benefit when batching those:
     jlls = JLLSource[s for s in sources if isa(s, JLLSource)]
     non_jlls = [s for s in sources if !isa(s, JLLSource)]
     if !isempty(jlls)
-        prepare(jlls; verbose, project_dir, depot, force)
+        prepare(jlls; verbose, project_dir, depot, registries, force, to)
     end
     prepare.(non_jlls; verbose)
     return nothing
@@ -113,7 +117,10 @@ function source end
 """
     content_hash(as::AbstractSource)
 
-Return a `SHA1Hash` representing the content hash of the given source.
+Return a `SHA1Hash` representing the content hash of the given source.  This requires
+that you have called `prepare(as)`, as it generally relies upon having the actual bits
+of the source on-disk.  Use `spec_hash(as)` for a hash that depends only on the
+specification of the source.
 """
 function content_hash end
 

@@ -95,6 +95,7 @@ function Scratch.get_scratch!(arena::Arena, key::AbstractString,
     )
 
     # Jump down to the given key:
+    key = string(key)
     subscratch_path = joinpath(arena_path, key)
     mkpath(subscratch_path)
 

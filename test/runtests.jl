@@ -1,4 +1,4 @@
-using Test
+using Test, Random
 
 include("ContentReflectionTests.jl")
 include("BuildCacheTests.jl")
