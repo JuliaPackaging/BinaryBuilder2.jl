@@ -1,4 +1,4 @@
-using Test, BinaryBuilderToolchains
+using Test, BinaryBuilderToolchains, BinaryBuilderSources
 
 # Clear out environment variables that can cause problems
 for flagvar in ("C", "CPP", "CXX", "LD")
@@ -10,8 +10,10 @@ for libvar in ("LD", "DYLD")
 end
 
 include("common.jl")
-include("PkgUtilsTests.jl")
-include("WrapperUtilsTests.jl")
-include("CToolchainTests.jl")
-include("HostToolsToolchainTests.jl")
-include("CMakeToolchainTests.jl")
+with_temp_storage_locations() do
+    include("PkgUtilsTests.jl")
+    include("WrapperUtilsTests.jl")
+    include("CToolchainTests.jl")
+    include("HostToolsToolchainTests.jl")
+    include("CMakeToolchainTests.jl")
+end
