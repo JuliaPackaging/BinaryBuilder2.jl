@@ -1,6 +1,6 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.11.5"
+julia_version = "1.11.6"
 manifest_format = "2.0"
 project_hash = "5065db5cbc116447b19556c4543ba261ca11385f"
 
@@ -27,9 +27,9 @@ version = "1.4.0"
 
 [[deps.Git_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libiconv_jll", "OpenSSL_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "2f6d6f7e6d6de361865d4394b802c02fc944fc7c"
+git-tree-sha1 = "cb151153e40ad40a6dbf984fcd767e1d266fcc9c"
 uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
-version = "2.49.0+0"
+version = "2.50.1+0"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -76,9 +76,9 @@ version = "10.0.1+0"
 
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "9216a80ff3682833ac4b733caa8c00390620ba5d"
+git-tree-sha1 = "87510f7292a2b21aeff97912b0898f9553cc5c2c"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.5.0+0"
+version = "3.5.1+0"
 
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]

@@ -1,8 +1,8 @@
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.12.0-beta4"
+julia_version = "1.12.0-rc1"
 manifest_format = "2.0"
-project_hash = "dec8f7390ebc4e2d0dd378a61e4b46a9e4ccebf1"
+project_hash = "536abf74de62fb937e599ab9ced7d9e62fdaf80d"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -53,7 +53,7 @@ uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.1.0"
 
 [[deps.BinaryBuilderSources]]
-deps = ["BinaryBuilderGitUtils", "Dates", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "Random", "SHA", "Scratch", "TreeArchival"]
+deps = ["BinaryBuilderGitUtils", "Dates", "Downloads", "Git", "JLLPrefixes", "MultiHashParsing", "Pkg", "Random", "SHA", "Scratch", "TimerOutputs", "TreeArchival"]
 path = "BinaryBuilderSources.jl"
 uuid = "316c416d-4527-6863-7465-466137743047"
 version = "0.1.0"
@@ -72,9 +72,9 @@ version = "4.9.1+0"
 
 [[deps.Compat]]
 deps = ["TOML", "UUIDs"]
-git-tree-sha1 = "8ae8d32e09f0dcf42a36b90d4e17f5dd2e4c4215"
+git-tree-sha1 = "3a3dfb30697e96a440e4149c8c51bf32f818c0f3"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "4.16.0"
+version = "4.17.0"
 
     [deps.Compat.extensions]
     CompatLinearAlgebraExt = "LinearAlgebra"
@@ -155,9 +155,9 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "282d4920f56cb8c39f0a0baa5a834db2e78cc991"
+git-tree-sha1 = "c199272df7cab0230eb6febc3003c87873599107"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.3.11"
+version = "0.3.13"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -283,7 +283,7 @@ version = "10.0.1+0"
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.5.0+0"
+version = "3.5.1+0"
 
 [[deps.OrderedCollections]]
 git-tree-sha1 = "05868e21324cede2207c6f0f466b4bfef6d5e7ee"
@@ -306,7 +306,7 @@ version = "10.44.0+1"
 [[deps.Pkg]]
 deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "Random", "SHA", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.12.0"
+version = "1.13.0"
 
     [deps.Pkg.extensions]
     REPLExt = "REPL"
