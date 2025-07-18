@@ -1,4 +1,7 @@
-using Test, BinaryBuilderToolchains
+using Test, BinaryBuilderToolchains, BinaryBuilderSources
+
+# Get `with_temp_storage_locations()`
+include(joinpath(dirname(dirname(pathof(BinaryBuilderSources))), "test", "common.jl"))
 
 function capture_output(cmd)
     output = Pipe()
