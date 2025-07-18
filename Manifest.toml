@@ -120,9 +120,9 @@ version = "1.4.0"
 
 [[deps.Git_jll]]
 deps = ["Artifacts", "Expat_jll", "JLLWrappers", "LibCURL_jll", "Libdl", "Libiconv_jll", "OpenSSL_jll", "PCRE2_jll", "Zlib_jll"]
-git-tree-sha1 = "b981ed24de5855f20fce5b8cb767c179f93e4268"
+git-tree-sha1 = "cb151153e40ad40a6dbf984fcd767e1d266fcc9c"
 uuid = "f8c6e375-362e-5223-8a59-34ff63f689eb"
-version = "2.50.0+0"
+version = "2.50.1+0"
 
 [[deps.HistoricalStdlibVersions]]
 deps = ["Pkg", "PrecompileTools"]
@@ -149,7 +149,7 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-git-tree-sha1 = "85b9db8dda1da2786a8d1a7a556acbee170dbba8"
+path = "/home/sabae/.julia/dev/JLLPrefixes"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 version = "0.3.12"
 
