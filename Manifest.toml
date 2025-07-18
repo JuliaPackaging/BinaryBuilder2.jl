@@ -149,9 +149,9 @@ weakdeps = ["BinaryBuilderSources"]
 
 [[deps.JLLPrefixes]]
 deps = ["Artifacts", "Git", "HistoricalStdlibVersions", "Pkg", "Preferences", "SHA", "Scratch"]
-path = "/home/sabae/.julia/dev/JLLPrefixes"
+git-tree-sha1 = "c199272df7cab0230eb6febc3003c87873599107"
 uuid = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
-version = "0.3.12"
+version = "0.3.13"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
