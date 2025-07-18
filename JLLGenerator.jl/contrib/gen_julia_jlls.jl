@@ -15,8 +15,9 @@ for file in readdir(joinpath(@__DIR__, "stdlib_jllinfos"); join=true)
     Core.eval(m, :(using JLLGenerator))
     Core.include(m, file)
     jll_out_dir = joinpath(out_dir, basename(file)[1:end-3])
-    generate_jll(jll_out_dir, m.jll)
+    jll = Base.invokelatest(() -> m.jll)
+    generate_jll(jll_out_dir, jll)
 
     # Test that reading the JLL.toml back in is the same as `m.jll`:
-    @test m.jll == parse_toml_dict(TOML.parsefile(joinpath(jll_out_dir, "JLL.toml")))
+    @test jll == parse_toml_dict(TOML.parsefile(joinpath(jll_out_dir, "JLL.toml")))
 end
