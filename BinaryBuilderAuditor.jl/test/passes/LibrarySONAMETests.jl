@@ -26,10 +26,11 @@ end
             # Ensure that the library has no SONAME
             @test isfile(libfoo_path)
             curr_soname = readmeta(ohs -> get_soname(only(ohs)), libfoo_path)
-            if Sys.islinux(target)
-                @test curr_soname === nothing
-            elseif Sys.isapple(target)
+
+            if Sys.isapple(target)
                 @test curr_soname == abspath(libfoo_path)
+            elseif Sys.islinux(target) || Sys.isbsd(target)
+                @test curr_soname === nothing
             end
 
             # Run our audit pass on this prefix
@@ -39,10 +40,10 @@ end
 
             @test isfile(joinpath(libfoo_path))
             curr_soname = readmeta(ohs -> get_soname(only(ohs)), libfoo_path)
-            if Sys.islinux(target)
-                @test curr_soname == basename(libfoo_path)
-            elseif Sys.isapple(target)
+            if Sys.isapple(target)
                 @test curr_soname == "@rpath/$(basename(libfoo_path))"
+            elseif Sys.islinux(target) || Sys.isbsd(target)
+                @test curr_soname == basename(libfoo_path)
             end
             @test success(pass_results)
         end

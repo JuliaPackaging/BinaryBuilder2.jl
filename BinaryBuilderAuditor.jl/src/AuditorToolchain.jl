@@ -16,19 +16,7 @@ struct AuditorToolchain <: AbstractToolchain
 
     function AuditorToolchain(platform::CrossPlatform)
         tools = JLLSource[]
-        if Sys.islinux(platform.target)
-            push!(tools,
-                # We used to version Patchelf with date-based versions, but then
-                # we switched to actual upstream version numbers; Pkg chooses the
-                # date-based versions because they're higher, so we have to explicitly
-                # choose the correct version number here
-                JLLSource(
-                    "Patchelf_jll",
-                    platform.host;
-                    version=v"0.17.2+0",
-                ),
-            )
-        elseif Sys.isapple(platform.target)
+        if Sys.isapple(platform.target)
             push!(tools,
                 JLLSource(
                     "CCTools_jll",
@@ -40,6 +28,18 @@ struct AuditorToolchain <: AbstractToolchain
                     ),
                     # eventually, include a resolved version
                     version=v"986.0.0",
+                ),
+            )
+        elseif Sys.islinux(platform.target) || Sys.isbsd(platform.target)
+            push!(tools,
+                # We used to version Patchelf with date-based versions, but then
+                # we switched to actual upstream version numbers; Pkg chooses the
+                # date-based versions because they're higher, so we have to explicitly
+                # choose the correct version number here
+                JLLSource(
+                    "Patchelf_jll",
+                    platform.host;
+                    version=v"0.17.2+0",
                 ),
             )
         end
@@ -71,10 +71,10 @@ function toolchain_sources(toolchain::AuditorToolchain)
 end
 function toolchain_env(toolchain::AuditorToolchain, deployed_prefix::String)
     env = Dict{String,String}()
-    if Sys.islinux(toolchain.platform.target)
-        env["PATCHELF"] = patchelf_filename(toolchain)
-    elseif Sys.isapple(toolchain.platform.target)
+    if Sys.isapple(toolchain.platform.target)
         env["INSTALL_NAME_TOOL"] = install_name_tool_filename(toolchain)
+    elseif Sys.islinux(toolchain.platform.target) || Sys.isbsd(toolchain.platform.target)
+        env["PATCHELF"] = patchelf_filename(toolchain)
     end
 
     insert_PATH!(env, :PRE, [
