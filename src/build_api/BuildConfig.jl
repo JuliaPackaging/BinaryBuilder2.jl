@@ -3,11 +3,9 @@ using TimerOutputs, Sandbox, BinaryBuilderToolchains
 using BinaryBuilderToolchains: gcc_platform, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
-using MultiHashParsing, SHA, OutputCollectors
+using MultiHashParsing, SHA, OutputCollectors, Infiltrator
 
 export BuildConfig, build!, cleanup
-
-
 
 
 """
@@ -505,14 +503,18 @@ function build!(config::BuildConfig;
     meta.builds[config] = result
 
     if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
-        @warn("Launching debug shell")
+        @warn("Dropping into Julia REPL for debugging, variables of interest include: `meta::BuildMeta`, `config::BuildConfig` and `result::BuildResult`")
+        @warn("Use `runshell(result; verbose)` to enter debug shell within extraction environment.")
         if !verbose
             for line in split(build_log, "\n")[end-50:end]
                 printstyled(line; color=:red)
                 println()
             end
         end
-        runshell(result; verbose)
+
+        if run_status != :success
+            @infiltrate
+        end
     end
     return result
 end

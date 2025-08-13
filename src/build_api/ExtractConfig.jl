@@ -1,4 +1,4 @@
-using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor, Pkg
+using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor, Pkg, Infiltrator
 
 export ExtractConfig, extract!
 
@@ -319,8 +319,9 @@ function extract!(config::ExtractConfig;
     end
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
-        @warn("Launching debug shell", run_status)
-        runshell(result)
+        @warn("Dropping into Julia REPL, variables of interest include `meta::BuildMeta`, `config::ExtractConfig` and `result::ExtractResult`")
+        @warn("Use `runshell(result; verbose)` to enter debug shell within extraction environment.")
+        @infiltrate
     end
     return result
 end
