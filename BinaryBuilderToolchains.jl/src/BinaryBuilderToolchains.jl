@@ -40,6 +40,13 @@ abstract type AbstractToolchain; end
 import TreeArchival
 const bbt_code_hash = bytes2hex(TreeArchival.treehash(@__DIR__))
 
+"""
+    CachedGeneratedSource(f::Function, name::String; target::String)
+
+A wrapper around GeneratedSource that applies a BinaryBuilderToolchains hash
+to the end of `name` to ensure that this gets invalidated in the source of BBT
+(or any of its dependencies) are modified.
+"""
 function CachedGeneratedSource(f::Function, name::String; target::String)
     return GeneratedSource(f, string(name, "-", bbt_code_hash); target)
 end
