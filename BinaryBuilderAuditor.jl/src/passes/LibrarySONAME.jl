@@ -31,7 +31,9 @@ function ensure_sonames!(scan::ScanResult, pass_results::Dict{String,Vector{Pass
             cmd = patchelf(scan, `--set-soname $(soname) $(abs_path)`)
         end
 
-        proc, output = capture_output(cmd)
+        proc, output = with_writable(abs_path) do
+            capture_output(cmd)
+        end
         if !success(proc)
             push_result!(pass_results, "ensure_sonames!", :fail, rel_path, "Failed to set SONAME: $(output)")
             continue

@@ -196,30 +196,32 @@ function rpaths_consistent!(scan::ScanResult,
         # Now, add them into the actual object
         abs_path = abspath(scan, rel_path)
         rpath_str = join(all_rpaths, ':')
-        if Sys.isapple(scan.platform)
-            # Remove all rpaths from the object:
-            for rpath in obj_rpaths
-                run_and_log(
-                    install_name_tool(scan, `-delete_rpath $(rpath) $(abs_path)`),
-                    false,
-                    "Delete RPATH '$(rpath)'",
-                )
-            end
+        with_writable(abs_path) do
+            if Sys.isapple(scan.platform)
+                # Remove all rpaths from the object:
+                for rpath in obj_rpaths
+                    run_and_log(
+                        install_name_tool(scan, `-delete_rpath $(rpath) $(abs_path)`),
+                        false,
+                        "Delete RPATH '$(rpath)'",
+                    )
+                end
 
-            # Build up our new rpath:
-            for rpath in all_rpaths
+                # Build up our new rpath:
+                for rpath in all_rpaths
+                    run_and_log(
+                        install_name_tool(scan, `-add_rpath $(rpath) $(abs_path)`),
+                        true,
+                        "Add RPATH '$(rpath)'",
+                    )
+                end
+            else
                 run_and_log(
-                    install_name_tool(scan, `-add_rpath $(rpath) $(abs_path)`),
+                    patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`),
                     true,
-                    "Add RPATH '$(rpath)'",
+                    "Set RPATH '$(rpath_str)'",
                 )
             end
-        else
-            run_and_log(
-                patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`),
-                true,
-                "Set RPATH '$(rpath_str)'",
-            )
         end
     end
 end

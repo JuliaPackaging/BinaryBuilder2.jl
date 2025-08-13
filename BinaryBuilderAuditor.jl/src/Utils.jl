@@ -96,3 +96,19 @@ function capture_output(cmd::Cmd)
     proc = run(pipeline(ignorestatus(cmd); stdout=output, stderr=output))
     return proc, String(take!(output))
 end
+
+function with_writable(f::Function, path::String)
+    orig_mode = nothing
+    try
+        if !Sys.iswritable(path)
+            orig_mode = stat(path).mode
+            # Make it writable by us, the owner
+            chmod(path, orig_mode | 0o200)
+        end
+        return f()
+    finally
+        if orig_mode !== nothing
+            chmod(path, orig_mode)
+        end
+    end
+end
