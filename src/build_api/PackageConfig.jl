@@ -258,7 +258,7 @@ function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
     end
 
     for toolchain in target_spec.toolchains
-        if !isa(toolchain, CToolchain)
+        if !isa(toolchain, CToolchain) && !isa(toolchain, BinutilsToolchain)
             continue
         end
 

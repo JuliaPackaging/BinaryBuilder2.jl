@@ -42,6 +42,12 @@ struct CToolchain <: AbstractToolchain
     extra_cflags::Vector{String}
     extra_ldflags::Vector{String}
 
+    # Cache key that we use to store our generated wrappers
+    cache_key::String
+
+    # We internally create a BinutilsToolchain
+    binutils_toolchain::BinutilsToolchain
+
     function CToolchain(platform::CrossPlatform;
                         vendor = :auto,
                         env_prefixes = [""],
@@ -50,7 +56,6 @@ struct CToolchain <: AbstractToolchain
                         use_ccache = true,
                         gcc_version = VersionSpec("9"),
                         llvm_version = VersionSpec("17"),
-                        binutils_version = v"2.41.0",
                         glibc_version = :oldest,
                         compiler_runtime = :auto,
                         cxx_runtime = :auto,
@@ -111,7 +116,6 @@ struct CToolchain <: AbstractToolchain
             platform,
             gcc_version,
             llvm_version,
-            binutils_version,
             glibc_version,
             use_ccache,
             compiler_runtime,
@@ -121,12 +125,49 @@ struct CToolchain <: AbstractToolchain
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
         resolve_versions!(deps; julia_version=nothing)
 
+        gcc_version = nothing
+        for name in ("GCC", "GCCBootstrap")
+            jll = get_jll(deps, string(name, "_jll"))
+            if jll !== nothing
+                gcc_version = jll.package.version
+                break
+            end
+        end
+
+        wrapper_prefixes = string.(wrapper_prefixes)
+        env_prefixes = string.(env_prefixes)
+        binutils_toolchain = BinutilsToolchain(
+            platform,
+            get_vendor(vendor, platform);
+            wrapper_prefixes,
+            env_prefixes,
+            use_ccache,
+            gcc_version,
+        )
+
+        cache_key = string(
+            triplet(platform),
+            lock_microarchitecture ? "true" : "false",
+            use_ccache ? "true" : "false",
+            compiler_runtime,
+            cxx_runtime,
+            vendor,
+            env_prefixes...,
+            wrapper_prefixes...,
+            extra_cflags...,
+            extra_ldflags...,
+        )
+        cache_key = string(
+            "CToolchain-",
+            bytes2hex(sha1(cache_key))
+        )
+
         return new(
             platform,
             vendor,
             deps,
-            string.(wrapper_prefixes),
-            string.(env_prefixes),
+            wrapper_prefixes,
+            env_prefixes,
             lock_microarchitecture,
             use_ccache,
             compiler_runtime,
@@ -134,10 +175,13 @@ struct CToolchain <: AbstractToolchain
             linker,
             string.(extra_cflags),
             string.(extra_ldflags),
+            cache_key,
+            binutils_toolchain,
         )
     end
 end
 
+cache_key(toolchain::CToolchain) = toolchain.cache_key
 function get_vendor(vendor::Symbol, platform::AbstractPlatform)
     clang_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
     if vendor == :auto
@@ -156,7 +200,7 @@ function get_vendor(vendor::Symbol, platform::AbstractPlatform)
     end
     return vendor
 end
-get_vendor(ct::CToolchain) = get_vendor(ct.vendor, ct.platform)
+get_vendor(toolchain) = get_vendor(toolchain.vendor, toolchain.platform)
 
 # This one only returns `gcc` or `clang`, no `bootstrap` distinction.
 function get_simple_vendor(vendor::Symbol)
@@ -168,7 +212,7 @@ function get_simple_vendor(vendor::Symbol)
         return string(vendor)
     end
 end
-get_simple_vendor(toolchain::CToolchain) = get_simple_vendor(get_vendor(toolchain))
+get_simple_vendor(toolchain) = get_simple_vendor(get_vendor(toolchain))
 
 
 function auto_chooser(criteria, val, platform, choices)
@@ -220,7 +264,6 @@ get_linker(ct::CToolchain) = get_linker(ct.linker, ct.platform)
 function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                               gcc_version,
                               llvm_version,
-                              binutils_version,
                               glibc_version,
                               use_ccache,
                               compiler_runtime,
@@ -292,51 +335,21 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             ),
             target=sysroot_path,
         )]
+    elseif os(platform.target) == "freebsd"
+        freebsd_sdk_jll = JLLSource(
+            "FreeBSDSysroot_jll",
+            platform.target;
+            uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
+            repo=Pkg.Types.GitRepo(
+                source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
+                rev="main",
+            ),
+            version=v"14.1",
+            target=sysroot_path,
+        )
+        libc_jlls = [freebsd_sdk_jll]
     else
         error("Unknown libc for $(triplet(platform.target))")
-    end
-
-    if os(platform.target) == "macos"
-        binutils_jlls = [
-            JLLSource(
-                "CCTools_jll",
-                platform;
-                uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
-                repo=Pkg.Types.GitRepo(
-                    rev="main",
-                    source="https://github.com/staticfloat/CCTools_jll.jl",
-                ),
-                # eventually, include a resolved version
-                version=v"986.0.0",
-                target=get_simple_vendor(vendor),
-            ),
-            JLLSource(
-                "libtapi_jll",
-                platform.host;
-                uuid=Base.UUID("defda0c2-6d1f-5f19-8ead-78afca958a10"),
-                repo=Pkg.Types.GitRepo(
-                    rev="main",
-                    source="https://github.com/staticfloat/libtapi_jll.jl",
-                ),
-                # eventually, include a resolved version
-                version=v"1300.6.0",
-                target=get_simple_vendor(vendor),
-            ),
-            JLLSource("ldid_jll", platform.host),
-        ]
-    else
-        binutils_jlls = [JLLSource(
-            "Binutils_jll",
-            platform;
-            repo=Pkg.Types.GitRepo(
-                rev="main",
-                #rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
-                source="https://github.com/staticfloat/Binutils_jll.jl",
-            ),
-            # eventually, include a resolved version
-            version=v"2.41.0",
-            target=get_simple_vendor(vendor),
-        )]
     end
 
     # Both GCC and Clang can use the GCC support libraries
@@ -417,9 +430,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         ),
     ]
 
-    # These JLLs get installed not only when we're actually asking for
-    # `:clang_bootstrap`, but also when we're asking for `:gcc_bootstrap`
-    # on macOS, because `gcc` -> `as` -> `clang -intergrated-as`.  :(
     clang_bootstrap_jlls = [
         JLLSource(
             "LLVMBootstrap_Clang_jll",
@@ -430,7 +440,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
             ),
             version=v"17.0.0",
-            target="clang",
+            target=get_simple_vendor(vendor),
         ),
         JLLSource(
             "LLVMBootstrap_libLLVM_jll",
@@ -441,7 +451,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
             ),
             version=v"17.0.0",
-            target="clang",
+            target=get_simple_vendor(vendor),
         ),
     ]
 
@@ -455,7 +465,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/Clang_jll.jl",
             ),
             version=v"17.0.7",
-            target="clang",
+            target=get_simple_vendor(vendor),
         ),
         JLLSource(
             "libLLVM_jll",
@@ -465,7 +475,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/libLLVM_jll.jl",
             ),
             version=v"17.0.7",
-            target="clang",
+            target=get_simple_vendor(vendor),
         ),
     ]
 
@@ -485,10 +495,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     version=v"14.2.0",
                     target="gcc",
                 ),
-
-                # binutils actually needs `clang` to act as assembler, so we include it here.
-                clang_bootstrap_jlls...,
-                binutils_jlls...,
                 libc_jlls...,
             ])
         else
@@ -528,7 +534,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     append!(deps, libc_jlls)
 
     if vendor == :gcc
-        # Include GCC as well as Binutils
+        # Include GCC
         # These are compilers, so they take in the full cross platform.
         # TODO: Get `GCC_jll.jl` packaged so that I don't
         #       have to pull down a special commit like this!
@@ -548,23 +554,15 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             ),
             gcc_support_libs...,
             libstdcxx_libs...,
-            binutils_jlls...,
         ])
-
-        # binutils actually needs `clang` to act as assembler, so we include it here.
-        if Sys.isapple(platform.target)
-            append!(deps, clang_bootstrap_jlls)
-        end
     elseif vendor == :clang || vendor == :clang_bootstrap
         if vendor == :clang
             append!(deps, [
                 clang_jlls...,
-                binutils_jlls...,
             ])
         else
             append!(deps, [
                 clang_bootstrap_jlls...,
-                binutils_jlls...,
             ])
         end
         comp_runtime = get_compiler_runtime(compiler_runtime, platform)
@@ -603,14 +601,15 @@ function Base.show(io::IO, toolchain::CToolchain)
     end
 end
 
-function get_jll(toolchain::CToolchain, name::String)
-    for jll in toolchain.deps
+function get_jll(deps::Vector{JLLSource}, name::String)
+    for jll in deps
         if jll.package.name == name
             return jll
         end
     end
     return nothing
 end
+get_jll(toolchain, name::String) = get_jll(toolchain.deps, name)
 
 function toolchain_sources(toolchain::CToolchain)
     sources = AbstractSource[]
@@ -619,34 +618,16 @@ function toolchain_sources(toolchain::CToolchain)
     # Create a `GeneratedSource` that, at `prepare()` time, will JIT out
     # our compiler wrappers.  We store it with a cache key that is sensitive
     # to basically all inputs, so that it can be cached.
-    cache_key = string(
-        triplet(toolchain.platform),
-        toolchain.lock_microarchitecture ? "true" : "false",
-        toolchain.use_ccache ? "true" : "false",
-        toolchain.compiler_runtime,
-        toolchain.cxx_runtime,
-        toolchain.vendor,
-        toolchain.env_prefixes...,
-        toolchain.wrapper_prefixes...,
-        toolchain.extra_cflags...,
-        toolchain.extra_ldflags...,
-    )
-    cache_key = string(
-        "CToolchain-",
-        bytes2hex(sha1(cache_key))
-    )
-    push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
+    push!(sources, CachedGeneratedSource(cache_key(toolchain); target="wrappers") do out_dir
         if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapMacOS_jll")
             gcc_wrappers(toolchain, out_dir)
         end
         if installing_jll("Clang_jll") || installing_jll("LLVMBootstrap_Clang_jll")
             clang_wrappers(toolchain, out_dir)
         end
-        if installing_jll("Binutils_jll") || installing_jll("CCTools_jll") || installing_jll("GCCBootstrap_jll")
-            binutils_wrappers(toolchain, out_dir)
-        end
     end)
 
+    append!(sources, toolchain_sources(toolchain.binutils_toolchain))
     append!(sources, toolchain.deps)
     return sources
 end
@@ -654,49 +635,15 @@ end
 function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     env = Dict{String,String}()
 
-    if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
-        insert_PATH!(env, :PRE, [
-            joinpath(deployed_prefix, "gcc", "bin"),
-        ])
-    end
-
-    if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
-        insert_PATH!(env, :PRE, [
-            joinpath(deployed_prefix, "clang", "bin"),
-        ])
-    end
-
     insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),
+        joinpath(deployed_prefix, get_simple_vendor(toolchain), "bin")
     ])
 
     function set_envvars(envvar_prefix::String, tool_prefix::String)
-        env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
-        env["$(envvar_prefix)AS"] = "$(tool_prefix)as"
         env["$(envvar_prefix)CC"] = "$(tool_prefix)cc"
         env["$(envvar_prefix)CXX"] = "$(tool_prefix)c++"
         env["$(envvar_prefix)CPP"] = "$(tool_prefix)cpp"
-        env["$(envvar_prefix)LD"] = "$(tool_prefix)ld"
-        env["$(envvar_prefix)NM"] = "$(tool_prefix)nm"
-        env["$(envvar_prefix)RANLIB"] = "$(tool_prefix)ranlib"
-        env["$(envvar_prefix)OBJCOPY"] = "$(tool_prefix)objcopy"
-        env["$(envvar_prefix)OBJDUMP"] = "$(tool_prefix)objdump"
-        env["$(envvar_prefix)STRIP"] = "$(tool_prefix)strip"
-
-        if Sys.isapple(toolchain.platform.target)
-            env["$(envvar_prefix)DSYMUTIL"] = "$(tool_prefix)dsymutil"
-            env["$(envvar_prefix)LIPO"] = "$(tool_prefix)lipo"
-        end
-
-        if !Sys.isapple(toolchain.platform.target)
-            env["$(envvar_prefix)READELF"] = "$(tool_prefix)readelf"
-        end
-
-        if Sys.iswindows(toolchain.platform.target)
-            env["$(envvar_prefix)DLLTOOL"] = "$(tool_prefix)dlltool"
-            env["$(envvar_prefix)WINDRES"] = "$(tool_prefix)windres"
-            env["$(envvar_prefix)WINMC"] = "$(tool_prefix)winmc"
-        end
         env["$(envvar_prefix)CC_TARGET"] = triplet(gcc_platform(toolchain.platform.target))
     end
 
@@ -727,7 +674,9 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         )
         env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
     end
-    
+
+    # Merge in Binutils environment variables
+    merge!(env, toolchain_env(toolchain.binutils_toolchain, deployed_prefix))
     return env
 end
 
@@ -894,36 +843,6 @@ function add_macos_flags(io, toolchain)
     end
 end
 
-function add_ccache_preamble(io, toolchain)
-    if toolchain.use_ccache
-        # Build hash of compiler JLLs that we will feed to `ccache` to identify our
-        # specific compiler set, to key our `ccache` cache correctly.
-        compiler_treehash = bytes2hex(sha256(
-            join([dep.package.tree_hash for dep in toolchain.deps])
-        ))
-
-        println(io, """
-        # If `ccache` is available, use it!
-        if which ccache >/dev/null; then
-            PROG=( ccache "compiler_check=string:$(compiler_treehash)" "\${PROG[@]}" )
-        fi
-        """)
-    end
-end
-
-function get_gcc_version(toolchain::CToolchain)
-    gcc_version = nothing
-    for name in ("GCC", "GCCBootstrap")
-        jll = get_jll(toolchain, string(name, "_jll"))
-        if jll !== nothing
-            gcc_version = jll.package.version
-            break
-        end
-    end
-    return gcc_version
-end
-
-
 """
     gcc_wrappers(toolchain::CToolchain, dir::String)
 
@@ -936,7 +855,7 @@ wrapper names `cc`, `gcc`, `c++`, etc...
 function gcc_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/gcc"
-    gcc_version = something(get_gcc_version(toolchain), v"0")
+    gcc_version = something(toolchain.binutils_toolchain.gcc_version, v"0")
 
     function _gcc_wrapper(io)
         add_microarchitectural_flags(io, toolchain)
@@ -1117,333 +1036,5 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
     end
 end
 
-
-function binutils_wrappers(toolchain::CToolchain, dir::String)
-    p = toolchain.platform.target
-    toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/$(get_simple_vendor(toolchain))"
-    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
-    gcc_version = get_gcc_version(toolchain)
-
-    # These tools don't need anything fancy; just `compiler_wrapper()`
-    simple_tools = String[]
-    @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
-    @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
-    # Apple has some extra simple tools
-    if Sys.isapple(p)
-        append!(simple_tools, [
-            "install_name_tool",
-            "lipo",
-            "otool",
-        ])
-    else
-        # Everyone except for `macOS` has a `readelf` command.
-        append!(simple_tools, [
-            "readelf",
-        ])
-    end
-
-    # Windows has some extra simple tools
-    if Sys.iswindows(p)
-        append!(simple_tools, [
-            "windres",
-            "winmc",
-        ])
-    end
-
-    function _ld_wrapper(io)
-        if Sys.iswindows(p)
-            _warn_nondeterministic_definition(io, "uses the '--insert-timestamps' flag which embeds timestamps")
-
-            # Warn if someone has asked for timestamps
-            flagmatch(io, [flag"--insert-timestamps"]) do io
-                println(io, "warn_nondeterministic")
-            end
-
-            # Default to not using timestamps
-            flagmatch(io, [!flag"--insert-timestamps", !flag"--no-insert-timestamps"]) do io
-                append_flags(io, :PRE, "--no-insert-timestamp")
-            end
-        end
-
-        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
-        add_ccache_preamble(io, toolchain)
-    end
-
-    # Many of our tools have nondeterministic
-    function _warn_nondeterministic_definition(io, nondeterminism_description="uses flags that cause nondeterministic output!")
-        println(io, """
-        NONDETERMINISTIC=0
-        warn_nondeterministic() {
-            if [[ "\${NONDETERMINISTIC}" != "1" ]]; then
-                echo "Non-reproducibility alert: This '\$0' invocation $(nondeterminism_description)." >&2
-                echo "\$0 flags: \${ARGS[@]}" >&2
-                echo "Continuing build, but please repent." >&2
-            fi
-            NONDETERMINISTIC=1
-        }
-        """)
-    end
-
-    # Some tools can load an LTO plugin.  We make sure this happens by passing in
-    # `--plugin` automatically if the plugin exists.  This is not necessary on newer
-    # binutils builds which properly install a symlink in `lib/bfd_plugins/`, but
-    # doesn't hurt anything, so we just always do it.
-    function lto_plugin_args(io::IO)
-        if !isa(gcc_version, VersionNumber)
-            return
-        end
-
-        # We have the version glob here because our patch version may not actually
-        # correspond to the true patch version.  It would be nice to inspect the
-        # JLL.toml for the GCC build and determine the true `src_version here,
-        # but that's an incredibly low-priority TODO.
-        plugin_path = "`compgen -G \"$(toolchain_prefix)/libexec/gcc/$(gcc_triplet)/$(gcc_version.major).$(gcc_version.minor)*/liblto_plugin.so\"`"
-        bash_if_statement(io, "-f $(plugin_path)") do io
-            append_flags(io, :POST, "--plugin=$(plugin_path)")
-        end
-    end
-
-    # `ar` and `ranlib` have special treatment due to determinism requirements.
-    # Additionally, we use the `llvm-` prefixed tools on macOS.
-    function _ar_wrapper(io)
-        # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
-        # `ar` accepts many forms of its arguments, and we want to catch all of them.
-        _warn_nondeterministic_definition(io, "uses the '-U' flag which embeds timestamps")
-
-        # We'll start with the easy stuff; `-U` by itself, as any argument!
-        flagmatch(io, [flag"-U"]) do io
-            println(io, "warn_nondeterministic")
-        end
-
-        # However, the more traditional way to use `ar` is to mash a bunch of
-        # single-letter flags together into the first argument.  This can be
-        # preceeded by a dash, but doesn't have to be (sigh).
-        flagmatch(io, [flag"-?[^-]*U.*"r]; match_target="\${ARGS[0]}") do io
-            println(io, "warn_nondeterministic")
-        end
-
-        # Figure out if we've already set `-D`
-        flagmatch(io, [flag"-D"]) do io
-            println(io, "DETERMINISTIC=1")
-        end
-        flagmatch(io, [flag"-?[^-]*D"r]; match_target="\${ARGS[0]}") do io
-            println(io, "DETERMINISTIC=1")
-        end
-
-        # If we haven't already set `-U`, _and_ we haven't already set `-D`, then
-        # we'll try to set `-D`:
-        flagmatch(io, [!flag"--.*"r]; match_target="\${ARGS[0]}") do io
-            # If our first flag is not a double-dashed option, we will just
-            # slap `D` onto the end of it:
-            println(io, raw"""
-            if [[ "${NONDETERMINISTIC}" != "1" ]] && [[ "${DETERMINISTIC}" != "1" ]]; then
-                ARGS[0]="${ARGS[0]}D"
-                DETERMINISTIC="1"
-            fi
-            """)
-        end
-
-        # Eliminate the `u` option, as it's incompatible with `D` and is just an optimization
-        println(io, raw"""
-        if [[ "${DETERMINISTIC}" == "1" ]]; then
-            for ((i=0; i<"${#ARGS[@]}"; ++i)); do
-                if [[ "${ARGS[i]}" == "-u" ]]; then
-                    unset ARGS[$i]
-                fi
-            done
-
-            # Also find examles like `ar -ruD` or `ar ruD`
-            if [[ " ${ARGS[0]} " == *'u'* ]]; then
-                ARGS[0]=$(echo "${ARGS[0]}" | tr -d u)
-            fi
-        fi
-        """)
-
-        # If we've got a `liblto_plugin`, load it in:
-        lto_plugin_args(io)
-    end
-
-    # Multiple tools (`ranlib`, `strip`) have a `-U` or `-D` option that switches them
-    # from nondeterministic mode to determinstic mode.  We, of course, _always_ want
-    # deterministic mode, and so do some common option parsing here. `ar` is a special
-    # case due to handling the `-u` flag, which is why it has all that extra logic above.
-    function _simple_U_D_determinism(io)
-        _warn_nondeterministic_definition(io, "uses the '-U' flag which embeds UIDs and timestamps")
-        # Warn the user if they provide `-U` in their build script
-        flagmatch(io, [flag"-[^-]*U.*"r]) do io
-            println(io, "warn_nondeterministic")
-        end
-
-        # If there's no `-U`, and we haven't already provided `-D`, insert it!
-        flagmatch(io, [!flag"-[^-]*U.*"r, !flag"-[^-]*D.*"r]) do io
-            append_flags(io, :PRE, "-D")
-        end
-    end
-
-    function _ranlib_wrapper(io)
-        _simple_U_D_determinism(io)
-
-        # ranlib can take in `--plugin`
-        lto_plugin_args(io)
-    end
-
-    function _nm_wrapper(io)
-        # nm can take in `--plugin`
-        lto_plugin_args(io)
-    end
-
-    function _strip_wrapper_pre(io)
-        _simple_U_D_determinism(io)
-
-        # On non-apple platforms, there's nothing else to be done!
-        if !Sys.isapple(p)
-            return
-        end
-
-        # Otherwise, we need to do some RATHER ONEROUS parsing.
-        # We need to identify every file touched by `strip` and then
-        # re-sign them all using `ldid`.  Because `strip` can take
-        # multiple output files, we end up doing a bunch of custom
-        # argument parsing here to identify all files that will be signed.
-        println(io, raw"""
-        FILES_TO_SIGN=()
-        # Parse arguments to figure out what files are being stripped,
-        # so we know what to re-sign after all is said and done.
-        get_files_to_sign()
-        {
-            for ARG_IDX in "${!ARGS[@]}"; do
-                # If `-o` is passed, that's the only file to sign, ignore
-                # everything else and finish off immediately.
-                if [[ "${ARGS[ARG_IDX]}" == "-o" ]] && (( ARG_IDX + 1 < ${#ARGS[@]} )); then
-                    FILES_TO_SIGN=( "${ARGS[ARG_IDX+1]}" )
-                    return
-                elif [[ "${ARGS[ARG_IDX]}" == "-o"* ]]; then
-                    filename="${ARGS[ARG_IDX}]}"
-                    FILES_TO_SIGN=( "${filename%%-o}" )
-                    return
-                fi
-
-                # Otherwise, we collect arguments we don't know what to do with,
-                # assuming they are files we should be signing.
-                if [[ "${ARGS[ARG_IDX]}" != -* ]]; then
-                    FILES_TO_SIGN+=( "${ARGS[ARG_IDX]}" )
-                fi
-            done
-        }
-        """)
-
-        # Tell `strip` not to complain about us invalidating a code signature, since
-        # we're gonna fix it up with `ldid` immediately afterward.
-        append_flags(io, :PRE, ["-no_code_signature_warning"])
-    end
-
-    function _strip_wrapper_post(io)
-        # On non-apple platforms, we don't need to do anything
-        if !Sys.isapple(p)
-            return
-        end
-
-        println(io, raw"""
-        # Re-sign all files listed in `FILES_TO_SIGN`
-        for file in "${FILES_TO_SIGN[@]}"; do
-            ldid -S "${file}"
-        done
-        """)
-    end
-
-    function _as_wrapper(io)
-        if Sys.isapple(p)
-            # Warn if someone has asked for timestamps
-            flagmatch(io, [!flag"-arch"]) do io
-                # macOS likes to use `arm64`, not `aarch64`:
-                arch_str = arch(p) == "aarch64" ? "arm64" : arch(p)
-                append_flags(io, :PRE, ["-arch", arch_str])
-            end
-
-            # Tell the `as` executable how to find the corresponding clang
-            println(io, "export CCTOOLS_CLANG_AS_EXECUTABLE='$(gcc_triplet)-clang'")
-        end
-
-        # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
-        add_ccache_preamble(io, toolchain)
-    end
-
-    # For all simple tools, create the target-specific name, and the basename if we're the default toolchain
-    for tool in simple_tools
-        make_tool_wrappers(toolchain, dir, tool, "$(gcc_triplet)-$(tool)"; toolchain_prefix)
-    end
-
-    # `ld` is a simple tool, except that it can be wrapped with `ccache`:
-    make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix)
-
-    # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
-    make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)
-
-    # `nm` is a simple tool, except that it can take in `--plugin` for LTO
-    make_tool_wrappers(toolchain, dir, "nm", "$(gcc_triplet)-nm"; wrapper=_nm_wrapper, toolchain_prefix)
-
-    # `strip` needs complicated option parsing if we're on macOS
-    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)
-
-
-    # Used by llvm tools like `llvm-ar` if we're on macOS
-    if Sys.isapple(p)
-        llvm_toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
-    else
-        llvm_toolchain_prefix = toolchain_prefix
-    end
-
-    # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
-    cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
-    make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix=llvm_toolchain_prefix)
-
-    ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
-    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix=llvm_toolchain_prefix)
-
-    ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
-    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix=llvm_toolchain_prefix)
-
-    objcopy_name = Sys.isapple(p) ? "llvm-objcopy" : "$(gcc_triplet)-objcopy"
-    make_tool_wrappers(toolchain, dir, "objcopy", objcopy_name; toolchain_prefix=llvm_toolchain_prefix)
-
-    objdump_name = Sys.isapple(p) ? "llvm-objdump" : "$(gcc_triplet)-objdump"
-    make_tool_wrappers(toolchain, dir, "objdump", objdump_name; toolchain_prefix=llvm_toolchain_prefix)
-
-    if Sys.isapple(p)
-        # dsymutil is just called `dsymutil`
-        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix=llvm_toolchain_prefix)
-    end
-
-    # dlltool needs some determinism fixes as well
-    if Sys.iswindows(p)
-        function _dlltool_wrapper(io)
-            append_flags(io, :PRE, ["--temp-prefix", "/tmp/dlltool-\${ARGS_HASH}"])
-        end
-        make_tool_wrappers(toolchain, dir, "dlltool", "$(gcc_triplet)-dlltool"; wrapper=_dlltool_wrapper, toolchain_prefix)
-    end
-end
-
-
-
-function supported_platforms(::Type{CToolchain}; experimental::Bool = false)
-    # Maybe make this inspect the supported platforms of GCC_jll or something like that?
-    return [
-        Platform("x86_64", "linux"),
-        Platform("i686", "linux"),
-        Platform("aarch64", "linux"),
-        Platform("armv7l", "linux"),
-        Platform("ppc64le", "linux"),
-
-        Platform("x86_64", "linux"; libc="musl"),
-        Platform("i686", "linux"; libc="musl"),
-        Platform("aarch64", "linux"; libc="musl"),
-        Platform("armv6l", "linux"; libc="musl"),
-        Platform("armv7l", "linux"; libc="musl"),
-
-        Platform("x86_64", "windows"),
-        Platform("i686", "windows"),
-
-        Platform("x86_64", "macos"),
-        Platform("aarch64", "macos"),
-    ]
-end
+# Sub off to BinutilsToolchain
+supported_platforms(::Type{CToolchain}; experimental::Bool = false) = supported_platforms(BinutilsToolchain; experimental)
