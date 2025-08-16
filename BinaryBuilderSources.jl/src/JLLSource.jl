@@ -1,4 +1,4 @@
-using TreeArchival, TimerOutputs
+using TreeArchival, TimerOutputs, TOML
 
 using Base.BinaryPlatforms, JLLPrefixes, Pkg, Dates
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
@@ -139,8 +139,8 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         bytes2hex.([reg.tree_info.bytes for reg in registries if reg.tree_info !== nothing])...,
     )))
 end
-function jll_cache_name(jll::JLLSource, registries::Vector{Pkg.Registry.RegistryInstance})
-    return string(jll.package.name, "-", bytes2hex(spec_hash(jll; registries)))
+function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry.RegistryInstance})
+    return bytes2hex(sha1(string(bytes2hex.(spec_hash.(jlls; registries))...)))
 end
 
 """
@@ -177,10 +177,9 @@ function prepare(jlls::Vector{JLLSource};
     # process (that is, a hash of everything coming in).  While the output depends on
     # the state of the registry as well, we will avoid updating that (and thus invalidating
     # the results) unless the registry hasn't been updated in a while.
-    function jll_cache_path(jll::JLLSource)
-        return joinpath(jll_resolve_cache(jll_cache_name(jll, registries)), "cache.list")
+    function jll_cache_path(jlls::Vector{JLLSource})
+        return joinpath(jll_resolve_cache(jll_cache_name(jlls, registries)), "cache.toml")
     end
-    jll_cache_paths = Dict{JLLSource,String}()
 
     for jll in jlls
         # If this JLL does not yet have a UUID, resolve it by name with respect
@@ -193,42 +192,7 @@ function prepare(jlls::Vector{JLLSource};
             end
         end
 
-        jll_cache_paths[jll] = jll_cache_path(jll)
-
-        # If `force` is set, drop any previously-stored artifact paths,
-        # delete any cache files, and force resolution.
-        if force || registries_outdated
-            @debug("Emptying", force, registries_outdated)
-            empty!(jll.artifact_paths)
-
-        # If we don't already have artifact_paths, try to load them from the cache file,
-        # but only if our registries are not outdated.
-        elseif isempty(jll.artifact_paths)
-            if ispath(jll_cache_paths[jll])
-                append!(jll.artifact_paths, filter(!isempty, readlines(jll_cache_paths[jll])))
-                @debug("Loaded cache", jll)
-            else
-                @debug("No cache available", jll, jll_cache_paths[jll])
-            end
-        else
-            # this case is that we have artifact paths that were previously
-            # stored in the object, and we're good to try and use them.
-            @debug("Attempting to re-use", jll)
-        end
-
-        # Check the `artifact_paths` to ensure none have been GC'ed while we weren't looking.
-        if any(!isdir(art_path) for art_path in jll.artifact_paths)
-            @debug("Emptying", jll, [isdir(art_path) for art_path in jll.artifact_paths])
-            empty!(jll.artifact_paths)
-        end
-
-        # If we made it through the above with `jll.artifact_paths` filled, we can skip resolution
-        if !isempty(jll.artifact_paths)
-            @debug("Skipping resolution", jll)
-            continue
-        end
-
-        # Otherwise, add this `jll` into the datastructures to be resolved below.
+        # Sort JLLs by platform, then by prefix.  JLLs in the same bucket will be resolved together.
         if jll.platform ∉ keys(jlls_by_platform_by_prefix)
             jlls_by_platform_by_prefix[jll.platform] = Dict{String,Vector{JLLSource}}()
         end
@@ -244,26 +208,75 @@ function prepare(jlls::Vector{JLLSource};
     # two different versions of the same JLL to different prefixes.
     for (platform, platform_jlls_by_prefix) in jlls_by_platform_by_prefix
         for (prefix, jlls_slice) in platform_jlls_by_prefix
-            @timeit to "collect_artifact_paths" begin
-                art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
+            # Check to see if this slice of JLLs has been resolved before:
+            cache_path = jll_cache_path(jlls_slice)
+
+            # If we decide the cache is stale, we do this to clear it
+            function clear_cache!()
+                for jll in jlls_slice
+                    empty!(jll.artifact_paths)
+                end
+                rm(cache_path; force=true)
             end
-            for jll in jlls_slice
-                @debug("Prepared", jll, cache_key=jll_cache_paths[jll])
-                pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
-                # Update `jll.package` with things from `pkg`
-                if pkg.version != Pkg.Types.VersionSpec()
-                    jll.package.version = pkg.version
+
+            # If `force` is set, drop any previously-stored artifact paths,
+            # delete any cache files, and force resolution.
+            if force || registries_outdated
+                @debug("Emptying", force, registries_outdated)
+                clear_cache!()
+            end
+
+            # If we have a cache path, try to load artifact paths for any JLL in the cache
+            if ispath(cache_path)
+                cache = TOML.parsefile(cache_path)
+
+                for jll in jlls_slice
+                    # This should be impossible since we address the cache by spec_hash, but let's be paranoid
+                    if !haskey(cache, string(jll.package.uuid))
+                        @error("JLLSource cache does not contain all UUIDs!  This should be impossible!", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                        clear_cache!()
+                        break
+                    end
+
+                    if isempty(jll.artifact_paths)
+                        cached_paths = cache[string(jll.package.uuid)]
+
+                        # Only use the cached paths if they actually exist on-disk (e.g. they haven't been Pkg.gc()'ed)
+                        if all(isdir.(cached_paths))
+                            append!(jll.artifact_paths, cached_paths)
+                        end
+                    end
                 end
-                if pkg.path !== nothing
-                    jll.package.path = pkg.path
+            end
+
+            if any(isempty(jll.artifact_paths) for jll in jlls_slice)
+                @timeit to "collect_artifact_paths" begin
+                    art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
                 end
-                if pkg.tree_hash !== nothing
-                    jll.package.tree_hash = pkg.tree_hash
+                for jll in jlls_slice
+                    @debug("Prepared", jll, cache_key=jll_cache_paths[jll])
+                    pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
+                    # Update `jll.package` with things from `pkg`
+                    if pkg.version != Pkg.Types.VersionSpec()
+                        jll.package.version = pkg.version
+                    end
+                    if pkg.path !== nothing
+                        jll.package.path = pkg.path
+                    end
+                    if pkg.tree_hash !== nothing
+                        jll.package.tree_hash = pkg.tree_hash
+                    end
+                    if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
+                        jll.package.repo = pkg.repo
+                    end
+                    append!(jll.artifact_paths, art_paths[pkg])
                 end
-                if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
-                    jll.package.repo = pkg.repo
+
+                # Write out the result
+                mkpath(dirname(cache_path))
+                open(cache_path; write=true) do io
+                    TOML.print(io, Dict(string(jll.package.uuid) => jll.artifact_paths for jll in jlls_slice))
                 end
-                append!(jll.artifact_paths, art_paths[pkg])
             end
         end
     end
@@ -271,13 +284,7 @@ function prepare(jlls::Vector{JLLSource};
     # Serialize all artifact paths into a hashed cache for each jll, so we don't have
     # to do this again until our next update.
     for jll in jlls
-        mkpath(dirname(jll_cache_paths[jll]))
-        open(jll_cache_paths[jll]; write=true) do io
-            truncate(io, 0)
-            for art_path in jll.artifact_paths
-                println(io, realpath(art_path))
-            end
-        end
+        
     end
 end
 
