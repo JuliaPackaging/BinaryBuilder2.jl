@@ -51,6 +51,11 @@ function toolchain_tests(prefix, env, platform, testsuite; do_cxxabi_tests::Bool
 
     # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
     for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
+        # Skip these, they're special
+        if endswith(basename(wrapper), "-clang-as")
+            continue
+        end
+
         if Sys.isexecutable(wrapper)
             @testset "$(basename(wrapper))" begin
                 @test success(setenv(`$(wrapper) --version`, env))

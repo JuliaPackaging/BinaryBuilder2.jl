@@ -69,6 +69,22 @@ function PlatformlessWrapper(ct::CToolchain)
     return CToolchain(;vendor=BinaryBuilderToolchains.get_vendor(ct))
 end
 
+# BinutilsToolchain support
+function BinaryBuilderToolchains.BinutilsToolchain(vendor; kwargs...)
+    return PlatformlessWrapper{BinutilsToolchain}(; args=[vendor], kwargs=Dict(kwargs...))
+end
+function apply_platform(pw::PlatformlessWrapper{BinutilsToolchain}, platform::CrossPlatform)
+    return BinutilsToolchain(platform, pw.args...; pw.kwargs...)
+end
+function apply_platform(bt::BinutilsToolchain, p::AbstractPlatform)
+    if !platforms_match(bt.platform, p)
+        throw(ArgumentError("Attempted to `apply_platform` a BinutilsToolchain with platform $(triplet(bt.platform)) but for $(triplet(p))"))
+    end
+    return bt
+end
+function PlatformlessWrapper(bt::BinutilsToolchain)
+    return BinutilsToolchain(bt.vendor)
+end
 
 # CMakeToolchain support
 function BinaryBuilderToolchains.CMakeToolchain(; kwargs...)

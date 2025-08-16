@@ -31,8 +31,6 @@ struct BuildTargetSpec
 
             # Alter wrapper and environment prefix mappings based on our `name`:
             toolchain = rename_wrapper_prefixes(name, flags, toolchain)
-
-            # Re-name `wrapper_prefixes`
             return apply_platform(toolchain, platform)
         end
 

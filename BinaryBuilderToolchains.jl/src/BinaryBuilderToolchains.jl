@@ -54,6 +54,7 @@ end
 
 include("WrapperUtils.jl")
 include("PathUtils.jl")
+include("toolchains/BinutilsToolchain.jl")
 include("toolchains/CToolchain.jl")
 include("toolchains/HostToolsToolchain.jl")
 include("toolchains/CMakeToolchain.jl")
@@ -79,7 +80,7 @@ include("InteractiveUtils.jl")
                     HostToolsToolchain(platform)
                 ])
             catch e
-                @warn("Failed to precompile support for platform", platform, e)
+                @error("Failed to precompile support for platform", platform, exception=(e, catch_backtrace()))
             end
         end
     end
