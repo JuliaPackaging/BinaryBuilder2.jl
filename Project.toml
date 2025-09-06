@@ -67,7 +67,7 @@ TreeArchival = {path = "TreeArchival.jl"}
 Accessors = "0.1.42"
 HistoricalStdlibVersions = "2"
 Infiltrator = "1.9.2"
-JLLPrefixes = "0.3.8"
+JLLPrefixes = "0.3.8, 0.4"
 Logging = "1.11.0"
 LoggingExtras = "1.1.0"
 OutputCollectors = "1"
