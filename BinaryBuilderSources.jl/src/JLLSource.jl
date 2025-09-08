@@ -233,13 +233,22 @@ function prepare(jlls::Vector{JLLSource};
                 for jll in jlls_slice
                     # This should be impossible since we address the cache by spec_hash, but let's be paranoid
                     if !haskey(cache, string(jll.package.uuid))
-                        @error("JLLSource cache does not contain all UUIDs!  This should be impossible!", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                        @debug("JLLSource cache does not contain all UUIDs!  This should be impossible!", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
                         clear_cache!()
                         break
                     end
 
-                    if isempty(jll.artifact_paths)
-                        cached_paths = cache[string(jll.package.uuid)]
+                    # Drop the package cache if has the wrong structure
+                    package_cache = cache[string(jll.package.uuid)]
+                    if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash")
+                        @debug("JLLSource cache lacks artifact paths or tree_hash!  Cache corrupt?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                        clear_cache!()
+                        break
+                    end
+
+                    if isempty(jll.artifact_paths) || jll.package.tree_hash === nothing
+                        cached_paths = package_cache["artifact_paths"]
+                        tree_hash = Base.SHA1(package_cache["tree_hash"])
 
                         if !isa(cached_paths, Vector{AbstractString})
                             @debug("cached_paths is not a String[], clearing", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
@@ -248,8 +257,10 @@ function prepare(jlls::Vector{JLLSource};
                         end
 
                         # Only use the cached paths if they actually exist on-disk (e.g. they haven't been Pkg.gc()'ed)
-                        if all(isdir.(cached_paths))
+                        if all(isdir.(cached_paths)) && isdir(Pkg.Operations.find_installed(jll.package.name, jll.package.uuid, tree_hash))
+                            @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths))
                             append!(jll.artifact_paths, cached_paths)
+                            jll.package.tree_hash = tree_hash
                         end
                     end
                 end
@@ -260,7 +271,7 @@ function prepare(jlls::Vector{JLLSource};
                     art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
                 end
                 for jll in jlls_slice
-                    @debug("Prepared", jll, cache_key=jll_cache_paths[jll])
+                    @debug("Prepared", jll, cache_path)
                     pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
                     # Update `jll.package` with things from `pkg`
                     if pkg.version != Pkg.Types.VersionSpec()
@@ -278,23 +289,91 @@ function prepare(jlls::Vector{JLLSource};
                     append!(jll.artifact_paths, art_paths[pkg])
                 end
 
-                # Write out the result
-                mkpath(dirname(cache_path))
-                open(cache_path; write=true) do io
-                    TOML.print(io, Dict(string(jll.package.uuid) => jll.artifact_paths for jll in jlls_slice))
+                # Write out the result into a cache so we don't have to go through this resolution again.
+                # Only do that if all jll's had a `tree_hash`:
+                if all(jll.package.tree_hash !== nothing for jll in jlls_slice)
+                    mkpath(dirname(cache_path))
+                    open(cache_path; write=true) do io
+                        cache_entry = Dict(
+                            # We record both the artifact path and the gitsha as those are the primary outputs
+                            # of our resolution and artifact meta collection.
+                            string(jll.package.uuid) => Dict(
+                                # Useful for debugging
+                                "name" => jll.package.name,
+                                "artifact_paths" => jll.artifact_paths,
+                                "tree_hash" => string(jll.package.tree_hash),
+                            )
+                            for jll in jlls_slice
+                        )
+                        TOML.print(io, cache_entry)
+                    end
                 end
             end
         end
     end
-
-    # Serialize all artifact paths into a hashed cache for each jll, so we don't have
-    # to do this again until our next update.
-    for jll in jlls
-        
-    end
 end
 
 verify(jll::JLLSource) = !isempty(jll.artifact_paths)
+
+function find_duplicate_artifact_paths(artifact_paths::Vector{String})
+    seen_files = Dict{String,Any}()
+    for art_path in artifact_paths
+        for (root, dirs, files) in walkdir(art_path)
+            for file in files
+                rel_path = relpath(joinpath(root, file), art_path)
+                if !haskey(seen_files, rel_path)
+                    seen_files[rel_path] = []
+                end
+                push!(seen_files[rel_path], art_path)
+            end
+        end
+    end
+
+    # Only keep files that are listed in more than one artifact path
+    filter!(seen_files) do (file, art_paths)
+        length(art_paths) > 1
+    end
+    return seen_files
+end
+
+function find_overlapping_jlls(jlls::Vector{JLLSource})
+    paths = unique(vcat((jll.artifact_paths for jll in jlls)...))
+    dup_files = find_duplicate_artifact_paths(paths)
+
+    conflicting_sets = Set{Set{String}}()
+    for (file, art_paths) in dup_files
+        push!(conflicting_sets, Set{String}(art_paths))
+    end
+    @show conflicting_sets
+
+    function find_jlls_for_art_path(art_path)
+        jll_names = String[]
+        for jll in jlls
+            if art_path ∈ jll.artifact_paths
+                push!(jll_names, jll.package.name)
+            end
+        end
+        return jll_names
+    end
+
+    for conflicting_set in conflicting_sets
+        @warn("Conflicting JLLs found:")
+        for jll in jlls
+            jll_arts = filter(p -> p ∈ jll.artifact_paths, collect(conflicting_set))
+            if !isempty(jll_arts)
+                println("$(jll.package.name):")
+                for art in jll_arts
+                    println("  - $(art)")
+                    for (file, art_paths) in dup_files
+                        if art ∈ art_paths
+                            println("    - $(file)")
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
 
 """
     deploy(jlls::Vector{JLLSource}, prefix::String)
@@ -318,6 +397,9 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
 
     # Install each to their relative targets
     for (target, target_jlls) in jlls_by_prefix
+        # For debugging only
+        #find_overlapping_jlls(target_jlls)
+
         install_path = joinpath(prefix, target)
         mkpath(install_path)
         paths = unique(vcat((jll.artifact_paths for jll in target_jlls)...))
