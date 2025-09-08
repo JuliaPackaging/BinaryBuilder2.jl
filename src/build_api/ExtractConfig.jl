@@ -147,6 +147,25 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
+function load_dep_jllinfos(config::ExtractConfig)
+    build_config = config.build.config
+    meta = AbstractBuildMeta(config)
+    jll_infos = JLLInfo[]
+    prefix_alias = target_prefix(config.target_spec)
+    for d in build_config.source_trees[prefix_alias]
+        if isa(d, JLLSource) && platforms_match(d.platform, host_if_crossplatform(config.platform))
+            jll_info = try
+                parse_toml_dict(d; depot=meta.universe.depot_path)
+            catch
+                @error("Unable to parse JLLInfo TOML dict for dependency", dep=d)
+                rethrow()
+            end
+            push!(jll_infos, jll_info)
+        end
+    end
+    return jll_infos
+end
+
 
 function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; verbose::Bool = AbstractBuildMeta(config).verbose, kwargs...)
     build_config = config.build.config
@@ -154,7 +173,7 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
     @timeit config.to "audit" begin
         prefix_alias = target_prefix(config.target_spec)
         # Load JLLInfo structures for each dependency
-        dep_jll_infos = JLLInfo[parse_toml_dict(d; depot=meta.universe.depot_path) for d in build_config.source_trees[prefix_alias] if isa(d, JLLSource) && platforms_match(d.platform, host_if_crossplatform(config.platform))]
+        dep_jll_infos = load_dep_jllinfos(config)
         platform = host_if_crossplatform(config.platform)
 
         # Get libraries for all JLL dependencies
