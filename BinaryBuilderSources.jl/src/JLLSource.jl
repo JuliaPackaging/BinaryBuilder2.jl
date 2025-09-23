@@ -203,6 +203,16 @@ function prepare(jlls::Vector{JLLSource};
         push!(jlls_by_prefix[jll.target], jll)
     end
 
+    # Load UUIDs contained within our project, which were previously built by us
+    built_uuids = Set{Base.UUID}()
+    project_path = Pkg.Types.projectfile_path(project_dir)
+    if isfile(project_path)
+        project_deps = get(TOML.parsefile(project_path), "deps", String[])
+        for (_, uuid) in project_deps
+            push!(built_uuids, Base.UUID(uuid))
+        end
+    end
+
     # For each group of platforms and sharded by prefix, we are able to download as a group:
     # We can't do it all together because it's totally valid for us to try and download
     # two different versions of the same JLL to different prefixes.
@@ -230,6 +240,17 @@ function prepare(jlls::Vector{JLLSource};
             if ispath(cache_path)
                 cache = TOML.parsefile(cache_path)
 
+                if !haskey(cache, "dep_uuids")
+                    @debug("JLLSource cache lacks dep_uuids!  Cache corrupt or out of date!")
+                    clear_cache!()
+                    continue
+                end
+
+                cached_dep_uuids = Set{Base.UUID}()
+                for uuid in cache["dep_uuids"]
+                    push!(cached_dep_uuids, Base.UUID(uuid))
+                end
+
                 for jll in jlls_slice
                     # This should be impossible since we address the cache by spec_hash, but let's be paranoid
                     if !haskey(cache, string(jll.package.uuid))
@@ -238,11 +259,19 @@ function prepare(jlls::Vector{JLLSource};
                         break
                     end
 
-                    # Drop the package cache if has the wrong structure
+                    # Drop the package cache if has the wrong structure (this is how we gracefully deal with Elliot adding new fields)
                     package_cache = cache[string(jll.package.uuid)]
                     if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash")
                         @debug("JLLSource cache lacks artifact paths or tree_hash!  Cache corrupt?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
                         clear_cache!()
+                        break
+                    end
+
+                    # Don't use the cache (but don't drop it) if any of the dep_uuids
+                    # are in our universe (e.g. they were built by us previously)
+                    overridden_deps = intersect(built_uuids, cached_dep_uuids)
+                    if !isempty(overridden_deps)
+                        @debug("Universe overrides some deps, rejecting cache!", name=jll.package.name, overridden_deps)
                         break
                     end
 
@@ -267,11 +296,12 @@ function prepare(jlls::Vector{JLLSource};
             end
 
             if any(isempty(jll.artifact_paths) for jll in jlls_slice)
-                @timeit to "collect_artifact_paths" begin
-                    art_paths = collect_artifact_paths([jll.package for jll in jlls_slice]; platform, project_dir, pkg_depot=depot, verbose)
+                @timeit to "collect_artifact_metas" begin
+                    slice_deps = [jll.package for jll in jlls_slice]
+                    artifact_metas = collect_artifact_metas(slice_deps; platform, project_dir, pkg_depot=depot, verbose)
+                    art_paths = collect_artifact_paths(artifact_metas, slice_deps)
                 end
                 for jll in jlls_slice
-                    @debug("Prepared", jll, cache_path)
                     pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
                     # Update `jll.package` with things from `pkg`
                     if pkg.version != Pkg.Types.VersionSpec()
@@ -287,23 +317,34 @@ function prepare(jlls::Vector{JLLSource};
                         jll.package.repo = pkg.repo
                     end
                     append!(jll.artifact_paths, art_paths[pkg])
+                    @debug("Prepared", jll, cache_path)
                 end
 
                 # Write out the result into a cache so we don't have to go through this resolution again.
                 # Only do that if all jll's had a `tree_hash`:
                 if all(jll.package.tree_hash !== nothing for jll in jlls_slice)
+                    # Record here all recursive dependencies of the slice_deps, so that if we know one of
+                    # these is changed (e.g. by being built as part of the current universe), then we
+                    # invalidate this entire slice.
+                    slice_uuids = union([m["dep_uuids"] for m in values(artifact_metas)]...)
+
                     mkpath(dirname(cache_path))
                     open(cache_path; write=true) do io
                         cache_entry = Dict(
                             # We record both the artifact path and the gitsha as those are the primary outputs
                             # of our resolution and artifact meta collection.
-                            string(jll.package.uuid) => Dict(
+                            (string(jll.package.uuid) => Dict(
                                 # Useful for debugging
                                 "name" => jll.package.name,
                                 "artifact_paths" => jll.artifact_paths,
                                 "tree_hash" => string(jll.package.tree_hash),
                             )
-                            for jll in jlls_slice
+                            for jll in jlls_slice)...,
+
+                            # We also record a full set of UUIDs involved in this resolution, so that if we
+                            # come back in the future but have rebuilt one of these as part of the build
+                            # process, we can reject the cache (because we have overridden that UUID).
+                            "dep_uuids" => string.(slice_uuids),
                         )
                         TOML.print(io, cache_entry)
                     end
@@ -344,7 +385,6 @@ function find_overlapping_jlls(jlls::Vector{JLLSource})
     for (file, art_paths) in dup_files
         push!(conflicting_sets, Set{String}(art_paths))
     end
-    @show conflicting_sets
 
     function find_jlls_for_art_path(art_path)
         jll_names = String[]
