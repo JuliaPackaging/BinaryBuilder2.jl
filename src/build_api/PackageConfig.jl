@@ -18,6 +18,11 @@ struct PackageConfig
     # Often used for inter-build dependencies in complicated builds.
     extra_deps::Vector{PackageSpec}
 
+    # JLL dependencies that we explicitly want to drop
+    # NOTE: You should not use this unless you REALLY know what you're doing!
+    # This is a one-way ticket to problems if you use this wrong.
+    drop_dep_names::Vector{String}
+
     # Julia compat specification for this JLL
     julia_compat::String
 
@@ -25,6 +30,7 @@ struct PackageConfig
                            jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = default_jll_version_series(extractions),
                            extra_deps::Vector{PackageSpec} = PackageSpec[],
+                           drop_dep_names::Vector{String} = String[],
                            julia_compat::AbstractString = "1.6",
                            duplicate_extraction_handling::Symbol = :error)
         if isempty(extractions)
@@ -85,7 +91,7 @@ struct PackageConfig
         meta = AbstractBuildMeta(extractions)
         version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
 
-        return new(jll_name, version, extractions, extra_deps, string(julia_compat))
+        return new(jll_name, version, extractions, extra_deps, drop_dep_names, string(julia_compat))
     end
 end
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
@@ -167,13 +173,18 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
     )
 end
 
-function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
+function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec}, drop_dep_names::Vector{String})
     # Get list of JLLSources installed in this target's prefix
     build_config = result.config.build.config
     target_jll_deps = filter(d -> isa(d, JLLSource), get_default_target_spec(build_config).dependencies)
     deps = [JLLPackageDependency(jll.package.name, jll.package.uuid) for jll in target_jll_deps]
     for pkg in extra_deps
         push!(deps, JLLPackageDependency(pkg.name, pkg.uuid))
+    end
+
+    # Filter out all deps marked as drop deps:
+    filter!(deps) do dep
+        return dep.name ∉ drop_dep_names
     end
     return deps
 end
@@ -278,7 +289,7 @@ function add_os_version(cp::CrossPlatform, target_spec::BuildTargetSpec)
     return CrossPlatform(add_os_version(cp.host, target_spec) => cp.target)
 end
 
-function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec})
+function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec}, drop_dep_names::Vector{String})
     if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
@@ -286,7 +297,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
 
     return JLLBuildInfo(;
         src_version = build_config.src_version,
-        deps = JLLPackageDependencies(result, extra_deps),
+        deps = JLLPackageDependencies(result, extra_deps, drop_dep_names),
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = JLLSourceRecords(result),
         platform = add_os_version(result.config.platform, result.config.target_spec),
@@ -337,7 +348,7 @@ function package!(config::PackageConfig)
 
     @timeit to "package" begin
         builds = vcat(
-            ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+            ([JLLBuildInfo(name, extraction, config.extra_deps, config.drop_dep_names) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
         )
         jll = JLLInfo(;
             name = config.name,
