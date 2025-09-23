@@ -1,4 +1,4 @@
-export macos_version, macos_kernel_version, freebsd_kernel_version, nbits, proc_family, exeext, dlext
+export macos_version, macos_kernel_version, nbits, proc_family, exeext, dlext
 
 function macos_version(kernel_version::Integer)
     # See https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
@@ -66,16 +66,6 @@ end
 
 function macos_kernel_version(p::AbstractPlatform)
     if os(p) != "macos"
-        return nothing
-    end
-    if os_version(p) === nothing
-        return nothing
-    end
-    return Int(os_version(p).major)
-end
-
-function freebsd_kernel_version(p::AbstractPlatform)
-    if os(p) != "freebsd"
         return nothing
     end
     if os_version(p) === nothing

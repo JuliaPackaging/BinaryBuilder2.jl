@@ -655,26 +655,6 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         set_envvars(env_prefix, wrapper_prefix)
     end
 
-    if Sys.isapple(toolchain.platform.target)
-        # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
-        # use the default deployment targets for the architecture being built:
-        function default_kernel_version(arch)
-            if arch == "x86_64"
-                return 14
-            elseif arch == "aarch64"
-                return 20
-            else
-                throw(ArgumentError("Unknown macOS architecture '$(arch)'!"))
-            end
-        end
-
-        kernel_version = something(
-            os_version(toolchain.platform.target),
-            default_kernel_version(arch(toolchain.platform.target))
-        )
-        env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
-    end
-
     # Merge in Binutils environment variables
     merge!(env, toolchain_env(toolchain.binutils_toolchain, deployed_prefix))
     return env

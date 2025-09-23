@@ -526,6 +526,37 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
         set_envvars(env_prefix, wrapper_prefix)
     end
 
+    if Sys.isapple(toolchain.platform.target)
+        # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
+        # use the default deployment targets for the architecture being built:
+        function default_macos_kernel_version(arch)
+            if arch == "x86_64"
+                return 14
+            elseif arch == "aarch64"
+                return 20
+            else
+                throw(ArgumentError("Unknown macOS architecture '$(arch)'!"))
+            end
+        end
+
+        kernel_version = something(
+            os_version(toolchain.platform.target),
+            default_macos_kernel_version(arch(toolchain.platform.target))
+        )
+        env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
+    end
+
+    if Sys.isfreebsd(toolchain.platform.target)
+        function default_freebsd_sdk_version()
+            return v"14.1"
+        end
+        freebsd_version = something(
+            os_version(toolchain.platform.target),
+            default_freebsd_sdk_version(),
+        )
+        env["FREEBSD_TARGET_SDK"] = "$(freebsd_version.major).$(freebsd_version.minor)"
+    end
+
     return env
 end
 
