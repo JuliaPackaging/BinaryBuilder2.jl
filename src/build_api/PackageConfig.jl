@@ -250,8 +250,7 @@ function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
         libc_jll_name = "macOSSDK_jll"
         version_map = macos_kernel_version
     elseif Sys.isfreebsd(platform)
-        libc_jll_name = "freebsd_something_jll"
-        version_map = freebsd_kernel_version
+        libc_jll_name = "FreeBSDSysroot_jll"
     else
         # Other platforms don't do versioning yet
         return platform
@@ -266,6 +265,11 @@ function add_os_version(platform::Platform, target_spec::BuildTargetSpec)
         if haskey(tenv, "MACOSX_DEPLOYMENT_TARGET")
             # Get the version that the JLL corresponds to, and return!
             platform["os_version"] = string(version_map(tenv["MACOSX_DEPLOYMENT_TARGET"]))
+            return platform
+        end
+
+        if haskey(tenv, "FREEBSD_TARGET_SDK")
+            platform["os_version"] = tenv["FREEBSD_TARGET_SDK"]
             return platform
         end
     end
