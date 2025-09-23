@@ -1,8 +1,16 @@
-using Revise
 using BinaryBuilder2, Pkg
 
+# `--bootstrap` causes us to only build `host => target` binutils for everything
+# This does not require a target C toolchain.
+bootstrap_mode = false
+if "--bootstrap" ∈ ARGS
+    bootstrap_mode = true
+    filter!(x -> x != "--bootstrap", ARGS)
+end
+
+
 meta = BinaryBuilder2.get_default_meta()
-host = Platform(arch(HostPlatform()), "linux")
+
 binutils_version_sources = Dict{VersionNumber,Vector}(
     v"2.24" => [
         ArchiveSource("https://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.bz2",
@@ -56,11 +64,17 @@ make -j${nproc} ${MAKEVARS[@]}
 make install ${MAKEVARS[@]}
 """
 
-# Build for these host platforms
-host_platforms = [
-    Platform("x86_64", "linux"),
-    Platform("aarch64", "linux"),
-]
+if bootstrap_mode
+    host_platforms = [
+        Platform(arch(HostPlatform()), "linux")
+    ]
+else
+    # Build for these host platforms
+    host_platforms = [
+        Platform("x86_64", "linux"),
+        Platform("aarch64", "linux"),
+    ]
+end
 
 # Build for all supported target platforms, except for macOS, which uses cctools, not binutils :(
 target_platforms = [
@@ -79,14 +93,20 @@ target_platforms = [
 
     Platform("x86_64", "windows"),
     Platform("i686", "windows"),
+
+    Platform("x86_64", "freebsd"),
+    Platform("aarch64", "freebsd"),
 ]
 
-platforms = vcat(
+platforms = vec([
     # Build cross-binutils from `host => target`
-    (CrossPlatform(host, target) for host in host_platforms, target in target_platforms if host != target)...,
+    CrossPlatform(host, target) for host in host_platforms, target in target_platforms
+])
+
+if !bootstrap_mode
     # Build native binutils for all targets as well
-    (CrossPlatform(target, target) for target in target_platforms)...,
-)
+    append!(platforms, [CrossPlatform(target, target) for target in target_platforms if target ∉ host_platforms])
+end
 
 tool_names = [
     :ar, :as, :ld, :nm, :objcopy, :objdump, :ranlib, :readelf, :strings, :binutils_strip,
@@ -104,6 +124,11 @@ for varname in tool_names
 end
 
 for version in (v"2.41",) #keys(binutils_version_sources)
+    extra_kwargs = Dict()
+    if !bootstrap_mode
+        extra_kwargs[:target_toolchains] = [CToolchain(;vendor=:bootstrap)]
+    end
+
     build_tarballs(;
         src_name = "Binutils",
         src_version = version,
@@ -126,7 +151,7 @@ for version in (v"2.41",) #keys(binutils_version_sources)
         platforms,
         products,
         host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
-        target_toolchains = [CToolchain(;vendor=:bootstrap)],
         meta,
+        extra_kwargs...,
     )
 end

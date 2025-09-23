@@ -107,7 +107,7 @@ function cctools_build_spec_generator(host, platform)
             "build",
             CrossPlatform(host => host),
             [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
-            [], #[JLLSource("Python_jll")],
+            [],
             Set([:host]),
         ),
         BuildTargetSpec(

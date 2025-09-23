@@ -201,6 +201,12 @@ elif [[ "${target}" == *-darwin* ]]; then
         ICONV_PATHS+=( /opt/host-* )
     fi
     find ${ICONV_PATHS[@]} -name iconv.h -o -name libiconv\* | xargs rm -fv
+
+elif [[ "${target}" == *-freebsd* ]]; then
+    # If we don't already have a version number, add one
+    if [[ "${target}" == *-freebsd ]]; then
+        target_suffix="${FREEBSD_TARGET_SDK}"
+    fi
 fi
 
 # Get rid of version numbers at the end of GCC deps
@@ -232,14 +238,18 @@ for TOOL in CC CPP CXX AS AR NM LD RANLIB; do
     BUILD_NAME="BUILD_${TOOL}"
     export ${TOOL}_FOR_BUILD=${!BUILD_NAME}
     TARGET_NAME="TARGET_${TOOL}"
-    export ${TOOL}_FOR_TARGET=${!TARGET_NAME}
+    if [[ -v "${TARGET_NAME}" ]]; then
+        export ${TOOL}_FOR_TARGET=${!TARGET_NAME}
 
-    # These target tool autodetections do not work
-    export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
+        # These target tool autodetections do not work
+        export ac_cv_path_${TOOL}_FOR_TARGET=${!TARGET_NAME}
+    fi
 done
 
 # libcc1 fails with an error about `-rdynamic` unless we define this
-export gcc_cv_nm="${NM_FOR_TARGET}"
+if [[ -v "NM_FOR_TARGET" ]]; then
+    export gcc_cv_nm="${NM_FOR_TARGET}"
+fi
 
 # Make sure the tools that GCC itself wants to use ("ld", "as", "dysmutil") are available
 # not just as "host-ld" or "host-as", etc... Otherwise, the `collect2` we generate looks
@@ -259,7 +269,7 @@ $WORKSPACE/srcdir/gcc-*/configure \
     --prefix="${host_prefix}" \
     --build="${build}" \
     --host="${host}" \
-    --target="${target}" \
+    --target="${target}${target_suffix:-}" \
     --disable-multilib \
     --disable-bootstrap \
     --disable-werror \
@@ -471,6 +481,17 @@ function gcc_build_spec_generator(host, platform)
             repo=Pkg.Types.GitRepo(
                 rev="main",
                 source="https://github.com/staticfloat/macOSSDK_jll.jl"
+            ),
+            target=target_str,
+        ))
+    elseif os(platform.target) == "freebsd"
+        push!(target_sources, JLLSource(
+            "FreeBSDSysroot_jll",
+            platform.target;
+            uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
+            repo=Pkg.Types.GitRepo(
+                source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
+                rev="main",
             ),
             target=target_str,
         ))
