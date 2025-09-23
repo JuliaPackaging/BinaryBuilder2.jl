@@ -435,18 +435,22 @@ function build!(config::BuildConfig;
     # Hit our build cache and see if we've already done this exact build.
     if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
         prepare(config; verbose)
-        build_hash = content_hash(config)
-        if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
-            if verbose
-                @info("Build cached", config, build_hash=content_hash(config))
+        try
+            build_hash = content_hash(config)
+            if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
+                if verbose
+                    @info("Build cached", config, build_hash=content_hash(config))
+                end
+                try
+                    result = BuildResult_cached(config)
+                    meta.builds[config] = result
+                    return result
+                catch exception
+                    @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
+                end
             end
-            try
-                result = BuildResult_cached(config)
-                meta.builds[config] = result
-                return result
-            catch exception
-                @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
-            end
+        catch e
+            @error("Unable to hit build cache", exception=(e, catch_backtrace()))
         end
     end
 
