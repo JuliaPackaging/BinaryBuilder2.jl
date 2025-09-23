@@ -634,7 +634,7 @@ function init_jll_repo(u::Universe, jll_name::String)
 end
 
 const fetched_registries = Set{Base.UUID}()
-function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::String;
+function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::Union{Nothing,String};
                             cache_dir::String = source_download_cache("registry_clones"),
                             force::Bool = false)
     reg_checkout_path = joinpath(uni.depot_path, "deploy_registries", reg.name)
@@ -652,7 +652,7 @@ function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::Strin
     if !isdir(reg_checkout_path)
         # Check out the head commit to that path
         head_commit = only(log(reg_clone_path; limit=1))
-        reg_branch_name = branch_name !== nothing ? branch_name : head_branch(reg_clone_path)
+        reg_branch_name = @something(branch_name, head_branch(reg_clone_path))
         checkout!(reg_clone_path, reg_checkout_path, head_commit)
 
         # Make sure we're on the right branch name
@@ -682,19 +682,20 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     rm(export_dir; force=true, recursive=true)
     mkpath(export_dir)
 
-    uni_branch_name = "bb2/$(u.name)"
     if u.name !== nothing
+        uni_branch_name = "bb2/$(u.name)"
         if isbranch(jll_bare_repo, uni_branch_name)
             src_branch = uni_branch_name
         else
             src_branch = head_branch(jll_bare_repo)
         end
     else
+        uni_branch_name = nothing
         src_branch = head_branch(jll_bare_repo)
     end
 
     checkout!(jll_bare_repo, jll_path, src_branch; verbose)
-    if u.name !== nothing
+    if uni_branch_name !== nothing
         branch!(jll_path, uni_branch_name)
     end
 
