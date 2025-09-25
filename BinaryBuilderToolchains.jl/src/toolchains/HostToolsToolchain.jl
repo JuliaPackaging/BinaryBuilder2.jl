@@ -148,7 +148,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
         "HostTools-",
         bytes2hex(sha1(string(
             triplet(toolchain.platform),
-            BinaryBuilderSources.jll_cache_name.(toolchain.deps, (registries,))...,
+            BinaryBuilderSources.jll_cache_name(Vector{JLLSource}(toolchain.deps), registries)...,
         ))),
     )
     push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
