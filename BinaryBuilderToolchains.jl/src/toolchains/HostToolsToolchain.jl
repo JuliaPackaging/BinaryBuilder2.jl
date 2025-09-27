@@ -34,7 +34,9 @@ struct HostToolsToolchain <: AbstractToolchain
         default_tools = [
             # Build tools
             "automake_jll",
-            "autoconf_jll",
+            # We explicitly ask for this version until this issue is addressed:
+            # https://github.com/JuliaPackaging/Yggdrasil/pull/12026#issuecomment-3331916149
+            PackageSpec(;name="autoconf_jll", version=v"2.71+2"),
             "Bison_jll",
             "Ccache_jll",
             "file_jll",
