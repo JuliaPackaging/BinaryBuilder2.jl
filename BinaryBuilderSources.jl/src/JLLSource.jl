@@ -241,6 +241,12 @@ function prepare(jlls::Vector{JLLSource};
                     if isempty(jll.artifact_paths)
                         cached_paths = cache[string(jll.package.uuid)]
 
+                        if !isa(cached_paths, Vector{AbstractString})
+                            @debug("cached_paths is not a String[], clearing", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                            clear_cache!()
+                            break
+                        end
+
                         # Only use the cached paths if they actually exist on-disk (e.g. they haven't been Pkg.gc()'ed)
                         if all(isdir.(cached_paths))
                             append!(jll.artifact_paths, cached_paths)
