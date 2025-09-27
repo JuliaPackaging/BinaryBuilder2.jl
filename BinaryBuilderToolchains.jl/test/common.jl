@@ -52,7 +52,9 @@ function toolchain_tests(prefix, env, platform, testsuite; do_cxxabi_tests::Bool
     # Ensure that every wrapper we generate actually runs (e.g. no dangling tool references)
     for wrapper in readdir(joinpath(prefix, "wrappers"); join=true)
         if Sys.isexecutable(wrapper)
-            @test success(setenv(`$(wrapper) --version`, env))
+            @testset "$(basename(wrapper))" begin
+                @test success(setenv(`$(wrapper) --version`, env))
+            end
         end
     end
 end
