@@ -18,9 +18,9 @@ greatest binaries built from e.g. GCC 14.  It does this by setting
 """
 struct HostToolsToolchain <: AbstractToolchain
     platform::Platform
-    deps::Vector{AbstractSource}
+    deps::Vector{JLLSource}
 
-    function HostToolsToolchain(platform; overrides=AbstractSource[])
+    function HostToolsToolchain(platform; overrides::Union{String,Vector{JLLSource}} = JLLSource[])
         platform = host_if_crossplatform(platform)
 
         # If the user is lazy and only gives us names, just turn them into JLLSource objects
@@ -92,7 +92,7 @@ struct HostToolsToolchain <: AbstractToolchain
             "CompilerSupportLibraries_jll",
         ]
 
-        deps = AbstractSource[]
+        deps = JLLSource[]
 
         # Add any JLLS from our default tools that are not already in the overrides list, to prevent duplicates.
         override_jlls = filter(e -> isa(e, JLLSource), overrides)
@@ -150,7 +150,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
         "HostTools-",
         bytes2hex(sha1(string(
             triplet(toolchain.platform),
-            BinaryBuilderSources.jll_cache_name.(toolchain.deps, (registries,))...,
+            BinaryBuilderSources.jll_cache_name(toolchain.deps, registries),
         ))),
     )
     push!(sources, CachedGeneratedSource(cache_key; target="wrappers") do out_dir
