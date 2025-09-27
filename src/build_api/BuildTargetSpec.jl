@@ -121,9 +121,11 @@ function add_target_dir_envs(env, target_prefix_path, platform, name)
         end
     end
 
-    return path_appending_merge(env, Dict(
-        name => "$(triplet(gcc_platform(platform)))",
-        "bb_full_$(name)" => "$(triplet(platform))",
+    name_spec = isempty(name) ? () :
+    	(name => "$(triplet(gcc_platform(platform)))",
+	 "bb_full_$(name)" => "$(triplet(platform))")
+
+    return path_appending_merge(env, Dict(name_spec...,
         name_maker(name, "prefix") => target_prefix_path,
         name_maker(name, "bindir") => "$(target_prefix_path)/bin",
         name_maker(name, "libdir") => "$(target_prefix_path)/lib",
