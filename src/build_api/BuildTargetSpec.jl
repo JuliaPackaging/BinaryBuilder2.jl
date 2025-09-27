@@ -120,9 +120,7 @@ function add_target_dir_envs(env, target_prefix_path, platform, name)
         end
     end
 
-    return path_appending_merge(env, Dict(
-        name => "$(triplet(gcc_platform(platform)))",
-        "bb_full_$(name)" => "$(triplet(platform))",
+    target_envs = Dict(
         name_maker(name, "prefix") => target_prefix_path,
         name_maker(name, "bindir") => "$(target_prefix_path)/bin",
         name_maker(name, "libdir") => "$(target_prefix_path)/lib",
@@ -130,7 +128,18 @@ function add_target_dir_envs(env, target_prefix_path, platform, name)
         name_maker(name, "includedir") => "$(target_prefix_path)/include",
         name_maker(name, "dlext") => dlext(platform)[2:end],
         name_maker(name, "nbits") => string(nbits(platform)),
-    ))
+    )
+
+    # If `name` is empty (denoting the "default" target) we rename these
+    # environment variables a bit so that we don't have empty strings here.
+    if !isempty(name)
+        target_envs[name] = "$(triplet(gcc_platform(platform)))"
+        target_envs["bb_full_$(name)"] = "$(triplet(platform))"
+    else
+        target_envs["bb_default_target"] = "$(triplet(gcc_platform(platform)))"
+        target_envs["bb_full_default_target"] = "$(triplet(platform))"
+    end
+    return path_appending_merge(env, target_envs)
 end
 
 function apply_toolchains(bts::BuildTargetSpec,
