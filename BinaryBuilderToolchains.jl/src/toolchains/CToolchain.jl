@@ -482,7 +482,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # If we're asking for a bootstrap toolchain, give just that and nothing else,
     # which is why we `return` from within here.
     if vendor == :gcc_bootstrap
-        if Sys.isapple(platform.target)
+        if Sys.isapple(platform.target) || Sys.isbsd(platform.target)
             append!(deps, [
                 JLLSource(
                     "GCCBootstrapMacOS_jll",

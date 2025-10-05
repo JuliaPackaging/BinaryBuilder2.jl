@@ -71,8 +71,8 @@ for version in (v"14.2.0",)
         ],
         script,
         platforms = [
-            #CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "macos")),
-            #CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "macos")),
+            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "macos")),
+            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "macos")),
             CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "freebsd"))
         ],
         products = [

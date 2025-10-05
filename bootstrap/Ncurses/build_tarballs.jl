@@ -4,7 +4,7 @@ build_tarballs(;
     src_name = "Ncurses",
     src_version = v"6.4",
     sources = [
-        ArchiveSource("https://ftp.gnu.org/pub/gnu/ncurses/ncurses-6.4.tar.gz",
+        ArchiveSource("https://ftp.wayne.edu/gnu/ncurses/ncurses-6.4.tar.gz",
                       "6931283d9ac87c5073f30b6290c4c75f21632bb4fc3603ac8100812bed248159"),
     ],
     script = raw"""

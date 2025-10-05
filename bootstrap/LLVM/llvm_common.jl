@@ -1,5 +1,6 @@
 using BinaryBuilder2, Pkg
 using BinaryBuilder2: BuildTargetSpec, get_target_spec_by_name, get_default_target_spec, ExtractSpec, get_package_result
+include("../bootstrap_common.jl")
 
 # The build host
 host = Platform(arch(HostPlatform()), "linux")
@@ -8,9 +9,8 @@ host = Platform(arch(HostPlatform()), "linux")
 # builds clang only for a few targets, using GCC instead of clang.
 function llvm_platforms(;is_bootstrap::Bool = false)
     platforms = CrossPlatform[]
-    # If this is a bootstrap build, only build for these hosts
     if is_bootstrap
-        for host in [Platform("x86_64", "linux"), Platform("aarch64", "linux")]
+        for host in bootstrap_host_platforms
             push!(platforms, CrossPlatform(host => AnyPlatform()))
         end
     else

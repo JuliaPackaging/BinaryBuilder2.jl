@@ -26,39 +26,29 @@ run_build_tarballs(ctng_meta, "CrosstoolNG/build_tarballs.jl")
 
 # Build GCCBootstrap, which we will then use to build our Glibc, Binutils, GCC, etc...
 @info("Building GCCBootstrap...")
-run_build_tarballs(meta, "GCCBootstrap/build_tarballs.jl")
+#run_build_tarballs(meta, "GCCBootstrap/build_tarballs.jl")
 
-# Build Binutils (but bootstrap mode, which is restricted)
-run_build_tarballs(meta, "Binutils/build_tarballs_bootstrap.jl", )
+# Build Binutils and Zlib (but bootstrap mode, which is restricted to only host => targets, rather than also building targets => targets)
+run_build_tarballs(meta, "Binutils/build_tarballs.jl", ["--bootstrap"])
 
 # Build GCCBootstrapMacOS
 @info("Building GCCBootstrapMacOS...")
 run_build_tarballs(meta, "macOSSDK/build_tarballs.jl")
-run_build_tarballs(meta, "CCTools/build_tarballs.jl")
+run_build_tarballs(meta, "CCTools/build_tarballs.jl", ["--bootstrap"])
 run_build_tarballs(meta, "FreeBSDSysroot/build_tarballs.jl")
 run_build_tarballs(meta, "GCCBootstrapMacOS/build_tarballs.jl")
+
+# Build Zlib again, this time targeting everything, so that we can build compiler_rt and libcxx
+run_build_tarballs(meta, "Zlib/build_tarballs.jl")
+run_build_tarballs(meta, "LLVM/compiler_rt.jl")
+run_build_tarballs(meta, "LLVM/libcxx.jl")
 
 # Build tblgen and ClangBootstrap for the current host
 run_build_tarballs(ctng_meta, "LLVM/tblgen.jl")
 clangbootstrap_target = CrossPlatform(BBHostPlatform() => AnyPlatform())
 run_build_tarballs(meta, "LLVM/clang_bootstrap.jl")
 
-# Next, use ClangBootstrap to build actual `clang` for all platforms, then use it to compile `compiler_rt`,
-# and then use clang+compiler_rt to build `libcxx`!
-LLVM_TOOLS=[
-    "compiler_rt",
-    "libcxx",
-]
-for tool in LLVM_TOOLS
-    @info("Building $(tool)")
-    run_build_tarballs(meta, "LLVM/$(tool).jl")
-end
-
-
 GCC_TOOLS=[
-    # Build Zlib again, this time targeting everything
-    "Zlib",
-
     # Platform header/library bundles
     "LinuxKernelHeaders",
     "Mingw",

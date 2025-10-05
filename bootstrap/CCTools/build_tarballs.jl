@@ -1,10 +1,26 @@
 using BinaryBuilder2, Pkg
+include("../bootstrap_common.jl")
+
+# `--bootstrap` causes us to only build `host => target` binutils for everything
+# This does not require a target C toolchain.
+bootstrap_mode = false
+if "--bootstrap" ∈ ARGS
+    bootstrap_mode = true
+    filter!(x -> x != "--bootstrap", ARGS)
+end
 
 meta = BinaryBuilder2.get_default_meta()
-host_platforms = [
-    Platform("x86_64", "linux"),
-    Platform("aarch64", "linux"),
-]
+
+if bootstrap_mode
+    host_platforms = bootstrap_host_platforms
+else
+    # Build for these host platforms
+    host_platforms = [
+        Platform("x86_64", "linux"),
+        Platform("aarch64", "linux"),
+    ]
+end
+
 mac_platforms = [
     Platform("x86_64", "macos"),
     Platform("aarch64", "macos"),
