@@ -3,12 +3,10 @@ using BinaryBuilder2, Pkg
 host_linux = Platform(arch(HostPlatform()), "linux")
 build_tarballs(;
     src_name = "Readline",
-    src_version = v"8.2",
+    src_version = v"8.3",
     sources = [
-        ArchiveSource("https://ftp.gnu.org/gnu/readline/readline-8.2.tar.gz",
-                        "3feb7171f16a84ee82ca18a36d7b9be109a52c04f492a053331d7d1095007c35"),
-        FileSource("https://ftp.gnu.org/gnu/readline/readline-8.2-patches/readline82-001",
-                    "bbf97f1ec40a929edab5aa81998c1e2ef435436c597754916e6a5868f273aff7"),
+        ArchiveSource("https://ftp.wayne.edu/gnu/readline/readline-8.3.tar.gz",
+                      "fe5383204467828cd495ee8d1d3c037a7eba1389c22bc6a041f627976f9061cc"),
     ],
     target_dependencies = [
         JLLSource(
@@ -21,8 +19,6 @@ build_tarballs(;
     ],
     script = raw"""
     cd $WORKSPACE/srcdir/readline-*/
-
-    atomic_patch -p0 ${WORKSPACE}/srcdir/readline82-001
     export CPPFLAGS="-I${includedir}"
     ./configure --prefix=${prefix} --build=${MACHTYPE} --host=${target} --with-curses
 
@@ -35,6 +31,5 @@ build_tarballs(;
         LibraryProduct(["libhistory", "libhistory8"], :libhistory),
         LibraryProduct(["libreadline", "libreadline8"], :libreadline),
     ],
-    # We're only building for the host here, as this is part of bootstrap
     platforms = supported_platforms(),
 )

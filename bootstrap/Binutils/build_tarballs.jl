@@ -8,20 +8,6 @@ if "--bootstrap" ∈ ARGS
     filter!(x -> x != "--bootstrap", ARGS)
 end
 
-
-meta = BinaryBuilder2.get_default_meta()
-
-binutils_version_sources = Dict{VersionNumber,Vector}(
-    v"2.24" => [
-        ArchiveSource("https://ftp.gnu.org/gnu/binutils/binutils-2.24.tar.bz2",
-                        "e5e8c5be9664e7f7f96e0d09919110ab5ad597794f5b1809871177a0f0f14137"),
-    ],
-    v"2.41" => [
-        ArchiveSource("https://ftp.gnu.org/gnu/binutils/binutils-2.41.tar.xz",
-                        "ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450"),
-    ]
-)
-
 script = raw"""
 cd ${WORKSPACE}/srcdir/binutils-*/
 
@@ -123,35 +109,35 @@ for varname in tool_names
     push!(products, ExecutableProduct("\${bindir}/\${target}-$(tool_name)", varname))
 end
 
-for version in (v"2.41",) #keys(binutils_version_sources)
-    extra_kwargs = Dict()
-    if !bootstrap_mode
-        extra_kwargs[:target_toolchains] = [CToolchain(;vendor=:bootstrap)]
-    end
-
-    build_tarballs(;
-        src_name = "Binutils",
-        src_version = version,
-        sources = [
-            binutils_version_sources[version]...,
-            # We've got a bevvy of patches for Binutils, include them in.
-            DirectorySource("./patches-v$(version)"; follow_symlinks=true, target="patches"),
-        ],
-        target_dependencies = [
-            JLLSource(
-                "Zlib_jll";
-                # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
-                repo=Pkg.Types.GitRepo(
-                    rev="main",
-                    source="https://github.com/staticfloat/Zlib_jll.jl"
-                ),
-            ),
-        ],
-        script,
-        platforms,
-        products,
-        host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
-        meta,
-        extra_kwargs...,
-    )
+# We only need to build one version, because this is just the script we use to bootstrap
+# a single fully-working copy of Binutils.
+extra_kwargs = Dict()
+if !bootstrap_mode
+    extra_kwargs[:target_toolchains] = [CToolchain(;vendor=:bootstrap)]
 end
+
+build_tarballs(;
+    src_name = "Binutils",
+    src_version = v"2.41",
+    sources = [
+        ArchiveSource("https://ftp.wayne.edu/gnu/binutils/binutils-2.41.tar.xz",
+                      "ae9a5789e23459e59606e6714723f2d3ffc31c03174191ef0d015bdf06007450"),
+        # We've got a bevvy of patches for Binutils, include them in.
+        DirectorySource("./patches-v2.41.0"; follow_symlinks=true, target="patches"),
+    ],
+    target_dependencies = [
+        JLLSource(
+            "Zlib_jll";
+            # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
+            repo=Pkg.Types.GitRepo(
+                rev="main",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+    ],
+    script,
+    platforms,
+    products,
+    host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
+    extra_kwargs...,
+)

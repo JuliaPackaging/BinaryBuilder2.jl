@@ -181,6 +181,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libexecinfo.so.1",
             "libkvm.so.7",
             "libutil.so.9",
+            "libc.so.7",
         ]
         return lowercase(soname) ∈ sdk_libs
     else

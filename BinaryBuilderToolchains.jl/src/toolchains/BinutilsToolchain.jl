@@ -428,13 +428,10 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
     make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)
 
-    # Our `as` on macOS subs out to `$(gcc_triplet)-clang-as`.  If we're already installing clang,
-    # forward that to the real clang.  If we're not, forward it to the clang from LLVMBootstrap_Clang_jll
-    # that we're installing here:
-    if get_simple_vendor(toolchain) == :clang
-        make_tool_wrappers(toolchain, dir, "$(gcc_triplet)-clang-as", "clang"; toolchain_prefix)
-    else
-        make_tool_wrappers(toolchain, dir, "$(gcc_triplet)-clang-as", "clang"; wrapper=_clang_as_wrapper, toolchain_prefix)
+    # Our `as` on macOS subs out to `$(gcc_triplet)-clang-as`, so we generate that here,
+    # which in turn subs out to `clang`.
+    if Sys.isapple(p)
+        make_tool_wrappers(toolchain, dir, "clang-as", "clang"; wrapper=_clang_as_wrapper, toolchain_prefix)
     end
 
     # `nm` is a simple tool, except that it can take in `--plugin` for LTO
@@ -582,6 +579,9 @@ function supported_platforms(::Type{BinutilsToolchain}; experimental::Bool = fal
 
         Platform("x86_64", "macos"),
         Platform("aarch64", "macos"),
+
+        Platform("x86_64", "freebsd"),
+        Platform("aarch64", "freebsd"),
     ]
 end
 
