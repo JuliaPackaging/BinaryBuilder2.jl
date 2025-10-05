@@ -310,7 +310,7 @@ so try to avoid doing that in any script you want to use this function with.
 The `dry_run` keyword argument exists as a convenient way to override the `dry_run`
 parameter inside of `meta`.
 """
-function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString; dry_run::Bool = false)
+function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString, args::Vector{String} = String[]; dry_run::Bool = false)
     build_tarballs_path = abspath(build_tarballs_path)
     # If `dry_run` is set, we need to toggle `dry_run` in `meta`, but only
     # for the duration of this call:
@@ -319,6 +319,9 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
         empty!(meta.dry_run)
         push!.((meta.dry_run,), (:build, :extract, :package))
     end
+    old_ARGS = copy(ARGS)
+    empty!(ARGS)
+    append!(ARGS, args)
     try
         cd(dirname(build_tarballs_path)) do
             with_default_meta(meta) do
@@ -332,7 +335,10 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
         end
     finally
         empty!(meta.dry_run)
+        # Can't use `append!()` because this is a `Set`
         push!.((meta.dry_run,), old_dry_run)
+        empty!(ARGS)
+        append!(ARGS, old_ARGS)
     end
 end
 
