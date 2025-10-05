@@ -248,6 +248,10 @@ function extract!(config::ExtractConfig;
             catch exception
                 @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
             end
+        else
+            extract_hash = content_hash(config)
+            build_hash = content_hash(config.build.config)
+            @debug("Extraction not cached", config, extract_hash, build_hash)
         end
     end
 
@@ -338,8 +342,10 @@ function extract!(config::ExtractConfig;
     end
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
-        @warn("Dropping into Julia REPL, variables of interest include `meta::BuildMeta`, `config::ExtractConfig` and `result::ExtractResult`")
-        @warn("Use `runshell(result; verbose)` to enter debug shell within extraction environment.")
+        @warn("""
+        Dropping into Julia REPL, variables of interest include `meta::BuildMeta`, `config::ExtractConfig` and `result::ExtractResult`
+        Use `runshell(result; verbose)` to enter debug shell within extraction environment.
+        """)
         @infiltrate
     end
     return result
