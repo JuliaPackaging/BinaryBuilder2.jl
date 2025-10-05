@@ -13,6 +13,13 @@ struct BuildCache
     envs::Dict{SHA1Hash,Dict{String,String}}
 end
 
+function Base.show(io::IO, bc::BuildCache)
+    println(io, "BuildCache in $(bc.cache_dir):")
+    println(io, "  - $(length(bc.extractions)) extractions")
+    println(io, "  - $(length(bc.build_logs)) build logs, $(length(bc.extract_logs)) extraction logs")
+    println(io, "  - $(length(bc.envs)) environment maps")
+end
+
 default_buildcache_dir() = @get_scratch!("buildcache_database")
 
 function BuildCache(;cache_dir = default_buildcache_dir())
