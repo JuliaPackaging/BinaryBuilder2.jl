@@ -439,7 +439,7 @@ function build!(config::BuildConfig;
             build_hash = content_hash(config)
             if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
                 if verbose
-                    @info("Build cached", config, build_hash=content_hash(config))
+                    @info("Build cached", config, build_hash)
                 end
                 try
                     result = BuildResult_cached(config)
@@ -448,67 +448,84 @@ function build!(config::BuildConfig;
                 catch exception
                     @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
                 end
+            else
+                @debug("Build not cached", config)
+                for extract_args in extract_arg_hints
+                    @debug(" -> FAIL: ", build_hash, extract_hash=extract_content_hash(extract_args...))
+                end
             end
         catch e
             @error("Unable to hit build cache", exception=(e, catch_backtrace()))
         end
     end
 
-    # Write build script out into a logfile
-    build_log_io = IOBuffer()
-    mounts = deploy(config; verbose)
-    sandbox_config, collector = sandbox_and_collector(
-        build_log_io, config, mounts;
-        verbose,
-    )
-    local run_status, run_exception
-    exe = Sandbox.preferred_executor()()
-    if "build-start" ∈ debug_modes
-        @warn("Launching debug shell")
-        runshell(config; verbose)
-    end
+    local run_status
+    try
+        # Write build script out into a logfile
+        build_log_io = IOBuffer()
+        mounts = deploy(config; verbose)
+        sandbox_config, collector = sandbox_and_collector(
+            build_log_io, config, mounts;
+            verbose,
+        )
+        exe = Sandbox.preferred_executor()()
 
-    @timeit config.to "build" begin
-        run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
+        if "build-start" ∈ debug_modes
+            @warn("Launching debug shell")
+            runshell(config; verbose)
+        end
+
+        @timeit config.to "build" begin
+            run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
+        end
+
         if run_status != :success && verbose
             @error("Build failed", run_status, run_exception)
         end
-    end
-    wait(collector)
-    build_log = String(take!(build_log_io))
+        wait(collector)
+        build_log = String(take!(build_log_io))
 
-    # Generate "log" artifact that will later be packaged up.
-    log_artifact_hash = in_universe(meta.universe) do env
-        Pkg.Artifacts.create_artifact() do artifact_dir
-            open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
-                write(io, build_log)
+        # Generate "log" artifact that will later be packaged up.
+        log_artifact_hash = in_universe(meta.universe) do env
+            Pkg.Artifacts.create_artifact() do artifact_dir
+                open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
+                    write(io, build_log)
+                end
             end
         end
-    end
-    log_artifact_hash = SHA1Hash(log_artifact_hash)
+        log_artifact_hash = SHA1Hash(log_artifact_hash)
 
-    # Parse out the environment from the build
-    if run_status != :errored
-        env = parse_metadir_env(exe, config, mounts)
-    else
-        env = Dict{String,String}()
-    end
+        # Parse out the environment from the build
+        if run_status != :errored
+            env = parse_metadir_env(exe, config, mounts)
+        else
+            env = Dict{String,String}()
+        end
 
-    result = BuildResult(
-        config,
-        run_status,
-        run_exception,
-        exe,
-        mounts,
-        build_log,
-        log_artifact_hash,
-        env,
-    )
-    meta.builds[config] = result
+        result = BuildResult(
+            config,
+            run_status,
+            run_exception,
+            exe,
+            mounts,
+            build_log,
+            log_artifact_hash,
+            env,
+        )
+        meta.builds[config] = result
+    catch e
+        run_status = :errored
+        run_exception = e
+        if verbose
+            @error("Build failed (internal error)", run_status, run_exception)
+        end
+    end
 
     if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
-        @warn("Dropping into Julia REPL for debugging, variables of interest include: `meta::BuildMeta`, `config::BuildConfig` and `result::BuildResult`")
-        @warn("Use `runshell(result; verbose)` to enter debug shell within extraction environment.")
+        @warn("""
+        Dropping into Julia REPL, variables of interest include: `meta::BuildMeta`, `config::BuildConfig` and `result::BuildResult`
+        Use `runshell(result; verbose)` to enter debug shell within extraction environment.
+        """)
         if !verbose
             for line in split(build_log, "\n")[end-50:end]
                 printstyled(line; color=:red)
@@ -516,9 +533,8 @@ function build!(config::BuildConfig;
             end
         end
 
-        if run_status != :success
-            @infiltrate
-        end
+        # Drop into REPL
+        @infiltrate
     end
     return result
 end
