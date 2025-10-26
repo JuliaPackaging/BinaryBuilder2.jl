@@ -14,7 +14,7 @@ function notarget_build_spec_generator(host, platform)
             platform.target;
             uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/macOSSDK_jll.jl"
             ),
             target=target_str,
@@ -26,7 +26,7 @@ function notarget_build_spec_generator(host, platform)
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
             repo=Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             ),
             target=target_str,
         ))
@@ -63,7 +63,7 @@ end
 
 for version in (v"14.2.0",)
     build_tarballs(;
-        src_name = "GCCBootstrapMacOS",
+        src_name = "GCCBootstrapManual",
         src_version = version,
         sources = [
             gcc_version_sources[version]...,
@@ -73,7 +73,8 @@ for version in (v"14.2.0",)
         platforms = [
             CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "macos")),
             CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "macos")),
-            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "freebsd"))
+            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "freebsd")),
+            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "freebsd"))
         ],
         products = [
             FileProduct("bin", :bindir),

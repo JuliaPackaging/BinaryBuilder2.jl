@@ -229,7 +229,7 @@ end
     end
 
     for p in [Platform("x86_64", "linux"), Platform("x86_64", "windows"), Platform("aarch64", "linux"),
-              Platform("powerpc64le", "linux"), Platform("x86_64", "macos")]
+              Platform("powerpc64le", "linux"), Platform("x86_64", "macos"), Platform("riscv64", "linux")]
         @test nbits(p) == 64
     end
 
@@ -245,6 +245,7 @@ end
         @test proc_family(p) == "arm"
     end
     @test proc_family(Platform("powerpc64le", "linux")) == "power"
+    @test proc_family(Platform("riscv64", "linux")) == "riscv"
     @test proc_family(CrossPlatform(Platform("aarch64", "linux") => Platform("i686", "linux"))) == "intel"
     @test proc_family(AnyPlatform()) == "any"
 end

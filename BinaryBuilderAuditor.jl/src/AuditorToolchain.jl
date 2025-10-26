@@ -23,7 +23,7 @@ struct AuditorToolchain <: AbstractToolchain
                     platform;
                     uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                     repo=Pkg.Types.GitRepo(
-                        rev="main",
+                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                         source="https://github.com/staticfloat/CCTools_jll.jl",
                     ),
                     # eventually, include a resolved version

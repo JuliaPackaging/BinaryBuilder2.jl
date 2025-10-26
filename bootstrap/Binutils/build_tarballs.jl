@@ -63,26 +63,8 @@ else
 end
 
 # Build for all supported target platforms, except for macOS, which uses cctools, not binutils :(
-target_platforms = [
-    Platform("x86_64", "linux"),
-    Platform("i686", "linux"),
-    Platform("aarch64", "linux"),
-    Platform("armv6l", "linux"),
-    Platform("armv7l", "linux"),
-    Platform("powerpc64le", "linux"),
-
-    Platform("x86_64", "linux"; libc="musl"),
-    Platform("i686", "linux"; libc="musl"),
-    Platform("aarch64", "linux"; libc="musl"),
-    Platform("armv6l", "linux"; libc="musl"),
-    Platform("armv7l", "linux"; libc="musl"),
-
-    Platform("x86_64", "windows"),
-    Platform("i686", "windows"),
-
-    Platform("x86_64", "freebsd"),
-    Platform("aarch64", "freebsd"),
-]
+target_platforms = supported_platforms(CToolchain)
+target_platforms = filter(!Sys.isapple, target_platforms)
 
 platforms = vec([
     # Build cross-binutils from `host => target`
@@ -109,11 +91,9 @@ for varname in tool_names
     push!(products, ExecutableProduct("\${bindir}/\${target}-$(tool_name)", varname))
 end
 
-# We only need to build one version, because this is just the script we use to bootstrap
-# a single fully-working copy of Binutils.
-extra_kwargs = Dict()
+extra_kwargs = Dict(:target_toolchains => [])
 if !bootstrap_mode
-    extra_kwargs[:target_toolchains] = [CToolchain(;vendor=:bootstrap)]
+    extra_kwargs[:target_toolchains] = [CToolchain(;vendor=:gcc_bootstrap)]
 end
 
 build_tarballs(;
@@ -130,7 +110,7 @@ build_tarballs(;
             "Zlib_jll";
             # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
@@ -138,6 +118,6 @@ build_tarballs(;
     script,
     platforms,
     products,
-    host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
+    host_toolchains = [CToolchain(;vendor=:gcc_bootstrap), HostToolsToolchain()],
     extra_kwargs...,
 )

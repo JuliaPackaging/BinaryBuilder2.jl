@@ -16,21 +16,21 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
         JLLSource(
             "Ncurses_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Ncurses_jll.jl"
             ),
         ),
         JLLSource(
             "Readline_jll";
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Readline_jll.jl"
             ),
         ),

@@ -67,14 +67,16 @@ build_tarballs(;
     ninja install
     """,
     platforms,
-    host,
     # We need python, and we need to build with clang
     host_dependencies = [JLLSource("Python_jll")],
+
+    ## I think zlib_jll needs to get overwritten to have `path=...` if it's in-universe
+    ## Instead of just pulling things out from the environment
     target_dependencies = [
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl",
             ),
         ),

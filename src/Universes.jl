@@ -559,7 +559,7 @@ function deploy_jll(jll_path::String,
         if branch_name !== nothing
             repo_url = "$(repo_url)/tree/$(branch_name)"
         end 
-        @info("Pushing JLL code", repo_url)
+        @info("Pushing JLL code", repo_url, branch_name)
     end
     github_remote = "https://github.com/$(deploy_org)/$(jll_name)_jll.jl"
     remote_url!(jll_path, deploy_org, github_remote)
@@ -735,6 +735,8 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             push=false,
             # We add `.git` here to better match what is already in the General repository
             repo="$(jll_repo_url).git",
+            # When iterating, this is pretty useful.
+            ignore_reregistration=true,
         )
     end
 
@@ -755,6 +757,8 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
                 commit=true,
                 push=false,
                 repo=jll_repo_url,
+                # When iterating, this is pretty useful.
+                ignore_reregistration=true,
             )
         end
 

@@ -182,6 +182,13 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libkvm.so.7",
             "libutil.so.9",
             "libc.so.7",
+            "libthr.so.3",
+            "libm.so.5",
+
+            # compiler support libraries
+            "libc++.so.1",
+            "libcxxrt.so.1",
+            "libgcc_s.so.1",
         ]
         return lowercase(soname) ∈ sdk_libs
     else

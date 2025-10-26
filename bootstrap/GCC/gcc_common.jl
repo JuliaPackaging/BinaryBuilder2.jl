@@ -1,5 +1,6 @@
 using BinaryBuilder2, Pkg
 using BinaryBuilder2: BuildTargetSpec, gcc_platform, get_target_spec_by_name
+include("../bootstrap_common.jl")
 
 meta = BinaryBuilder2.get_default_meta()
 
@@ -379,26 +380,7 @@ host_platforms = [
 ]
 
 # Build for all supported target platforms
-target_platforms = [
-    Platform("x86_64", "linux"),
-    Platform("i686", "linux"),
-    Platform("aarch64", "linux"),
-    Platform("armv6l", "linux"),
-    Platform("armv7l", "linux"),
-    Platform("powerpc64le", "linux"),
-
-    Platform("x86_64", "linux"; libc="musl"),
-    Platform("i686", "linux"; libc="musl"),
-    Platform("aarch64", "linux"; libc="musl"),
-    Platform("armv6l", "linux"; libc="musl"),
-    Platform("armv7l", "linux"; libc="musl"),
-
-    Platform("x86_64", "windows"),
-    Platform("i686", "windows"),
-
-    Platform("x86_64", "macos"),
-    Platform("aarch64", "macos"),
-]
+target_platforms = supported_platforms()
 
 function gcc_platforms(version::VersionNumber)
     platforms = vcat(
@@ -425,7 +407,7 @@ function gcc_build_spec_generator(host, platform)
             "LinuxKernelHeaders_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCC",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
             ),
             target=joinpath(target_str, "usr"),
@@ -436,13 +418,13 @@ function gcc_build_spec_generator(host, platform)
         if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le")
             # v2.17
             glibc_repo = Pkg.Types.GitRepo(
-                rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
+                rev="e5b3b44098fd3ca7a67c7a0e439091a79027a7ee",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
             # v2.19
             glibc_repo = Pkg.Types.GitRepo(
-                rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
+                rev="b4779ca103670a2cc631da614c7eecc9e126c98f",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         end
@@ -458,7 +440,7 @@ function gcc_build_spec_generator(host, platform)
             "Musl_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="827bfab690e1cab77b4d48e1a250c8acd3547443",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Musl_jll.jl"
             ),
             target=target_str,
@@ -479,7 +461,7 @@ function gcc_build_spec_generator(host, platform)
             platform.target;
             uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/macOSSDK_jll.jl"
             ),
             target=target_str,
@@ -491,7 +473,7 @@ function gcc_build_spec_generator(host, platform)
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
             repo=Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             ),
             target=target_str,
         ))
