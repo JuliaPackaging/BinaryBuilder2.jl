@@ -26,6 +26,8 @@ mac_platforms = [
     Platform("aarch64", "macos"),
 ]
 target_platforms = [CrossPlatform(host => target) for host in host_platforms, target in mac_platforms][:]
+host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()]
+target_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain()]
 
 build_tarballs(;
     src_name = "tblgen",
@@ -62,16 +64,18 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
     ],
+    host_toolchains,
+    target_toolchains,
     meta,
     # Don't package this JLL, we're just using this to get the `tblgen_source` below.
     package_jll = false,
 )
-tblgen_source = ExtractResultSource(BinaryBuilder2.get_extract_result(meta, "tblgen"))
+tblgen_source = ExtractResultSource(only(BinaryBuilder2.get_extract_results(meta, "tblgen")))
 
 build_tarballs(;
     src_name = "libtapi",
@@ -108,11 +112,13 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),
     ],
+    host_toolchains,
+    target_toolchains,
     meta,
 )
 
@@ -136,7 +142,7 @@ function cctools_build_spec_generator(host, platform)
                     "Zlib_jll";
                     # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
                     repo=Pkg.Types.GitRepo(
-                        rev="main",
+                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                         source="https://github.com/staticfloat/Zlib_jll.jl"
                     ),
                 ),

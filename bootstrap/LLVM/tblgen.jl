@@ -32,7 +32,6 @@ build_tarballs(;
     mv ./bin "${bindir}"
     """,
     platforms = [BBHostPlatform()],
-    host,
     products = [
         ExecutableProduct(["llvm-tblgen"], :llvm_tblgen),
         ExecutableProduct(["clang-tblgen"], :clang_tblgen),
@@ -44,9 +43,11 @@ build_tarballs(;
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl",
             ),
         ),
     ],
+    host_toolchains = [CToolchain(;vendor=:gcc_bootstrap), CMakeToolchain(), HostToolsToolchain()],
+    target_toolchains = [CToolchain(;vendor=:gcc_bootstrap), CMakeToolchain()],
 )

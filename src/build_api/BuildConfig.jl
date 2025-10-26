@@ -36,7 +36,7 @@ struct BuildConfig
     # Contains sources, host dependencies, target dependencies, and toolchains.
     # Organized by installation prefix (e.g. `/opt/$(triplet)` for toolchains,
     # `/workspace/srcdir` for sources, `/workspace/destdir/$(triplet)` for dependencies, etc...)
-    source_trees::Dict{String,Vector{<:AbstractSource}}
+    source_trees::Dict{String,Vector{AbstractSource}}
     env::Dict{String,String}
 
     # Bash script that will perform the actual build itself

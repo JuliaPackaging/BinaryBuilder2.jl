@@ -77,7 +77,7 @@ function binutils_jll_source_selection(vendor, platform)
                 platform;
                 uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="main",
+                    rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                     source="https://github.com/staticfloat/CCTools_jll.jl",
                 ),
                 # eventually, include a resolved version
@@ -89,7 +89,7 @@ function binutils_jll_source_selection(vendor, platform)
             #     platform.host;
             #     uuid=Base.UUID("defda0c2-6d1f-5f19-8ead-78afca958a10"),
             #     repo=Pkg.Types.GitRepo(
-            #         rev="main",
+            #         rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             #         source="https://github.com/staticfloat/libtapi_jll.jl",
             #     ),
             #     # eventually, include a resolved version
@@ -106,7 +106,7 @@ function binutils_jll_source_selection(vendor, platform)
                     platform;
                     uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
                     repo=Pkg.Types.GitRepo(
-                        rev="main",
+                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                         source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
                     ),
                     version=v"17.0.0",
@@ -117,7 +117,7 @@ function binutils_jll_source_selection(vendor, platform)
                     platform;
                     uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
                     repo=Pkg.Types.GitRepo(
-                        rev="main",
+                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                         source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
                     ),
                     version=v"17.0.0",
@@ -130,7 +130,7 @@ function binutils_jll_source_selection(vendor, platform)
             "Binutils_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 #rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
@@ -580,8 +580,8 @@ function supported_platforms(::Type{BinutilsToolchain}; experimental::Bool = fal
         Platform("x86_64", "macos"),
         Platform("aarch64", "macos"),
 
-        Platform("x86_64", "freebsd"),
-        Platform("aarch64", "freebsd"),
+        Platform("x86_64", "freebsd"; os_version="14.1"),
+        Platform("aarch64", "freebsd"; os_version="14.1"),
     ]
 end
 

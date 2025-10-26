@@ -82,7 +82,7 @@ Return the number of bits in the architecture of the given Platform.
 Usually either 32 or 64.
 """
 function nbits(p::AbstractPlatform)
-    if arch(p) ∈ ("x86_64", "aarch64", "powerpc64le")
+    if arch(p) ∈ ("x86_64", "aarch64", "powerpc64le", "riscv64")
         return 64
     elseif arch(p) ∈ ("i686", "armv7l", "armv6l")
         return 32
@@ -108,6 +108,8 @@ function proc_family(p::AbstractPlatform)
         return "arm"
     elseif arch(p) == "powerpc64le"
         return "power"
+    elseif arch(p) == "riscv64"
+        return "riscv"
     else
         error("Unknown processor family for architecture of platform $(triplet(p))")
     end

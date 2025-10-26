@@ -93,7 +93,7 @@ build_tarballs(;
             uuid = Base.UUID("86569e53-7a4c-551c-9ab0-bc1131c15cd4"),
             repo = Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/CrosstoolNG_jll.jl",
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             ),
         ),
     ],

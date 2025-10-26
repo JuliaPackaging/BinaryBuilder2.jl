@@ -89,6 +89,9 @@ const ARCHITECTURE_FLAGS = Dict(
             #"power9"  => ["-mcpu=power9", "-mtune=power9"],
             # Eventually, we'll support power10, once we have compilers that support it.
             #"power10" => ["-mcpu=power10", "-mtune=power10"],
+        ),
+        "riscv64" => OrderedDict(
+            "riscv64" => ["-march=rv64gc"],
         )
     ),
     "gcc" => Dict(

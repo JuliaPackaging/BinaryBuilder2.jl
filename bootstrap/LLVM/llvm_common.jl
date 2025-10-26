@@ -2,9 +2,6 @@ using BinaryBuilder2, Pkg
 using BinaryBuilder2: BuildTargetSpec, get_target_spec_by_name, get_default_target_spec, ExtractSpec, get_package_result
 include("../bootstrap_common.jl")
 
-# The build host
-host = Platform(arch(HostPlatform()), "linux")
-
 # Check to see if the user has asked for a "bootstrap" build, which
 # builds clang only for a few targets, using GCC instead of clang.
 function llvm_platforms(;is_bootstrap::Bool = false)
@@ -42,7 +39,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                         "LLVMTblgen_jll",
                         uuid=Base.UUID("47b65027-ac0b-59bd-a35b-966a6339d635"),
                         repo=Pkg.Types.GitRepo(
-                            rev="main",
+                            rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                             source="https://github.com/staticfloat/LLVMTblgen_jll.jl",
                         ),
                     ),
@@ -67,7 +64,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                     JLLSource(
                         "Zlib_jll";
                         repo=Pkg.Types.GitRepo(
-                            rev="main",
+                            rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                             source="https://github.com/staticfloat/Zlib_jll.jl"
                         ),
                     ),

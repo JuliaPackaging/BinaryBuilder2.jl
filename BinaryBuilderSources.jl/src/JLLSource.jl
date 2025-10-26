@@ -287,7 +287,7 @@ function prepare(jlls::Vector{JLLSource};
 
                         # Only use the cached paths if they actually exist on-disk (e.g. they haven't been Pkg.gc()'ed)
                         if all(isdir.(cached_paths)) && isdir(Pkg.Operations.find_installed(jll.package.name, jll.package.uuid, tree_hash))
-                            @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths))
+                            @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths), platform, prefix)
                             append!(jll.artifact_paths, cached_paths)
                             jll.package.tree_hash = tree_hash
                         end
@@ -317,7 +317,7 @@ function prepare(jlls::Vector{JLLSource};
                         jll.package.repo = pkg.repo
                     end
                     append!(jll.artifact_paths, art_paths[pkg])
-                    @debug("Prepared", jll, cache_path)
+                    @debug("Prepared", jll, pkg, cache_path, prefix, platform)
                 end
 
                 # Write out the result into a cache so we don't have to go through this resolution again.

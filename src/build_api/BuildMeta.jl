@@ -373,14 +373,14 @@ function get_package_result(meta::BuildMeta, name::String)
     return meta.packagings[only(filter(criteria, keys(meta.packagings)))]
 end
 
-function get_extract_result(meta::BuildMeta, src_name::String, platform::AbstractPlatform = AnyPlatform())
+function get_extract_results(meta::BuildMeta, src_name::String, platform::AbstractPlatform = AnyPlatform())
     criteria(config) = config.build.config.src_name == src_name && platforms_match(config.platform, platform)
-    return meta.extractions[only(filter(criteria, keys(meta.extractions)))]
+    return [meta.extractions[k] for k in filter(criteria, keys(meta.extractions))]
 end
 
-function get_build_result(meta::BuildMeta, src_name::String)
+function get_build_results(meta::BuildMeta, src_name::String)
     criteria(config) = config.src_name == src_name
-    return meta.builds[only(filter(criteria, keys(meta.builds)))]
+    return [meta.builds[k] for k in filter(criteria, keys(meta.builds))]
 end
 
 import BinaryBuilderToolchains: indent

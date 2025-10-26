@@ -21,14 +21,13 @@ build_tarballs(;
     ninja install
     """,
     platforms=supported_platforms(),
-    host,
     # We need python, and we need to build with clang
     host_dependencies = [JLLSource("Python_jll")],
     target_dependencies = [
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Zlib_jll.jl"
             ),
         ),

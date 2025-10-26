@@ -276,12 +276,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         # Manual version selection, drop this once these are registered!
         if v"2.17" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="2f33ece6d34f813332ff277ffaea52b075f1af67",
+                rev="e5b3b44098fd3ca7a67c7a0e439091a79027a7ee",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         elseif v"2.19" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="a3d1c4ed6e676a47c4659aeecc8f396a2233757d",
+                rev="b4779ca103670a2cc631da614c7eecc9e126c98f",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
@@ -314,7 +314,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             repo=Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/macOSSDK_jll.jl",
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             ),
             version=v"11.1",
             target=sysroot_path,
@@ -330,7 +330,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Mingw_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Mingw_jll.jl",
             ),
             target=sysroot_path,
@@ -342,7 +342,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
             repo=Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
             ),
             version=v"14.1",
             target=sysroot_path,
@@ -359,7 +359,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("465c4c53-7f13-5720-b733-07d6cbd50c3b"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev="bd474738852a3f647784ca0d51a02ab88ea04718",
                 source="https://github.com/staticfloat/GCC_support_libraries_jll.jl",
             ),
             version=v"14.2.0",
@@ -370,7 +371,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("7bc14925-bf4e-535d-80f2-90698dc22d13"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev="f297e87d75c6fedf0f8273503d6bcd9914880082",
                 source="https://github.com/staticfloat/GCC_crt_objects_jll.jl",
             ),
             version=v"14.2.0",
@@ -384,7 +386,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("4e17d02c-6bf5-513e-be62-445f41c75a11"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LLVMCompilerRT_jll.jl",
             ),
             version=v"17.0.7",
@@ -398,7 +400,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev="718f8487629fca31c00609f9e85344acc0244545",
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
             version=v"14.2.0",
@@ -411,7 +414,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("899a7460-a157-599b-96c7-ccb58ef9beb5"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
             ),
             version=v"17.0.1",
@@ -422,7 +425,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("871c935c-5660-55ad-bb68-d1283357316b"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
             ),
             version=v"17.0.1",
@@ -436,7 +439,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform;
             uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
             ),
             version=v"17.0.0",
@@ -447,7 +450,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform;
             uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
             ),
             version=v"17.0.0",
@@ -461,7 +464,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Clang_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Clang_jll.jl",
             ),
             version=v"17.0.7",
@@ -471,7 +474,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "libLLVM_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/libLLVM_jll.jl",
             ),
             version=v"17.0.7",
@@ -483,14 +486,16 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # which is why we `return` from within here.
     if vendor == :gcc_bootstrap
         if Sys.isapple(platform.target) || Sys.isbsd(platform.target)
+            # Darwin and FreeBSD use clang natively and aren't supported by
+            # crosstool-ng, so we manually cobble together a GCCBootstrap-like build here:
             append!(deps, [
                 JLLSource(
-                    "GCCBootstrapMacOS_jll",
+                    "GCCBootstrapManual_jll",
                     platform;
-                    uuid = Base.UUID("117daf6b-c727-5bed-b063-6a70e57c2a0e"),
+                    uuid = Base.UUID("f60369a9-3442-5217-af1b-bf3786f10eba"),
                     repo=Pkg.Types.GitRepo(
                         rev="bb2/GCCBootstrap-$(triplet(platform.host))",
-                        source="https://github.com/staticfloat/GCCBootstrapMacOS_jll.jl"
+                        source="https://github.com/staticfloat/GCCBootstrapManual_jll.jl"
                     ),
                     version=v"14.2.0",
                     target="gcc",
@@ -522,7 +527,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LinuxKernelHeaders_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="main",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
             ),
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
@@ -544,7 +549,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="main",
+                    rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                     source="https://github.com/staticfloat/GCC_jll.jl",
                 ),
                 # eventually, include a resolved version
@@ -619,7 +624,7 @@ function toolchain_sources(toolchain::CToolchain)
     # our compiler wrappers.  We store it with a cache key that is sensitive
     # to basically all inputs, so that it can be cached.
     push!(sources, CachedGeneratedSource(cache_key(toolchain); target="wrappers") do out_dir
-        if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapMacOS_jll")
+        if installing_jll("GCC_jll") || installing_jll("GCCBootstrap_jll") || installing_jll("GCCBootstrapManual_jll")
             gcc_wrappers(toolchain, out_dir)
         end
         if installing_jll("Clang_jll") || installing_jll("LLVMBootstrap_Clang_jll")

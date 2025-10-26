@@ -10,10 +10,14 @@ function Base.pkgdir(j::JLLSource)
     if j.package.path !== nothing
         return j.package.path
     end
+    if j.package.tree_hash === nothing
+        @warn("BinaryBuilder2 error: this package didn't get resolved!  Perhaps lacking a platform mapping?", j.package)
+    end
     return Pkg.Operations.find_installed(j.package.name, j.package.uuid, j.package.tree_hash)
 end
-function JLLGenerator.parse_toml_dict(j::JLLSource; depot::Union{Nothing,String} = nothing)
+function JLLGenerator.parse_toml_dict(j::JLLSource; project::Union{Nothing,String} = nothing, depot::Union{Nothing,String} = nothing)
     local pkg_dir
+
     if depot === nothing
         pkg_dir = pkgdir(j)
     else
