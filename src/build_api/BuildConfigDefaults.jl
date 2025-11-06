@@ -32,7 +32,7 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
                 "build",
                 host_toolchains,
                 host_dependencies,
-                Set([:host]),
+                Set([:native]),
             ),
             BuildTargetSpec(
                 "host",
@@ -53,7 +53,7 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
                 "host",
                 host_toolchains,
                 host_dependencies,
-                Set([:host]),
+                Set([:native]),
             ),
             BuildTargetSpec(
                 "target",
@@ -72,11 +72,11 @@ function apply_spec_plan(target_spec_plan::Vector,
 
     # Separate out our `host` and `default` specs, which we must always have.
     flags(plan::PlatformlessWrapper{BuildTargetSpec}) = plan.args[4]
-    host_specs = filter(plan -> :host ∈ flags(plan), target_spec_plan)
+    host_specs = filter(plan -> :native ∈ flags(plan), target_spec_plan)
     default_specs = filter(plan -> :default ∈ flags(plan), target_spec_plan)
 
     if length(host_specs) != 1 || length(default_specs) != 1
-        throw(ArgumentError("apply_spec_plan() requires exactly 1 `:host` spec (got $(length(host_specs))), and 1 `:default` spec (got $(length(default_specs))!"))
+        throw(ArgumentError("apply_spec_plan() requires exactly 1 `:native` spec (got $(length(host_specs))), and 1 `:default` spec (got $(length(default_specs))!"))
     end
 
     target_specs = BuildTargetSpec[
@@ -90,7 +90,7 @@ function apply_spec_plan(target_spec_plan::Vector,
     ]
     if isa(target, CrossPlatform)
         if length(target_spec_plan) == 3
-            other_specs = filter(plan -> !any((:host, :default) .∈ (flags(plan),)), target_spec_plan)
+            other_specs = filter(plan -> !any((:native, :default) .∈ (flags(plan),)), target_spec_plan)
             # If we're dealing with a cross-compiler, add on the "target" spec.
             push!(target_specs, apply_platform(only(other_specs), CrossPlatform(host => target.target)))
         else

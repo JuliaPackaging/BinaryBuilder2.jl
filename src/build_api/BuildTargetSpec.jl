@@ -7,7 +7,7 @@ struct BuildTargetSpec
     dependencies::Vector{AbstractSource}
 
     # Flags can be one of:
-    #  `:host`    -- this is a toolchain for the build machine itself
+    #  `:native`  -- this is a toolchain for the build machine itself
     #  `:default` -- this is the "default" toolchain, and should be invokable by `cc`, etc...
     flags::Set{Symbol}
 
@@ -44,7 +44,7 @@ end
 
 # This is where JLLSources get installed
 function target_prefix(name::String, platform::CrossPlatform, flags::Set{Symbol})
-    if :host ∈ flags
+    if :native ∈ flags
         return "/usr/local"
     else
         return string("/workspace/destdir/$(name)-$(triplet(platform.target))")
@@ -173,7 +173,7 @@ function get_default_target_spec(specs::Vector{BuildTargetSpec})
     return specs[idx]
 end
 function get_host_target_spec(specs::Vector{BuildTargetSpec})
-    idx = findfirst(bts -> :host ∈ bts.flags, specs)
+    idx = findfirst(bts -> :native ∈ bts.flags, specs)
     if idx === nothing
         return nothing
     end

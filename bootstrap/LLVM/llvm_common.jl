@@ -44,7 +44,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                         ),
                     ),
                 ],
-                Set([:host]),
+                Set([:native]),
             ),
             BuildTargetSpec(
                 "host",
