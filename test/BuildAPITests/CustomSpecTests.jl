@@ -53,7 +53,7 @@ end
                     CrossPlatform(host => host),
                     [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
                     [],
-                    Set([:host]),
+                    Set([:native]),
                 ),
                 BuildTargetSpec(
                     "host",

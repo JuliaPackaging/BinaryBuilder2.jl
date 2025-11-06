@@ -487,7 +487,7 @@ function gcc_build_spec_generator(host, platform)
             CrossPlatform(host => host),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture), HostToolsToolchain()],
             [],
-            Set([:host]),
+            Set([:native]),
         ),
         BuildTargetSpec(
             "host",
