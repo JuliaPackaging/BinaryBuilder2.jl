@@ -69,8 +69,8 @@ struct BuildConfig
                          kwargs...,
                          )
         sources = Vector{AbstractSource}(sources)
-        if count(bts -> :host ∈ bts.flags, target_specs) != 1
-            throw(ArgumentError("Invalid `target_specs`, must have exactly one marked as `:host`!"))
+        if count(bts -> :native ∈ bts.flags, target_specs) != 1
+            throw(ArgumentError("Invalid `target_specs`, must have exactly one marked as `:native`!"))
         end
         host = get_host_target_spec(target_specs).platform.host
 
@@ -199,7 +199,7 @@ function target_platform_string(config::BuildConfig)
     end
     host = get_host_target_spec(config.target_specs).platform.host
     if length(config.target_specs) == 2
-        idx = findfirst(bts -> :host ∉ bts.flags, config.target_specs)
+        idx = findfirst(bts -> :native ∉ bts.flags, config.target_specs)
         target = config.target_specs[idx].platform.target
         return string(triplet(host), " => ", triplet(target))
     elseif is_canadian()
