@@ -270,7 +270,9 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
 
     # Use the bundled CA root file
     env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")
-    env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", "ca-certificates.crt")
+    if isfile(ca_roots_path())
+        env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", basename(ca_roots_path()))
+    end
 
     # Apply LD_LIBRARY_PATH for CSL
     if Sys.iswindows()
