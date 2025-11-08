@@ -221,12 +221,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
             compiler_wrapper(identity, joinpath(out_dir, "ninja"), "$(toolchain_prefix)/bin/ninja")
         end
         if any(jll.package.name == "CURL_jll" for jll in toolchain.deps)
-            compiler_wrapper(joinpath(out_dir, "curl"), "$(toolchain_prefix)/bin/curl") do io
-                println(io, """
-                # Ensure CURL can find its certificates
-                export CURL_CA_BUNDLE=\"$(toolchain_prefix)/etc/certs/ca-certificates.crt\"
-                """)
-            end
+            compiler_wrapper(identity, joinpath(out_dir, "curl"), "$(toolchain_prefix)/bin/curl")
         end
         if any(jll.package.name == "Vim_jll" for jll in toolchain.deps)
             # Teach `vim` how to find `defaults.vim`
@@ -269,7 +264,9 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
 
     # Use the bundled CA root file
     env["SSL_CERT_DIR"] = joinpath(deployed_prefix, "etc", "certs")
-    env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", "ca-certificates.crt")
+    if isfile(ca_roots_path())
+        env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", basename(ca_roots_path()))
+    end
 
     # Apply LD_LIBRARY_PATH for CSL
     if Sys.iswindows()
