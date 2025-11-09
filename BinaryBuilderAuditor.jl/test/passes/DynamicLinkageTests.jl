@@ -20,7 +20,7 @@ function soname_flag(platform, soname)
 end
 
 # We're gonna make use of a C toolchain for lots of these tests
-for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"))
+for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"; os_version=v"20"))
     platform = CrossPlatform(BBHostPlatform() => target_platform)
     toolchain = CToolchain(platform; use_ccache=false)
 

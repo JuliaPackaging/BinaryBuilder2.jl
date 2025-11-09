@@ -1,10 +1,7 @@
 using BinaryBuilder2
 
 meta = BinaryBuilder2.get_default_meta()
-platforms = [
-    Platform("x86_64", "macos"),
-    Platform("aarch64", "macos"),
-]
+platforms = filter(Sys.isapple, supported_platforms())
 
 # Build the tarballs, and possibly a `build.jl` as well.
 build_tarballs(;

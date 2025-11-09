@@ -21,10 +21,7 @@ else
     ]
 end
 
-mac_platforms = [
-    Platform("x86_64", "macos"),
-    Platform("aarch64", "macos"),
-]
+mac_platforms = filter(Sys.isapple, supported_platforms())
 target_platforms = [CrossPlatform(host => target) for host in host_platforms, target in mac_platforms][:]
 host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()]
 target_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain()]

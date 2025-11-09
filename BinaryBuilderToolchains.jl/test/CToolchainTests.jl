@@ -178,11 +178,15 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
     end
 
     # Ensure that `strip` works for macOS without needing to resign
-    macos_cp = CrossPlatform(BBHostPlatform() => Platform("aarch64", "macos"))
-    toolchains = [CToolchain(macos_cp), htt_toolchain]
-    with_toolchains(toolchains) do prefix, env
-        cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
-            @test success(setenv(Cmd(["/bin/bash", "-c", "make clean; make check"]), env))
+    @testset "macos strip resigning" begin
+        for macos_target in filter(Sys.isapple, supported_platforms(CToolchain))
+            macos_cp = CrossPlatform(BBHostPlatform() => macos_target)
+            toolchains = [CToolchain(macos_cp), htt_toolchain]
+            with_toolchains(toolchains) do prefix, env
+                cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
+                    @test success(setenv(Cmd(["/bin/bash", "-c", "make clean; make check"]), env))
+                end
+            end
         end
     end
 end
