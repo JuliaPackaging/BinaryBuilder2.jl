@@ -3,6 +3,7 @@ module Maintenance
 # This file will collect entrypoints for maintenance of a build system.
 using Ccache_jll
 import ..BinaryBuilder2: ccache_cache
+import ..BinaryBuilderSources: generated_source_cache, jll_resolve_cache
 
 function ccache_env(cmd::Cmd)
     return addenv(cmd, "CCACHE_DIR" => ccache_cache())
@@ -31,6 +32,11 @@ end
 
 function ccache_show_stats()
     run(ccache_env(`$(ccache()) --show-stats --show-compression --verbose`))
+end
+
+function clear_sources_cache()
+    rm(generated_source_cache("."); recursive=true, force=true)
+    rm(jll_resolve_cache("."); recursive=true, force=true)
 end
 
 # TODO:
