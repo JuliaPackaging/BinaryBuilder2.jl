@@ -59,7 +59,7 @@ end
             ensure_sonames!(scan, pass_results)
             @test !success(pass_results)
             io = IOBuffer()
-            print_results(pass_results; io)
+            show(io, pass_results)
             @test occursin("Failed to set SONAME:", String(take!(io)))
             @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in pass_results["ensure_sonames!"])
         end
