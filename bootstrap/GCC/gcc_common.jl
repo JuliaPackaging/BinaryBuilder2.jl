@@ -133,7 +133,7 @@ cd ${WORKSPACE}/srcdir
 
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
-if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]]; then
+if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]] && [[ "${target}" != *freebsd* ]]; then
     lib64="lib${target_nbits%32}"
 else
     lib64="lib"

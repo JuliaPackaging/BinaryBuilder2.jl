@@ -276,12 +276,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         # Manual version selection, drop this once these are registered!
         if v"2.17" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="e5b3b44098fd3ca7a67c7a0e439091a79027a7ee",
+                rev="d3f2e355cd60300022f455f61aa608d963868e35",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         elseif v"2.19" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="b4779ca103670a2cc631da614c7eecc9e126c98f",
+                rev="462af198d91ad3ad73815e77e64dd34e6866b1f3",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
@@ -303,7 +303,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "Musl_jll",
             platform.target;
             repo=Pkg.Types.GitRepo(
-                rev="827bfab690e1cab77b4d48e1a250c8acd3547443",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/Musl_jll.jl"
             ),
             target=sysroot_path,
@@ -359,8 +359,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("465c4c53-7f13-5720-b733-07d6cbd50c3b"),
             repo=Pkg.Types.GitRepo(
-                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                rev="bd474738852a3f647784ca0d51a02ab88ea04718",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/GCC_support_libraries_jll.jl",
             ),
             version=v"14.2.0",
@@ -371,8 +370,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("7bc14925-bf4e-535d-80f2-90698dc22d13"),
             repo=Pkg.Types.GitRepo(
-                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                rev="f297e87d75c6fedf0f8273503d6bcd9914880082",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/GCC_crt_objects_jll.jl",
             ),
             version=v"14.2.0",
@@ -400,8 +398,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
             repo=Pkg.Types.GitRepo(
-                #rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                rev="718f8487629fca31c00609f9e85344acc0244545",
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
             version=v"14.2.0",

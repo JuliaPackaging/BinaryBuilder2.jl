@@ -138,11 +138,9 @@ version = "2.44.0+2"
 
 [[deps.HistoricalStdlibVersions]]
 deps = ["Pkg", "PrecompileTools"]
-git-tree-sha1 = "3a167a57ca85255f532ae75bd3f0fc2062ae58c4"
-repo-rev = "main"
-repo-url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"
+git-tree-sha1 = "abdd6437ede003ee3c412b7da655a8dde356a573"
 uuid = "6df8b67a-e8a0-4029-b4b7-ac196fe72102"
-version = "2.0.5"
+version = "2.0.6"
 
 [[deps.Infiltrator]]
 deps = ["InteractiveUtils", "Markdown", "REPL", "UUIDs"]

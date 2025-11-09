@@ -54,7 +54,6 @@ BinaryBuilderPlatformExtensions = {path = "BinaryBuilderPlatformExtensions.jl"}
 BinaryBuilderProducts = {path = "BinaryBuilderProducts.jl"}
 BinaryBuilderSources = {path = "BinaryBuilderSources.jl"}
 BinaryBuilderToolchains = {path = "BinaryBuilderToolchains.jl"}
-HistoricalStdlibVersions = {rev = "main", url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"}
 JLLGenerator = {path = "JLLGenerator.jl"}
 KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
 LazyJLLWrappers = {path = "LazyJLLWrappers.jl"}
