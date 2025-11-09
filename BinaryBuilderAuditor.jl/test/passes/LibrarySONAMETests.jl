@@ -19,7 +19,7 @@ function make_libfoo(prefix, target)
 end
 
 @testset "ensure_sonames" begin
-    for target in (Platform("x86_64", "linux"), Platform("aarch64", "macos"))
+    for target in (Platform("x86_64", "linux"), Platform("aarch64", "macos"; os_version=v"20"))
         mktempdir() do prefix
             libfoo_path = make_libfoo(prefix, target)
 

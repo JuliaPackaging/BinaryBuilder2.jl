@@ -2,8 +2,8 @@ using BinaryBuilder2
 
 meta = BinaryBuilder2.get_default_meta()
 platforms = [
-    Platform("x86_64", "freebsd"),
-    Platform("aarch64", "freebsd"),
+    Platform("x86_64", "freebsd"; os_version="14.1"),
+    Platform("aarch64", "freebsd"; os_version="14.1"),
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well.

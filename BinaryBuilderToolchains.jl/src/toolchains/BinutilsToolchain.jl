@@ -577,8 +577,9 @@ function supported_platforms(::Type{BinutilsToolchain}; experimental::Bool = fal
         Platform("x86_64", "windows"),
         Platform("i686", "windows"),
 
-        Platform("x86_64", "macos"),
-        Platform("aarch64", "macos"),
+        # These os version numbers come from the currently-default macOSSDK_jll and FreeBSDSysroot_jll versions
+        Platform("x86_64", "macos"; os_version=string(macos_kernel_version("11.1"))),
+        Platform("aarch64", "macos"; os_version=string(macos_kernel_version("11.1"))),
 
         Platform("x86_64", "freebsd"; os_version="14.1"),
         Platform("aarch64", "freebsd"; os_version="14.1"),

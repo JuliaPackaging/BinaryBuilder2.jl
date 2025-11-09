@@ -51,7 +51,7 @@ using BinaryBuilder2: get_package_result
     # All the tests above target a native linux; let's run a test on Windows and macOS, just so that
     # we're exercising those troublesome platforms in at least some way:
     @testset "Zlib on Windows and macOS" begin
-        meta = BuildMeta(;universe_name,target_list=[Platform("x86_64", "windows"), Platform("aarch64", "macos")])
+        meta = BuildMeta(;universe_name,target_list=[Platform("x86_64", "windows"), Platform("aarch64", "macos"; os_version=v"20")])
         run_build_tarballs(meta, joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"))
         package_result = get_package_result(meta, "Zlib")
         @test package_result.status == :success

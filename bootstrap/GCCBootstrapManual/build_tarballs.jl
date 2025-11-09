@@ -62,6 +62,8 @@ end
 
 
 for version in (v"14.2.0",)
+    platforms = filter(p -> Sys.isapple(p) || Sys.isfreebsd(p), supported_platforms())
+    platforms = [CrossPlatform(Platform(arch(HostPlatform()), "linux") => p) for p in platforms]
     build_tarballs(;
         src_name = "GCCBootstrapManual",
         src_version = version,
@@ -70,12 +72,7 @@ for version in (v"14.2.0",)
             DirectorySource("./patches-v$(version)"; follow_symlinks=true, target="patches"),
         ],
         script,
-        platforms = [
-            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "macos")),
-            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "macos")),
-            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("x86_64", "freebsd")),
-            CrossPlatform(Platform(arch(HostPlatform()), "linux") => Platform("aarch64", "freebsd"))
-        ],
+        platforms,
         products = [
             FileProduct("bin", :bindir),
             ExecutableProduct("\${target}-gcc", :gcc),

@@ -66,7 +66,7 @@ include("InteractiveUtils.jl")
         BBHostPlatform(),
         Platform("x86_64", "windows"),
         Platform("armv7l", "linux"; libc=:musl),
-        Platform("aarch64", "macos"),
+        Platform("aarch64", "macos"; os_version=v"20"),
     ]
     platforms = [CrossPlatform(BBHostPlatform() => target) for target in targets]
     @compile_workload begin

@@ -30,14 +30,18 @@ understand, return the closest valid number.
 """
 function macos_kernel_version(v::VersionNumber)
     if v.major < 10
+        # kernel version 12 (10.8) as our minimum
         return 12
     elseif v.major == 10
+        # 10.8 is our typical minimum
         if v.minor <= 8
             return 12
         else
+            # 19 (10.15) is the last `10.x` version
             return min(12 + (v.minor - 8), 19)
         end
     else
+        # Somewhat easier counting for 11.x and beyond
         return 20 + (v.major - 11)
     end
 end

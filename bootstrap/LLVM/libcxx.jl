@@ -2,13 +2,6 @@ include("llvm_common.jl")
 using BinaryBuilderPlatformExtensions: macos_kernel_version
 
 platforms = supported_platforms()
-platforms = map(platforms) do p
-    # x86_64-apple-darwin needs to target at least 10.13
-    if Sys.isapple(p) && arch(p) == "x86_64"
-        p["os_version"] = string(macos_kernel_version("10.13"))
-    end
-    return p
-end
 
 build_tarballs(;
     src_name = "LLVMLibcxx",
