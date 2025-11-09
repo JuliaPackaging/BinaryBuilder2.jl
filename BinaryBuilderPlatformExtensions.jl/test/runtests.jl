@@ -288,7 +288,7 @@ end
     end
 
     # Get all architectures and all microarchitectures for the different architectures
-    @test sort(get_all_arch_names()) == ["aarch64", "armv6l", "armv7l", "i686", "powerpc64le", "x86_64"]
+    @test sort(get_all_arch_names()) == ["aarch64", "armv6l", "armv7l", "i686", "powerpc64le", "riscv64", "x86_64"]
     @test sort(get_all_march_names("x86_64")) == ["avx", "avx2", "avx512", "x86_64"]
     @test sort(get_all_march_names("armv7l")) == ["armv7l", "neonvfpv4"]
 end
