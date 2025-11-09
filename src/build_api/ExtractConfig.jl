@@ -96,7 +96,7 @@ function BinaryBuilderSources.content_hash(config::ExtractConfig)
     return extract_content_hash(config.script, config.products)
 end
 
-function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir()), shell::Cmd = `/bin/bash`)
+function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)
     sandbox_config = SandboxConfig(config, output_dir; save_env=false)
     run(config.build.exe, sandbox_config, ignorestatus(shell))
 end

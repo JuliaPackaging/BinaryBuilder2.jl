@@ -1,4 +1,4 @@
-using Test, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival
+using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival
 
 include("ScanningTests.jl")
 include("passes/RelativeSymlinkTests.jl")

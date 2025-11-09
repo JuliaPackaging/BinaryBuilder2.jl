@@ -6,14 +6,17 @@ build_tarballs(;
     sources = llvm_sources,
     script = llvm_script_prefix * raw"""
     # Specify exactly which pieces of compiler-rt we want
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_BUILTINS=ON")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_CRT=ON")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_LIBFUZZER=OFF")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_MEMPROF=OFF")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_PROFILE=OFF")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_SANITIZERS=OFF")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_BUILD_XRAY=OFF")
-    CMAKE_FLAGS+=("-DCOMPILER_RT_DEFAULT_TARGET_TRIPLE=${target}")
+    CMAKE_FLAGS+=(
+        -DCOMPILER_RT_BUILD_BUILTINS=ON
+        -DCOMPILER_RT_BUILD_CRT=ON
+        -DCOMPILER_RT_BUILD_LIBFUZZER=OFF
+        -DCOMPILER_RT_BUILD_MEMPROF=OFF
+        -DCOMPILER_RT_BUILD_PROFILE=OFF
+        -DCOMPILER_RT_BUILD_SANITIZERS=OFF
+        -DCOMPILER_RT_BUILD_XRAY=OFF
+        -DCOMPILER_RT_ENABLE_IOS=OFF
+        -DCOMPILER_RT_DEFAULT_TARGET_TRIPLE="${target}"
+    )
 
     # configure, build, install!
     ${CMAKE} ${WORKSPACE}/srcdir/llvm-project/compiler-rt ${CMAKE_FLAGS[@]}

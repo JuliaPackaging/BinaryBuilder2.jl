@@ -131,7 +131,6 @@ function binutils_jll_source_selection(vendor, platform)
             platform;
             repo=Pkg.Types.GitRepo(
                 rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                #rev="c5da93839bef6c88d3b7ecf4109eb9fe0c716a34",
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version

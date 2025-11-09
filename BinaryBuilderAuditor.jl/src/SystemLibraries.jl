@@ -62,8 +62,8 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libpmsample.dylib",
             "libsandbox.1.dylib",
             "libsystem.b.dylib",
-            # This is not built by clang or GCC, so we leave it as a system library
             "libc++.1.dylib",
+            "libstdc++.6.dylib",
             "libresolv.9.dylib",
             # Frameworks in the SDK
             "accelerate",
@@ -182,13 +182,16 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libkvm.so.7",
             "libutil.so.9",
             "libc.so.7",
+            "libc.so.6",
             "libthr.so.3",
             "libm.so.5",
+            "libm.so.6",
 
             # compiler support libraries
             "libc++.so.1",
             "libcxxrt.so.1",
             "libgcc_s.so.1",
+            "libstdc++.so.6",
         ]
         return lowercase(soname) ∈ sdk_libs
     else

@@ -6,7 +6,7 @@ if get(parsed_args, :universe_name, nothing) === nothing
     parsed_args[:universe_name] = "GCCBootstrap-$(triplet(host))"
 end
 meta = BuildMeta(;parsed_args...)
-#BinaryBuilder2.reset_timeline!(meta.universe)
+BinaryBuilder2.reset_timeline!(meta.universe)
 
 # We start by building CrosstoolNG; to do so, we need Zlib, Ncurses and Readline.
 # We use whatever C compiler BB2 already has in order to perform this initial

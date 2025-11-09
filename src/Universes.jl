@@ -146,7 +146,11 @@ struct Universe
             string(registry_url),
         )
         prune!(uni)
-        dev_bb2_packages(uni)
+        try
+            dev_bb2_packages(uni)
+        catch e
+            @warn("Unable to dev BB2 packages in universe, perhaps you need to clean it out", uni.depot_path, e)
+        end
 
         # If we are not persistent, clean this universe up at the end of our run
         if !persistent

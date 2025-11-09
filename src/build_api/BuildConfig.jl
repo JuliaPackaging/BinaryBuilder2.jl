@@ -459,17 +459,19 @@ function build!(config::BuildConfig;
         end
     end
 
-    local run_status
-    try
-        # Write build script out into a logfile
-        build_log_io = IOBuffer()
-        mounts = deploy(config; verbose)
-        sandbox_config, collector = sandbox_and_collector(
-            build_log_io, config, mounts;
-            verbose,
-        )
-        exe = Sandbox.preferred_executor()()
+    # Declare these all as `local` so that we can inspect them in the `@infiltrate` below
+    local run_status, run_exception, build_log
 
+    # Write build script out into a logfile
+    build_log_io = IOBuffer()
+    mounts = deploy(config; verbose)
+    sandbox_config, collector = sandbox_and_collector(
+        build_log_io, config, mounts;
+        verbose,
+    )
+    exe = Sandbox.preferred_executor()()
+
+    try
         if "build-start" ∈ debug_modes
             @warn("Launching debug shell")
             runshell(config; verbose)
@@ -483,36 +485,6 @@ function build!(config::BuildConfig;
             @error("Build failed", run_status, run_exception)
         end
         wait(collector)
-        build_log = String(take!(build_log_io))
-
-        # Generate "log" artifact that will later be packaged up.
-        log_artifact_hash = in_universe(meta.universe) do env
-            Pkg.Artifacts.create_artifact() do artifact_dir
-                open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
-                    write(io, build_log)
-                end
-            end
-        end
-        log_artifact_hash = SHA1Hash(log_artifact_hash)
-
-        # Parse out the environment from the build
-        if run_status != :errored
-            env = parse_metadir_env(exe, config, mounts)
-        else
-            env = Dict{String,String}()
-        end
-
-        result = BuildResult(
-            config,
-            run_status,
-            run_exception,
-            exe,
-            mounts,
-            build_log,
-            log_artifact_hash,
-            env,
-        )
-        meta.builds[config] = result
     catch e
         run_status = :errored
         run_exception = e
@@ -520,6 +492,37 @@ function build!(config::BuildConfig;
             @error("Build failed (internal error)", run_status, run_exception)
         end
     end
+    
+    build_log = String(take!(build_log_io))
+
+    # Generate "log" artifact that will later be packaged up.
+    log_artifact_hash = in_universe(meta.universe) do env
+        Pkg.Artifacts.create_artifact() do artifact_dir
+            open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
+                write(io, build_log)
+            end
+        end
+    end
+    log_artifact_hash = SHA1Hash(log_artifact_hash)
+
+    # Parse out the environment from the build
+    if run_status != :errored
+        env = parse_metadir_env(exe, config, mounts)
+    else
+        env = Dict{String,String}()
+    end
+
+    result = BuildResult(
+        config,
+        run_status,
+        run_exception,
+        exe,
+        mounts,
+        build_log,
+        log_artifact_hash,
+        env,
+    )
+    meta.builds[config] = result
 
     if "build-stop" ∈ debug_modes || ("build-error" ∈ debug_modes && run_status != :success)
         @warn("""
