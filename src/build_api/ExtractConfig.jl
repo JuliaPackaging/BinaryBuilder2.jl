@@ -293,7 +293,7 @@ function extract!(config::ExtractConfig;
                         audit_result = audit!(config, artifact_dir)
                         if !success(audit_result)
                             @error("Audit failed, Running again with debugging enabled, then erroring out!")
-                            print_results(audit_result)
+                            show(audit_result)
                             withenv("JULIA_DEBUG" => "all") do
                                 audit!(config, artifact_dir)
                             end
@@ -322,7 +322,7 @@ function extract!(config::ExtractConfig;
             end
             if audit_result !== nothing
                 open(joinpath(artifact_dir, "$(build_config.src_name)-audit.log"); write=true) do io
-                    print_results(audit_result; io)
+                    show(io, audit_result)
                 end
             end
         end

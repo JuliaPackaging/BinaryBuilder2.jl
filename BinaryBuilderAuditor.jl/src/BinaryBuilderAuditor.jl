@@ -57,7 +57,7 @@ function audit!(prefix::String,
     licenses_present(scan, pass_results)
 
     if verbose
-        print_results(pass_results)
+        show(pass_results)
     end
 
     # Cleanup temporary directories containing toolchains

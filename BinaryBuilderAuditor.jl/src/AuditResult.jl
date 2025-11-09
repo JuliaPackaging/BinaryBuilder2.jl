@@ -1,5 +1,5 @@
 using JLLGenerator, StyledStrings
-export PassResult, AuditResult, print_results, success
+export PassResult, AuditResult, success
 
 struct PassResult
     # One of `:success`, `:warn` or `:fail`
@@ -42,8 +42,8 @@ function status_style(status::Symbol)
     )[status]
 end
 
-print_results(ar::AuditResult; kwargs...) = print_results(ar.pass_results; kwargs...)
-function print_results(pass_results::Dict{String,Vector{PassResult}}; io::IO = stdout)
+Base.show(io::IO, ar::AuditResult) = show(io, ar.pass_results)
+function Base.show(io::IO, pass_results::Dict{String,Vector{PassResult}})
     println(io, "Audit results:")
     for (name, results) in pass_results
         println(io, "  -> $(name) ($(length(results)) entries)")
