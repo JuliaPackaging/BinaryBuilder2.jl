@@ -3,7 +3,7 @@ steps:
     command: |
       export ARCH JULIA_VERSION SOFT_FAIL
       for ARCH in x86_64 aarch64; do
-        for JULIA_VERSION in nightly 1 1.12; do
+        for JULIA_VERSION in nightly 1 1.11; do
           if [[ "\${JULIA_VERSION}" == "nightly" ]]; then
             SOFT_FAIL="true"
           else
