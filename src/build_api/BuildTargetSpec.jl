@@ -1,5 +1,13 @@
 using BinaryBuilderToolchains: gcc_platform
 
+"""
+    BuildTargetSpec
+
+BinaryBuilder2 supports an extremely flexible (and thereby annoyingly
+complicated) way of specifying what toolchains to place where within the build
+environment.  Read the [`BuildTargetSpec`](@ref) documentation page for the
+full details.
+"""
 struct BuildTargetSpec
     name::String
     platform::CrossPlatform
