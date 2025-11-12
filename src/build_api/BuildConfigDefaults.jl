@@ -6,10 +6,25 @@ export supported_platforms, make_target_spec_plan, apply_spec_plan
 # This just makes qemu-user-static's job easier.
 default_host() = Platform(arch(HostPlatform()), "linux")
 
+"""
+    make_target_spec_plan(;host_toolchains = [CToolchain(), HostToolsToolchain()],
+                           target_toolchains = [CToolchain()],
+                           host_dependencies = [],
+                           target_dependencies = [],
+                           cross_compiler = false)
+
+A convenience function that creates a vector of `BuildTargetSpec` objects in
+one of two forms, either a `host` and `target` pair, or if `cross_compiler` is
+set to `true`, a `build`, `host` and `target` triplet.  See the [Platform
+Naming](@ref) doc page for the confusing terminology around these names.
+
+In particular, `host_toolchains` and `host_dependencies` will always be for
+things that run on the current build machine.
+"""
 function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToolsToolchain()],
                                 target_toolchains::Vector = [CToolchain()],
-                                target_dependencies::Vector = [],
                                 host_dependencies::Vector = [],
+                                target_dependencies::Vector = [],
                                 cross_compiler::Bool = false)
     host_toolchains = Vector{PlatformlessWrapper{<:AbstractToolchain}}(host_toolchains)
     target_toolchains = Vector{PlatformlessWrapper{<:AbstractToolchain}}(target_toolchains)
@@ -65,9 +80,20 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
     end
 end
 
+"""
+    apply_spec_plan(target_spec_plan::Vector
+                    host::Platform
+                    platform::AbstractPlatform)
+
+Given a build specification plan (generated via `make_target_spec_plan()`)
+concretize it for the given `host` and `platform`.  This is the equivalent
+of `apply_platform()` but for a vector of `BuildTargetSpec` objects.
+If `platform` is a `CrossPlatform`, it is assumed that the `target_spec_plan`
+was created with `make_target_spec_plan(;..., cross_compiler=true)`.
+"""
 function apply_spec_plan(target_spec_plan::Vector,
                          host::Platform,
-                         target::AbstractPlatform)
+                         platform::AbstractPlatform)
     target_spec_plan = Vector{PlatformlessWrapper{BuildTargetSpec}}(target_spec_plan)
 
     # Separate out our `host` and `default` specs, which we must always have.
@@ -86,13 +112,13 @@ function apply_spec_plan(target_spec_plan::Vector,
         # The "default" spec refers to the machine that `cc` builds for, which is
         # usually the "target" (but is the "host" in the event that we're building
         # a cross-compiler with these cross-compilers).
-        apply_platform(only(default_specs), CrossPlatform(host => host_if_crossplatform(target))),
+        apply_platform(only(default_specs), CrossPlatform(host => host_if_crossplatform(platform))),
     ]
-    if isa(target, CrossPlatform)
+    if isa(platform, CrossPlatform)
         if length(target_spec_plan) == 3
             other_specs = filter(plan -> !any((:native, :default) .∈ (flags(plan),)), target_spec_plan)
             # If we're dealing with a cross-compiler, add on the "target" spec.
-            push!(target_specs, apply_platform(only(other_specs), CrossPlatform(host => target.target)))
+            push!(target_specs, apply_platform(only(other_specs), CrossPlatform(host => platform.target)))
         else
             throw(ArgumentError("For cross-compilers, you must specify 3 target spec plans, see `is_crosscompiler` in `default_target_spec_plan()`"))
         end
