@@ -5,6 +5,8 @@ This is now possible via the `launch_code_server` script, which, once invoked, d
 The tailscale funnel address will be printed out by the `launch_code_server` script, and is meant for use in debugging difficult-to-reproduce issues on CI servers and the like.
 Opening a terminal in the vscode instance gives you the same shell prompt as the `--debug` session, including `bash` history with the commands from the build script.
 
+![](./code_server.png)
+
 ## Future work
 
 1. It would be nice to have a `--debug=vscode` flag to automatically run this, perhaps?  Following onto that, perhaps we can figure out a way to securely allow this in Yggdrasil so maintainers can debug difficult builds?
