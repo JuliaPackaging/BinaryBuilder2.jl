@@ -1,4 +1,5 @@
 using BinaryBuilderSources: PkgSpec
+export PlatformlessWrapper, apply_platform
 
 """
     PlatformlessWrapper{T}
@@ -8,14 +9,9 @@ platform, such as `JLLSource`s, or `CToolchain`s.  This struct provides a
 convenient method of delaying full concretization while allowing carrythrough
 of arguments past API layers.  Example usage is via the constructor of an
 implemented type (such as `CToolchain`), but lacking the platform argument,
-then later invoking `apply_platform()` on that type:
+then later invoking `apply_platform()` on that type.
 
-    toolchain = CToolchain()
-    ...
-    toolchain = apply_platform(
-        toolchain,
-        CrossPlatform(Platform("x86_64", "linux") => Platform("aarch64", "linux")),
-    )
+See the [`PlatformlessWrapper`](@ref) documentation page for examples.
 """
 Base.@kwdef struct PlatformlessWrapper{T}
     args::Vector = []
