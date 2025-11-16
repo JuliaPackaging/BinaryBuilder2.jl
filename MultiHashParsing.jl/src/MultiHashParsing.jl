@@ -21,6 +21,7 @@ Base.bytes2hex(hash::MultiHash) = bytes2hex(hash.data)
 # Equality convenience methods
 Base.:(==)(hash::MultiHash, data::Union{Vector{UInt8}, NTuple{N, UInt8}}) where {N} = all(hash.data .== data)
 Base.:(==)(data::Union{Vector{UInt8}, NTuple{N, UInt8}}, hash::MultiHash) where {N} = hash == data
+Base.isless(a::T, b::T) where {T<:MultiHash} = a.data < b.data
 
 # For strings, we try to parse them and then do the comparison
 function Base.:(==)(hash::MultiHash, str::String)
