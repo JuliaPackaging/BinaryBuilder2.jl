@@ -398,7 +398,7 @@ function Base.show(io::IO, meta::BuildMeta)
 
         function layer_report(name, vals)
             num_total = length(vals)
-            num_successful = length(filter(v -> v.status == :success, vals))
+            num_successful = length(filter(v -> v.status ∈ (:success, :cached), vals))
             if num_successful == num_total
                 color = :green
             elseif num_successful >= 1
