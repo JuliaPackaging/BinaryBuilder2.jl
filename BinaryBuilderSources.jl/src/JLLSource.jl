@@ -73,21 +73,25 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
     # e.g. GCC_jll requires `Zlib_jll`, and so does `Binutils_jll`.
     # We need to collapse down to a single version of `Zlib_jll` that
     # satisfies all constraints, if we can't do that, we should error here.
-    seen_jlls = Dict{Tuple{String,String,AbstractPlatform},JLLSource}()
+    # We use a Tuple[] here instead of a `Dict` because we need this function
+    # to be stably-sorted.
+    seen_jlls = Tuple{Tuple{String,String,AbstractPlatform},JLLSource}[]
     for jll in jlls
         key = (jll.package.name, jll.target, jll.platform)
-        if key ∈ keys(seen_jlls)
+        k_idx = findfirst(((k,j),) -> k == key, seen_jlls)
+        if k_idx !== nothing
+            seen_jll = seen_jlls[k_idx][2]
             # Compute new version that is the intersection of the versions
-            new_version = insersect_versions(seen_jlls[key].package.version, jll.package.version)
+            new_version = insersect_versions(seen_jll.package.version, jll.package.version)
             if !isa(new_version, VersionNumber) && isempty(new_version)
-                throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jlls[key].package.version) ∩ $(jll.package.version)"))
+                throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jll.package.version) ∩ $(jll.package.version)"))
             end
-            seen_jlls[key].package.version = new_version
+            seen_jll.package.version = new_version
         else
-            seen_jlls[key] = jll
+            push!(seen_jlls, (key, jll))
         end
     end
-    return values(seen_jlls)
+    return [jll for (_, jll) in seen_jlls]
 end
 
 """
