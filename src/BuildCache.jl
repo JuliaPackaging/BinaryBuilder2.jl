@@ -53,9 +53,10 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
 end
 
 function Base.haskey(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash)
-    return haskey(bc.extractions, (build_hash, extract_hash)) &&
-           haskey(bc.extract_logs, (build_hash, extract_hash)) &&
-           haskey(bc.build_logs, build_hash) &&
+    haskeydir(dict, arg) = haskey(dict, arg) && isdir(artifact_path(dict[arg]))
+    return haskeydir(bc.extractions, (build_hash, extract_hash)) &&
+           haskeydir(bc.extract_logs, (build_hash, extract_hash)) &&
+           haskeydir(bc.build_logs, build_hash) &&
            haskey(bc.envs, build_hash)
 end
 function Base.get(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash)
