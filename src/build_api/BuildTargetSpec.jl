@@ -79,7 +79,7 @@ function rename_wrapper_prefixes(name::String, flags::Set{Symbol}, pw::Platforml
         # If `:default` is set in our flags, make a `x86_64-linux-gnu-gcc` wrapper
         # as well as a `gcc` wrapper and point `$CC` at our compiler.
         if :default ∈ flags
-            append!(wrapper_prefixes, ["\${triplet}-", ""])
+            push!(wrapper_prefixes, "")
             push!(env_prefixes, "")
         end
         pw.kwargs[:wrapper_prefixes] = wrapper_prefixes
