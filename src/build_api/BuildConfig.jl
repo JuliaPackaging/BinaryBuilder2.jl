@@ -245,6 +245,15 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
             for prefix in sort(collect(keys(config.source_trees)))
                 deps = config.source_trees[prefix]
                 println(hash_buffer, "  $(prefix) = $(content_hash(deps))")
+
+                # For debugging build cache issues
+                # source_str(gs::GitSource) = "GitSource: $(gs.target)"
+                # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
+                # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
+                # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
+                # for dep in deps
+                #     println(hash_buffer, "    - $(source_str(dep)) $(content_hash(dep))")
+                # end
             end
 
             # Next, the subset of the environment that includes all `BinaryBuilder*` packages
@@ -255,7 +264,9 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
                 println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
             end
         end
-        config.content_hash[] = SHA1Hash(sha1(take!(hash_buffer)))
+        hash_buffer = String(take!(hash_buffer))
+        @debug("BuildConfig hash buffer:\n$(hash_buffer)")
+        config.content_hash[] = SHA1Hash(sha1(hash_buffer))
 
         # Add `bb_build_identifier` to our environment which is primarily used
         # as the hostname in our vscode tunnel to `bb2.cflo.at`.
@@ -440,6 +451,8 @@ function build!(config::BuildConfig;
             if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
                 if verbose
                     @info("Build cached", config, build_hash)
+                else
+                    @debug("Build cached", config, build_hash)
                 end
                 try
                     result = BuildResult_cached(config)
@@ -457,6 +470,8 @@ function build!(config::BuildConfig;
         catch e
             @error("Unable to hit build cache", exception=(e, catch_backtrace()))
         end
+    else
+        @debug("Build cache disabled", build_cache_enabled(meta), disable_cache, isempty(extract_arg_hints))
     end
 
     # Declare these all as `local` so that we can inspect them in the `@infiltrate` below

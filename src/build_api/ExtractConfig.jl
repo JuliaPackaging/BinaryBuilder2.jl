@@ -90,7 +90,9 @@ function extract_content_hash(extract_script::String, products::Vector{<:Abstrac
     #     println(hash_buffer, "  $(config.name) - $(content_hash(config))")
     # end
 
-    return SHA1Hash(sha1(take!(hash_buffer)))
+    hash_buffer = String(take!(hash_buffer))
+    @debug("ExtractConfig hash buffer:\n$(hash_buffer)")
+    return SHA1Hash(sha1(hash_buffer))
 end
 function BinaryBuilderSources.content_hash(config::ExtractConfig)
     return extract_content_hash(config.script, config.products)
@@ -239,7 +241,7 @@ function extract!(config::ExtractConfig;
             if verbose
                 extract_hash = content_hash(config)
                 build_hash = content_hash(config.build.config)
-                @info("Extraction cached", config, extract_hash, build_hash)
+                @info("Extraction cached", config, extract_hash, build_hash, path=artifact_path(artifact_hash))
             end
             try
                 result = ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
