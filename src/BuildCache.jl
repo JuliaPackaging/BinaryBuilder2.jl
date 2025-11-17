@@ -11,24 +11,33 @@ struct BuildCache
     build_logs::Dict{SHA1Hash,SHA1Hash}
     # This maps from content_hash(::BuildConfig) -> env dict
     envs::Dict{SHA1Hash,Dict{String,String}}
+
+    # This is where our artifacts are stored.  For simplicity, we lock ourselves to a
+    # single artifact directory rather than doing the typical depot-based lookup.
+    artifacts_dir::String
 end
 
 function Base.show(io::IO, bc::BuildCache)
-    println(io, "BuildCache in $(bc.cache_dir):")
+    println(io, "BuildCache")
+    println(io, "  - database path in $(bc.cache_dir)")
     println(io, "  - $(length(bc.extractions)) extractions")
     println(io, "  - $(length(bc.build_logs)) build logs, $(length(bc.extract_logs)) extraction logs")
     println(io, "  - $(length(bc.envs)) environment maps")
+    println(io, "  - artifacts in $(bc.artifact_dir)")
 end
 
 default_buildcache_dir() = @get_scratch!("buildcache_database")
 
-function BuildCache(;cache_dir = default_buildcache_dir())
+function BuildCache(;cache_dir = default_buildcache_dir(), artifacts_dir = joinpath(first(Base.DEPOT_PATH), "artifacts"))
+    mkpath(cache_dir)
+    mkpath(artifacts_dir)
     return BuildCache(
         cache_dir,
         Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}(),
         Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}(),
         Dict{SHA1Hash,SHA1Hash}(),
         Dict{SHA1Hash,Dict{String,String}}(),
+        artifacts_dir,
     )
 end
 
@@ -53,7 +62,9 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
 end
 
 function Base.haskey(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash)
-    haskeydir(dict, arg) = haskey(dict, arg) && isdir(artifact_path(dict[arg]))
+    function haskeydir(dict, arg)
+        return haskey(dict, arg) && isdir(joinpath(bc.artifacts_dir, bytes2hex(dict[arg])))
+    end
     return haskeydir(bc.extractions, (build_hash, extract_hash)) &&
            haskeydir(bc.extract_logs, (build_hash, extract_hash)) &&
            haskeydir(bc.build_logs, build_hash) &&
@@ -96,6 +107,9 @@ function save_cache(bc::BuildCache)
             println(io, "$(bytes2hex(build_hash)) $(bytes2hex(log_artifact_hash))")
         end
     end
+    open(joinpath(bc.cache_dir, "artifacts_dir"); write=true) do io
+        println(io, bc.artifacts_dir)
+    end
 
     # Serialize out environment blocks
     mkpath(joinpath(bc.cache_dir, "envs"))
@@ -119,6 +133,7 @@ function safe_readdir(path::AbstractString; kwargs...)
 end
 
 function load_cache(cache_dir::String = default_buildcache_dir())
+    artifacts_dir = ""
     cache = Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}()
     extract_logs = Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}()
     build_logs = Dict{SHA1Hash,SHA1Hash}()
@@ -163,12 +178,16 @@ function load_cache(cache_dir::String = default_buildcache_dir())
                 continue
             end
         end
+
+        artifacts_dir = open(joinpath(cache_dir, "artifacts_dir"); read=true) do io
+            first(readlines(io))
+        end
     catch e
         if !(isa(e, SystemError) && e.errnum == Base.Libc.ENOENT)
             rethrow(e)
         end
     end
-    bc = BuildCache(cache_dir, cache, extract_logs, build_logs, envs)
+    bc = BuildCache(cache_dir, cache, extract_logs, build_logs, envs, artifacts_dir)
     atexit() do
         try
             save_cache(bc)
@@ -178,8 +197,10 @@ function load_cache(cache_dir::String = default_buildcache_dir())
     return bc
 end
 
-function prune!(bc::BuildCache, depots::Vector{String} = Base.DEPOT_PATH)
-    artifact_exists = ((_, h),) -> any(isdir(joinpath(depot, "artifacts", bytes2hex(h))) for depot in depots)
+function prune!(bc::BuildCache)
+    function artifact_exists((_, h),)
+        return isdir(joinpath(bc.artifacts_dir, bytes2hex(h)))
+    end
     # See which artifacts are still existant
     filter!(artifact_exists, bc.extractions)
     filter!(artifact_exists, bc.extract_logs)
