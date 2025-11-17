@@ -283,8 +283,8 @@ function prepare(jlls::Vector{JLLSource};
                         cached_paths = package_cache["artifact_paths"]
                         tree_hash = Base.SHA1(package_cache["tree_hash"])
 
-                        if !isa(cached_paths, Vector{AbstractString})
-                            @debug("cached_paths is not a String[], clearing", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                        if !isa(cached_paths, Vector{<:AbstractString})
+                            @debug("cached_paths is not a String[], clearing", name=jll.package.name, uuid=string(jll.package.uuid), cache_path, typeof(cached_paths))
                             clear_cache!()
                             break
                         end
