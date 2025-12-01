@@ -302,7 +302,7 @@ version = "1.8.1"
 
 [[deps.OutputCollectors]]
 deps = ["StyledStrings"]
-git-tree-sha1 = "e3ba2c5c1c1b73b02758108d6fdaa36ef8605615"
+git-tree-sha1 = "c2555cc81cf75dc03d4c1e9fde457c47c6bbb08a"
 repo-rev = "master"
 repo-url = "https://github.com/JuliaPackaging/OutputCollectors.jl.git"
 uuid = "6c11c7d4-943b-4e2b-80de-f2cfc2930a8c"

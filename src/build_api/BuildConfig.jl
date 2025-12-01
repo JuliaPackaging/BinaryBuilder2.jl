@@ -4,6 +4,7 @@ using BinaryBuilderToolchains: gcc_platform, platform, path_appending_merge
 using Pkg.Types: PackageSpec
 import BinaryBuilderSources: prepare, deploy
 using MultiHashParsing, SHA, OutputCollectors, Infiltrator
+import Base: PipeEndpoint
 
 export BuildConfig, build!, cleanup
 
@@ -377,7 +378,7 @@ function sandbox_and_collector(log_io::IO,
                                args...;
                                verbose::Bool = false,
                                kwargs...)
-    pipes = Dict("stdout" => Pipe(), "stderr" => Pipe())
+    pipes = Dict("stdout" => PipeEndpoint(), "stderr" => PipeEndpoint())
     styles = Dict("stderr" => :red)
     outputs = IO[log_io]
     if verbose
