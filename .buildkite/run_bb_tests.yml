@@ -12,6 +12,7 @@ steps:
           install:
             - "GNUMake_jll"
     commands: |
+      julia --project -e 'import Pkg; Pkg.instantiate()'
       make --output-sync=target -j$$(nproc) testall
     agents:
       queue: "juliaecosystem"
