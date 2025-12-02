@@ -603,7 +603,8 @@ function bind_jll_artifact!(artifacts_toml_path::String, name::String, platform:
                             artifact::JLLArtifactBinding; lazy::Bool = false)
     kwargs = Dict(
         :download_info => [(s.url, bytes2hex(s.tarball_hash)) for s in artifact.download_sources],
-        :lazy =>lazy,
+        :lazy => lazy,
+        :force => true,
     )
 
     if !isa(platform, AnyPlatform)
@@ -654,7 +655,9 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
 
     # Generate `Artifacts.toml`
     artifacts_toml_path = joinpath(out_dir, "Artifacts.toml")
-    for (bidx, build) in enumerate(info.builds)
+
+    # Sort builds to make this more deterministic
+    for build in sort(info.builds; by=b->triplet(b.platform))
         # Bind the main artifact
         bind_jll_artifact!(artifacts_toml_path, build.name, build.platform, build.artifact; lazy=build.lazy)
 

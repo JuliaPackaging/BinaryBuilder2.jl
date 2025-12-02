@@ -437,7 +437,8 @@ end
             Core.eval(m, Meta.parse(jllinfo_def))
 
             # Round-trip the JLLInfo object to TOML and ensure it comes back clean:
-            @test m.jll == roundtrip_jll_through_toml(m.jll)[2]
+            jll = Core.eval(m, :jll)
+            @test jll == roundtrip_jll_through_toml(jll)[2]
         end
     end
 end
@@ -541,7 +542,7 @@ using BinaryBuilderSources: PkgSpec
     ), Platform("aarch64", "linux"))
 
     mktempdir() do prefix
-        prepare(jll; depot=prefix)
+        prepare(jll; depot=prefix, ignore_empty_registries=true)
         data = parse_toml_dict(jll; depot=prefix)
 
         @test data.name == "Ncurses"

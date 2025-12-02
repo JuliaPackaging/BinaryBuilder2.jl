@@ -162,15 +162,16 @@ function prepare(jlls::Vector{JLLSource};
                  force::Bool = false,
                  registries::Vector{Pkg.Registry.RegistryInstance} = Pkg.Registry.reachable_registries(; depots=[depot]),
                  registry_refresh_interval::TimePeriod = Hour(1),
-                 to::TimerOutput = TimerOutput())
+                 to::TimerOutput = TimerOutput(),
+                 ignore_empty_registries::Bool = false)
     # Split JLLs by platform:
     jlls_by_platform_by_prefix = Dict{AbstractPlatform,Dict{String,Vector{JLLSource}}}()
 
     # Look up our extant registries immediately, and mark if they're out of date.
-    if isempty(registries)
+    if isempty(registries) && !ignore_empty_registries
         # This should never happen, because `default_jll_source_depot()` should
         # automatically fill it out, so this only happens if someone gives us something weird.
-        error("No reachable registries in depot '$(depot)'?")
+        @warn("No reachable registries in depot '$(depot)'?")
     end
 
     time_thresh = Dates.datetime2unix(Dates.now() - registry_refresh_interval)
