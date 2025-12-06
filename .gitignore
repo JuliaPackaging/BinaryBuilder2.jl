@@ -2,3 +2,4 @@
 LocalPreferences.toml
 .buildkite/logs/
 .aider*
+Manifest*.toml
