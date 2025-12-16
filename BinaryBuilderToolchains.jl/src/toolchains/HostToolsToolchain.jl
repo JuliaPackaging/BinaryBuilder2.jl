@@ -224,7 +224,7 @@ function toolchain_sources(toolchain::HostToolsToolchain)
             compiler_wrapper(joinpath(out_dir, "curl"), "$(toolchain_prefix)/bin/curl") do io
                 println(io, """
                 # Ensure CURL can find its certificates
-                export CURL_CA_BUNDLE=\"$(toolchain_prefix)/etc/certs/ca-certificates.crt\"
+                export CURL_CA_BUNDLE=\"\${SSL_CERT_FILE}\"
                 """)
             end
         end
