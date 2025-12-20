@@ -133,61 +133,63 @@ function safe_readdir(path::AbstractString; kwargs...)
 end
 
 function load_cache(cache_dir::String = default_buildcache_dir())
-    artifacts_dir = ""
+    artifacts_dir = Ref(joinpath(first(Base.DEPOT_PATH), "artifacts"))
     cache = Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}()
     extract_logs = Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}()
     build_logs = Dict{SHA1Hash,SHA1Hash}()
     envs = Dict{SHA1Hash,Dict{String,String}}()
-    try
-        # Parse extractions artifact mapping cache
-        open(joinpath(cache_dir, "extractions_cache.db"); read=true) do io
-            for line in readlines(io)
-                build_hash, extract_hash, artifact_hash = split(line, " ")
-                cache[(SHA1Hash(build_hash), SHA1Hash(extract_hash))] = SHA1Hash(artifact_hash)
-            end
-        end
 
-        # Parse logs artifact mapping cache
-        open(joinpath(cache_dir, "extract_log_cache.db"); read=true) do io
-            for line in readlines(io)
-                build_hash, extract_hash, log_artifact_hash = split(line, " ")
-                extract_logs[(SHA1Hash(build_hash), SHA1Hash(extract_hash))] = SHA1Hash(log_artifact_hash)
-            end
-        end
-        open(joinpath(cache_dir, "build_log_cache.db"); read=true) do io
-            for line in readlines(io)
-                build_hash, log_artifact_hash = split(line, " ")
-                build_logs[SHA1Hash(build_hash)] = SHA1Hash(log_artifact_hash)
-            end
-        end
-
-        # Parse environment blocks
-        for env_filename in safe_readdir(joinpath(cache_dir, "envs"))
-            if !endswith(env_filename, ".env")
-                continue
-            end
-            local build_hash
-            try
-                build_hash = SHA1Hash(env_filename[1:end-4])
-                
-                env_string = String(read(joinpath(cache_dir, "envs", env_filename)))
-                envs[build_hash] = parse_env_block(env_string)
-            catch
-                # Just silently skip env files we can't read or who have an improper name
-                @debug("Can't read envfile $(env_filename)")
-                continue
-            end
-        end
-
-        artifacts_dir = open(joinpath(cache_dir, "artifacts_dir"); read=true) do io
-            first(readlines(io))
-        end
-    catch e
-        if !(isa(e, SystemError) && e.errnum == Base.Libc.ENOENT)
-            rethrow(e)
+    function safe_open(func, file; kwargs...)
+        if isfile(file)
+            open(func, file; kwargs...)
         end
     end
-    bc = BuildCache(cache_dir, cache, extract_logs, build_logs, envs, artifacts_dir)
+
+    # Parse extractions artifact mapping cache
+    safe_open(joinpath(cache_dir, "extractions_cache.db"); read=true) do io
+        for line in readlines(io)
+            build_hash, extract_hash, artifact_hash = split(line, " ")
+            cache[(SHA1Hash(build_hash), SHA1Hash(extract_hash))] = SHA1Hash(artifact_hash)
+        end
+    end
+
+    # Parse logs artifact mapping cache
+    safe_open(joinpath(cache_dir, "extract_log_cache.db"); read=true) do io
+        for line in readlines(io)
+            build_hash, extract_hash, log_artifact_hash = split(line, " ")
+            extract_logs[(SHA1Hash(build_hash), SHA1Hash(extract_hash))] = SHA1Hash(log_artifact_hash)
+        end
+    end
+    safe_open(joinpath(cache_dir, "build_log_cache.db"); read=true) do io
+        for line in readlines(io)
+            build_hash, log_artifact_hash = split(line, " ")
+            build_logs[SHA1Hash(build_hash)] = SHA1Hash(log_artifact_hash)
+        end
+    end
+
+    # Parse environment blocks
+    for env_filename in safe_readdir(joinpath(cache_dir, "envs"))
+        if !endswith(env_filename, ".env")
+            continue
+        end
+        local build_hash
+        try
+            build_hash = SHA1Hash(env_filename[1:end-4])
+            
+            env_string = String(read(joinpath(cache_dir, "envs", env_filename)))
+            envs[build_hash] = parse_env_block(env_string)
+        catch
+            # Just silently skip env files we can't read or who have an improper name
+            @debug("Can't read envfile $(env_filename)")
+            continue
+        end
+    end
+
+    safe_open(joinpath(cache_dir, "artifacts_dir"); read=true) do io
+        artifacts_dir[] = first(readlines(io))
+    end
+
+    bc = BuildCache(cache_dir, cache, extract_logs, build_logs, envs, artifacts_dir[])
     atexit() do
         try
             save_cache(bc)
