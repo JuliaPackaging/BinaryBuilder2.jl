@@ -87,6 +87,7 @@ struct HostToolsToolchain <: AbstractToolchain
             # Misc. tools
             "strace_jll",
             "libtree_jll",
+            "ripgrep_jll",
 
             # Runtime libraries (e.g. libstdc++.so)
             "CompilerSupportLibraries_jll",
