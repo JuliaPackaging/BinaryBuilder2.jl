@@ -47,6 +47,7 @@ run_build_tarballs(meta, "GCCBootstrapManual/build_tarballs.jl")
 run_build_tarballs(meta, "Zlib/build_tarballs.jl")
 run_build_tarballs(meta, "LLVM/compiler_rt.jl")
 run_build_tarballs(meta, "LLVM/libcxx.jl")
+run_build_tarballs(meta, "CCTools/build_tarballs.jl")
 
 GCC_TOOLS=[
     # Platform header/library bundles
