@@ -2,7 +2,7 @@
 
 if [[ "${target}" == aarch64-* ]]; then
     echo " arm64"
+    echo " arm64e"
 else
     echo " $(uname -m)"
 fi
-EOF
