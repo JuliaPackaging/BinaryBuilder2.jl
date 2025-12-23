@@ -39,6 +39,9 @@ const verbose = false
             "gzip",
             "zstd",
             "xz",
+
+            # Misc. tools
+            "rg",
         ]
         for tool in host_tools
             @testset "$tool" begin
