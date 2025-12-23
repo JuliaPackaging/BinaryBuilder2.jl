@@ -186,7 +186,13 @@ function load_cache(cache_dir::String = default_buildcache_dir())
     end
 
     safe_open(joinpath(cache_dir, "artifacts_dir"); read=true) do io
-        artifacts_dir[] = first(readlines(io))
+        new_artifacts_dir = first(readlines(io))
+
+        # We had a bug for a while that wrote out an empty string here, which is totally busted.
+        # Let's reject that to get things working without having to fix all the installs manually.
+        if !isempty(new_artifacts_dir)
+            artifacts_dir[] = new_artifacts_dir
+        end
     end
 
     bc = BuildCache(cache_dir, cache, extract_logs, build_logs, envs, artifacts_dir[])
