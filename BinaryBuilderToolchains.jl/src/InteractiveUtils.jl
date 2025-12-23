@@ -153,7 +153,7 @@ function with_toolchains(f::Function, toolchains::Vector{<:AbstractToolchain};
     # If no `deploy_dir` was given, generate a temporary one that exists only
     # for the lifetime of this function.  Otherwise, use the given directory.
     if deploy_dir === nothing
-        mktempdir(deploy_and_run, @get_scratch!("tempdirs"))
+        mktempdir(deploy_and_run, @get_scratch!("tempdirs"); prefix="with_toolchains_")
     else
         deploy_and_run(deploy_dir)
     end
