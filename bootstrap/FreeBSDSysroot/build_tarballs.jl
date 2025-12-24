@@ -39,18 +39,20 @@ build_tarballs(;
         ./usr/lib/crt1.o
 
         # Compiler runtimes
-        # ./usr/lib/libcompiler_rt.a
-        # ./usr/lib/libgcc.a
-        # ./usr/lib/libgcc_s.so
-        # ./usr/lib/libgcc_eh.a
-        # ./lib/libgcc_s.so.1
+        ./usr/lib/libcompiler_rt.a
+        ./usr/lib/libgcc.a
+        ./usr/lib/libgcc_s.so
+        ./lib/libgcc_s.so.1
+        ./usr/lib/libgcc_eh.a
+        ./lib/libc++.so.1
+        ./usr/lib/libcxxrt.a
+        ./usr/lib/libcxxrt.so
+        ./lib/libcxxrt.so.1
+
+        # These conflict
         # ./usr/lib/libc++.so
         # ./usr/lib/libc++.a
         # ./usr/lib/libc++experimental.a
-        # ./lib/libc++.so.1
-        # ./usr/lib/libcxxrt.a
-        # ./usr/lib/libcxxrt.so
-        # ./lib/libcxxrt.so.1
 
         # We're only going to extract certain libraries that are required to bootstrap GCC/Clang:
         # libc
