@@ -39,18 +39,18 @@ build_tarballs(;
         ./usr/lib/crt1.o
 
         # Compiler runtimes
-        ./usr/lib/libcompiler_rt.a
-        ./usr/lib/libgcc.a
-        ./usr/lib/libgcc_s.so
-        ./usr/lib/libgcc_eh.a
-        ./lib/libgcc_s.so.1
-        ./usr/lib/libc++.so
-        ./usr/lib/libc++.a
-        ./usr/lib/libc++experimental.a
-        ./lib/libc++.so.1
-        ./usr/lib/libcxxrt.a
-        ./usr/lib/libcxxrt.so
-        ./lib/libcxxrt.so.1
+        # ./usr/lib/libcompiler_rt.a
+        # ./usr/lib/libgcc.a
+        # ./usr/lib/libgcc_s.so
+        # ./usr/lib/libgcc_eh.a
+        # ./lib/libgcc_s.so.1
+        # ./usr/lib/libc++.so
+        # ./usr/lib/libc++.a
+        # ./usr/lib/libc++experimental.a
+        # ./lib/libc++.so.1
+        # ./usr/lib/libcxxrt.a
+        # ./usr/lib/libcxxrt.so
+        # ./lib/libcxxrt.so.1
 
         # We're only going to extract certain libraries that are required to bootstrap GCC/Clang:
         # libc
@@ -76,6 +76,19 @@ build_tarballs(;
     )
 
     tar -C ${prefix} -xJf "${TARBALL_NAME}" "${FILES_TO_EXTRACT[@]}"
+
+    # Clean up headers that we're going to deploy from JLLs we build
+    # libc++
+    rm -rf ${prefix}/usr/include/c++
+
+    # libunwind
+    rm -rf ${prefix}/usr/include/__libunwind_config.h
+    rm -rf ${prefix}/usr/include/unwind_arm_ehabi.h
+    rm -rf ${prefix}/usr/include/libunwind.h
+
+    # zlib
+    rm -rf ${prefix}/usr/include/zconf.h
+    rm -rf ${prefix}/usr/include/zlib.h
 
     # Extract license
     tar -xJf "${TARBALL_NAME}" ./COPYRIGHT
