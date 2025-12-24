@@ -18,9 +18,14 @@ struct JLLSource <: AbstractSource
     # The artifacts that belong to this JLL and must be linked in.
     # This is filled out by `prepare()`
     artifact_paths::Vector{String}
+
+    # Defaults to `true`, turn this off for collections of JLLs that
+    # you know will clobber eachother, such as the bootstrap variants
+    # of JLLs, which we don't control the contents of that closely.
+    warn_on_overwrite::Bool
 end
 
-function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
+function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "", warn_on_overwrite::Bool = true)
     noabspath!(target)
     return JLLSource(
         package,
@@ -29,17 +34,18 @@ function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "")
         HostPlatform(platform),
         string(target),
         String[],
+        warn_on_overwrite,
     )
 end
 
-function JLLSource(name::String, platform; target = "", kwargs...)
+function JLLSource(name::String, platform; target = "", warn_on_overwrite = true, kwargs...)
     noabspath!(target)
-    return JLLSource(PkgSpec(;name, kwargs...), platform; target)
+    return JLLSource(PkgSpec(;name, kwargs...), platform; target, warn_on_overwrite)
 end
 
 function retarget(jll::JLLSource, new_target::String)
     noabspath!(new_target)
-    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths)
+    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths, jll.warn_on_overwrite)
 end
 
 """
@@ -448,8 +454,12 @@ function deploy(jlls::Vector{JLLSource}, prefix::String)
         install_path = joinpath(prefix, target)
         mkpath(install_path)
         paths = unique(vcat((jll.artifact_paths for jll in target_jlls)...))
+
+        # If all JLLs in this prefix are marked as "do not warn on overwrite", then
+        # pass that through to `deploy_artifact_paths(;verbose)`.
+        warn_on_overwrite = any(jll.warn_on_overwrite for jll in target_jlls)
         try
-            deploy_artifact_paths(install_path, paths)
+            deploy_artifact_paths(install_path, paths; verbose = warn_on_overwrite)
         catch
             @error("Failed to deploy", install_path, paths)
             rethrow()

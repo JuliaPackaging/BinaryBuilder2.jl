@@ -409,6 +409,44 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 retarget(zstd_specific_dep, "foo"),
                 retarget(zstd_impossible_dep, "bar"),
             ])) == 2
+
+            function get_overlapping_jlls(should_warn = false)
+                return [
+                    # Get a zstd JLL, and another package that just so happens to contain the same files:
+                    JLLSource("Zstd_jll", HostPlatform(),
+                        uuid=Base.UUID("3161d3a3-bdf6-5164-811a-617609db77b4"),
+                        version=v"1.5.6+3",
+                        warn_on_overwrite=should_warn,
+                    ),
+                    JLLSource("OverlappingZstd_jll", HostPlatform(),
+                        uuid=Base.UUID("3161d3a3-bdf6-5164-811a-000000000000"),
+                        repo=Pkg.Types.GitRepo(
+                            source="https://github.com/staticfloat/OverlappingZstd_jll.jl",
+                            rev="cde53a86f0bf893872606759e28be06ebe1b8e89",
+                        ),
+                        warn_on_overwrite=false,
+                    ),
+                ]
+            end
+
+            # Test that two JLLs with overlapping contents warns about overwriting:
+            mktempdir() do prefix
+                jlls = get_overlapping_jlls(true)
+                prepare(jlls)
+                @test_logs (:warn, r"already exists in") match_mode=:any begin
+                    deploy(jlls, prefix)
+                end
+            end
+
+            # Test that we can squelch this by setting all JLLSource's to have
+            # `warn_on_overwrite` set to `false`.
+            mktempdir() do prefix
+                jlls = get_overlapping_jlls(false)
+                prepare(jlls)
+                @test_logs begin
+                    deploy(jlls, prefix)
+                end
+            end
         end
     end
 end
