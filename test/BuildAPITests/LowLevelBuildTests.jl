@@ -5,7 +5,7 @@ if !isdefined(@__MODULE__, :TestingUtils)
 end
 
 @testset "Multi-stage build test" begin
-    meta = BuildMeta(; verbose=true, disable_cache=true)
+    meta = BuildMeta(; verbose=true, disabled_caches=["build"])
     # First, build `libstring` from the BBToolchains testsuite
     libstring_build_config = BuildConfig(
         meta,

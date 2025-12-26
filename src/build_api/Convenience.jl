@@ -317,7 +317,7 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
     old_dry_run = copy(meta.dry_run)
     if dry_run
         empty!(meta.dry_run)
-        push!.((meta.dry_run,), (:build, :extract, :package))
+        push!.((meta.dry_run,), ("build", "extract", "package"))
     end
     old_ARGS = copy(ARGS)
     empty!(ARGS)

@@ -10,76 +10,84 @@ const BUILD_HELP = (
                              [--output-dir=<dir>] [--dry-run=<tags>] [--meta-json]
 
     Options:
-        targets             By default `build_tarballs.jl` will build a tarball for every
-                            target within the `platforms` variable.  To override this,
-                            pass in a list of comma-separated target triplets for each
-                            target to be built.  Note that this can be used to build for
-                            platforms that are not listed in the default list of
-                            platforms in the `build_tarballs.jl` script.
+        targets                   By default `build_tarballs.jl` will build a tarball for every
+                                  target within the `platforms` variable.  To override this, pass
+                                  in a list of comma-separated target triplets for each target to
+                                  be built.  Note that this can be used to build for platforms that
+                                  are not listed in the default list of platforms in the
+                                  `build_tarballs.jl` script.
 
-        --verbose           This streams compiler and setup code output to `stdout`
-                            during the build, which can help track down issues in your
-                            build script.
+        --verbose                 This streams compiler and setup code output to `stdout` during
+                                  the build, which can help track down issues in your build script.
 
-        --debug=<mode>      This causes a build to drop into an interactive shell for
-                            debugging purposes.  `<mode>` is a comma-separated list of
-                            one or more of the following triggers:
-                              - `build-start`   -- just before the build script.
-                              - `build-error`   -- just after a failed build script.
-                              - `build-stop`    -- just after a build script.
-                              - `extract-start` -- just before the extraction script.
-                              - `extract-error` -- just after a failed extraction script.
-                              - `extract-stop`  -- just after an extraction script.
+        --debug=<mode>            This causes a build to drop into an interactive shell for
+                                  debugging purposes.  `<mode>` is a comma-separated list of one or
+                                  more of the following triggers:
+                                    - `build-start`   -- just before the build script.
+                                    - `build-error`   -- just after a failed build script.
+                                    - `build-stop`    -- just after a build script.
+                                    - `extract-start` -- just before the extraction script.
+                                    - `extract-error` -- just after a failed extraction script.
+                                    - `extract-stop`  -- just after an extraction script.
 
-                            Additionally, the following shorthands are available:
-                              - `start` -- equivalent to `build-start,extract-start`
-                              - `error` -- equivalent to `build-error,extract-error`
-                              - `stop`  -- equivalent to `build-stop,extract-stop`
+                                  Additionally, the following shorthands are available:
+                                    - `start` -- equivalent to `build-start,extract-start`
+                                    - `error` -- equivalent to `build-error,extract-error`
+                                    - `stop`  -- equivalent to `build-stop,extract-stop`
 
-                            In all cases, exiting the shell will continue the build, but
-                            in the case of an error, the build will then immediately end.
-                            If `*-stop` is already specified, specifying `*-debug` has no
-                            effect, as the debug shell will already be launched.
-                            The default `<mode>` value is `error`.
+                                  In all cases, exiting the shell will continue the build, but in
+                                  the case of an error, the build will then immediately end.  If
+                                  `*-stop` is already specified, specifying `*-debug` has no
+                                  effect, as the debug shell will already be launched.  The default
+                                  `<mode>` value is `error`.
 
-        --universe=<name>   Register JLL wrapper code in the named universe.  Defaults
-                            to creating a new arbitrarily-named universe.  Naming a
-                            universe is most useful when stacking multiple build
-                            invocations from disparate `build_tarballs.jl` scripts.
+        --universe=<name>         Register JLL wrapper code in the named universe.  Defaults to
+                                  creating a new arbitrarily-named universe.  Naming a universe is
+                                  most useful when stacking multiple build invocations from
+                                  disparate `build_tarballs.jl` scripts.
 
-        --deploy=<org>      Deploy binaries and JLL wrapper code to a github release of
-                            an autogenerated repository.  `org` should be a user or
-                            organization name, such as `"JuliaBinaryWrappers"`.
-                            The default behavior of deploying only to the `dev`
-                            directory of the current universe can be explicitly
-                            requested via `--deploy=local`.
+        --deploy=<org>            Deploy binaries and JLL wrapper code to a github release of an
+                                  autogenerated repository.  `org` should be a user or organization
+                                  name, such as `"JuliaBinaryWrappers"`.  The default behavior of
+                                  deploying only to the `dev` directory of the current universe can
+                                  be explicitly requested via `--deploy=local`.
 
-        --register=<url>    Open a pull request against the given registry URL,
-                            typically that of `General`.  Registration requires
-                            deployment to a target, as it must embed the URL that the
-                            deployed JLL package is available at within the registry.
+        --register=<url>          Open a pull request against the given registry URL, typically
+                                  that of `General`.  Registration requires deployment to a target,
+                                  as it must embed the URL that the deployed JLL package is
+                                  available at within the registry.
 
-        --dry-run=<tags>    Allows skipping various parts of the build pipeline.  Must be
-                            a list of comma-separated tags, one of `build`, `extract`,
-                            `package`, or `all`.  If no `tags` are specified, defaults to
-                            `all`, which is equivalent to specifying all categories.
-                            Note that specifying `build` implies `extract`, which in turn
-                            implies `package`.
+        --dry-run=<tags>          Allows skipping various parts of the build pipeline.  Must be a
+                                  list of comma-separated tags, one of `build`, `extract`,
+                                  `package`, or `all`.  If no `tags` are specified, defaults to
+                                  `all`, which is equivalent to specifying all categories.  Note
+                                  that specifying `build` implies `extract`, which in turn implies
+                                  `package`.
 
-        --meta-json=<path>  Output a JSON representation of the given build.  Often used
-                            in conjunction with `--dry-run` to get a description of what
-                            would be built, without any products actually being listed.
-                            Note that in the case of complicated `build_tarballs.jl` with
-                            multiple builds, it may output multiple JSON objects.  If no
-                            path is given, defaults to writing to standard output.
+        --meta-json=<path>        Output a JSON representation of the given build.  Often used in
+                                  conjunction with `--dry-run` to get a description of what would
+                                  be built, without any products actually being listed.  Note that
+                                  in the case of complicated `build_tarballs.jl` with multiple
+                                  builds, it may output multiple JSON objects.  If no path is
+                                  given, defaults to writing to standard output.
 
-        --output-dir=<dir>  Directory that holds packaged tarball outputs.  Defaults to
-                            the value `"\$(pwd())/products"`.
+        --output-dir=<dir>        Directory that holds packaged tarball outputs.  Defaults to the
+                                  value `"\$(pwd())/products"`.
 
-        --disable-cache     Disable usage of the build cache, forcing all builds to be
-                            run no matter if they were previously run and cached.
+        --disable-caches=<list>   Disable a comma-separated list of the following caches:
 
-        --help              Print out this message.
+                                    - `build` -- The cache that maps build inputs to extractions,
+                                      causing future builds to be elided.  See `BuildCache`.
+
+                                    - `jll` -- The cache that maps joint resolution of JLLs when
+                                      constructing toolchains and other dependency prefixes.  See
+                                      the documentation in `BinaryBuilderSources.JLLSource`.
+
+                                  This will disable reading from those caches, but results are
+                                  still stored into those caches, meaning that future invocations
+                                  can still make use of the results of `--disable-cache` runs.
+
+        --help                    Print out this message.
 
     Examples:
         julia --color=yes build_tarballs.jl --verbose
@@ -188,10 +196,13 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     # Dry run settings
     dry_run, dry_run_csv = extract_flag!(ARGS, "--dry-run", "all")
     if dry_run
-        parsed_kwargs[:dry_run] = Set(Symbol.(split(dry_run_csv, ",")))
+        parsed_kwargs[:dry_run] = Set(split(dry_run_csv, ","))
     end
 
-    parsed_kwargs[:disable_cache] = check_flag!(ARGS, "--disable-cache")
+    disable_caches_set, disable_caches = extract_flag!(ARGS, "--disable-caches", "")
+    if disable_caches_set
+        parsed_kwargs[:disabled_caches] = Set(split(disable_caches, ","))
+    end
 
     # Slurp up the last argument as platforms
     if length(ARGS) == 1
@@ -244,12 +255,15 @@ struct BuildMeta <: AbstractBuildMeta
 
     # Our build cache, allowing us to skip builds (unless it is disabled)
     build_cache::BuildCache
-    build_cache_disabled::Bool
+
+    # Caches that are disabled in this BuildMeta.  Note that this disables reading
+    # from these caches, but does not disable writing to them.
+    disabled_caches::Set{String}
 
     # Most steps have a JSON representation that they can output, to allow us to
     # "trace" through a build and see what steps were run.  On Yggdrasil, we combine
     # this with the "dry run" mode, to allow us to generate a series of jobs.
-    dry_run::Set{Symbol}
+    dry_run::Set{String}
     json_output::Union{Nothing,IO}
     register::Bool
 
@@ -259,8 +273,8 @@ struct BuildMeta <: AbstractBuildMeta
                         verbose::Bool = false,
                         debug_modes = Set{String}(),
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
-                        disable_cache::Bool = false,
-                        dry_run = Set{Symbol}(),
+                        disabled_caches = Set{String}(),
+                        dry_run = Set{String}(),
                         register::Bool = false,
                        )
         if !isa(debug_modes, Set)
@@ -273,37 +287,56 @@ struct BuildMeta <: AbstractBuildMeta
         # This is used to list out the valid values for arguments in error messages
         example_list(vals) = return join([string(" - ", v) for v in vals], "\n")
 
-        valid_debug_modes = [
-            "build-start",   "build-error",   "build-stop",
-            "extract-start", "extract-error", "extract-stop",
-        ]
-        for mode in debug_modes
-            if mode ∉ valid_debug_modes
-                throw(ArgumentError("Invalid debug mode: \"$(mode)\".  Try one of the following:\n$(example_list(valid_debug_modes))"))
+        function validate_list(name, list, valids)
+            for l in list
+                # Skip special value `all`
+                if l == "all"
+                    continue
+                end
+
+                if l ∉ valids
+                    throw(ArgumentError("Invalid $(name) \"$(l)\".  Try one of the following:\n$(example_list(valids))"))
+                end
             end
+
+            if "all" ∈ list
+                return Set(valids)
+            end
+            return Set(list)
         end
+
+        debug_modes = validate_list(
+            "debug mode",
+            debug_modes,
+            [
+                "build-start",   "build-error",   "build-stop",
+                "extract-start", "extract-error", "extract-stop",
+            ],
+        )
 
         # If `:all` was passed, just set the parsed values to all valid possibilities
-        valid_dry_runs = Set([:build, :extract, :package, :all])
-        for dr in dry_run
-            if dr ∉ valid_dry_runs
-                throw(ArgumentError("Invalid dry_run category \"$(dr)\".  Try one of the following:\n$(example_list(valid_dry_runs))"))
-            end
+        dry_run = validate_list(
+            "dry run category",
+            dry_run,
+            ["build", "extract", "package"],
+        )
+
+        # If `build` was passed, that implies `extract`
+        if "build" ∈ dry_run
+            push!(dry_run, "extract")
         end
 
-        if :all ∈ dry_run
-            dry_run = valid_dry_runs
-        else
-            # If `:build` was passed, that implies `:extract` and `:package`,
-            # just like `:extract` implies `:package`.
-            if :build ∈ dry_run
-                push!(dry_run, :extract)
-            end
-
-            if :extract in dry_run
-                push!(dry_run, :package)
-            end
+        # If `extract` was passed, that implies `package`
+        if "extract" in dry_run
+            push!(dry_run, "package")
         end
+
+        # Parse out our disabled cache list
+        disabled_caches = validate_list(
+            "disabled cache",
+            disabled_caches,
+            ["build", "jll"],
+        )
 
         universe = Universe(
             something([universe_name], [])...;
@@ -328,8 +361,8 @@ struct BuildMeta <: AbstractBuildMeta
             debug_modes,
             universe,
             load_cache(),
-            disable_cache,
-            Set{Symbol}(dry_run),
+            Set{String}(disabled_caches),
+            Set{String}(dry_run),
             json_output,
             register,
         )
@@ -339,7 +372,7 @@ AbstractBuildMeta(meta::BuildMeta) = meta
 
 function build_cache_enabled(meta::BuildMeta)
     # If the user has specifically requested we not use the cache, return `false`
-    if meta.build_cache_disabled
+    if "build" ∈ meta.disabled_caches
         return false
     end
 

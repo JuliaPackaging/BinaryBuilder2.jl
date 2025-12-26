@@ -9,12 +9,12 @@ BinaryBuilder2.allow_github_authentication[] = false
         # Ensure that we get very simple defaults for no args
         parsed_kwargs = parse_build_tarballs_args(String[])
         @test !parsed_kwargs[:verbose]
-        @test !parsed_kwargs[:disable_cache]
         @test parsed_kwargs[:universe_name] === nothing
         @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :debug_modes)
         @test !haskey(parsed_kwargs, :register_depot)
         @test !haskey(parsed_kwargs, :target_list)
+        @test !haskey(parsed_kwargs, :disabled_caches)
 
         # Next, turn on options that have defaults
         parsed_kwargs = parse_build_tarballs_args(String[
@@ -29,12 +29,13 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :target_list)
 
-        # Next, supply arguments to them all
+        # Next, supply arguments to everything all
         parsed_kwargs = parse_build_tarballs_args(String[
             "--debug=build-start",
             "--meta-json=meta.json",
             "--deploy=JuliaBinaryWrappers",
             "--universe=the_verse",
+            "--disable-caches=all",
             "x86_64-apple-darwin14,aarch64-linux-musl,i686-linux-gnu-libgfortran3-cxx11",
         ])
         @test parsed_kwargs[:debug_modes] == Set(["build-start"])
@@ -59,7 +60,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test isempty(meta.debug_modes)
         @test meta.universe.name === nothing
         @test !meta.universe.persistent
-        @test !meta.build_cache_disabled
+        @test isempty(meta.disabled_caches)
         @test isempty(meta.dry_run)
         @test meta.json_output === nothing
         @test !meta.register
@@ -73,7 +74,7 @@ BinaryBuilder2.allow_github_authentication[] = false
             ],
             verbose=true,
             debug_modes=["build-stop"],
-            dry_run=Symbol[:all],
+            dry_run=["all"],
             json_output=Base.stdout,
             deploy_org="JuliaBinaryWrappers",
             universe_name,
@@ -87,7 +88,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test os(meta.target_list[2]) == "windows"
         @test meta.verbose
         @test meta.debug_modes == Set(["build-stop"])
-        @test meta.dry_run == Set([:build, :extract, :package, :all])
+        @test meta.dry_run == Set(["build", "extract", "package"])
         @test meta.json_output == Base.stdout
         @test meta.register
         @test meta.universe.name == universe_name
@@ -109,6 +110,7 @@ BinaryBuilder2.allow_github_authentication[] = false
             "--deploy=JuliaBinaryWrappers",
             "--register",
             "--universe=$(universe_name)",
+            "--disable-caches=build,jll",
             "x86_64-linux-gnu,x86_64-linux-musl,i686-linux-gnu"
         ])
         @test isempty(meta.builds)
@@ -119,6 +121,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.verbose
         @test meta.debug_modes == Set(["build-start", "extract-start"])
         @test isempty(meta.dry_run)
+        @test meta.disabled_caches == Set(["build", "jll"])
         @test isa(meta.json_output, IOStream)
         @test meta.json_output.name == "<file $(json_path)>"
         @test meta.register

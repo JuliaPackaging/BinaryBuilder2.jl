@@ -320,7 +320,7 @@ function package!(config::PackageConfig)
     meta = AbstractBuildMeta(config)
     meta.packagings[config] = nothing
 
-    if :package ∈ meta.dry_run
+    if "package" ∈ meta.dry_run
         result = PackageResult_skipped(config)
         meta.packagings[config] = result
         return result

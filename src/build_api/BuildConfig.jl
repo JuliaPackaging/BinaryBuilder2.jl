@@ -295,6 +295,7 @@ function prepare(config::BuildConfig; verbose::Bool = false)
         universe = config.meta.universe
         depot = depot_path(universe)
         registries = Pkg.Registry.reachable_registries(; depots=[depot])
+        disable_jll_cache = "jll" ∈ config.meta.disabled_caches
         for (prefix, deps) in config.source_trees
             # We install different source trees in different environments.
             @timeit config.to prefix begin
@@ -307,7 +308,14 @@ function prepare(config::BuildConfig; verbose::Bool = false)
                     # in the rest of the build.
                     cp(dirname(environment_path(universe)), project_dir; force=true)
                     # This verbose needs like a `verbose = verbose_level >= 2` or something
-                    prepare(deps; verbose=false, project_dir, registries, depot, to=config.to)
+                    prepare(deps;
+                        verbose=false,
+                        force=disable_jll_cache,
+                        project_dir,
+                        registries,
+                        depot,
+                        to=config.to,
+                    )
                 end
             end
         end
@@ -428,14 +436,14 @@ end
 
 function build!(config::BuildConfig;
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
-                disable_cache::Bool = false,
+                disable_cache::Bool = !build_cache_enabled(AbstractBuildMeta(config)),
                 debug_modes = AbstractBuildMeta(config).debug_modes,
                 verbose::Bool = AbstractBuildMeta(config).verbose)
     meta = AbstractBuildMeta(config)
     meta.builds[config] = nothing
 
     # If we're asking for a dry run, skip out
-    if :build ∈ meta.dry_run
+    if "build" ∈ meta.dry_run
         if verbose
             @info("Dry-run build", config)
         end
@@ -445,7 +453,7 @@ function build!(config::BuildConfig;
     end
 
     # Hit our build cache and see if we've already done this exact build.
-    if build_cache_enabled(meta) && !disable_cache && !isempty(extract_arg_hints)
+    if !disable_cache && !isempty(extract_arg_hints)
         prepare(config; verbose)
         try
             build_hash = content_hash(config)
@@ -472,7 +480,7 @@ function build!(config::BuildConfig;
             @error("Unable to hit build cache", exception=(e, catch_backtrace()))
         end
     else
-        @debug("Build cache disabled", build_cache_enabled(meta), disable_cache, isempty(extract_arg_hints))
+        @debug("Build cache disabled", disable_cache, isempty(extract_arg_hints))
     end
 
     # Declare these all as `local` so that we can inspect them in the `@infiltrate` below

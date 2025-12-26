@@ -214,7 +214,7 @@ function find_unlocatable_products(config::ExtractConfig, prefix)
 end
 
 function extract!(config::ExtractConfig;
-                  disable_cache::Bool = false,
+                  disable_cache::Bool = !build_cache_enabled(AbstractBuildMeta(config)),
                   debug_modes = config.build.config.meta.debug_modes,
                   verbose::Bool = AbstractBuildMeta(config).verbose)
     local artifact_hash, run_status, run_exception, collector
@@ -224,7 +224,7 @@ function extract!(config::ExtractConfig;
     meta.extractions[config] = nothing
 
     # If we're asking for a dry run, skip out
-    if :extract ∈ meta.dry_run
+    if "extract" ∈ meta.dry_run
         if verbose
             @info("Dry-run extraction", config)
         end
@@ -235,7 +235,7 @@ function extract!(config::ExtractConfig;
     @assert config.build.status != :skipped
 
     # Hit our build cache and see if we've already done this exact extraction.
-    if build_cache_enabled(meta) && !disable_cache
+    if !disable_cache
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
         if artifact_hash !== nothing
             if verbose
