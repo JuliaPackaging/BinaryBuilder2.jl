@@ -7,56 +7,13 @@ end
 
 @testset "MultiJLLOutput" begin
     meta = BuildMeta(; verbose=false)
-    zlib_args = (;
-        meta,
-        src_name = "Zlib",
-        src_version = v"1.2.13",
-        sources = [
-            ArchiveSource("https://github.com/madler/zlib/releases/download/v1.2.13/zlib-1.2.13.tar.xz",
-                            "sha256:d14c38e313afc35a9a8760dadf26042f51ea0f5d154b0630a31da0540107fb98")
-        ],
-        script = """
-        cd zlib*
-        ./configure --prefix=\$prefix
-        make -j30
-        make install
-        """,
-        platforms = [native_linux],
-    )
 
     # First, build `Zlib` and extract into multiple extractions, but a single JLL:
-    empty!(meta.packagings)
-    build_tarballs(;
-        zlib_args...,
-        extract_spec_generator = (build_config, platform) -> begin
-            return Dict(
-                # The default extraction (denoted by matching the JLL name) contains only the shared library
-                "Zlib" => ExtractSpec(
-                    raw"extract ${shlibdir}/**",
-                    [
-                        LibraryProduct("libz", :libz),
-                    ],
-                    get_default_target_spec(build_config),
-                ),
-                # The "full" extraction contains everything
-                "ZlibFull" => ExtractSpec(
-                    raw"extract ${prefix}/**",
-                    [
-                        FileProduct("include/zlib.h", :zlib_h),
-                        LibraryProduct("libz", :libz),
-                    ],
-                    get_default_target_spec(build_config),
-                ),
-            )
-        end,
-        jll_extraction_map = Dict(
-            "Zlib" => ["Zlib", "ZlibFull"],
-        ),
-    )
+    run_build_tarballs(meta, "bundled/zlib_multi_packaging.jl", ["--multi-extractions"])
     package_result = get_package_result(meta, "Zlib")
     @test package_result.status == :success
     @test length(package_result.config.named_extractions) == 2
-    
+
     zlib_full_path = artifact_path(only(package_result.config.named_extractions["ZlibFull"]))
     zlib_path = artifact_path(only(package_result.config.named_extractions["Zlib"]))
 
@@ -68,34 +25,7 @@ end
 
     # Next, build `Zlib` and extract into multiple JLLs, one which depends on the other
     empty!(meta.packagings)
-    build_tarballs(;
-        zlib_args...,
-        extract_spec_generator = (build_config, platform) -> begin
-            return Dict(
-                # The default extraction (denoted by matching the JLL name) contains only the shared library
-                "Zlib" => ExtractSpec(
-                    raw"extract ${shlibdir}/**",
-                    [
-                        LibraryProduct("libz", :libz),
-                    ],
-                    get_default_target_spec(build_config),
-                ),
-                # The "full" extraction contains headers and whatnot, and is what BB2 would install
-                "ZlibFull" => ExtractSpec(
-                    raw"extract ${includedir}/**",
-                    [
-                        FileProduct("include/zlib.h", :zlib_h),
-                    ],
-                    get_default_target_spec(build_config);
-                    inter_deps = ["Zlib"],
-                ),
-            )
-        end,
-        jll_extraction_map = Dict(
-            "Zlib" => ["Zlib"],
-            "ZlibFull" => ["ZlibFull", "Zlib"],
-        )
-    )
+    run_build_tarballs(meta, "bundled/zlib_multi_packaging.jl", ["--multi-jlls"])
     package_result = get_package_result(meta, "Zlib")
     @test package_result.config.name == "Zlib"
     @test package_result.status == :success
