@@ -33,7 +33,6 @@ run_build_tarballs(meta, "Binutils/build_tarballs.jl", ["--bootstrap"])
 
 # Build tblgen and ClangBootstrap for the current host
 run_build_tarballs(ctng_meta, "LLVM/tblgen.jl")
-clangbootstrap_target = CrossPlatform(BBHostPlatform() => AnyPlatform())
 run_build_tarballs(meta, "LLVM/clang_bootstrap.jl")
 
 # Build GCCBootstrapManual

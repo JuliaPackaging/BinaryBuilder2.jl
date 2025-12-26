@@ -39,7 +39,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                         "LLVMTblgen_jll",
                         uuid=Base.UUID("47b65027-ac0b-59bd-a35b-966a6339d635"),
                         repo=Pkg.Types.GitRepo(
-                            rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                            rev="bb2/GCCBootstrap-$(triplet(host))",
                             source="https://github.com/staticfloat/LLVMTblgen_jll.jl",
                         ),
                     ),
