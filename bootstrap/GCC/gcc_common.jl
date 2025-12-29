@@ -188,8 +188,7 @@ elif [[ "${target}" == *-mingw* ]]; then
     fi
 
 elif [[ "${target}" == *-darwin* ]]; then
-    # GCC doesn't turn LTO on by default for some reason.
-    GCC_CONF_ARGS+=( --enable-lto --enable-plugin )
+    GCC_CONF_ARGS+=( --enable-plugin )
 
     # On darwin, cilk doesn't build on 5.X-7.X.  :(
     export enable_libcilkrts=no
