@@ -28,6 +28,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
 
             # Glibc libraries
             "libdl.so.2",
+            "libdl.so.1",
             "librt.so.1",
             "libm.so.5",
             "libm.so.6",
