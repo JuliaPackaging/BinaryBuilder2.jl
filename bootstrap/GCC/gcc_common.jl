@@ -160,6 +160,12 @@ elif [[ "${target}" == i686* ]]; then
     GCC_CONF_ARGS+=( --with-arch=pentium4 )
 fi
 
+# We need a `c++filt` for libstdc++ generation.  Make sure it's named appropriately:
+echo $PATH
+ls -la /usr/local/
+mkdir -p /usr/local/bin
+ln -s "${HOST_CXXFILT}" /usr/local/bin/c++filt
+
 ## OS-dependent arguments
 # On musl targets, disable a bunch of things we don't want
 if [[ "${target}" == *-musl* ]]; then

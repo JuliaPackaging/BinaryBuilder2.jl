@@ -493,6 +493,7 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
     function set_envvars(envvar_prefix::String, tool_prefix::String)
         env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
         env["$(envvar_prefix)AS"] = "$(tool_prefix)as"
+        env["$(envvar_prefix)CXXFILT"] = "$(tool_prefix)c++filt"
         env["$(envvar_prefix)LD"] = "$(tool_prefix)ld"
         env["$(envvar_prefix)NM"] = "$(tool_prefix)nm"
         env["$(envvar_prefix)RANLIB"] = "$(tool_prefix)ranlib"
