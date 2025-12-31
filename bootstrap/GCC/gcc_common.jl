@@ -161,10 +161,8 @@ elif [[ "${target}" == i686* ]]; then
 fi
 
 # We need a `c++filt` for libstdc++ generation.  Make sure it's named appropriately:
-echo $PATH
-ls -la /usr/local/
 mkdir -p /usr/local/bin
-ln -s "${HOST_CXXFILT}" /usr/local/bin/c++filt
+ln -s "$(which "${HOST_CXXFILT}")" /usr/local/bin/c++filt
 
 ## OS-dependent arguments
 # On musl targets, disable a bunch of things we don't want

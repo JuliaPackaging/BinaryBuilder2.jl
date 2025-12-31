@@ -27,7 +27,7 @@ host_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostT
 target_toolchains = [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain()]
 
 build_tarballs(;
-    src_name = "tblgen",
+    src_name = "LibTAPITblgen",
     src_version = v"1300.6.5",
     sources = [
         GitSource("https://github.com/tpoechtrager/apple-libtapi",
@@ -69,10 +69,7 @@ build_tarballs(;
     host_toolchains,
     target_toolchains,
     meta,
-    # Don't package this JLL, we're just using this to get the `tblgen_source` below.
-    package_jll = false,
 )
-tblgen_source = ExtractResultSource(only(BinaryBuilder2.get_extract_results(meta, "tblgen")))
 
 build_tarballs(;
     src_name = "libtapi",
@@ -104,7 +101,10 @@ build_tarballs(;
     products = [
         LibraryProduct("libtapi", :libtapi),
     ],
-    host_dependencies = [JLLSource("Python_jll"), tblgen_source],
+    host_dependencies = [
+        JLLSource("Python_jll"),
+        JLLSource("LibTAPITblgen_jll"),
+    ],
     target_dependencies = [
         JLLSource(
             "Zlib_jll";
