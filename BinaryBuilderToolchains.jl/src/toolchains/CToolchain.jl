@@ -276,12 +276,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         # Manual version selection, drop this once these are registered!
         if v"2.17" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="d3f2e355cd60300022f455f61aa608d963868e35",
+                rev="aaa18d2db4bc6bb4e3d8ec5e094d4b71807ef951",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         elseif v"2.19" == glibc_version
             glibc_repo = Pkg.Types.GitRepo(
-                rev="462af198d91ad3ad73815e77e64dd34e6866b1f3",
+                rev="dae6e7aebaa51599c0a6a7c2f8ca95ff45d88f87",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
