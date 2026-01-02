@@ -5,11 +5,12 @@ if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
 end
 
+zlib_multi_packaging_jl = joinpath(@__DIR__, "bundled", "zlib_multi_packaging.jl")
 @testset "MultiJLLOutput" begin
     meta = BuildMeta(; verbose=false)
 
     # First, build `Zlib` and extract into multiple extractions, but a single JLL:
-    run_build_tarballs(meta, "bundled/zlib_multi_packaging.jl", ["--multi-extractions"])
+    run_build_tarballs(meta, zlib_multi_packaging_jl, ["--multi-extractions"])
     package_result = get_package_result(meta, "Zlib")
     @test package_result.status == :success
     @test length(package_result.config.named_extractions) == 2
@@ -25,7 +26,7 @@ end
 
     # Next, build `Zlib` and extract into multiple JLLs, one which depends on the other
     empty!(meta.packagings)
-    run_build_tarballs(meta, "bundled/zlib_multi_packaging.jl", ["--multi-jlls"])
+    run_build_tarballs(meta, zlib_multi_packaging_jl, ["--multi-jlls"])
     package_result = get_package_result(meta, "Zlib")
     @test package_result.config.name == "Zlib"
     @test package_result.status == :success
