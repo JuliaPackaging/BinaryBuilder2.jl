@@ -4,7 +4,7 @@ if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
 end
 
-@testset "Multi-stage build test" begin
+@testset "Multi-stage build test (low-level)" begin
     meta = BuildMeta(; verbose=true, disabled_caches=["build"])
     # First, build `libstring` from the BBToolchains testsuite
     libstring_build_config = BuildConfig(
@@ -15,6 +15,7 @@ end
         apply_spec_plan(spec_plan, native_linux, native_linux),
         raw"""
         cd 02_cxx_string_abi
+        make clean
         make libstring
         mkdir -p ${shlibdir}
         cp build/*.so ${shlibdir}/
@@ -74,7 +75,8 @@ end
 
         # Explicitly use the `libstring` we built previously,
         # ensure this file does not get rebuilt by checking timestamps
-        cp ${shlibdir}/libstring* .
+        rm -rf build; mkdir build
+        cp ${shlibdir}/libstring* build/
         orig_mtime=$(stat -c %Y libstring*)
 
         make cxx_string_abi

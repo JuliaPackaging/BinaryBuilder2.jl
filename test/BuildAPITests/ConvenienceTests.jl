@@ -56,4 +56,14 @@ using BinaryBuilder2: get_package_result
         package_result = get_package_result(meta, "Zlib")
         @test package_result.status == :success
     end
+
+    @testset "Multi-stage build test (high-level)" begin
+        meta = BuildMeta(;universe_name)
+        run_build_tarballs(meta, joinpath(@__DIR__, "build_examples", "multi_stage_build.jl"))
+
+        for package_name in ("libstring", "libstring_headers", "cxx_string_abi")
+            package_result = get_package_result(meta, package_name)
+            @test package_result.status == :success
+        end
+    end
 end

@@ -5,7 +5,7 @@ if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
 end
 
-zlib_multi_packaging_jl = joinpath(@__DIR__, "bundled", "zlib_multi_packaging.jl")
+zlib_multi_packaging_jl = joinpath(@__DIR__, "build_examples", "zlib_multi_packaging.jl")
 @testset "MultiJLLOutput" begin
     meta = BuildMeta(; verbose=false)
 
