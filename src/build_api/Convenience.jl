@@ -234,7 +234,7 @@ function build_tarballs(src_name::String,
         function get_jll_deps(extract_names)
             jll_dep_names = String[]
             for extract_name in extract_names
-                # This `first()` just completely ignores the possibility
+                # TODO: This `first()` just completely ignores the possibility
                 # that different platforms might have different dependencies
                 config = first(extract_results[extract_name]).config
                 append!(jll_dep_names, filter(d -> d ∈ keys(jll_extraction_map), keys(config.inter_deps)))
