@@ -145,6 +145,7 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         something(pkg.repo.source, ""),
         something(pkg.repo.rev, ""),
         triplet(jll.platform),
+        jll.target,
         # And then we add in registry information to be sensitive to that as well.
         bytes2hex.([reg.tree_info.bytes for reg in registries if reg.tree_info !== nothing])...,
     )))

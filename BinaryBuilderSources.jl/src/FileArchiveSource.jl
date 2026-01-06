@@ -151,10 +151,12 @@ function deploy(fs::FileSource, prefix::String)
     cp(download_cache_path(fs), target_path)
 end
 
-# We key only off of the hash of the source
+# We key only off of the hash of the source and the target
 function spec_hash(fas::FileArchiveSource; kwargs...)
-    # The extra `sha1()` here is because `fas.hash` could be a different kind of hash.
-    return SHA1Hash(sha1(bytes2hex(fas.hash)))
+    return SHA1Hash(sha1(string(
+        bytes2hex(fas.hash),
+        fas.target,
+    )))
 end
 
 
@@ -171,7 +173,7 @@ end
 
 function content_hash(fs::FileSource)
     checkprepared!("content_hash", fs)
-    # We re-use `Pkgs`'s `blob_hash` here:
+    # We re-use `TreeArchival's`'s `blob_hash` here:
     path = download_cache_path(fs)
     return SHA1Hash(TreeArchival.blob_hash(SHA1_CTX, path))
 end

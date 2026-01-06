@@ -95,9 +95,14 @@ function content_hash(gs::GitSource)
     # Even though we don't have to have anything on-disk to return
     # `gs.hash`, we still verify to ensure that the treehash exists.
     checkprepared!("content_hash", gs)
-
     return gs.hash
 end
-spec_hash(gs::GitSource; kwargs...) = gs.hash
+function spec_hash(gs::GitSource; kwargs...)
+    # Make the hash sensitive to our target, as that changes the layout on-disk.
+    return SHA1Hash(sha1(string(
+        bytes2hex(gs.hash),
+        gs.target,
+    )))
+end
 
 source(gs::GitSource) = string(gs.url)

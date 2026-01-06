@@ -89,6 +89,11 @@ function content_hash(ds::DirectorySource)
 end
 
 # Beacuse there's nothing to prepare, we can just directly use `content_hash`.
-spec_hash(ds::DirectorySource; kwargs...) = content_hash(ds)
+function spec_hash(ds::DirectorySource; kwargs...)
+    return SHA1Hash(sha1(string(
+        bytes2hex(content_hash(ds)),
+        ds.target,
+    )))
+end
 
 source(ds::DirectorySource) = ds.source
