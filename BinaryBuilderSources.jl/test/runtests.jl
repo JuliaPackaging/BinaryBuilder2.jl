@@ -140,7 +140,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             gs = GitSource(url, hash)
             @test gs.url == url
             @test gs.hash == hex2bytes(hash)
-            @test gs.target == basename(url)
+            @test gs.target == basename(url)[1:end-4]
 
             # Nothing is on disk yet
             clone_path = download_cache_path(gs)

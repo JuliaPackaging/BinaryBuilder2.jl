@@ -19,7 +19,14 @@ struct GitSource <: AbstractSource
     target::String
 end
 
-function GitSource(url, hash; target = basename(url))
+function remove_dot_git(name)
+    if endswith(name, ".git")
+        return name[1:end-4]
+    end
+    return name
+end
+
+function GitSource(url, hash; target = remove_dot_git(basename(url)))
     noabspath!(target)
     return GitSource(
         string(url),
