@@ -490,39 +490,46 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
         joinpath(deployed_prefix, get_simple_vendor(toolchain), "bin")
     ])
 
-    function set_envvars(envvar_prefix::String, tool_prefix::String)
-        env["$(envvar_prefix)AR"] = "$(tool_prefix)ar"
-        env["$(envvar_prefix)AS"] = "$(tool_prefix)as"
-        env["$(envvar_prefix)CXXFILT"] = "$(tool_prefix)c++filt"
-        env["$(envvar_prefix)LD"] = "$(tool_prefix)ld"
-        env["$(envvar_prefix)NM"] = "$(tool_prefix)nm"
-        env["$(envvar_prefix)RANLIB"] = "$(tool_prefix)ranlib"
-        env["$(envvar_prefix)OBJCOPY"] = "$(tool_prefix)objcopy"
-        env["$(envvar_prefix)OBJDUMP"] = "$(tool_prefix)objdump"
-        env["$(envvar_prefix)STRIP"] = "$(tool_prefix)strip"
-
-        if Sys.isapple(toolchain.platform.target)
-            env["$(envvar_prefix)DSYMUTIL"] = "$(tool_prefix)dsymutil"
-            env["$(envvar_prefix)LIPO"] = "$(tool_prefix)lipo"
-        end
-
-        if !Sys.isapple(toolchain.platform.target)
-            env["$(envvar_prefix)READELF"] = "$(tool_prefix)readelf"
-        end
-
-        if Sys.iswindows(toolchain.platform.target)
-            env["$(envvar_prefix)DLLTOOL"] = "$(tool_prefix)dlltool"
-            env["$(envvar_prefix)WINDRES"] = "$(tool_prefix)windres"
-            env["$(envvar_prefix)WINMC"] = "$(tool_prefix)winmc"
+    function set_envvars!(env, toolchain, key::String, value::String)
+        for envvar_prefix in toolchain.env_prefixes
+            env["$(envvar_prefix)$(key)"] = value
         end
     end
 
     wrapper_prefixes = replace.(toolchain.wrapper_prefixes, ("\${triplet}" => triplet(gcc_platform(toolchain.platform.target)),))
     wrapper_prefix = wrapper_prefixes[argmax(length.(wrapper_prefixes))]
-    for env_prefix in toolchain.env_prefixes
-        set_envvars(env_prefix, wrapper_prefix)
+
+    # Binutils mappings
+    set_envvars!(env, toolchain, "AR", "$(wrapper_prefix)ar")
+    set_envvars!(env, toolchain, "AS", "$(wrapper_prefix)as")
+    set_envvars!(env, toolchain, "CXXFILT", "$(wrapper_prefix)c++filt")
+    set_envvars!(env, toolchain, "LD", "$(wrapper_prefix)ld")
+    set_envvars!(env, toolchain, "NM", "$(wrapper_prefix)nm")
+    set_envvars!(env, toolchain, "RANLIB", "$(wrapper_prefix)ranlib")
+    set_envvars!(env, toolchain, "OBJCOPY", "$(wrapper_prefix)objcopy")
+    set_envvars!(env, toolchain, "OBJDUMP", "$(wrapper_prefix)objdump")
+    set_envvars!(env, toolchain, "STRIP", "$(wrapper_prefix)strip")
+
+    if Sys.isapple(toolchain.platform.target)
+        set_envvars!(env, toolchain, "DSYMUTIL", "$(wrapper_prefix)dsymutil")
+        set_envvars!(env, toolchain, "LIPO", "$(wrapper_prefix)lipo")
     end
 
+    if !Sys.isapple(toolchain.platform.target)
+        set_envvars!(env, toolchain, "READELF", "$(wrapper_prefix)readelf")
+    end
+
+    if Sys.iswindows(toolchain.platform.target)
+        set_envvars!(env, toolchain, "DLLTOOL", "$(wrapper_prefix)dlltool")
+        set_envvars!(env, toolchain, "WINDRES", "$(wrapper_prefix)windres")
+        set_envvars!(env, toolchain, "WINMC", "$(wrapper_prefix)winmc")
+    end
+
+    # platform extensions for this target
+    set_envvars!(env, toolchain, "exeext", Sys.iswindows(toolchain.platform.target) ? ".exe" : "")
+    set_envvars!(env, toolchain, "dlext", platform_dlext(toolchain.platform.target))
+
+    # OS version variables
     if Sys.isapple(toolchain.platform.target)
         # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
         # use the default deployment targets for the architecture being built:
@@ -540,7 +547,7 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
             os_version(toolchain.platform.target),
             default_macos_kernel_version(arch(toolchain.platform.target))
         )
-        env["MACOSX_DEPLOYMENT_TARGET"] = macos_version(kernel_version)
+        set_envvars!(env, toolchain, "MACOSX_DEPLOYMENT_TARGET", macos_version(kernel_version))
     end
 
     if Sys.isfreebsd(toolchain.platform.target)
@@ -551,7 +558,7 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
             os_version(toolchain.platform.target),
             default_freebsd_sdk_version(),
         )
-        env["FREEBSD_TARGET_SDK"] = "$(freebsd_version.major).$(freebsd_version.minor)"
+        set_envvars!(env, toolchain, "FREEBSD_TARGET_SDK", "$(freebsd_version.major).$(freebsd_version.minor)")
     end
 
     return env
