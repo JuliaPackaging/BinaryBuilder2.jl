@@ -25,7 +25,7 @@ to force the usage of a particular `meta` object.
 """
 function get_default_meta()
     if _default_meta[] === nothing
-        _default_meta[] = BuildMeta(;parse_build_tarballs_args(ARGS)...)
+        _default_meta[] = BuildMeta(ARGS)
     end
     return _default_meta[]
 end
