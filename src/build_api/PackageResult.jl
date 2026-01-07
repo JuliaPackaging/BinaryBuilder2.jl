@@ -79,3 +79,17 @@ function collect_builds(result::PackageResult)
     end
     return ret
 end
+
+"""
+    collect_platforms(result::PackageResult)
+
+Return all `Platform`'s that are targeted within a `PackageResult`.
+This is primarily useful to filter down which platforms should be built for a package.
+"""
+function collect_platforms(result::PackageResult)
+    ret = AbstractPlatform[]
+    for extract_result in collect_extractions(result)
+        push!(ret, extract_result.config.target_spec.platform.target)
+    end
+    return ret
+end
