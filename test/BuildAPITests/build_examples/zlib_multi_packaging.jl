@@ -12,11 +12,11 @@ using BinaryBuilder2: get_default_target_spec
 ## command line arguments that change the shape of the output of your build
 ## but if you need it, know that it's there.
 
-function zlib_extract_generator(;zlib_full_deps = String[])
+function zlib_extract_generator(;zlib_deps = String[])
     return (build_config, platform) -> begin
         return Dict(
             # The default extraction (denoted by matching the JLL name) contains only the shared library
-            "Zlib" => ExtractSpec(
+            "ZlibSlim" => ExtractSpec(
                 raw"extract ${shlibdir}/**",
                 [
                     LibraryProduct("libz", :libz),
@@ -24,14 +24,14 @@ function zlib_extract_generator(;zlib_full_deps = String[])
                 get_default_target_spec(build_config),
             ),
             # The "full" extraction contains everything
-            "ZlibFull" => ExtractSpec(
+            "Zlib" => ExtractSpec(
                 raw"extract ${prefix}/**",
                 [
                     FileProduct("include/zlib.h", :zlib_h),
                     LibraryProduct("libz", :libz),
                 ],
                 get_default_target_spec(build_config),
-                inter_deps = zlib_full_deps,
+                inter_deps = zlib_deps,
             ),
         )
     end
@@ -55,15 +55,17 @@ build_tarballs_args = Dict(
 
 if "--multi-extractions" ∈ ARGS
     build_tarballs_args[:jll_extraction_map] = Dict(
-        "Zlib" => ["Zlib", "ZlibFull"],
+        "Zlib" => ["Zlib", "ZlibSlim"],
     )
     build_tarballs_args[:extract_spec_generator] = zlib_extract_generator()
+    filter!(x -> x != "--multi-extractions", ARGS)
 elseif "--multi-jlls" ∈ ARGS
     build_tarballs_args[:jll_extraction_map] = Dict(
-        "Zlib" => ["Zlib"],
-        "ZlibFull" => ["ZlibFull", "Zlib"],
+        "Zlib" => ["Zlib", "ZlibSlim"],
+        "ZlibSlim" => ["ZlibSlim"],
     )
-    build_tarballs_args[:extract_spec_generator] = zlib_extract_generator(;zlib_full_deps=["Zlib"])
+    build_tarballs_args[:extract_spec_generator] = zlib_extract_generator(;zlib_deps=["ZlibSlim"])
+    filter!(x -> x != "--multi-jlls", ARGS)
 else
     error("You must specify either --multi-extractions or --multi-jlls!")
 end
