@@ -666,6 +666,13 @@ function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::Union
     return reg_checkout_path
 end
 
+function add_dot_git(url::String)
+    if endswith(url, ".git")
+        return url
+    end
+    return string(url, ".git")
+end
+
 """
     register_jll!(u::Universe, jll::JLLInfo)
 
@@ -738,7 +745,7 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             commit=true,
             push=false,
             # We add `.git` here to better match what is already in the General repository
-            repo="$(jll_repo_url).git",
+            repo=add_dot_git(jll_repo_url),
             # When iterating, this is pretty useful.
             ignore_reregistration=true,
         )
