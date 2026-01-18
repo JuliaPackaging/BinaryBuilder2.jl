@@ -97,6 +97,11 @@ function content_hash(sources::Vector{<:AbstractSource})
     return SHA1Hash(TreeArchival.tree_node_hash(SHA.SHA1_CTX, entries))
 end
 
+function spec_hash(sources::Vector{<:AbstractSource}; kwargs...)
+    hashes = bytes2hex.(spec_hash.(sources; kwargs...))
+    return SHA1Hash(sha1(string(hashes...)))
+end
+
 """
     target(as::AbstractSource)
 

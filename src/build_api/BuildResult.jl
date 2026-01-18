@@ -64,7 +64,7 @@ function Sandbox.cleanup(result::BuildResult)
 end
 
 function BuildResult_cached(config::BuildConfig)
-    build_hash = content_hash(config)
+    build_hash = spec_hash(config)
     log_artifact_hash = config.meta.build_cache.build_logs[build_hash]
     env = config.meta.build_cache.envs[build_hash]
     build_log = joinpath(artifact_path(config.meta.universe, log_artifact_hash), "$(config.src_name)-build.log")
