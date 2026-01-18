@@ -27,7 +27,7 @@ const treehash_cache = Dict{String, SHA1Hash}(string(pkg_name) => pkg_treehash(p
 
 Returns a dictionary mapping name to treehash for every BinaryBuilder2-associated package
 that should be considered as sensitive toward reproducible building.  See the definition
-of `content_hash(::BuildConfig)` for more.
+of `spec_hash(::BuildConfig)` for more.
 """
 function bb_package_treehashes()
     return treehash_cache

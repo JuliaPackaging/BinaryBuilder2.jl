@@ -74,9 +74,9 @@ function Base.show(io::IO, config::ExtractConfig)
     print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(config.platform))")
 end
 
-function extract_content_hash(extract_script::String, products::Vector{<:AbstractProduct})
-    # Similar to the `content_hash()` definition for `BuildConfig`, we construct
-    # a string in `hash_buffer` then hash it at the end for the final `content_hash()`.
+function extract_spec_hash(extract_script::String, products::Vector{<:AbstractProduct})
+    # Similar to the `spec_hash()` definition for `BuildConfig`, we construct
+    # a string in `hash_buffer` then hash it at the end for the final `spec_hash()`.
     hash_buffer = IOBuffer()
 
     println(hash_buffer, "[extraction_metadata]")
@@ -87,15 +87,15 @@ function extract_content_hash(extract_script::String, products::Vector{<:Abstrac
     end
     # println(hash_buffer, "[inter_deps]")
     # for config in inter_dep_configs
-    #     println(hash_buffer, "  $(config.name) - $(content_hash(config))")
+    #     println(hash_buffer, "  $(config.name) - $(spec_hash(config))")
     # end
 
     hash_buffer = String(take!(hash_buffer))
     @debug("ExtractConfig hash buffer:\n$(hash_buffer)")
     return SHA1Hash(sha1(hash_buffer))
 end
-function BinaryBuilderSources.content_hash(config::ExtractConfig)
-    return extract_content_hash(config.script, config.products)
+function BinaryBuilderSources.spec_hash(config::ExtractConfig)
+    return extract_spec_hash(config.script, config.products)
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)
@@ -239,8 +239,8 @@ function extract!(config::ExtractConfig;
         artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
         if artifact_hash !== nothing
             if verbose
-                extract_hash = content_hash(config)
-                build_hash = content_hash(config.build.config)
+                extract_hash = spec_hash(config)
+                build_hash = spec_hash(config.build.config)
                 @info("Extraction cached", config, extract_hash, build_hash, path=artifact_path(artifact_hash))
             end
             try
@@ -251,8 +251,8 @@ function extract!(config::ExtractConfig;
                 @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
             end
         else
-            extract_hash = content_hash(config)
-            build_hash = content_hash(config.build.config)
+            extract_hash = spec_hash(config)
+            build_hash = spec_hash(config.build.config)
             @debug("Extraction not cached", config, extract_hash, build_hash)
         end
     end

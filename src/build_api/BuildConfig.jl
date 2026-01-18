@@ -57,8 +57,8 @@ struct BuildConfig
     # We're going to store all sorts of timing information about our build in here
     to::TimerOutput
 
-    # Our content hash; we cache it because we may need to ask for it multiple times
-    content_hash::Ref{Union{Nothing,SHA1Hash}}
+    # Our spec hash; we cache it because we may need to ask for it multiple times
+    spec_hash::Ref{Union{Nothing,SHA1Hash}}
 
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
@@ -74,6 +74,15 @@ struct BuildConfig
         end
         host = get_host_target_spec(target_specs).platform.host
 
+        # Cache key for our metadir generated source, it is sensitive to the BB2 hash and the script itself
+        function metadir_cache_key(script)
+            hash = sha1(string(
+                bytes2hex(bb_package_treehashes()["BinaryBuilder2"]),
+                script,
+            ))
+            return string("BB2-", bytes2hex(hash)[1:4], "-metadir")
+        end
+
         # Dependencies for each target's prefix
         target_deps = [target_prefix(bts) => bts.dependencies for bts in target_specs]
         source_trees = Dict{String,Vector{AbstractSource}}(
@@ -88,7 +97,7 @@ struct BuildConfig
             )],
 
             # Metadata such as our build script
-            metadir_prefix() => [GeneratedSource() do out_dir
+            metadir_prefix() => [GeneratedSource(metadir_cache_key(script)) do out_dir
                 # Generate a `.bashrc` that contains all sorts of `source` statements and whatnot
                 bashrc_path = joinpath(out_dir, ".bashrc")
                 open(bashrc_path; write=true) do io
@@ -224,13 +233,15 @@ function Base.show(io::IO, config::BuildConfig)
     print(io, "BuildConfig($(config.src_name), $(config.src_version), $(target_platform_string(config)))")
 end
 
-function BinaryBuilderSources.content_hash(config::BuildConfig)
-    if config.content_hash[] === nothing
+function BinaryBuilderSources.spec_hash(config::BuildConfig)
+    if config.spec_hash[] === nothing
+        depot = depot_path(AbstractBuildMeta(config).universe)
+        registries = Pkg.Registry.reachable_registries(; depots=[depot])
         # We will collect all information as a string (including hashes of dependencies)
         # and then hash that whole thing to generate our content-hash.
         hash_buffer = IOBuffer()
 
-        @timeit config.to "content_hash" begin
+        @timeit config.to "spec_hash" begin
             # Metadata about the build itslef,
             println(hash_buffer, "[build_metadata]")
             println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
@@ -245,7 +256,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
             println(hash_buffer, "[source_trees]")
             for prefix in sort(collect(keys(config.source_trees)))
                 deps = config.source_trees[prefix]
-                println(hash_buffer, "  $(prefix) = $(content_hash(deps))")
+                println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
 
                 # For debugging build cache issues
                 # source_str(gs::GitSource) = "GitSource: $(gs.target)"
@@ -253,7 +264,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
                 # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
                 # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
                 # for dep in deps
-                #     println(hash_buffer, "    - $(source_str(dep)) $(content_hash(dep))")
+                #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
                 # end
             end
 
@@ -267,7 +278,7 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
         end
         hash_buffer = String(take!(hash_buffer))
         @debug("BuildConfig hash buffer:\n$(hash_buffer)")
-        config.content_hash[] = SHA1Hash(sha1(hash_buffer))
+        config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
 
         # Add `bb_build_identifier` to our environment which is primarily used
         # as the hostname in our vscode tunnel to `bb2.cflo.at`.
@@ -276,10 +287,10 @@ function BinaryBuilderSources.content_hash(config::BuildConfig)
             "-v",
             config.src_version,
             "-",
-            bytes2hex(config.content_hash[])[1:8],
+            bytes2hex(config.spec_hash[])[1:8],
         )
     end
-    return config.content_hash[]::SHA1Hash
+    return config.spec_hash[]::SHA1Hash
 end
 
 # Helpers so I don't have to hard-code paths everywhere
@@ -454,10 +465,9 @@ function build!(config::BuildConfig;
 
     # Hit our build cache and see if we've already done this exact build.
     if !disable_cache && !isempty(extract_arg_hints)
-        prepare(config; verbose)
         try
-            build_hash = content_hash(config)
-            if all(haskey(meta.build_cache, build_hash, extract_content_hash(args...)) for args in extract_arg_hints)
+            build_hash = spec_hash(config)
+            if all(haskey(meta.build_cache, build_hash, extract_spec_hash(args...)) for args in extract_arg_hints)
                 if verbose
                     @info("Build cached", config, build_hash)
                 else
@@ -473,7 +483,7 @@ function build!(config::BuildConfig;
             else
                 @debug("Build not cached", config)
                 for extract_args in extract_arg_hints
-                    @debug(" -> FAIL: ", build_hash, extract_hash=extract_content_hash(extract_args...))
+                    @debug(" -> FAIL: ", build_hash, extract_hash=extract_spec_hash(extract_args...))
                 end
             end
         catch e

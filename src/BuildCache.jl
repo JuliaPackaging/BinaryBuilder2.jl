@@ -3,13 +3,13 @@ export BuildCache
 
 struct BuildCache
     cache_dir::String
-    # This maps from content_hash(::BuildConfig, extract_args...) -> artifact hash
+    # This maps from spec_hash(::BuildConfig, extract_args...) -> artifact hash
     extractions::Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}
-    # This maps from content_hash(::BuildConfig, extract_args...) -> extract log artifact hash
+    # This maps from spec_hash(::BuildConfig, extract_args...) -> extract log artifact hash
     extract_logs::Dict{Tuple{SHA1Hash,SHA1Hash},SHA1Hash}
-    # This maps from content_hash(::BuildConfig) -> build log artifact hash
+    # This maps from spec_hash(::BuildConfig) -> build log artifact hash
     build_logs::Dict{SHA1Hash,SHA1Hash}
-    # This maps from content_hash(::BuildConfig) -> env dict
+    # This maps from spec_hash(::BuildConfig) -> env dict
     envs::Dict{SHA1Hash,Dict{String,String}}
 
     # This is where our artifacts are stored.  For simplicity, we lock ourselves to a
@@ -52,8 +52,8 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
     build_result = extract_result.config.build
     return put!(
         bc,
-        content_hash(build_result.config),
-        content_hash(extract_result.config),
+        spec_hash(build_result.config),
+        spec_hash(extract_result.config),
         SHA1Hash(extract_result.artifact),
         extract_result.log_artifact,
         build_result.log_artifact,
@@ -82,8 +82,8 @@ function Base.get(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash)
 end
 
 function Base.get(bc::BuildCache, extract_config::ExtractConfig)
-    extract_hash = content_hash(extract_config)
-    build_hash = content_hash(extract_config.build.config)
+    extract_hash = spec_hash(extract_config)
+    build_hash = spec_hash(extract_config.build.config)
     return get(bc, build_hash, extract_hash)
 end
 
