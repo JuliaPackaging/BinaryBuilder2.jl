@@ -224,15 +224,11 @@ function extract!(config::ExtractConfig;
     meta.extractions[config] = nothing
 
     # If we're asking for a dry run, skip out
-    if "extract" ∈ meta.dry_run
-        if verbose
-            @info("Dry-run extraction", config)
-        end
+    if should_skip(config, verbose)
         result = ExtractResult_skipped(config)
         meta.extractions[config] = result
         return result
     end
-    @assert config.build.status != :skipped
 
     # Hit our build cache and see if we've already done this exact extraction.
     if !disable_cache

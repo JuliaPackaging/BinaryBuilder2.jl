@@ -250,6 +250,13 @@ struct BuildMeta <: AbstractBuildMeta
     verbose::Bool
     debug_modes::Set{String}
 
+    # We can selectively turn on/off separate builds by specifying the builds'
+    # content hash.  This is a more specific method of filtering down which
+    # builds to perform.  We specifically list _only_ the build hashes we
+    # care about, not extract hashes, as we will always perform all
+    # extractions for any selected builds.
+    build_hash_list::Set{MultiHash}
+
     # The universe we register into and deploy from
     universe::Universe
 
@@ -275,6 +282,7 @@ struct BuildMeta <: AbstractBuildMeta
                         json_output::Union{Nothing,AbstractString,IO} = nothing,
                         disabled_caches = Set{String}(),
                         dry_run = Set{String}(),
+                        build_hash_list = Set{MultiHash}(),
                         register::Bool = false,
                        )
         if !isa(debug_modes, Set)
@@ -359,6 +367,7 @@ struct BuildMeta <: AbstractBuildMeta
             Vector{AbstractPlatform}(target_list),
             verbose,
             debug_modes,
+            Set{MultiHash}(build_hash_list),
             universe,
             load_cache(),
             Set{String}(disabled_caches),
@@ -383,6 +392,85 @@ function build_cache_enabled(meta::BuildMeta)
     end
 
     return true
+end
+
+function should_skip(config::BuildConfig, verbose::Bool)
+    meta = AbstractBuildMeta(config)
+    if "build" ∈ meta.dry_run
+        if verbose
+            @info("Dry-run build", config)
+        else
+            @debug("Dry-run build", config)
+        end
+        return true
+    end
+
+    if !isempty(meta.build_hash_list)
+        build_hash = spec_hash(config)
+        if build_hash ∉ meta.build_hash_list
+            if verbose
+                @info("Hash-skipped build", config)
+            else
+                @debug("Hash-skipped build", config)
+            end
+            return true
+        end
+
+        if verbose
+            @info("Hash-selected build", config)
+        else
+            @debug("Hash-selected build", config)
+        end
+    end
+
+    return false
+end
+
+function should_skip(config::ExtractConfig, verbose::Bool)
+    meta = AbstractBuildMeta(config)
+
+    # If we're doing a dry run, skip out
+    if "extract" ∈ meta.dry_run
+        if verbose
+            @info("Dry-run extraction", config)
+        else
+            @debug("Dry-run extraction", config)
+        end
+        return true
+    end
+
+    # If our build was skipped, we skip ourselves too
+    if config.build.status == :skipped
+        @debug("Skipping hash-skipped build", config)
+        return true
+    end
+
+    return false
+end
+
+function should_skip(config::PackageConfig, verbose::Bool)
+    meta = AbstractBuildMeta(config)
+
+    # If we're doing a dry run, skip out
+    if "package" ∈ meta.dry_run
+        if verbose
+            @info("Dry-run packaging", config)
+        else
+            @debug("Dry-run packaging", config)
+        end
+        return true
+    end
+
+    # If any extractions were skipped, we skip ourselves too
+    for (_, extractions) in config.named_extractions
+        for extraction in extractions
+            if extraction.status == :skipped
+                return true
+            end
+        end
+    end
+
+    return false
 end
 
 """

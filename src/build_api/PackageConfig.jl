@@ -62,7 +62,7 @@ struct PackageConfig
                         # If ignoring, do nothing
                     elseif duplicate_extraction_handling == :ignore_identical
                         # If ignoring identical, only push if not identical
-                        if unique_extractions[extract_result.config.platform].artifact != extract_result.artifact
+                        if unique_extractions[extract_result.config.platform].artifact != extract_result.artifact && extract_result.artifact !== nothing
                             push!(duplicate_extractions, extract_result)
                         end
                     else
@@ -320,15 +320,10 @@ function package!(config::PackageConfig)
     meta = AbstractBuildMeta(config)
     meta.packagings[config] = nothing
 
-    if "package" ∈ meta.dry_run
+    if should_skip(config, meta.verbose)
         result = PackageResult_skipped(config)
         meta.packagings[config] = result
         return result
-    end
-    for (_, extractions) in config.named_extractions
-        for extraction in extractions
-            @assert extraction.status != :skipped
-        end
     end
 
     # Merge all our timer outputs into a single, final, timer output.

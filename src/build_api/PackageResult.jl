@@ -1,4 +1,5 @@
 export PackageResult
+export collect_builds, collect_extractions, collect_platforms
 
 struct PackageResult
     # Link back to the originating Package Config
@@ -64,20 +65,32 @@ function BinaryBuilderSources.PackageSpec(result::PackageResult)
     )
 end
 
+"""
+    collect_builds(result::PackageResult)
+
+Return all `ExtractResult`'s that were used as part of this packaging.
+"""
 function collect_extractions(result::PackageResult)
-    ret = ExtractResult[]
-    for (name, ers) in result.config.named_extractions
-        append!(ret, ers)
+    ret = Set{ExtractResult}()
+    for (_, ers) in result.config.named_extractions
+        for er in ers
+            push!(ret, er)
+        end
     end
-    return ret
+    return collect(ret)
 end
 
+"""
+    collect_builds(result::PackageResult)
+
+Return all `BuildConfig`'s that were used as part of this packaging.
+"""
 function collect_builds(result::PackageResult)
-    ret = BuildResult[]
+    ret = Set{BuildResult}()
     for extract_result in collect_extractions(result)
         push!(ret, extract_result.config.build)
     end
-    return ret
+    return collect(ret)
 end
 
 """
