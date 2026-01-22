@@ -453,11 +453,8 @@ function build!(config::BuildConfig;
     meta = AbstractBuildMeta(config)
     meta.builds[config] = nothing
 
-    # If we're asking for a dry run, skip out
-    if "build" ∈ meta.dry_run
-        if verbose
-            @info("Dry-run build", config)
-        end
+    # If we're asking for a dry run or our build_hash is not selected
+    if should_skip(config, verbose)
         result = BuildResult_skipped(config)
         meta.builds[config] = result
         return result
