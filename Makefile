@@ -1,4 +1,5 @@
 PROJECTS := $(subst /,,$(dir $(wildcard */Project.toml))) .
+PROJECTS := $(filter-out docs,$(PROJECTS))
 JULIA ?= julia
 JULIA_v12_OR_HIGHER := $(shell $(JULIA) -e 'if VERSION >= v"1.12.0-DEV"; println("true"); end')
 
