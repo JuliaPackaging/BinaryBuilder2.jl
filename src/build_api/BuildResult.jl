@@ -61,17 +61,15 @@ function Sandbox.cleanup(result::BuildResult)
     end
 end
 
-function BuildResult_cached(config::BuildConfig)
-    bc = config.meta.build_cache
-    build_entry = bc.build_entries[spec_hash(config)]
+function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,SHA1Hash}, env::Dict{String,String})
     return BuildResult(
         config,
         :cached,
         nothing,
         nothing,
         Dict{String,MountInfo}(),
-        build_entry.log_artifact,
-        build_entry.env,
+        SHA1Hash(log_artifact),
+        env,
     )
 end
 

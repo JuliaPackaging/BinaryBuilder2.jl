@@ -350,3 +350,13 @@ function prune!(bc::BuildCache)
     prune_aux_dir(keys(bc.build_entries), ".env", "envs")
     prune_aux_dir(keys(bc.extract_entries), ".jlp", "jll_lib_products")
 end
+
+
+# Helper functions for using these cache entries
+function BuildResult_cached(config::BuildConfig, entry::BuildCacheBuildEntry)
+    return BuildResult_cached(config, entry.log_artifact, entry.env)
+end
+
+function ExtractResult_cached(config::ExtractConfig, entry::BuildCacheExtractEntry)
+    return ExtractResult_cached(config, entry.artifact, entry.log_artifact, entry.jll_lib_products)
+end

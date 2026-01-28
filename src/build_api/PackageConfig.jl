@@ -92,6 +92,19 @@ end
 # Helper functions for quickly packaging a few ExtractResults
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
 PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
+
+# Helper function for resynthesizing a `PackageConfig` out of some `ExtractResults`
+# that are coming from Yggdrasil builders
+function PackageConfig(config::PackageConfig, extractions::Dict{String,Vector{ExtractResult}})
+    return PackageConfig(
+        extractions;
+        jll_name = config.name,
+        version_series = config.version,
+        extra_deps = config.extra_deps,
+        julia_compat = config.julia_compat,
+    )
+end
+
 AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
 AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = AbstractBuildMeta(first(first(values(named_extractions))))
 
@@ -318,11 +331,11 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
     )
 end
 
-function package!(config::PackageConfig)
+function package!(config::PackageConfig; verbose::Bool = AbstractBuildMeta(config).verbose)
     meta = AbstractBuildMeta(config)
     meta.packagings[config] = nothing
 
-    if should_skip(config, meta.verbose)
+    if should_skip(config, verbose)
         result = PackageResult_skipped(config)
         meta.packagings[config] = result
         return result
@@ -349,7 +362,7 @@ function package!(config::PackageConfig)
 
         @timeit to "register_jll!" begin
             # Register this JLL out into our universe
-            register_jll!(meta.universe, jll; verbose=meta.verbose)
+            register_jll!(meta.universe, jll; verbose)
         end
     end
 

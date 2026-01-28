@@ -471,7 +471,8 @@ function build!(config::BuildConfig;
                     @debug("Build cached", config, build_hash)
                 end
                 try
-                    result = BuildResult_cached(config)
+                    build_entry = meta.build_cache.build_entries[build_hash]
+                    result = BuildResult_cached(config, build_entry)
                     meta.builds[config] = result
                     return result
                 catch exception
