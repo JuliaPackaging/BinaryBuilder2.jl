@@ -464,7 +464,7 @@ function build!(config::BuildConfig;
     if !disable_cache && !isempty(extract_arg_hints)
         try
             build_hash = spec_hash(config)
-            if all(haskey(meta.build_cache, build_hash, extract_spec_hash(args...)) for args in extract_arg_hints)
+            if all(haskey(meta.build_cache, build_hash, extract_spec_hash(build_hash, args...)) for args in extract_arg_hints)
                 if verbose
                     @info("Build cached", config, build_hash)
                 else
@@ -480,7 +480,7 @@ function build!(config::BuildConfig;
             else
                 @debug("Build not cached", config)
                 for extract_args in extract_arg_hints
-                    @debug(" -> FAIL: ", build_hash, extract_hash=extract_spec_hash(extract_args...))
+                    @debug(" -> FAIL: ", build_hash, extract_hash=extract_spec_hash(build_hash, extract_args...))
                 end
             end
         catch e
@@ -549,7 +549,6 @@ function build!(config::BuildConfig;
         run_exception,
         exe,
         mounts,
-        build_log,
         log_artifact_hash,
         env,
     )

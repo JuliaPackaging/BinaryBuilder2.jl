@@ -1,4 +1,5 @@
 export BuildResult
+export build_log
 
 """
     BuildResult
@@ -24,7 +25,6 @@ mutable struct BuildResult
     mounts::Dict{String,MountInfo}
 
     # Log from the build
-    build_log::String
     log_artifact::SHA1Hash
 
     # The final environment of this build result.
@@ -35,7 +35,6 @@ mutable struct BuildResult
                          exception::Union{Nothing,Exception},
                          exe::Union{Nothing,SandboxExecutor},
                          mounts::Dict{String,MountInfo},
-                         build_log::AbstractString,
                          log_artifact::SHA1Hash,
                          env::Dict{String,String})
         obj = new(
@@ -44,7 +43,6 @@ mutable struct BuildResult
             exception,
             exe,
             mounts,
-            String(build_log),
             log_artifact,
             env,
         )
@@ -64,19 +62,16 @@ function Sandbox.cleanup(result::BuildResult)
 end
 
 function BuildResult_cached(config::BuildConfig)
-    build_hash = spec_hash(config)
-    log_artifact_hash = config.meta.build_cache.build_logs[build_hash]
-    env = config.meta.build_cache.envs[build_hash]
-    build_log = joinpath(artifact_path(config.meta.universe, log_artifact_hash), "$(config.src_name)-build.log")
+    bc = config.meta.build_cache
+    build_entry = bc.build_entries[spec_hash(config)]
     return BuildResult(
         config,
         :cached,
         nothing,
         nothing,
         Dict{String,MountInfo}(),
-        String(read(build_log)),
-        log_artifact_hash,
-        env,
+        build_entry.log_artifact,
+        build_entry.env,
     )
 end
 
@@ -87,7 +82,6 @@ function BuildResult_skipped(config::BuildConfig)
         nothing,
         nothing,
         Dict{String,MountInfo}(),
-        "",
         SHA1Hash(sha1("")),
         Dict{String,String}(),
     )
@@ -148,6 +142,11 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
         throw(ArgumentError("Could not read file $(filepath): $(String(take!(stderr)))"))
     end
     return take!(stdout)
+end
+
+function build_log(br::BuildResult)
+    build_log_path = artifact_path(br.config.meta.universe, br.log_artifact)
+    return String(read(joinpath(build_log_path, "$(br.config.src_name)-build.log")))
 end
 
 function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})

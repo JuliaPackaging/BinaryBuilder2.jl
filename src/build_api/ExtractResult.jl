@@ -18,8 +18,11 @@ struct ExtractResult
     # Treehash that represents the packaged log files for the given config
     log_artifact::Union{Nothing,SHA1Hash}
 
-    # The audit result.  It can be nothing if the build itself failed.
+    # The audit result.  It can be nothing if this is a failed or cached build
     audit_result::Union{Nothing,AuditResult}
+
+    # The JLL library product structure, comes from `audit_result`.
+    jll_lib_products::Vector{JLLLibraryProduct}
 
     # Logs generated during this extraction (audit logs, mostly)
     extract_log::String
@@ -30,6 +33,7 @@ struct ExtractResult
                            artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            log_artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            audit_result::Union{Nothing,AuditResult},
+                           jll_lib_products::Vector{JLLLibraryProduct},
                            extract_log::String)
         return new(
             config,
@@ -38,23 +42,24 @@ struct ExtractResult
             artifact !== nothing ? SHA1Hash(artifact) : nothing,
             log_artifact !== nothing ? SHA1Hash(log_artifact) : nothing,
             audit_result,
+            jll_lib_products,
             extract_log,
         )
     end
 end
 AbstractBuildMeta(result::ExtractResult) = AbstractBuildMeta(result.config)
 
-function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash})
+function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash}, jll_lib_products::Vector{JLLLibraryProduct})
     build_config = config.build.config
     extract_log = joinpath(artifact_path(build_config.meta.universe, log_artifact), "$(build_config.src_name)-extract.log")
-    audit_result = audit!(config, artifact_path(build_config.meta.universe, artifact); readonly=true)
     return ExtractResult(
         config,
         :cached,
         nothing,
         artifact,
         log_artifact,
-        audit_result,
+        nothing,
+        jll_lib_products,
         String(read(extract_log)),
     )
 end
@@ -67,6 +72,7 @@ function ExtractResult_skipped(config::ExtractConfig)
         nothing,
         nothing,
         nothing,
+        JLLLibraryProduct[],
         "",
     )
 end
@@ -88,7 +94,6 @@ end
 function runshell(result::ExtractResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
     run(result.config.build.exe, SandboxConfig(result; verbose), ignorestatus(shell))
 end
-
 
 """
     ExtractResultSource(result::ExtractResult)

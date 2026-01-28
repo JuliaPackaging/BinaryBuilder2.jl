@@ -88,6 +88,8 @@ struct PackageConfig
         return new(jll_name, version, extractions, extra_deps, string(julia_compat))
     end
 end
+
+# Helper functions for quickly packaging a few ExtractResults
 PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
 PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
 AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
@@ -206,7 +208,7 @@ function JLLProducts(result::ExtractResult)
     end
 
     # Copy over the LibraryProducts that were translated by the auditor
-    append!(products, result.audit_result.jll_lib_products)
+    append!(products, result.jll_lib_products)
     return products
 end
 
