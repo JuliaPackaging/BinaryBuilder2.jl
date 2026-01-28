@@ -1,23 +1,34 @@
 steps:
   - label: ":rocket: Launch test jobs"
     command: |
-      export ARCH JULIA_VERSION SOFT_FAIL
-      for ARCH in x86_64 aarch64; do
-        JULIA_VERSIONS=(
-          # We're going to do our best to keep the latest stable always working
-          1
+      export SUBPROJECT SUBPROJECT_NAME SOFT_FAIL
+      export ARCH={{ matrix.arch }}
+      export JULIA_VERSION={{ matrix.julia_version }}
+      if [[ "\${JULIA_VERSION}" == "nightly" ]]; then
+        SOFT_FAIL="true"
+      else
+        SOFT_FAIL="false"
+      fi
 
-          # Keeping nightly commented out for now due to HSG not keeping up
-          #nightly
-        )
-        for JULIA_VERSION in "\${JULIA_VERSIONS[@]}"; do
-          if [[ "\${JULIA_VERSION}" == "nightly" ]]; then
-            SOFT_FAIL="true"
-          else
-            SOFT_FAIL="false"
-          fi
-          buildkite-agent pipeline upload .buildkite/run_bb_tests.yml
-        done
+      SUBPROJECTS=( \$(find . -maxdepth 2 -name Project.toml | \
+                      xargs -n1 dirname | \
+                      xargs -n1 basename | \
+                      grep -v '^docs\$' ) )
+      for SUBPROJECT in "\${SUBPROJECTS[@]}"; do
+        SUBPROJECT_NAME="\${SUBPROJECT}"
+        if [[ "\${SUBPROJECT_NAME}" == "." ]]; then
+          SUBPROJECT_NAME="BinaryBuilder2"
+        fi
+        buildkite-agent pipeline upload .buildkite/run_bb_tests.yml
       done
+    matrix:
+      setup:
+        arch:
+          - "aarch64"
+          - "x86_64"
+        julia_version:
+          - "1"
+          # Keeping nightly commented out for now due to HSG not keeping up
+          #- "nightly"
     agents:
       queue: juliaecosystem
