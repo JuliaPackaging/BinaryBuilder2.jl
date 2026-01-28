@@ -1,5 +1,5 @@
 using BinaryBuilder2, Test
-import BinaryBuilder2: get_target_spec, spec_hash
+import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
 
 @testset "Build Selection" begin
     meta = BuildMeta(; verbose=false)
@@ -35,4 +35,35 @@ import BinaryBuilder2: get_target_spec, spec_hash
 
     # Next, ensure that `libstring` was not packaged, since it has skipped elements
     @test filtered_meta["libstring"].status == :skipped
+
+    # Now, let's pretend that we're Yggdrasil; two separate workers have built and sent
+    # us each an `BuildCacheExtractEntry` (and extract config hash), which is precisely
+    # what is needed for BB2 to consider a build as previously successfully built.
+    # The hash will allow us to pair this result with the ExtractConfig from a dry run,
+    # enabling us to then synthesize a `PackageConfig` we can `package!()`.
+    struct YggdrasilBuildResult
+        config_hash::SHA1Hash
+        entry::BuildCacheExtractEntry
+    end
+    build_results = [
+        YggdrasilBuildResult(
+            spec_hash(er.config),
+            BuildCacheExtractEntry(er.artifact, er.log_artifact, er.jll_lib_products),
+        )
+        for er in filter(er -> er.status == :success, extract_results)
+    ]
+
+    function BinaryBuilder2.ExtractResult(ybg::YggdrasilBuildResult)
+        for er in extract_results
+            if spec_hash(er.config) == ybg.config_hash
+                return BinaryBuilder2.ExtractResult_cached(er.config, ybg.entry)
+            end
+        end
+        return nothing
+    end
+
+    extract_results = ExtractResult.(build_results)
+    package_config = PackageConfig(meta["libstring"].config, Dict("libstring" => extract_results))
+    package_result = package!(package_config)
+    @test package_result.status == :success
 end
