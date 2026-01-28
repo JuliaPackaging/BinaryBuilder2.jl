@@ -74,17 +74,20 @@ function Base.show(io::IO, config::ExtractConfig)
     print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(config.platform))")
 end
 
-function extract_spec_hash(extract_script::String, products::Vector{<:AbstractProduct})
+function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, products::Vector{<:AbstractProduct})
     # Similar to the `spec_hash()` definition for `BuildConfig`, we construct
     # a string in `hash_buffer` then hash it at the end for the final `spec_hash()`.
     hash_buffer = IOBuffer()
 
     println(hash_buffer, "[extraction_metadata]")
+    println(hash_buffer, "  build_hash = $(bytes2hex(build_hash))")
     println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(extract_script)))")
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
     end
+
+    # I think we probably don't need to be sensitive to these, since they're only used in packaging?
     # println(hash_buffer, "[inter_deps]")
     # for config in inter_dep_configs
     #     println(hash_buffer, "  $(config.name) - $(spec_hash(config))")
@@ -95,7 +98,8 @@ function extract_spec_hash(extract_script::String, products::Vector{<:AbstractPr
     return SHA1Hash(sha1(hash_buffer))
 end
 function BinaryBuilderSources.spec_hash(config::ExtractConfig)
-    return extract_spec_hash(config.script, config.products)
+    build_hash = spec_hash(config.build.config)
+    return extract_spec_hash(build_hash, config.script, config.products)
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)
@@ -219,6 +223,7 @@ function extract!(config::ExtractConfig;
                   verbose::Bool = AbstractBuildMeta(config).verbose)
     local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
+    jll_lib_products = JLLLibraryProduct[]
     build_config = BuildConfig(config)
     meta = AbstractBuildMeta(config)
     meta.extractions[config] = nothing
@@ -232,15 +237,15 @@ function extract!(config::ExtractConfig;
 
     # Hit our build cache and see if we've already done this exact extraction.
     if !disable_cache
-        artifact_hash, extract_log_artifact_hash, _, _ = get(meta.build_cache, config)
-        if artifact_hash !== nothing
+        _, extract_entry = get(meta.build_cache, config)
+        if extract_entry !== nothing
             if verbose
                 extract_hash = spec_hash(config)
                 build_hash = spec_hash(config.build.config)
-                @info("Extraction cached", config, extract_hash, build_hash, path=artifact_path(artifact_hash))
+                @info("Extraction cached", config, extract_hash, build_hash, path=artifact_path(extract_entry.artifact))
             end
             try
-                result = ExtractResult_cached(config, artifact_hash, extract_log_artifact_hash)
+                result = ExtractResult_cached(config, extract_entry.artifact, extract_entry.log_artifact, extract_entry.jll_lib_products)
                 meta.extractions[config] = result
                 return result
             catch exception
@@ -289,6 +294,7 @@ function extract!(config::ExtractConfig;
                     # Before the artifact is sealed, we run our audit passes, as they may alter the binaries, but only if the extraction was successful
                     try
                         audit_result = audit!(config, artifact_dir)
+                        jll_lib_products = audit_result.jll_lib_products
                         if !success(audit_result)
                             @error("Audit failed, Running again with debugging enabled, then erroring out!")
                             show(audit_result)
@@ -333,6 +339,7 @@ function extract!(config::ExtractConfig;
         artifact_hash,
         log_artifact_hash,
         audit_result,
+        jll_lib_products,
         extract_log,
     )
     if build_cache_enabled(meta) && run_status == :success

@@ -40,7 +40,7 @@ end
     failing_build_result = build!(bad_build_config)
     @test failing_build_result.status == :failed
     @test failing_build_result.env["env_val"] == "pre"
-    @test occursin("Previous command 'false' exited with code 1", failing_build_result.build_log)
+    @test occursin("Previous command 'false' exited with code 1", build_log(failing_build_result))
 end
 
 include("BuildAPITests/LowLevelBuildTests.jl")
