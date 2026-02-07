@@ -1,34 +1,20 @@
 steps:
-  - label: ":rocket: Launch test jobs"
+  - label: ":rocket: Generate and launch test pipeline"
+    plugins:
+      JuliaCI/julia#v1:
+        version: "1"
     command: |
-      export SUBPROJECT SUBPROJECT_NAME SOFT_FAIL
-      export ARCH={{ matrix.arch }}
-      export JULIA_VERSION={{ matrix.julia_version }}
-      if [[ "\${JULIA_VERSION}" == "nightly" ]]; then
-        SOFT_FAIL="true"
-      else
-        SOFT_FAIL="false"
-      fi
-
-      SUBPROJECTS=( \$(find . -maxdepth 2 -name Project.toml | \
-                      xargs -n1 dirname | \
-                      xargs -n1 basename | \
-                      grep -v '^docs\$' ) )
-      for SUBPROJECT in "\${SUBPROJECTS[@]}"; do
-        SUBPROJECT_NAME="\${SUBPROJECT}"
-        if [[ "\${SUBPROJECT_NAME}" == "." ]]; then
-          SUBPROJECT_NAME="BinaryBuilder2"
-        fi
-        buildkite-agent pipeline upload .buildkite/run_bb_tests.yml
-      done
-    matrix:
-      setup:
-        arch:
-          - "aarch64"
-          - "x86_64"
-        julia_version:
-          - "1"
-          # Keeping nightly commented out for now due to HSG not keeping up
-          #- "nightly"
+      # Generate the pipeline dynamically
+      # Options:
+      #   --group-by-julia      - Group steps by Julia version
+      #   --group-by-arch       - Group steps by architecture
+      #   --group-by-subproject - Group steps by subproject name
+      #   (no flag)             - No grouping (flat list)
+      
+      cd .buildkite
+      julia --project -e 'import Pkg; Pkg.instantiate()'
+      julia --project generate_pipeline.jl --group-by-arch | buildkite-agent pipeline upload
     agents:
       queue: juliaecosystem
+      os: linux
+      arch: aarch64
