@@ -1,7 +1,7 @@
 name = "BinaryBuilderGitUtils"
 uuid = "654d7472-7548-7361-4832-74694762694c"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.1"
+version = "0.2.0"
 
 [deps]
 Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
