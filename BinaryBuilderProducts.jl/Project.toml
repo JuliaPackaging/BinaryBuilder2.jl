@@ -1,7 +1,7 @@
 name = "BinaryBuilderProducts"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
