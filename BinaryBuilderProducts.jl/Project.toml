@@ -1,18 +1,19 @@
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderProducts"
 uuid = "21737265-7a69-6e4f-4974-6375646f7270"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
+
+[compat]
+BinaryBuilderSources = "0.1"
+JLLGenerator = "0.3"
+KeywordArgumentExtraction = "1.0"
+julia = "1.6"
 
 [deps]
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 KeywordArgumentExtraction = "45533465-3150-2073-4772-41774b207255"
 Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
-
-[compat]
-BinaryBuilderSources = "0.1"
-JLLGenerator = "0.3"
-julia = "1.6"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
