@@ -1,7 +1,7 @@
 name = "LazyJLLWrappers"
 uuid = "21706172-204c-4d4f-5420-656854206f44"
 authors = ["Elliot Saba"]
-version = "1.0.3"
+version = "1.1.0"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
