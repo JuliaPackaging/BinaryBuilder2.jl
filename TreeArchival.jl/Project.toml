@@ -1,7 +1,7 @@
 name = "TreeArchival"
 uuid = "216c6a2e-6c61-7669-6863-726165657274"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
