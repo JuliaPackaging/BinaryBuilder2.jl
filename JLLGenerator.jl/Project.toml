@@ -1,7 +1,15 @@
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "JLLGenerator"
 uuid = "73536572-7074-4e69-5270-206c4c6a2061"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.3.1"
+version = "0.4.0"
+
+[compat]
+BinaryBuilderPlatformExtensions = "0.2"
+LicenseCheck = "0.2"
+MultiHashParsing = "0.1"
+Reexport = "1"
+StructEquality = "2"
+julia = "1.9"
 
 [deps]
 BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
@@ -15,19 +23,8 @@ SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 StructEquality = "6ec83bb0-ed9f-11e9-3b4c-2b04cb4e219c"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 
-[weakdeps]
-BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
-
 [extensions]
 BinaryBuilderSourcesExt = "BinaryBuilderSources"
-
-[compat]
-BinaryBuilderPlatformExtensions = "0.1"
-LicenseCheck = "0.2"
-MultiHashParsing = "0.1"
-Reexport = "1"
-StructEquality = "2"
-julia = "1.9"
 
 [extras]
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
@@ -35,6 +32,9 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
 test = ["Test", "BinaryBuilderSources"]
+
+[weakdeps]
+BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 
 [workspace]
 projects = ["contrib"]
