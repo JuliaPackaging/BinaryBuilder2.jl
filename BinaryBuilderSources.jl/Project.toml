@@ -1,7 +1,20 @@
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderSources"
 uuid = "316c416d-4527-6863-7465-466137743047"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
+
+[compat]
+BinaryBuilderGitUtils = "0.2"
+Dates = "1.11.0"
+Git = "1.3.1"
+JLLPrefixes = "0.4.1"
+MultiHashParsing = "0.1"
+Random = "1.11.0"
+Scratch = "1"
+TOML = "1.0.3"
+TimerOutputs = "0.5.29"
+TreeArchival = "0.1"
+julia = "1.8"
 
 [deps]
 BinaryBuilderGitUtils = "654d7472-7548-7361-4832-74694762694c"
@@ -17,19 +30,6 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 TimerOutputs = "a759f4b9-e2f1-59dc-863e-4aeb61b1ea8f"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
-
-[compat]
-BinaryBuilderGitUtils = "0.1.0"
-Dates = "1.11.0"
-Git = "1.3.1"
-JLLPrefixes = "0.4.1"
-MultiHashParsing = "0.1.0"
-Random = "1.11.0"
-Scratch = "1"
-TOML = "1.0.3"
-TimerOutputs = "0.5.29"
-TreeArchival = "0.1.0"
-julia = "1.8"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
