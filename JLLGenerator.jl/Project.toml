@@ -6,7 +6,7 @@ version = "0.4.0"
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
 LicenseCheck = "0.2"
-MultiHashParsing = "0.1"
+MultiHashParsing = "0.2"
 Reexport = "1"
 StructEquality = "2"
 julia = "1.9"

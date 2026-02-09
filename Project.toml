@@ -1,10 +1,34 @@
+authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
 version = "2.0.0"
-authors = ["Elliot Saba <staticfloat@gmail.com>"]
 
-[workspace]
-projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl", "KeywordArgumentExtraction.jl", "docs", ".buildkite"]
+[compat]
+Accessors = "0.1.42"
+BinaryBuilderAuditor = "0.2"
+BinaryBuilderGitUtils = "0.2"
+BinaryBuilderPlatformExtensions = "0.2"
+BinaryBuilderProducts = "0.2"
+BinaryBuilderSources = "0.2"
+BinaryBuilderToolchains = "0.3"
+HistoricalStdlibVersions = "2"
+Infiltrator = "1.9.2"
+JLLGenerator = "0.4"
+JLLPrefixes = "0.3.8, 0.4"
+KeywordArgumentExtraction = "1.0"
+LazyJLLWrappers = "1.1"
+Logging = "1.11.0"
+LoggingExtras = "1.1.0"
+MultiHashParsing = "0.2"
+OutputCollectors = "1"
+Pkg = "1.11.0"
+PrecompileTools = "1.2.1"
+RegistryTools = "2.2.3"
+Sandbox = "2.1.1"
+StructEquality = "2.1.0"
+TreeArchival = "0.2"
+gh_cli_jll = "2.63.2"
+julia = "1.9"
 
 [deps]
 Artifacts = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
@@ -51,42 +75,57 @@ TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 UserNSSandbox_jll = "b88861f7-1d72-59dd-91e7-a8cc876a4984"
 gh_cli_jll = "5d31d589-30fb-542f-b82d-10325e863e38"
 
-[sources]
-BinaryBuilderAuditor = {path = "BinaryBuilderAuditor.jl"}
-BinaryBuilderGitUtils = {path = "BinaryBuilderGitUtils.jl"}
-BinaryBuilderPlatformExtensions = {path = "BinaryBuilderPlatformExtensions.jl"}
-BinaryBuilderProducts = {path = "BinaryBuilderProducts.jl"}
-BinaryBuilderSources = {path = "BinaryBuilderSources.jl"}
-BinaryBuilderToolchains = {path = "BinaryBuilderToolchains.jl"}
-HistoricalStdlibVersions = {rev = "main", url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"}
-JLLGenerator = {path = "JLLGenerator.jl"}
-KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
-LazyJLLWrappers = {path = "LazyJLLWrappers.jl"}
-MultiHashParsing = {path = "MultiHashParsing.jl"}
-OutputCollectors = {rev = "master", url = "https://github.com/JuliaPackaging/OutputCollectors.jl.git"}
-ScratchSpaceGarbageCollector = {path = "ScratchSpaceGarbageCollector.jl"}
-TreeArchival = {path = "TreeArchival.jl"}
-
-[compat]
-Accessors = "0.1.42"
-HistoricalStdlibVersions = "2"
-Infiltrator = "1.9.2"
-JLLPrefixes = "0.3.8, 0.4"
-Logging = "1.11.0"
-LoggingExtras = "1.1.0"
-OutputCollectors = "1"
-Pkg = "1.11.0"
-PrecompileTools = "1.2.1"
-RegistryTools = "2.2.3"
-Sandbox = "2.1.1"
-StructEquality = "2.1.0"
-gh_cli_jll = "2.63.2"
-julia = "1.9"
-
 [extras]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
 Patchelf_jll = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
+[sources.BinaryBuilderAuditor]
+path = "BinaryBuilderAuditor.jl"
+
+[sources.BinaryBuilderGitUtils]
+path = "BinaryBuilderGitUtils.jl"
+
+[sources.BinaryBuilderPlatformExtensions]
+path = "BinaryBuilderPlatformExtensions.jl"
+
+[sources.BinaryBuilderProducts]
+path = "BinaryBuilderProducts.jl"
+
+[sources.BinaryBuilderSources]
+path = "BinaryBuilderSources.jl"
+
+[sources.BinaryBuilderToolchains]
+path = "BinaryBuilderToolchains.jl"
+
+[sources.HistoricalStdlibVersions]
+rev = "main"
+url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"
+
+[sources.JLLGenerator]
+path = "JLLGenerator.jl"
+
+[sources.KeywordArgumentExtraction]
+path = "KeywordArgumentExtraction.jl"
+
+[sources.LazyJLLWrappers]
+path = "LazyJLLWrappers.jl"
+
+[sources.MultiHashParsing]
+path = "MultiHashParsing.jl"
+
+[sources.OutputCollectors]
+rev = "master"
+url = "https://github.com/JuliaPackaging/OutputCollectors.jl.git"
+
+[sources.ScratchSpaceGarbageCollector]
+path = "ScratchSpaceGarbageCollector.jl"
+
+[sources.TreeArchival]
+path = "TreeArchival.jl"
+
 [targets]
 test = ["Accessors", "Test", "Patchelf_jll"]
+
+[workspace]
+projects = ["BinaryBuilderAuditor.jl", "BinaryBuilderGitUtils.jl", "BinaryBuilderPlatformExtensions.jl", "BinaryBuilderProducts.jl", "BinaryBuilderSources.jl", "BinaryBuilderToolchains.jl", "JLLGenerator.jl", "LazyJLLWrappers.jl", "MultiHashParsing.jl", "TreeArchival.jl", "KeywordArgumentExtraction.jl", "docs", ".buildkite"]
