@@ -1,6 +1,6 @@
 name = "KeywordArgumentExtraction"
 uuid = "45533465-3150-2073-4772-41774b207255"
-version = "1.0.1"
+version = "1.1.0"
 authors = ["Elliot Saba"]
 
 [deps]
