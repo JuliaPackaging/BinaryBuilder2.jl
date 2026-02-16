@@ -101,7 +101,7 @@ StructEquality = "2.1.0"
 TimerOutputs = "0.5.29"
 TreeArchival = "0.2"
 gh_cli_jll = "2.63.2"
-julia = "1.9"
+julia = "1.12"
 
 [extras]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
