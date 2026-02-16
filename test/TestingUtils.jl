@@ -2,6 +2,10 @@ module TestingUtils
 using BinaryBuilderPlatformExtensions, BinaryBuilderToolchains
 using BinaryBuilder2: storage_locations, make_target_spec_plan
 
+# Ensure that `git commit` calls have a git user available
+ENV["GIT_AUTHOR_NAME"] = ENV["GIT_COMMITTER_NAME"] = "BinaryBuilder2 Tester"
+ENV["GIT_AUTHOR_EMAIL"] = ENV["GIT_COMMITTER_EMAIL"] = "bb2@julialang.org"
+
 # A helper function to set storage locations, mostly for testing
 function with_storage_locations(f::Function, mappings::Dict{Symbol,String})
     old_mappings = Dict{Symbol,Arena}()
