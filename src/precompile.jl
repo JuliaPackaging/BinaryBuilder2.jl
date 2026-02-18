@@ -1,5 +1,7 @@
 using PrecompileTools
 
+# Disable this for now, to avoid `__init__()` problems with IO locks
+#=
 @setup_workload begin
     git_envs = (
         "GIT_AUTHOR_NAME" => "BinaryBuilder2 Tester",
@@ -37,3 +39,4 @@ using PrecompileTools
         end
     end
 end
+=#
