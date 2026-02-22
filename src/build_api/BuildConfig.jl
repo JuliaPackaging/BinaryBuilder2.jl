@@ -60,12 +60,16 @@ struct BuildConfig
     # Our spec hash; we cache it because we may need to ask for it multiple times
     spec_hash::Ref{Union{Nothing,SHA1Hash}}
 
+    # If we know we came from a build_tarballs.jl script, record the path here.
+    build_script_path::Union{Nothing,String}
+
     function BuildConfig(meta::AbstractBuildMeta,
                          src_name::AbstractString,
                          src_version::Union{VersionNumber, String},
                          sources::Vector,
                          target_specs::Vector{BuildTargetSpec},
                          script::AbstractString;
+                         build_script_path::Union{AbstractString,Nothing} = nothing,
                          kwargs...,
                          )
         sources = Vector{AbstractSource}(sources)
@@ -177,6 +181,7 @@ struct BuildConfig
             target_specs,
             TimerOutput(),
             Ref{Union{SHA1Hash,Nothing}}(nothing),
+            build_script_path === nothing ? nothing : string(build_script_path),
         )
     end
 end

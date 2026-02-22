@@ -11,7 +11,8 @@ using BinaryBuilder2: get_package_result
 
     @testset "Zlib" begin
         # Test a `--dry-run` first!
-        run_build_tarballs(meta, joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"); dry_run=true)
+        zlib_build_script_path = joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl")
+        run_build_tarballs(meta, zlib_build_script_path; dry_run=true)
         @test length(meta.packagings) > 0
         @test all(result.status == :skipped for result in values(meta.builds))
         @test all(result.status == :skipped for result in values(meta.extractions))
@@ -21,7 +22,7 @@ using BinaryBuilder2: get_package_result
         # Test that we can take that dry run output and get everything we need for a `build_tarballs()` invocation
         build_args = extract_build_tarballs(get_package_result(meta, "Zlib"))
         empty!(meta.packagings)
-        build_tarballs(;build_args...)
+        build_tarballs(;build_args..., build_script_path = zlib_build_script_path)
         package_result = get_package_result(meta, "Zlib")
         @test package_result.status == :success
 
@@ -47,6 +48,16 @@ using BinaryBuilder2: get_package_result
     jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
     @test all(BinaryBuilder2.contains_jll.((uni,), jll_names))
 
+    # Test that these builds got the correct build_script_path
+    function check_build_script_path(name)
+        true_path = abspath(joinpath(bootstrap_dir, name, "build_tarballs.jl"))
+        for build_result in collect_builds(meta[name])
+            @test abspath(build_result.config.build_script_path) == true_path
+        end
+    end
+    check_build_script_path("Zlib")
+    check_build_script_path("Readline")
+    check_build_script_path("Ncurses")
 
     # All the tests above target a native linux; let's run a test on Windows and macOS, just so that
     # we're exercising those troublesome platforms in at least some way:
