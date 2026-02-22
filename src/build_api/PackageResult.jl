@@ -66,7 +66,7 @@ function BinaryBuilderSources.PackageSpec(result::PackageResult)
 end
 
 """
-    collect_builds(result::PackageResult)
+    collect_extractions(result::PackageResult)
 
 Return all `ExtractResult`'s that were used as part of this packaging.
 """
