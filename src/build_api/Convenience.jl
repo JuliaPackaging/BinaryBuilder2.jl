@@ -105,6 +105,12 @@ function build_tarballs(src_name::String,
                         ),
                         jll_extraction_map::Dict{String,Vector{String}} = Dict(src_name => [src_name]),
 
+                        # When running a `build_tarballs.jl` script directly, this will default to the
+                        # script name.  When using `run_build_tarballs()`, this gets filled in properly
+                        # by `Base.include()`.  If you're doing anything more complicated, it's up to
+                        # you to fill this out properly either here or in your `BuildConfig()`.
+                        build_script_path::Union{Nothing,AbstractString} = Base.source_path(nothing),
+
                         # Platform control
                         host::AbstractPlatform = default_host(),
                         platforms::Vector = supported_platforms(),
@@ -162,6 +168,7 @@ function build_tarballs(src_name::String,
             build_spec_generator(host, platform),
             script;
             host,
+            build_script_path,
             kwargs...,
         )
 
@@ -332,7 +339,10 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
                     eval(x) = Core.eval($m, x)
                     include(f) = Core.include($m, f)
                 end)
-                Core.include(m, build_tarballs_path)
+
+                # Use `Base.include()` here instead of `Core.include()` so
+                # that our `Base.source_path()` sniffing works.
+                Base.include(m, build_tarballs_path)
             end
         end
     finally
