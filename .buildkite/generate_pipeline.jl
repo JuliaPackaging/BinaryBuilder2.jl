@@ -84,8 +84,9 @@ function create_test_step(config::TestConfig)
                 "version" => config.julia_version,
                 "arch" => config.arch
             ),
-            "JuliaCI/julia-test#v1" => Dict(
-                "project" => config.subproject
+            "JuliaCI/julia-test#sf/fsck_on_error" => Dict(
+                "project" => config.subproject,
+                "fsck_on_error" => "true",
             )
         ),
         agents = Dict(
