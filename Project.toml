@@ -63,7 +63,6 @@ JLLGenerator = {path = "JLLGenerator.jl"}
 KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
 LazyJLLWrappers = {path = "LazyJLLWrappers.jl"}
 MultiHashParsing = {path = "MultiHashParsing.jl"}
-OutputCollectors = {rev = "master", url = "https://github.com/JuliaPackaging/OutputCollectors.jl.git"}
 ScratchSpaceGarbageCollector = {path = "ScratchSpaceGarbageCollector.jl"}
 TreeArchival = {path = "TreeArchival.jl"}
 
@@ -86,7 +85,7 @@ LocalRegistry = "0.5.7"
 Logging = "1.9.0"
 LoggingExtras = "1.1.0"
 MultiHashParsing = "0.2"
-ObjectFile = "0.4.4"
+ObjectFile = "0.4.4, 0.5"
 OrderedCollections = "1.8.1"
 OutputCollectors = "1"
 Pkg = "1.9.0"
