@@ -23,7 +23,7 @@ Represents a single Buildkite step with all its configuration.
 Base.@kwdef struct BuildkiteStep
     label::String
     command::Union{String, Vector{String}, Nothing} = nothing
-    plugins::Union{Dict, Nothing} = nothing
+    plugins::Union{Vector{Pair}, Nothing} = nothing
     agents::Union{Dict, Nothing} = nothing
     soft_fail::Union{Bool, String, Nothing} = nothing
     timeout_in_minutes::Union{Int, Nothing} = nothing
@@ -73,7 +73,7 @@ Create a Buildkite step for running tests with the given configuration.
 function create_test_step(config::TestConfig)
     BuildkiteStep(
         label = ":julia: :linux: $(config.arch) Julia $(config.julia_version) - $(config.subproject_name)",
-        plugins = Dict(
+        plugins = [
             "staticfloat/metahook" => Dict(
                 "post-checkout" => """
                     git config --global user.email "buildkite@julialang.org"
@@ -88,7 +88,7 @@ function create_test_step(config::TestConfig)
                 "project" => config.subproject,
                 "fsck_on_error" => "true",
             )
-        ),
+        ],
         agents = Dict(
             "queue" => "juliaecosystem",
             "os" => "linux",
