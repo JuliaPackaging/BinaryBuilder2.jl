@@ -39,6 +39,26 @@ function find_kwargs_splat(kwargs)
     return only(kwargs[splat_idxs[1]].args)
 end
 
+struct AmbiguousMethodError
+    methods
+end
+
+function get_function_kwarg_names(f, args...; kwargs...)
+    @nospecialize
+
+    # Extract the types of the non-kwargs args, look up all matching methods
+    ts = Base.typesof(args...)
+    ms = methods(f, ts)
+
+    if length(ms) > 1
+        throw(AmbiguousMethodError(ms))
+    end
+
+    # Get the keyword arguments from the `Method`, load them into a sub-kwargs
+    # If the method has a `kwargs...` splat within it, we just pass _all_ kwargs on.
+    return Base.kwarg_decl(only(ms))
+end
+
 """
     @auto_extract_kwargs(ex)
 
@@ -92,19 +112,23 @@ macro auto_extract_kwargs(ex)
     # Get the non-keyword arguments.  We'll use these to find the correct method to analyze.
     non_kwargs_args = esc.(filter(a -> !Meta.isexpr(a, :parameters), ex.args[2:end]))
     return quote
-        # Extract the types of the non-kwargs args, look up all matching methods
-        ts = Base.typesof($(non_kwargs_args...))
-        ms = methods($(func_name), ts)
-
-        # Error out if there's any ambiguity
-        if length(ms) != 1
+        method_kwargs_names = try
+            get_function_kwarg_names($(func_name), $(non_kwargs_args...))
+        catch e
+            if !isa(e, AmbiguousMethodError)
+                rethrow(e)
+            end
+            args_and_types = zip(
+                collect($(non_kwargs_args...)),
+                Base.typesof($(non_kwargs_args...)).types
+            )
             throw(ArgumentError(string(
                 "@auto_extract_kwargs() invoked on ambiguous call site ",
                 $(func_name),
                 "(",
-                [string(a, "::", t, ", ") for (a, t) in zip(collect($(non_kwargs_args...)), ts.types)]...,
+                [string(a, "::", t, ", ") for (a, t) in args_and_types]...,
                 "): ",
-                length(ms),
+                length(e.methods),
                 " methods found instead of 1.",
             )))
         end
@@ -114,7 +138,6 @@ macro auto_extract_kwargs(ex)
 
         # Get the keyword arguments from the `Method`, load them into a sub-kwargs
         # If the method has a `kwargs...` splat within it, we just pass _all_ kwargs on.
-        method_kwargs_names = Base.kwarg_decl(ms[1])
         if any(endswith.(string.(method_kwargs_names), ("...",)))
             sub_kwargs = $(esc(kwargs_name))
         else

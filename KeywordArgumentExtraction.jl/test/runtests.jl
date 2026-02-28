@@ -151,3 +151,11 @@ end
         driver_no_kwargs(1; ignore_me=true)
     end
 end
+
+using KeywordArgumentExtraction: get_function_kwarg_names
+@testset "get_function_kwarg_names" begin
+    function foo(x, y; a=1, b=2, c=3, kwargs...)
+        return x + y + a + b + c
+    end
+    @test get_function_kwarg_names(foo, 1, 2) == [:a, :b, :c, Symbol("kwargs...")]
+end
