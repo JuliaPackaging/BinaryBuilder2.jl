@@ -88,7 +88,7 @@ struct BuildConfig
         end
 
         # Dependencies for each target's prefix
-        target_deps = [target_prefix(bts) => bts.dependencies for bts in target_specs]
+        target_deps = [target_prefix(bts) => vcat(bts.dependencies, bts.build_time_dependencies) for bts in target_specs]
         source_trees = Dict{String,Vector{AbstractSource}}(
             # Target dependencies
             target_deps...,

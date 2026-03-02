@@ -119,15 +119,17 @@ function build_tarballs(src_name::String,
 
                         # Toolchain arguments; note that these are ignored
                         # if `spec_generator` is specified.
-                        target_dependencies::Vector = [],
-                        host_dependencies::Vector = [],
                         target_toolchains::Vector = [CToolchain(), CMakeToolchain()],
                         host_toolchains::Vector = [CToolchain(), CMakeToolchain(), HostToolsToolchain()],
+                        target_dependencies::Vector = [],
+                        target_build_time_dependencies::Vector = [],
+                        host_dependencies::Vector = [],
                         build_spec_generator::Function = default_build_spec_generator(;
-                            target_dependencies,
                             target_toolchains,
-                            host_dependencies,
                             host_toolchains,
+                            target_dependencies,
+                            target_build_time_dependencies,
+                            host_dependencies,
                             cross_compiler = isa(first(platforms), CrossPlatform)
                         ),
                         

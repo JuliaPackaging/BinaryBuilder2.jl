@@ -12,8 +12,8 @@ end
     meta = BuildMeta(;verbose=true, debug_modes=["build-error", "extract-error"])
     build_tarballs(;
         meta,
-        src_name = "Zlib",
-        src_version = v"1.2.13",
+        src_name = "libcxxstring",
+        src_version = v"1.2.3",
         sources = [cxx_string_abi_source],
         script = raw"""
         cd 02_cxx_string_abi
@@ -53,6 +53,7 @@ end
                     CrossPlatform(host => host),
                     [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
                     [],
+                    [],
                     Set([:native]),
                 ),
                 BuildTargetSpec(
@@ -60,12 +61,14 @@ end
                     CrossPlatform(host => platform.host),
                     [CToolchain(;vendor=:bootstrap)],
                     [],
+                    [],
                     Set([:default]),
                 ),
                 BuildTargetSpec(
                     "target",
                     CrossPlatform(host => platform.target),
                     [CToolchain(;vendor=:bootstrap)],
+                    [],
                     [],
                     Set([]),
                 ),

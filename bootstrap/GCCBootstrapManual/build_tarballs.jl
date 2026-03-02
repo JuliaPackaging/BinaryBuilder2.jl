@@ -40,12 +40,14 @@ function notarget_build_spec_generator(host, platform)
             CrossPlatform(host => host),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture), HostToolsToolchain()],
             [],
+            [],
             Set([:native]),
         ),
         BuildTargetSpec(
             "host",
             CrossPlatform(host => platform.host),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture)],
+            [],
             [],
             Set([:default]),
         ),
@@ -54,6 +56,7 @@ function notarget_build_spec_generator(host, platform)
             CrossPlatform(host => platform.target),
             [BinutilsToolchain(:gcc_bootstrap)],
             target_sources,
+            [],
             Set([]),
         ),
     ]
