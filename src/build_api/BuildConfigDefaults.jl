@@ -11,6 +11,7 @@ default_host() = Platform(arch(HostPlatform()), "linux")
                            target_toolchains = [CToolchain()],
                            host_dependencies = [],
                            target_dependencies = [],
+                           target_build_time_dependencies = [],
                            cross_compiler = false)
 
 A convenience function that creates a vector of `BuildTargetSpec` objects in
@@ -25,11 +26,13 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
                                 target_toolchains::Vector = [CToolchain()],
                                 host_dependencies::Vector = [],
                                 target_dependencies::Vector = [],
+                                target_build_time_dependencies::Vector = [],
                                 cross_compiler::Bool = false)
     host_toolchains = Vector{PlatformlessWrapper{<:AbstractToolchain}}(host_toolchains)
     target_toolchains = Vector{PlatformlessWrapper{<:AbstractToolchain}}(target_toolchains)
     host_dependencies = Vector{ConvenienceSource}(host_dependencies)
     target_dependencies = Vector{ConvenienceSource}(target_dependencies)
+    target_build_time_dependencies = Vector{ConvenienceSource}(target_build_time_dependencies)
     # Cross-compilation terminology is confusing.  Autotools defines the following terms:
     #  - `build`: the machine that is currently running your compilers
     #  - `host`: the machine that will run the built code
@@ -47,18 +50,21 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
                 "build",
                 host_toolchains,
                 host_dependencies,
+                [],
                 Set([:native]),
             ),
             BuildTargetSpec(
                 "host",
                 target_toolchains,
                 target_dependencies,
+                target_build_time_dependencies,
                 Set([:default]),
             ),
             BuildTargetSpec(
                 "target",
                 target_toolchains,
-                AbstractSource[],
+                [],
+                [],
                 Set(Symbol[]),
             ),
         ]
@@ -68,12 +74,14 @@ function make_target_spec_plan(;host_toolchains::Vector = [CToolchain(), HostToo
                 "host",
                 host_toolchains,
                 host_dependencies,
+                [],
                 Set([:native]),
             ),
             BuildTargetSpec(
                 "target",
                 target_toolchains,
                 target_dependencies,
+                target_build_time_dependencies,
                 Set([:default]),
             ),
         ]
@@ -97,11 +105,12 @@ function apply_spec_plan(target_spec_plan::Vector,
     target_spec_plan = Vector{PlatformlessWrapper{BuildTargetSpec}}(target_spec_plan)
 
     # Separate out our `host` and `default` specs, which we must always have.
-    flags(plan::PlatformlessWrapper{BuildTargetSpec}) = plan.args[4]
+    flags(plan::PlatformlessWrapper{BuildTargetSpec}) = plan.args[5]
     host_specs = filter(plan -> :native ∈ flags(plan), target_spec_plan)
     default_specs = filter(plan -> :default ∈ flags(plan), target_spec_plan)
 
     if length(host_specs) != 1 || length(default_specs) != 1
+        # If you hit this, double-check that `flags(plan)` above is actually grabbing the right thing.
         throw(ArgumentError("apply_spec_plan() requires exactly 1 `:native` spec (got $(length(host_specs))), and 1 `:default` spec (got $(length(default_specs))!"))
     end
 

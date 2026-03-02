@@ -1,4 +1,5 @@
 using BinaryBuilderSources: PkgSpec
+using KeywordArgumentExtraction: get_function_kwarg_names
 export PlatformlessWrapper, apply_platform
 
 """
@@ -24,11 +25,17 @@ function Base.show(io::IO, pw::PlatformlessWrapper{T}) where {T}
 end
 
 # JLLSource support
-function BinaryBuilderSources.JLLSource(pkg::PkgSpec; target="")
-    return PlatformlessWrapper{JLLSource}(;args=[pkg], kwargs=Dict(:target => target))
+function BinaryBuilderSources.JLLSource(pkg::PkgSpec; target="", kwargs...)
+    return PlatformlessWrapper{JLLSource}(;args=[pkg], kwargs=Dict(:target => target, kwargs...))
 end
 function BinaryBuilderSources.JLLSource(name::String; target="", kwargs...)
-    return PlatformlessWrapper{JLLSource}(;args=[PkgSpec(;name, kwargs...)], kwargs=Dict(:target => target))
+    pkg_spec_kwargs = Dict(k => v for (k, v) in kwargs if k ∈ get_function_kwarg_names(PkgSpec))
+    jll_source_args = [PkgSpec(;name, pkg_spec_kwargs...)]
+    jll_source_kwargs = Dict(k => v for (k, v) in kwargs if k ∈ get_function_kwarg_names(JLLSource, jll_source_args...))
+    return PlatformlessWrapper{JLLSource}(;
+        args=jll_source_args,
+        kwargs=Dict(:target => target, jll_source_kwargs...),
+    )
 end
 function apply_platform(pw::PlatformlessWrapper{JLLSource}, platform::AbstractPlatform)
     return JLLSource(pw.args..., platform; pw.kwargs...)

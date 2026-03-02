@@ -30,6 +30,7 @@ function build_spec_generator(host, platform)
             [CToolchain(), CMakeToolchain(), HostToolsToolchain()],
             # Some of our build tools need to compile against libpython
             [JLLSource("Python_jll")],
+            [],
             # Set the `native` flag for this BTS, which changes a few small minutae.
             Set([:native]),
         ),
@@ -41,6 +42,7 @@ function build_spec_generator(host, platform)
             [CToolchain(), CMakeToolchain()],
             # These are all the dependencies our software needs to run.
             [JLLSource("Zlib_jll"), JLLSource("XML2_jll")],
+            [],
             # Set the `default` flag for this BTS, which means that `$CC` refers to `$HOST_CC`.
             Set([:default]),
         ),
@@ -50,6 +52,7 @@ function build_spec_generator(host, platform)
             CrossPlatform(host => platform.target),
             # Again, we need a C compiler and cmake
             [CToolchain(), CMakeToolchain()],
+            [],
             [],
             Set{Symbol}(),
         ),

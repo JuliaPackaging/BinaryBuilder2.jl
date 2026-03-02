@@ -490,12 +490,14 @@ function gcc_build_spec_generator(host, platform)
             CrossPlatform(host => host),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture), HostToolsToolchain()],
             [],
+            [],
             Set([:native]),
         ),
         BuildTargetSpec(
             "host",
             CrossPlatform(host => platform.host),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture)],
+            [],
             [],
             Set([:default]),
         ),
@@ -504,6 +506,7 @@ function gcc_build_spec_generator(host, platform)
             CrossPlatform(host => platform.target),
             [CToolchain(; vendor=:gcc_bootstrap, lock_microarchitecture)],
             target_sources,
+            [],
             Set([]),
         ),
     ]

@@ -60,6 +60,18 @@ dependencies = [
             ),
         ),
     ),
+
+    # This is added, to test the HostBuildDependency support
+    HostBuildDependency(
+        PackageSpec(;
+            name = "Zlib_jll",
+            uuid = "83775a58-1f1d-513f-b197-d71354ab007a",
+            repo=Pkg.Types.GitRepo(
+                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                source="https://github.com/staticfloat/Zlib_jll.jl"
+            ),
+        ),
+    ),
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well

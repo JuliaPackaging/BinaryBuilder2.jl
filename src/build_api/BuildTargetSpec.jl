@@ -13,6 +13,7 @@ struct BuildTargetSpec
     platform::CrossPlatform
     toolchains::Vector{AbstractToolchain}
     dependencies::Vector{AbstractSource}
+    build_time_dependencies::Vector{AbstractSource}
 
     # Flags can be one of:
     #  `:native`  -- this is a toolchain for the build machine itself
@@ -23,14 +24,17 @@ struct BuildTargetSpec
                             platform::CrossPlatform,
                             toolchains::Vector,
                             dependencies::Vector,
+                            build_time_dependencies::Vector,
                             flags::Union{Vector,Set})
         name = String(name)
         flags = Set{Symbol}(flags)
         toolchains = Vector{ConvenienceToolchain}(toolchains)
         dependencies = Vector{ConvenienceSource}(dependencies)
+        build_time_dependencies = Vector{ConvenienceSource}(build_time_dependencies)
 
         # Concretize dependencies for `platform`
         dependencies = apply_platform.(dependencies, (platform.target,))
+        build_time_dependencies = apply_platform.(build_time_dependencies, (platform.target,))
 
         # Concretize toolchains for `platform`
         toolchains = map(toolchains) do toolchain
@@ -42,7 +46,7 @@ struct BuildTargetSpec
             return apply_platform(toolchain, platform)
         end
 
-        return new(name, platform, toolchains, dependencies, flags)
+        return new(name, platform, toolchains, dependencies, build_time_dependencies, flags)
     end
 end
 
@@ -200,19 +204,24 @@ end
 function BuildTargetSpec(name::String,
                          toolchains::Vector,
                          dependencies::Vector,
+                         build_time_dependencies::Vector,
                          flags::Set{Symbol})
     toolchains = Vector{PlatformlessWrapper{<:AbstractToolchain}}(toolchains)
     dependencies = Vector{ConvenienceSource}(dependencies)
-    return PlatformlessWrapper{BuildTargetSpec}(;args=[name, toolchains, dependencies, flags])
+    build_time_dependencies = Vector{ConvenienceSource}(build_time_dependencies)
+    return PlatformlessWrapper{BuildTargetSpec}(;
+        args = [name, toolchains, dependencies, build_time_dependencies, flags],
+    )
 end
 
 function apply_platform(pw::PlatformlessWrapper{BuildTargetSpec}, platform::CrossPlatform)
-    name, toolchains, dependencies, flags = pw.args
+    name, toolchains, dependencies, build_time_dependencies, flags = pw.args
     return BuildTargetSpec(
         name,
         platform,
         toolchains,
         dependencies,
+        build_time_dependencies,
         flags,
     )
 end
@@ -221,6 +230,7 @@ function PlatformlessWrapper(bts::BuildTargetSpec)
         bts.name,
         PlatformlessWrapper.(bts.toolchains),
         PlatformlessWrapper.(bts.dependencies),
+        PlatformlessWrapper.(bts.build_time_dependencies),
         bts.flags,
     )
 end

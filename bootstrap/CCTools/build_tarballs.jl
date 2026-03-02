@@ -127,6 +127,7 @@ function cctools_build_spec_generator(host, platform)
             CrossPlatform(host => host),
             [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain(), HostToolsToolchain()],
             [],
+            [],
             Set([:native]),
         ),
         BuildTargetSpec(
@@ -144,11 +145,13 @@ function cctools_build_spec_generator(host, platform)
                     ),
                 ),
             ],
+            [],
             Set([:default]),
         ),
         BuildTargetSpec(
             "target",
             CrossPlatform(host => platform.target),
+            [],
             [],
             [],
             Set{Symbol}(),

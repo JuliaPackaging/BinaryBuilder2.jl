@@ -1,6 +1,10 @@
 
 using Test, BinaryBuilder2, Random
-using BinaryBuilder2: get_package_result
+using BinaryBuilder2: get_package_result, JLLPackageDependencies, PackageSpec
+
+if !isdefined(@__MODULE__, :TestingUtils)
+    include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
+end
 
 @testset "build_tarballs()" begin
     # Create a meta with a universe that we will then inspect as other
@@ -75,6 +79,37 @@ using BinaryBuilder2: get_package_result
         for package_name in ("libstring", "libstring_headers", "cxx_string_abi")
             package_result = get_package_result(meta, package_name)
             @test package_result.status == :success
+        end
+    end
+
+    @testset "host and build deps" begin
+        meta = BuildMeta(;dry_run=["build"])
+        build_tarballs(;
+            meta,
+            src_name = "libcxxstring",
+            src_version = v"1.2.3",
+            sources = [cxx_string_abi_source],
+            script = "true",
+            target_dependencies = [JLLSource("Zlib_jll")],
+            target_build_time_dependencies = [JLLSource("LinuxKernelHeaders_jll")],
+            host_dependencies = [JLLSource("GNUMake_jll")],
+        )
+
+        # Ensure that each spec has the correct dependencies recorded
+        for build in collect_builds(meta["libcxxstring"])
+            for spec in build.config.target_specs
+                if spec.name == "host"
+                    @test only(spec.dependencies).package.name == "GNUMake_jll"
+                elseif spec.name == "target"
+                    @test only(spec.dependencies).package.name == "Zlib_jll"
+                    @test only(spec.build_time_dependencies).package.name == "LinuxKernelHeaders_jll"
+                end
+            end
+        end
+
+        # Test that only Zlib_jll is recorded as a dependency
+        for extraction in collect_extractions(meta["libcxxstring"])
+            @test only(JLLPackageDependencies(extraction, PackageSpec[])).name == :Zlib_jll
         end
     end
 end

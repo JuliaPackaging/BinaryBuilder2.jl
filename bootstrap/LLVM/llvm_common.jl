@@ -44,6 +44,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                         ),
                     ),
                 ],
+                [],
                 Set([:native]),
             ),
             BuildTargetSpec(
@@ -69,11 +70,13 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                         ),
                     ),
                 ],
+                [],
                 Set([:default]),
             ),
             BuildTargetSpec(
                 "target",
                 platform,
+                [],
                 [],
                 [],
                 Set{Symbol}(),
