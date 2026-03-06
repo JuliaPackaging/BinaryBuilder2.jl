@@ -220,7 +220,7 @@ end
         atomic_patch -p1 test.c.patch
         mkdir -p ${bindir}
         $CC -o ${bindir}/test test.c
-        install_license test.c
+        install_license /usr/share/licenses/MIT
         """,
     )
     patch_test_result = build!(patch_test_build_config)

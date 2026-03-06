@@ -97,7 +97,12 @@ struct BuildConfig
 
             # BB shell scripts
             scripts_prefix() => [DirectorySource(
-                joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts")
+                joinpath(Base.pkgdir(@__MODULE__), "share", "bash_scripts"),
+            )],
+
+            # Licenses
+            "/usr/share/licenses" => [DirectorySource(
+                joinpath(Base.pkgdir(@__MODULE__), "share", "licenses"),
             )],
 
             # Metadata such as our build script
