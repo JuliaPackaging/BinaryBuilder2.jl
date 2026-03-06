@@ -8,27 +8,26 @@ export VersionSpec, PkgSpec, PackageSpec
 export Product, Dependency, BuildDependency, HostBuildDependency
 
 const Product = AbstractProduct
-const Dependency = PlatformlessWrapper{JLLSource}
-BinaryBuilder2.PlatformlessWrapper{JLLSource}(name::String) = JLLSource(;name)
+const Dependency = JLLSource
 const PackageSpec = PkgSpec
 
 # We smuggle `HostBuildDependency`'s through by inserting a sentinel value into the `kwargs` object:
-BuildDependency(x) = PlatformlessWrapper{JLLSource}(x; build_dependency=true)
-HostBuildDependency(x) = PlatformlessWrapper{JLLSource}(x; host=true, build_dependency=true)
+BuildDependency(x) = JLLSource(x; build_dependency=true)
+HostBuildDependency(x) = JLLSource(x; host=true, build_dependency=true)
 
 # Map BinaryBuilder1 syntax to BB2 syntax
 function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, src_version, sources, script, platforms, products, dependencies; julia_compat::String = "1.6", kwargs...)
     # Separate out the dependencies into target dependencies and host dependencies
-    target_dependencies = AbstractSource[]
-    target_build_time_dependencies = AbstractSource[]
-    host_dependencies = AbstractSource[]
+    target_dependencies = []
+    target_build_time_dependencies = []
+    host_dependencies = []
 
     # We've smuggled information into the PlatformlessWrapper kwargs,
     # this strips that information out again
     function strip_dep_kwargs(dep::PlatformlessWrapper{T}) where {T}
         return PlatformlessWrapper{T}(
             dep.args,
-            filter(kwargs) do (k, v)
+            filter(dep.kwargs) do (k, v)
                 return k ∉ (:build_dependency, :host)
             end,
         )

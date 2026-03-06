@@ -351,10 +351,10 @@ function deploy(config::BuildConfig; verbose::Bool = false)
     registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
     @timeit config.to "deploy" begin
         for (idx, (prefix, srcs)) in enumerate(config.source_trees)
-            host_path = builds_dir(string(
-                idx, "-",
-                bytes2hex(sha1(string(bytes2hex.(spec_hash.(srcs; registries))))),
-            ))
+            srcs_hashes = bytes2hex.(spec_hash.(srcs; registries))
+            combined_hash = bytes2hex(sha1(string(srcs_hashes)))
+            host_path = builds_dir(string(idx, "-", combined_hash))
+            @debug("BuildConfig source", prefix, srcs_hashes, combined_hash)
             mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
 
             # Avoid deploying a second time if we're coming at this a second time

@@ -82,6 +82,13 @@ end
         end
     end
 
+    @testset "BinaryBuilder2.Compat" begin
+        meta = BuildMeta(;dry_run=["build"])
+        run_build_tarballs(meta, joinpath(@__DIR__, "build_examples", "binary_builder_one.jl"))
+        @warn("TODO: once XZ is built by BB2 natively, ")
+        @test meta["SSW"].status == :skipped
+    end
+
     @testset "host and build deps" begin
         meta = BuildMeta(;dry_run=["build"])
         build_tarballs(;

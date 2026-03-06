@@ -72,6 +72,7 @@ dependencies = [
             ),
         ),
     ),
+    HostBuildDependency("XZ_jll"),
 ]
 
 # Build the tarballs, and possibly a `build.jl` as well
