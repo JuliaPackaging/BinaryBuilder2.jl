@@ -8,12 +8,25 @@ export VersionSpec, PkgSpec, PackageSpec
 export Product, Dependency, BuildDependency, HostBuildDependency
 
 const Product = AbstractProduct
-const Dependency = JLLSource
 const PackageSpec = PkgSpec
 
-# We smuggle `HostBuildDependency`'s through by inserting a sentinel value into the `kwargs` object:
-BuildDependency(x) = JLLSource(x; build_dependency=true)
-HostBuildDependency(x) = JLLSource(x; host=true, build_dependency=true)
+struct Dependency
+    jll::Union{JLLSource,PlatformlessWrapper{JLLSource}}
+    host::Bool
+    build_dependency::Bool
+end
+
+function Dependency(name_or_pkgspec)
+    return Dependency(JLLSource(name_or_pkgspec), false, false)
+end
+
+function BuildDependency(name_or_pkgspec)
+    return Dependency(JLLSource(name_or_pkgspec), false, true)
+end
+
+function HostBuildDependency(name_or_pkgspec)
+    return Dependency(JLLSource(name_or_pkgspec), true, true)
+end
 
 # Map BinaryBuilder1 syntax to BB2 syntax
 function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, src_version, sources, script, platforms, products, dependencies; julia_compat::String = "1.6", kwargs...)
@@ -22,29 +35,15 @@ function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, s
     target_build_time_dependencies = []
     host_dependencies = []
 
-    # We've smuggled information into the PlatformlessWrapper kwargs,
-    # this strips that information out again
-    function strip_dep_kwargs(dep::PlatformlessWrapper{T}) where {T}
-        return PlatformlessWrapper{T}(
-            dep.args,
-            filter(dep.kwargs) do (k, v)
-                return k ∉ (:build_dependency, :host)
-            end,
-        )
-    end
-
-    # Use the smuggled kwargs to sort our dependencies into target/target_build/host dependencies
     for dep in dependencies
-        if :build_dependency ∈ keys(dep.kwargs)
-            if :host ∈ keys(dep.kwargs)
-                dep = strip_dep_kwargs(dep)
-                push!(host_dependencies, dep)
+        if dep.build_dependency
+            if dep.host
+                push!(host_dependencies, dep.jll)
             else
-                dep = strip_dep_kwargs(dep)
-                push!(target_build_time_dependencies, dep)
+                push!(target_build_time_dependencies, dep.jll)
             end
         else
-            push!(target_dependencies, dep)
+            push!(target_dependencies, dep.jll)
         end
     end
 
