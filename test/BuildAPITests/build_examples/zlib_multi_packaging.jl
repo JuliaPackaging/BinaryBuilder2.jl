@@ -15,7 +15,7 @@ using BinaryBuilder2: get_default_target_spec
 function zlib_extract_generator(;zlib_deps = String[])
     return (build_config, platform) -> begin
         return Dict(
-            # The default extraction (denoted by matching the JLL name) contains only the shared library
+            # The "slim" extraction contains only the shared library
             "ZlibSlim" => ExtractSpec(
                 raw"extract ${shlibdir}/**",
                 [
@@ -23,7 +23,7 @@ function zlib_extract_generator(;zlib_deps = String[])
                 ],
                 get_default_target_spec(build_config),
             ),
-            # The "full" extraction contains everything
+            # The default extraction (denoted by matching the JLL name) contains everything
             "Zlib" => ExtractSpec(
                 raw"extract ${prefix}/**",
                 [
