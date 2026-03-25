@@ -20,26 +20,22 @@ BinaryBuilder2.allow_github_authentication[] = false
         parsed_kwargs = parse_build_tarballs_args(String[
             "--verbose",
             "--debug",
-            "--meta-json",
             "--deploy",
         ])
         @test parsed_kwargs[:verbose]
         @test parsed_kwargs[:debug_modes] == Set(["build-error","extract-error"])
-        @test parsed_kwargs[:json_output] == Base.stdout
         @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :target_list)
 
         # Next, supply arguments to everything all
         parsed_kwargs = parse_build_tarballs_args(String[
             "--debug=build-start",
-            "--meta-json=meta.json",
             "--deploy=JuliaBinaryWrappers",
             "--universe=the_verse",
             "--disable-caches=all",
             "x86_64-apple-darwin14,aarch64-linux-musl,i686-linux-gnu-libgfortran3-cxx11",
         ])
         @test parsed_kwargs[:debug_modes] == Set(["build-start"])
-        @test parsed_kwargs[:json_output] == "meta.json"
         @test parsed_kwargs[:deploy_org] == "JuliaBinaryWrappers"
         @test parsed_kwargs[:universe_name] == "the_verse"
         @test parsed_kwargs[:target_list] == [
@@ -62,7 +58,6 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test !meta.universe.persistent
         @test isempty(meta.disabled_caches)
         @test isempty(meta.dry_run)
-        @test meta.json_output === nothing
         @test !meta.register
 
         # Now, provide parameters for all sorts of stuff
@@ -75,7 +70,6 @@ BinaryBuilder2.allow_github_authentication[] = false
             verbose=true,
             debug_modes=["build-stop"],
             dry_run=["all"],
-            json_output=Base.stdout,
             deploy_org="JuliaBinaryWrappers",
             universe_name,
             register=true,
@@ -89,7 +83,6 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.verbose
         @test meta.debug_modes == Set(["build-stop"])
         @test meta.dry_run == Set(["build", "extract", "package"])
-        @test meta.json_output == Base.stdout
         @test meta.register
         @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
@@ -102,15 +95,14 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test_throws ArgumentError BuildMeta(;register=true)
 
         # Next, test end-to-end parsing of ARGS-style options
-        json_path=mktemp()[1]
         meta = BuildMeta([
             "--verbose",
             "--debug=start",
-            "--meta-json=$(json_path)",
             "--deploy=JuliaBinaryWrappers",
             "--register",
             "--universe=$(universe_name)",
             "--disable-caches=build,jll",
+            "--build-hashes=sha1:"*"0"^40,
             "x86_64-linux-gnu,x86_64-linux-musl,i686-linux-gnu"
         ])
         @test isempty(meta.builds)
@@ -122,8 +114,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.debug_modes == Set(["build-start", "extract-start"])
         @test isempty(meta.dry_run)
         @test meta.disabled_caches == Set(["build", "jll"])
-        @test isa(meta.json_output, IOStream)
-        @test meta.json_output.name == "<file $(json_path)>"
+        @test meta.build_hash_list == Set([MultiHash("sha1:"*"0"^40)])
         @test meta.register
         @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"

@@ -7,7 +7,8 @@ const BUILD_HELP = (
     """
     Usage: build_tarballs.jl [target1,target2,...] [--help] [--verbose] [--debug=mode]
                              [--universe=<name>] [--deploy=<org>] [--register]
-                             [--output-dir=<dir>] [--dry-run=<tags>] [--meta-json]
+                             [--output-dir=<dir>] [--dry-run=<tags>]
+                             [--disable-caches=<list> [--build-hashes=<list>]
 
     Options:
         targets                   By default `build_tarballs.jl` will build a tarball for every
@@ -64,13 +65,6 @@ const BUILD_HELP = (
                                   that specifying `build` implies `extract`, which in turn implies
                                   `package`.
 
-        --meta-json=<path>        Output a JSON representation of the given build.  Often used in
-                                  conjunction with `--dry-run` to get a description of what would
-                                  be built, without any products actually being listed.  Note that
-                                  in the case of complicated `build_tarballs.jl` with multiple
-                                  builds, it may output multiple JSON objects.  If no path is
-                                  given, defaults to writing to standard output.
-
         --output-dir=<dir>        Directory that holds packaged tarball outputs.  Defaults to the
                                   value `"\$(pwd())/products"`.
 
@@ -86,6 +80,11 @@ const BUILD_HELP = (
                                   This will disable reading from those caches, but results are
                                   still stored into those caches, meaning that future invocations
                                   can still make use of the results of `--disable-cache` runs.
+
+        --build-hashes=<hash>     A comma-separated list of build hashes to build; causes all
+                                  builds not identified by this list of hashes to be skipped.
+                                  To determine what build hashes to use, do a dry-run build and
+                                  use `spec_hash(::BuildConfig)`.
 
         --help                    Print out this message.
 
@@ -172,16 +171,6 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:debug_modes] = debug_modes
     end
 
-    # Are we skipping building and just outputting JSON?
-    meta_json, meta_json_file = extract_flag!(ARGS, "--meta-json")
-    if meta_json
-        if meta_json_file === nothing
-            parsed_kwargs[:json_output] = stdout
-        else
-            parsed_kwargs[:json_output] = meta_json_file
-        end
-    end
-
     # The organization we deploy to
     _, deploy_org = extract_flag!(ARGS, "--deploy", nothing)
     parsed_kwargs[:deploy_org] = deploy_org
@@ -202,6 +191,12 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     disable_caches_set, disable_caches = extract_flag!(ARGS, "--disable-caches", "")
     if disable_caches_set
         parsed_kwargs[:disabled_caches] = Set(split(disable_caches, ","))
+    end
+
+    # Build hash selection
+    build_hash_set, build_hashes = extract_flag!(ARGS, "--build-hashes", nothing)
+    if build_hash_set
+        parsed_kwargs[:build_hash_list] = MultiHash.(split(build_hashes, ","))
     end
 
     # Slurp up the last argument as platforms
