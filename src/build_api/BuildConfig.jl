@@ -202,19 +202,11 @@ function get_target_spec(config::BuildConfig, name::String)
 end
 
 function target_platform_string(config::BuildConfig)
-    function get_spec_by_name(name)
-        for bts in config.target_specs
-            if bts.name == name
-                return bts
-            end
-        end
-        return nothing
-    end
     function is_canadian()
         return length(config.target_specs) == 3 &&
-               get_spec_by_name("build") !== nothing &&
-               get_spec_by_name("host") !== nothing &&
-               get_spec_by_name("target") !== nothing
+               get_target_spec(config, "build") !== nothing &&
+               get_target_spec(config, "host") !== nothing &&
+               get_target_spec(config, "target") !== nothing
     end
     host = get_host_target_spec(config.target_specs).platform.host
     if length(config.target_specs) == 2
