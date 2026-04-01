@@ -2,15 +2,6 @@ using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilde
 
 export ExtractConfig, extract!
 
-
-function guess_build_target(build::BuildResult)
-    target = guess_target(build.config)
-    if target === nothing
-        throw(ArgumentError("Cannot guess target platform for $(build); you must manually specify `platform` to `ExtractConfig()`!"))
-    end
-    return target
-end
-
 struct ExtractConfig
     # The build result we're packaging up
     build::BuildResult

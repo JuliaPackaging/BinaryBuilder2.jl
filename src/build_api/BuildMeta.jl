@@ -5,9 +5,8 @@ export BuildMeta
 
 const BUILD_HELP = (
     """
-    Usage: build_tarballs.jl [target1,target2,...] [--help] [--verbose] [--debug=mode]
-                             [--universe=<name>] [--deploy=<org>] [--register]
-                             [--output-dir=<dir>] [--dry-run=<tags>]
+    Usage: build_tarballs.jl [target1,target2,...] [--help] [--verbose] [--debug=<mode>]
+                             [--universe=<name>] [--deploy=<org>] [--register] [--dry-run=<tags>]
                              [--disable-caches=<list> [--build-hashes=<list>]
 
     Options:
@@ -64,9 +63,6 @@ const BUILD_HELP = (
                                   `all`, which is equivalent to specifying all categories.  Note
                                   that specifying `build` implies `extract`, which in turn implies
                                   `package`.
-
-        --output-dir=<dir>        Directory that holds packaged tarball outputs.  Defaults to the
-                                  value `"\$(pwd())/products"`.
 
         --disable-caches=<list>   Disable a comma-separated list of the following caches:
 
@@ -188,6 +184,7 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:dry_run] = Set(split(dry_run_csv, ","))
     end
 
+    # Cache disabling
     disable_caches_set, disable_caches = extract_flag!(ARGS, "--disable-caches", "")
     if disable_caches_set
         parsed_kwargs[:disabled_caches] = Set(split(disable_caches, ","))
@@ -266,7 +263,6 @@ struct BuildMeta <: AbstractBuildMeta
     # "trace" through a build and see what steps were run.  On Yggdrasil, we combine
     # this with the "dry run" mode, to allow us to generate a series of jobs.
     dry_run::Set{String}
-    json_output::Union{Nothing,IO}
     register::Bool
 
     function BuildMeta(;target_list::Vector{<:AbstractPlatform} = AbstractPlatform[],
@@ -274,7 +270,6 @@ struct BuildMeta <: AbstractBuildMeta
                         deploy_org::Union{AbstractString,Nothing} = nothing,
                         verbose::Bool = false,
                         debug_modes = Set{String}(),
-                        json_output::Union{Nothing,AbstractString,IO} = nothing,
                         disabled_caches = Set{String}(),
                         dry_run = Set{String}(),
                         build_hash_list = Set{MultiHash}(),
@@ -347,10 +342,6 @@ struct BuildMeta <: AbstractBuildMeta
             persistent=universe_name !== nothing,
         )
 
-        if isa(json_output, AbstractString)
-            json_output = open(json_output, write=true)
-        end
-
         if register && deploy_org === nothing
             throw(ArgumentError("Cannot register with a local deployment!"))
         end
@@ -367,7 +358,6 @@ struct BuildMeta <: AbstractBuildMeta
             load_cache(),
             Set{String}(disabled_caches),
             Set{String}(dry_run),
-            json_output,
             register,
         )
     end
