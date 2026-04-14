@@ -454,14 +454,37 @@ In full generality, this will look something like the following:
 function exported_artifact_filename(build_name::String,
                                     auxiliary_name::Union{Nothing,String},
                                     version::VersionNumber,
-                                    platform::AbstractPlatform)
+                                    platform::AbstractPlatform;
+                                    compressor::String = "gzip")
     ret = build_name
     if auxiliary_name !== nothing
         ret = string(ret, "-", auxiliary_name)
     end
+    ret = string(ret, "-v", version)
+    ret = string(ret, "-", triplet(platform))
 
-    ret = string(ret, "-v", version, "-", triplet(platform))
-    return string(ret, ".tar.gz")
+    if compressor == "gzip"
+        ret = string(ret, ".tar.gz")
+    elseif compressor == "zstd"
+        ret = string(ret, ".tar.zst")
+    else
+        throw(ArgumentError("Unknown extension for compressor '$(compressor)'"))
+    end
+    return ret
+end
+
+function export_artifact!(artifact_path::String, tarball_path::String;
+                          compressor::String = "gzip")
+    # Archive the main artifact
+    rm(tarball_path; force=true)
+    try
+        TreeArchival.archive(artifact_path, tarball_path, compressor)
+    catch e
+        @error("Unable to export artifact", artifact_path, tarball_path)
+        rethrow(e)
+    end
+
+    return tarball_path
 end
 
 """
@@ -486,49 +509,43 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
         end
     end
 
-    # This will expand to something like `/tmp/foo/readline-v1.0.0-x86_64-linux-gnu.tar.gz`
-    function get_tarball_path(build, name)
-        return joinpath(output_dir, exported_artifact_filename(
-            build.name,
-            name,
-            jll.version,
-            build.platform,
-        ))
-    end
-
     # Archive each artifact, multi-threaded
     @sync begin
         for build in jll.builds
             Threads.@spawn begin
-                # Archive the main artifact
-                rm(get_tarball_path(build, nothing); force=true)
-                try
-                    TreeArchival.archive(
+                update_binding!(build.artifact,
+                    export_artifact!(
                         artifact_path(u, build.artifact.treehash),
-                        get_tarball_path(build, nothing),
+                        joinpath(output_dir,
+                            exported_artifact_filename(
+                                jll.name,
+                                build.name,
+                                jll.version,
+                                build.platform;
+                                compressor
+                            ),
+                        );
                         compressor,
                     )
-                catch e
-                    @error(
-                        "Unable to export artifact",
-                        artifact_path=artifact_path(u, build.artifact.treehash),
-                        tarball_path=get_tarball_path(build, nothing),
-                        compressor,
-                        jll.name,
-                        build.name,
-                    )
-                    rethrow(e)
-                end
-                update_binding!(build.artifact, get_tarball_path(build, nothing))
+                )
 
                 # Next, archive each auxilliary artifact as well
                 for (aux_name, art) in build.auxilliary_artifacts
-                    TreeArchival.archive(
-                        artifact_path(u, art.treehash),
-                        get_tarball_path(build, aux_name),
-                        compressor,
+                    update_binding!(art,
+                        export_artifact!(
+                            artifact_path(u, art.treehash),
+                            joinpath(output_dir,
+                                exported_artifact_filename(
+                                    jll.name,
+                                    aux_name,
+                                    jll.version,
+                                    build.platform;
+                                    compressor
+                                ),
+                            );
+                            compressor,
+                        )
                     )
-                    update_binding!(art, get_tarball_path(build, aux_name))
                 end
             end
         end

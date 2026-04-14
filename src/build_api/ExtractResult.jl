@@ -35,6 +35,56 @@ struct ExtractResult
                            audit_result::Union{Nothing,AuditResult},
                            jll_lib_products::Vector{JLLLibraryProduct},
                            extract_log::String)
+        meta = AbstractBuildMeta(config)
+        # If we've been asked to immediately archive our output, do so now
+        if meta.archive_dir !== nothing
+            # TODO: make this a BuildMeta option?
+            compressor = "gzip"
+            function archive_name(aux_name)
+                filename = string(
+                    config.build.config.src_name,
+                    "-", config.build.config.src_version,
+                )
+                filename = string(
+                    filename,
+                    "-", triplet(config.platform),
+                    "-", spec_hash(config),
+                )
+                if aux_name !== nothing
+                    filename = string(filename, "-", aux_name)
+                end
+                if compressor == "gzip"
+                    filename = string(filename, ".tar.gz")
+                elseif compressor == "zstd"
+                    filename = string(filename, ".tar.zst")
+                end
+                return joinpath(meta.archive_dir, filename)
+            end
+
+            if artifact !== nothing
+                export_artifact!(
+                    artifact_path(meta.universe, artifact),
+                    archive_name(nothing),
+                )
+
+                # Write out JLL lib products to a serialized `.jlp` file
+                jlp_path = string(archive_name(nothing), ".jlp")
+                export_jll_lib_products(jll_lib_products, jlp_path)
+            end
+            if log_artifact !== nothing
+                export_artifact!(
+                    artifact_path(meta.universe, log_artifact),
+                    archive_name("extract_log"),
+                )
+            end
+            if config.build.log_artifact !== nothing
+                export_artifact!(
+                    artifact_path(meta.universe, config.build.log_artifact),
+                    archive_name("build_log"),
+                )
+            end
+        end
+
         return new(
             config,
             status,
@@ -115,3 +165,13 @@ function ExtractResultSource(result::ExtractResult, target::String = "")
     )
 end
 
+function export_jll_lib_products(products::Vector{JLLLibraryProduct}, jlp_path::String)
+    toml_io = IOBuffer()
+    TOML.print(toml_io, Dict("jll_lib_products" => generate_toml_dict.(products)))
+    jll_lib_product_str = String(take!(toml_io))
+    if filesize(jlp_path) != length(jll_lib_product_str)
+        open(jlp_path; write=true) do jlp_io
+            write(jlp_io, jll_lib_product_str)
+        end
+    end
+end

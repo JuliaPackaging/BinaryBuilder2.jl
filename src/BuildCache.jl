@@ -182,18 +182,8 @@ function save_cache(bc::BuildCache)
             println(io, "$(bytes2hex(extract_hash)) $(bytes2hex(e.artifact)) $(bytes2hex(e.log_artifact))")
 
             # JLL library information gets saved to a separate file, to ease serialization
-            toml_io = IOBuffer()
-            TOML.print(
-                toml_io,
-                Dict("jll_lib_products" => generate_toml_dict.(e.jll_lib_products))
-            )
-            jll_lib_product_str = String(take!(toml_io))
             jlp_path = joinpath(bc.cache_dir, "jll_lib_products", "$(bytes2hex(extract_hash)).jlp")
-            if filesize(jlp_path) != length(jll_lib_product_str)
-                open(jlp_path; write=true) do jlp_io
-                    write(jlp_io, jll_lib_product_str)
-                end
-            end
+            export_jll_lib_products(e.jll_lib_products, jlp_path)
         end
     end
 end

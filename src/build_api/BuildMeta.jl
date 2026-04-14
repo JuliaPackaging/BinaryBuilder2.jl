@@ -6,7 +6,8 @@ export BuildMeta
 const BUILD_HELP = (
     """
     Usage: build_tarballs.jl [target1,target2,...] [--help] [--verbose] [--debug=<mode>]
-                             [--universe=<name>] [--deploy=<org>] [--register] [--dry-run=<tags>]
+                             [--universe=<name>] [--deploy=<org>] [--register]
+                             [--output-dir=<dir>] [--dry-run=<tags>]
                              [--disable-caches=<list> [--build-hashes=<list>]
 
     Options:
@@ -61,6 +62,10 @@ const BUILD_HELP = (
                                   `all`, which is equivalent to specifying all categories.  Note
                                   that specifying `build` implies `extract`, which in turn implies
                                   `package`.
+
+        --archive-dir=<dir>       Directory that holds extractions, keyed by name and build hash.
+                                  This is an internal option used by Yggdrasil to auto-dump
+                                  extractions so they can be shared across computers.
 
         --disable-caches=<list>   Disable a comma-separated list of the following caches:
 
@@ -182,6 +187,12 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:dry_run] = Set(split(dry_run_csv, ","))
     end
 
+    # Output directory settings
+    archive_dir, archive_dir_path = extract_flag!(ARGS, "--archive-dir", nothing)
+    if archive_dir
+        parsed_kwargs[:archive_dir] = archive_dir_path
+    end
+
     # Cache disabling
     disable_caches_set, disable_caches = extract_flag!(ARGS, "--disable-caches", "")
     if disable_caches_set
@@ -253,6 +264,9 @@ struct BuildMeta <: AbstractBuildMeta
     # Our build cache, allowing us to skip builds (unless it is disabled)
     build_cache::BuildCache
 
+    # Where we output tarballs of extractions
+    archive_dir::Union{Nothing,String}
+
     # Caches that are disabled in this BuildMeta.  Note that this disables reading
     # from these caches, but does not disable writing to them.
     disabled_caches::Set{String}
@@ -268,6 +282,7 @@ struct BuildMeta <: AbstractBuildMeta
                         deploy_org::Union{AbstractString,Nothing} = nothing,
                         verbose::Bool = false,
                         debug_modes = Set{String}(),
+                        archive_dir::Union{AbstractString,Nothing} = nothing,
                         disabled_caches = Set{String}(),
                         dry_run = Set{String}(),
                         build_hash_list = Set{MultiHash}(),
@@ -340,6 +355,12 @@ struct BuildMeta <: AbstractBuildMeta
             persistent=universe_name !== nothing,
         )
 
+        # Ensure that `archive_dir`, if it is specified, is an extant directory.
+        if archive_dir !== nothing
+            archive_dir = String(archive_dir)
+            mkpath(archive_dir)
+        end
+
         if register && deploy_org === nothing
             throw(ArgumentError("Cannot register with a local deployment!"))
         end
@@ -354,6 +375,7 @@ struct BuildMeta <: AbstractBuildMeta
             Set{MultiHash}(build_hash_list),
             universe,
             load_cache(),
+            archive_dir,
             Set{String}(disabled_caches),
             Set{String}(dry_run),
             register,
@@ -492,6 +514,10 @@ import BinaryBuilderToolchains: indent
 function Base.show(io::IO, meta::BuildMeta)
     println(io, "BuildMeta")
     println(io, indent(string(meta.universe), 2))
+
+    if meta.archive_dir !== nothing
+        println(io, "  Archive Output: $(meta.archive_dir)")
+    end
 
     println(io, "  Builds:")
     # Start from packagings, work backward to extractions, then builds

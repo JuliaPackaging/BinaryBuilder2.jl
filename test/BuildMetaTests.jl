@@ -56,18 +56,21 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test isempty(meta.debug_modes)
         @test meta.universe.name === nothing
         @test !meta.universe.persistent
+        @test meta.archive_dir === nothing
         @test isempty(meta.disabled_caches)
         @test isempty(meta.dry_run)
         @test !meta.register
 
         # Now, provide parameters for all sorts of stuff
         universe_name = "BB2_test_universe-$(time())"
+        archive_dir_parent = mktempdir()
         meta = BuildMeta(;
             target_list=[
                 Platform("x86_64", "linux"),
                 Platform("i686", "windows"),
             ],
             verbose=true,
+            archive_dir=joinpath(archive_dir_parent, "archive"),
             debug_modes=["build-stop"],
             dry_run=["all"],
             deploy_org="JuliaBinaryWrappers",
@@ -81,6 +84,8 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test os(meta.target_list[1]) == "linux"
         @test os(meta.target_list[2]) == "windows"
         @test meta.verbose
+        @test isdir(meta.archive_dir)
+        @test realpath(meta.archive_dir) == realpath(joinpath(archive_dir_parent, "archive"))
         @test meta.debug_modes == Set(["build-stop"])
         @test meta.dry_run == Set(["build", "extract", "package"])
         @test meta.register
@@ -100,6 +105,7 @@ BinaryBuilder2.allow_github_authentication[] = false
             "--debug=start",
             "--deploy=JuliaBinaryWrappers",
             "--register",
+            "--archive-dir=$(joinpath(archive_dir_parent, "archive"))",
             "--universe=$(universe_name)",
             "--disable-caches=build,jll",
             "--build-hashes=sha1:"*"0"^40,
@@ -111,6 +117,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test length(meta.target_list) == 3
         @test all(os.(meta.target_list) .== "linux")
         @test meta.verbose
+        @test meta.archive_dir == joinpath(archive_dir_parent, "archive")
         @test meta.debug_modes == Set(["build-start", "extract-start"])
         @test isempty(meta.dry_run)
         @test meta.disabled_caches == Set(["build", "jll"])
