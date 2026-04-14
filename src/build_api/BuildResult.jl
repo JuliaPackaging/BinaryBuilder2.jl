@@ -25,7 +25,7 @@ mutable struct BuildResult
     mounts::Dict{String,MountInfo}
 
     # Log from the build
-    log_artifact::SHA1Hash
+    log_artifact::Union{Nothing,SHA1Hash}
 
     # The final environment of this build result.
     env::Dict{String,String}
@@ -35,7 +35,7 @@ mutable struct BuildResult
                          exception::Union{Nothing,Exception},
                          exe::Union{Nothing,SandboxExecutor},
                          mounts::Dict{String,MountInfo},
-                         log_artifact::SHA1Hash,
+                         log_artifact::Union{Nothing,SHA1Hash},
                          env::Dict{String,String})
         obj = new(
             config,
@@ -80,7 +80,7 @@ function BuildResult_skipped(config::BuildConfig)
         nothing,
         nothing,
         Dict{String,MountInfo}(),
-        SHA1Hash(sha1("")),
+        nothing,
         Dict{String,String}(),
     )
 end
@@ -143,6 +143,9 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
 end
 
 function build_log(br::BuildResult)
+    if br.log_artifact === nothing
+        throw(ArgumentError("Skipped BuildResult's don't have a build log!"))
+    end
     build_log_path = artifact_path(br.config.meta.universe, br.log_artifact)
     return String(read(joinpath(build_log_path, "$(br.config.src_name)-build.log")))
 end
