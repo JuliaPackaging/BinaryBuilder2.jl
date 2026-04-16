@@ -1,18 +1,24 @@
 using Test, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
-using BinaryBuilder2: load_cache, save_cache, prune!
-using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry
+using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
+using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe
 using JLLGenerator
 
 @testset "BuildCache" begin
+    archive_dir = mktempdir()
     mktempdir() do cache_dir
         # It's not normal to store the artifacts alongside the cache database,
         # but for testing it's fine so we don't have to make more tempdirs.
         bc = BuildCache(; cache_dir, artifacts_dir=cache_dir)
 
         function make_hashdir(name)
-            hash = SHA1Hash(sha1(name))
-            mkpath(joinpath(cache_dir, bytes2hex(hash)))
-            return hash
+            hash = Pkg.Artifacts.with_artifacts_directory(cache_dir) do
+                Pkg.Artifacts.create_artifact() do artifact_dir
+                    open(joinpath(artifact_dir, name); write=true) do io
+                        println(io, name)
+                    end
+                end
+            end
+            return SHA1Hash(hash)
         end
 
         build1_hash = SHA1Hash(sha1("build1"))
@@ -70,6 +76,10 @@ using JLLGenerator
         @test isfile(joinpath(cache_dir, "build_entries.db"))
         @test isfile(joinpath(cache_dir, "extract_entries.db"))
 
+        # Also export buildcache entries:
+        export_archive(bc, build1_hash, extract1_hash, archive_dir)
+        export_archive(bc, build2_hash, extract2_hash, archive_dir)
+
         bc2 = load_cache(cache_dir)
         probe_buildcache(bc2)
 
@@ -88,5 +98,14 @@ using JLLGenerator
         @test !haskey(bc2, build1_hash, extract2_hash)
         @test !haskey(bc2, build2_hash, extract1_hash)
         @test get(bc2, patchelf_build_hash, patchelf_extract_hash) == (patchelf_build_entry, patchelf_extract_entry)
+
+        # Wipe out our cache_dir, create an empty bc3, then import from the archive directory
+        for file in readdir(cache_dir; join=true)
+            rm(file; force=true, recursive=true)
+        end
+        bc3 = BuildCache(; cache_dir, artifacts_dir=cache_dir)
+
+        import_archives(bc3, archive_dir)
+        probe_buildcache(bc3)
     end
 end

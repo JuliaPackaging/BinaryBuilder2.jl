@@ -38,51 +38,11 @@ struct ExtractResult
         meta = AbstractBuildMeta(config)
         # If we've been asked to immediately archive our output, do so now
         if meta.archive_dir !== nothing
-            # TODO: make this a BuildMeta option?
-            compressor = "gzip"
-            function archive_name(aux_name)
-                filename = string(
-                    config.build.config.src_name,
-                    "-", config.build.config.src_version,
-                )
-                filename = string(
-                    filename,
-                    "-", triplet(config.platform),
-                    "-", spec_hash(config),
-                )
-                if aux_name !== nothing
-                    filename = string(filename, "-", aux_name)
-                end
-                if compressor == "gzip"
-                    filename = string(filename, ".tar.gz")
-                elseif compressor == "zstd"
-                    filename = string(filename, ".tar.zst")
-                end
-                return joinpath(meta.archive_dir, filename)
-            end
-
-            if artifact !== nothing
-                export_artifact!(
-                    artifact_path(meta.universe, artifact),
-                    archive_name(nothing),
-                )
-
-                # Write out JLL lib products to a serialized `.jlp` file
-                jlp_path = string(archive_name(nothing), ".jlp")
-                export_jll_lib_products(jll_lib_products, jlp_path)
-            end
-            if log_artifact !== nothing
-                export_artifact!(
-                    artifact_path(meta.universe, log_artifact),
-                    archive_name("extract_log"),
-                )
-            end
-            if config.build.log_artifact !== nothing
-                export_artifact!(
-                    artifact_path(meta.universe, config.build.log_artifact),
-                    archive_name("build_log"),
-                )
-            end
+            export_archive(
+                meta.bc,
+                spec_hash(config.build.config),
+                spec_hash(config),
+            )
         end
 
         return new(

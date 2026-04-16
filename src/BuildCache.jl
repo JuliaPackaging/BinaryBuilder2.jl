@@ -151,6 +151,90 @@ function Base.get(bc::BuildCache, extract_config::ExtractConfig)
     return get(bc, build_hash, extract_hash)
 end
 
+function export_archive(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1Hash, output_path::String)
+    function if_missing(f::Function, name::String)
+        path = joinpath(output_path, name)
+        if !isfile(path)
+            f(path)
+        end
+    end
+    function if_missing_artifact(name::String, artifact::SHA1Hash)
+        if_missing(name) do path
+            export_artifact!(joinpath(bc.artifacts_dir, bytes2hex(artifact)), path; compressor="zstd")
+        end
+    end
+
+    # Export BuildCacheBuildEntry
+    build_entry = bc.build_entries[build_hash]
+    bh = string(build_hash)
+    if_missing_artifact("$(bh)-log_artifact.tar.zst", build_entry.log_artifact)
+    if_missing("$(bh).env") do path
+        open(path; write=true) do io
+            write(io, serialize_env_block(build_entry.env))
+        end
+    end
+
+    # Export BuildCacheExtractEntry
+    extract_entry = bc.extract_entries[extract_hash]
+    eh = string(extract_hash)
+    if_missing_artifact("$(bh)-$(eh)-artifact.tar.zst", extract_entry.artifact)
+    if_missing_artifact("$(bh)-$(eh)-log_artifact.tar.zst", extract_entry.log_artifact)
+    if_missing("$(bh)-$(eh).jlp") do path
+        export_jll_lib_products(extract_entry.jll_lib_products, path)
+    end
+end
+
+function import_archives(bc::BuildCache, dir::String)
+    # Use `.jlp` files in the `dir` to find all (build_hash, extract_hash) pairings
+    jlp_files = filter(endswith(".jlp"), readdir(dir))
+    jlp_files = [f[1:end-4] for f in jlp_files]
+    build_extract_pairs = split.(jlp_files, ("-",))
+    for (bh, eh) in build_extract_pairs
+        function import_artifact(name::String)
+            path = joinpath(dir, name)
+            if !isfile(path)
+                error("Missing artifact")
+            end
+            return Pkg.Artifacts.with_artifacts_directory(bc.artifacts_dir) do
+                Pkg.Artifacts.create_artifact() do artifact_dir
+                    unarchive(path, artifact_dir; compressor="zstd")
+                end
+            end
+        end
+
+        # Construct BuildCacheBuildEntry
+        local build_entry
+        try
+            build_log_artifact = import_artifact("$(bh)-log_artifact.tar.zst")
+            build_env = parse_env_block(String(read(joinpath(dir, "$(bh).env"))))
+            build_entry = BuildCacheBuildEntry(build_log_artifact, build_env)
+        catch ex
+            @debug("Unable to import BuildCacheBuildEntry", exception=ex, build_hash=bh)
+            continue
+        end
+
+        # Construct BuildCacheExtractEntry
+        local extract_entry
+        try
+            extract_artifact = import_artifact("$(bh)-$(eh)-artifact.tar.zst")
+            extract_log_artifact = import_artifact("$(bh)-$(eh)-log_artifact.tar.zst")
+            jll_lib_products = TOML.parsefile(joinpath(dir, "$(bh)-$(eh).jlp"))["jll_lib_products"]
+            extract_entry = BuildCacheExtractEntry(
+                extract_artifact,
+                extract_log_artifact,
+                parse_toml_dict.(JLLLibraryProduct, jll_lib_products),
+            )
+        catch ex
+            @debug("Unable to import BuildCacheExtractEntry", exception=ex, build_hash=bh, extract_hash=eh)
+            continue
+        end
+
+        # Insert it into bc
+        put!(bc, SHA1Hash(bh), SHA1Hash(eh), build_entry, extract_entry)
+        @debug("Successfully imported BuildCacheEntries", build_hash=bh, build_entry, extract_hash=eh, extract_entry)
+    end
+end
+
 
 function save_cache(bc::BuildCache)
     # Write out `artifacts_dir` so that we can persist that setting properly
