@@ -67,4 +67,18 @@ using Test, MultiHashParsing, SHA
     @test SHA1Hash(Base.SHA1(sha1(""))) == SHA1Hash(sha1(""))
     @test Base.SHA1(SHA1Hash(sha1(""))) == Base.SHA1(sha1(""))
     @test MultiHash(Base.SHA1(sha1(""))) == SHA1Hash(sha1(""))
+
+    # Test that hashes remove their own prefix, even in the more specific constructors
+    @test SHA1Hash("sha1:$(bytes2hex(sha1("")))") == SHA1Hash(sha1(""))
+
+    # Test that SHA1Hash automatically converts to Base.SHA1 and vice-versa
+    struct sha1_holder
+        hash::Base.SHA1
+    end
+    struct sha1hash_holder
+        hash::SHA1Hash
+    end
+    h1 = sha1_holder(SHA1Hash(sha1("")))
+    h2 = sha1hash_holder(Base.SHA1(sha1("")))
+    @test SHA1Hash(h1.hash) == h2.hash
 end

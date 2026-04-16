@@ -72,7 +72,13 @@ macro define_multi_hash(prefix, len, func)
             end
             return $T(tuple(data...))
         end
-        $T(data::AbstractString) = $T(hex2bytes(data))
+        function $T(data::AbstractString)
+            prefix = hash_prefix($T)
+            if startswith(data, prefix)
+                data = data[length(prefix)+2:end]
+            end
+            return $T(hex2bytes(data))
+        end
 
         # Create trivial identity constructors
         $T(hash::$T) = hash
@@ -125,8 +131,11 @@ function MultiHash(hash::AbstractString)
 end
 
 # Special constructor for Base.SHA1
-SHA1Hash(hash::Base.SHA1) = SHA1Hash(hash.bytes)
-Base.SHA1(hash::SHA1Hash) = Base.SHA1(hash.data)
-MultiHash(hash::Base.SHA1) = SHA1Hash(hash.bytes)
+import Base: SHA1
+SHA1Hash(hash::SHA1) = SHA1Hash(hash.bytes)
+SHA1(hash::SHA1Hash) = SHA1(hash.data)
+Base.convert(SHA1Hash, hash::SHA1) = SHA1Hash(hash)
+Base.convert(SHA1, hash::SHA1Hash) = SHA1(hash)
+MultiHash(hash::SHA1) = SHA1Hash(hash.bytes)
 
 end # module MultiHashParsing
