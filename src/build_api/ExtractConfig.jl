@@ -237,6 +237,7 @@ function extract!(config::ExtractConfig;
             end
             try
                 result = ExtractResult_cached(config, extract_entry.artifact, extract_entry.log_artifact, extract_entry.jll_lib_products)
+                export_archive(result)
                 meta.extractions[config] = result
                 return result
             catch exception
@@ -333,9 +334,10 @@ function extract!(config::ExtractConfig;
         jll_lib_products,
         extract_log,
     )
-    if build_cache_enabled(meta) && run_status == :success
+    if run_status == :success
         put!(meta.build_cache, result)
     end
+    export_archive(result)
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
         @warn("""

@@ -35,16 +35,6 @@ struct ExtractResult
                            audit_result::Union{Nothing,AuditResult},
                            jll_lib_products::Vector{JLLLibraryProduct},
                            extract_log::String)
-        meta = AbstractBuildMeta(config)
-        # If we've been asked to immediately archive our output, do so now
-        if meta.archive_dir !== nothing
-            export_archive(
-                meta.bc,
-                spec_hash(config.build.config),
-                spec_hash(config),
-            )
-        end
-
         return new(
             config,
             status,
@@ -85,6 +75,19 @@ function ExtractResult_skipped(config::ExtractConfig)
         JLLLibraryProduct[],
         "",
     )
+end
+
+function export_archive(result::ExtractResult)
+    meta = AbstractBuildMeta(result)
+    # If we've been asked to immediately archive our output, do so now
+    if meta.archive_dir !== nothing
+        export_archive(
+            meta.build_cache,
+            spec_hash(result.config.build.config),
+            spec_hash(result.config),
+            meta.archive_dir,
+        )
+    end
 end
 
 function Base.show(io::IO, result::ExtractResult)

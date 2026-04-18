@@ -127,7 +127,8 @@ end
 
 @testset "native zlib build test" begin
     # Test building `zlib`
-    meta = BuildMeta(; verbose=false)
+    archive_dir = mktempdir()
+    meta = BuildMeta(; verbose=false, archive_dir)
     build_config = BuildConfig(
         meta,
         "Zlib",
@@ -146,6 +147,7 @@ end
     )
     build_result = build!(build_config; disable_cache=true);
     @test build_result.status == :success
+    @test isempty(readdir(archive_dir))
 
     extract_script = raw"""
     extract ${prefix}/lib/**.so*
@@ -170,6 +172,15 @@ end
         @test isdir(install_prefix)
         @test isfile(joinpath(install_prefix, "include", "zlib.h"))
         @test isfile(joinpath(install_prefix, "lib", "libz.so.$(build_config.src_version)"))
+    end
+
+    # Test that archive_dir has something in it
+    @test !isempty(readdir(archive_dir))
+    mktempdir() do cache_dir
+        bc = BuildCache(;cache_dir, artifacts_dir=cache_dir)
+        import_archives(bc, archive_dir)
+        @test length(bc.build_entries) == 1
+        @test length(bc.extract_entries) == 1
     end
 
     # Test that if we try to build it again, we get a cached version
