@@ -430,6 +430,7 @@ end
 function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     local run_status
     run_exception = nothing
+    run_backtrace = nothing
     try
         if success(run(exe, config, ignorestatus(cmd)))
             run_status = :success
@@ -443,8 +444,9 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
         end
         run_status = :errored
         run_exception = e
+        run_backtrace = catch_backtrace()
     end
-    return run_status, run_exception
+    return run_status, run_exception, run_backtrace
 end
 
 function build!(config::BuildConfig;
@@ -477,8 +479,8 @@ function build!(config::BuildConfig;
                     result = BuildResult_cached(config, build_entry)
                     meta.builds[config] = result
                     return result
-                catch exception
-                    @error("Error while reading from build cache", exception=(exception, catch_backtrace()))
+                catch e
+                    @error("Error while reading from build cache", exception=(e, catch_backtrace()))
                 end
             else
                 @debug("Build not cached", config)
@@ -512,18 +514,18 @@ function build!(config::BuildConfig;
         end
 
         @timeit config.to "build" begin
-            run_status, run_exception = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
+            run_status, run_exception, run_backtrace = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
         end
 
         if run_status != :success && verbose
-            @error("Build failed", run_status, run_exception)
+            @error("Build failed", run_status, exception=(run_exception, run_backtrace))
         end
         wait(collector)
     catch e
         run_status = :errored
         run_exception = e
         if verbose
-            @error("Build failed (internal error)", run_status, run_exception)
+            @error("Build failed (internal error)", run_status, exception=(run_exception, run_backtrace))
         end
     end
     
