@@ -414,17 +414,17 @@ function should_skip(config::BuildConfig, verbose::Bool)
         build_hash = spec_hash(config)
         if build_hash ∉ meta.build_hash_list
             if verbose
-                @info("Hash-skipped build", config)
+                @info("Hash-skipped build", config, build_hash)
             else
-                @debug("Hash-skipped build", config)
+                @debug("Hash-skipped build", config, build_hash)
             end
             return true
         end
 
         if verbose
-            @info("Hash-selected build", config)
+            @info("Hash-selected build", config, build_hash)
         else
-            @debug("Hash-selected build", config)
+            @debug("Hash-selected build", config, build_hash)
         end
     end
 
