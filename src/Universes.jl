@@ -730,9 +730,9 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     # First, we have to archive each artifact into a tarball
     # and update the JLLArtifactBinding with some download sources (if non-local deploy)
     if u.name !== nothing
-        tag_name = "v$(jll.version)-$(u.name)"
+        tag_name = "$(jll.name)-v$(jll.version)-$(u.name)"
     else
-        tag_name = "v$(jll.version)"
+        tag_name = "$(jll.name)-v$(jll.version)"
     end
     if !skip_artifact_export
         if verbose
