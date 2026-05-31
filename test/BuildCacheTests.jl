@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
+using Test, Pkg, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
 using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe
 using JLLGenerator

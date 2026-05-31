@@ -62,6 +62,16 @@ struct BuildCache
 
     # This maps from spec_hash(::ExtractConfig) -> BuildCacheExtractEntry
     extract_entries::Dict{SHA1Hash,BuildCacheExtractEntry}
+
+    function BuildCache(cache_dir::String, artifacts_dir::String,
+                        build_entries::Dict{SHA1Hash,BuildCacheBuildEntry},
+                        extract_entries::Dict{SHA1Hash,BuildCacheExtractEntry})
+        mkpath(cache_dir)
+        mkpath(artifacts_dir)
+        bc = new(cache_dir, artifacts_dir, build_entries, extract_entries)
+        push!(get_exit_hooks(), bc)
+        return bc
+    end
 end
 
 function Base.show(io::IO, bc::BuildCache)
@@ -75,8 +85,6 @@ end
 default_buildcache_dir() = @get_scratch!("buildcache_database")
 
 function BuildCache(;cache_dir = default_buildcache_dir(), artifacts_dir = joinpath(first(Base.DEPOT_PATH), "artifacts"))
-    mkpath(cache_dir)
-    mkpath(artifacts_dir)
     return BuildCache(
         cache_dir,
         artifacts_dir,
@@ -237,6 +245,11 @@ end
 
 
 function save_cache(bc::BuildCache)
+    # Only try to save if the cache_dir still exists.  For temporary universes, this will not be the case.
+    if !isdir(bc.cache_dir)
+        return
+    end
+
     # Write out `artifacts_dir` so that we can persist that setting properly
     open(joinpath(bc.cache_dir, "artifacts_dir"); write=true) do io
         println(io, bc.artifacts_dir)
@@ -369,14 +382,7 @@ function load_cache(cache_dir::String = default_buildcache_dir())
         end
     end
 
-    bc = BuildCache(cache_dir, artifacts_dir[], build_entries, extract_entries)
-    atexit() do
-        try
-            save_cache(bc)
-        catch
-        end
-    end
-    return bc
+    return BuildCache(cache_dir, artifacts_dir[], build_entries, extract_entries)
 end
 
 function prune!(bc::BuildCache)

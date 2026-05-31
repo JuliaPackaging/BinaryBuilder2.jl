@@ -154,9 +154,7 @@ struct Universe
 
         # If we are not persistent, clean this universe up at the end of our run
         if !persistent
-            atexit() do
-                cleanup(uni)
-            end
+            push!(get_exit_hooks(), uni)
         end
 
         @ensure_all_kwargs_consumed_check(kwargs)

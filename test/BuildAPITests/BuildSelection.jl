@@ -1,4 +1,4 @@
-using BinaryBuilder2, Test
+using BinaryBuilder2, Test, SHA
 import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
 
 @testset "Build Selection" begin
@@ -17,9 +17,10 @@ import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
             push!(build_hash_list, spec_hash(br.config))
         end
     end
+    @test length(build_hash_list) == 2
 
     # Run a build with that build hash list applied
-    filtered_meta = BuildMeta(; verbose=false, build_hash_list)
+    filtered_meta = BuildMeta(; verbose=true, build_hash_list)
     run_build_tarballs(filtered_meta, joinpath(build_examples_dir, "multi_stage_build.jl"))
 
     # Ensure that the extraction results show that only the builds with our
@@ -66,4 +67,12 @@ import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
     package_config = PackageConfig(meta["libstring"].config, Dict("libstring" => extract_results))
     package_result = package!(package_config)
     @test package_result.status == :success
+
+    # Ensure that running with a hash that never gets selected fails when we trigger `atexit()`
+    failing_meta = BuildMeta(; verbose=false, build_hash_list=[SHA1Hash(sha1(""))])
+    run_build_tarballs(failing_meta, joinpath(build_examples_dir, "multi_stage_build.jl"))
+    @test_throws InvalidStateException Base.atexit(BinaryBuilder2.get_exit_hooks())
+
+    # Clear out the failing_meta from the exit_hooks object so that we don't error out on actual exit here
+    @test pop!(BinaryBuilder2.get_exit_hooks().build_metas) == failing_meta
 end

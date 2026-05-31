@@ -47,9 +47,7 @@ mutable struct BuildResult
             env,
         )
         # Make sure that this is cleaned up _before_ we're in a finalizer.
-        atexit() do
-            Sandbox.cleanup(obj)
-        end
+        push!(get_exit_hooks(), obj)
         return obj
     end
 end

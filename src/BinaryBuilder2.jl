@@ -30,6 +30,7 @@ include("build_api/PackageConfig.jl")
 include("build_api/PackageResult.jl")
 include("BuildCache.jl")
 include("build_api/BuildMeta.jl")
+include("ExitHooks.jl")
 include("build_api/Convenience.jl")
 
 include("Compat.jl")

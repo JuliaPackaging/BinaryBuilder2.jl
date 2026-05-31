@@ -257,6 +257,7 @@ struct BuildMeta <: AbstractBuildMeta
     # care about, not extract hashes, as we will always perform all
     # extractions for any selected builds.
     build_hash_list::Set{MultiHash}
+    build_hash_list_used::Set{MultiHash}
 
     # The universe we register into and deploy from
     universe::Universe
@@ -365,7 +366,7 @@ struct BuildMeta <: AbstractBuildMeta
             throw(ArgumentError("Cannot register with a local deployment!"))
         end
 
-        return new(
+        meta = new(
             Dict{BuildConfig,BuildResult}(),
             Dict{ExtractConfig,ExtractResult}(),
             Dict{PackageConfig,PackageResult}(),
@@ -373,6 +374,7 @@ struct BuildMeta <: AbstractBuildMeta
             verbose,
             debug_modes,
             Set{MultiHash}(build_hash_list),
+            Set{MultiHash}(),
             universe,
             load_cache(),
             archive_dir,
@@ -380,6 +382,8 @@ struct BuildMeta <: AbstractBuildMeta
             Set{String}(dry_run),
             register,
         )
+        push!(get_exit_hooks(), meta)
+        return meta
     end
 end
 AbstractBuildMeta(meta::BuildMeta) = meta
@@ -421,6 +425,7 @@ function should_skip(config::BuildConfig, verbose::Bool)
             return true
         end
 
+        push!(meta.build_hash_list_used, build_hash)
         if verbose
             @info("Hash-selected build", config, build_hash)
         else

@@ -1,4 +1,5 @@
 using BinaryBuilder2, Test, Random
+import BinaryBuilder2: import_archives
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))

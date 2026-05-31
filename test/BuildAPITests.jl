@@ -47,5 +47,6 @@ include("BuildAPITests/LowLevelBuildTests.jl")
 include("BuildAPITests/ConvenienceTests.jl")
 include("BuildAPITests/MultiJLLOutputTests.jl")
 include("BuildAPITests/CustomSpecTests.jl")
+include("BuildAPITests/BuildSelection.jl")
 
 end # testset "BuildAPI"

@@ -125,5 +125,8 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.register
         @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
+
+        # Don't complain that we didn't actually build this buildhash
+        @test pop!(BinaryBuilder2.get_exit_hooks().build_metas) == meta
     end
 end
