@@ -1,5 +1,6 @@
 using Test, Pkg, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
+using BinaryBuilder2: load_build_entries!, load_extract_entries!
 using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe
 using JLLGenerator
 
@@ -107,5 +108,130 @@ using JLLGenerator
 
         import_archives(bc3, archive_dir)
         probe_buildcache(bc3)
+    end
+end
+
+@testset "load_build_entries!" begin
+    using BinaryBuilder2: serialize_env_block
+
+    mktempdir() do cache_dir
+        mkpath(joinpath(cache_dir, "envs"))
+
+        h1 = SHA1Hash(sha1("build1"))
+        h2 = SHA1Hash(sha1("build2"))
+        log1 = SHA1Hash(sha1("log1"))
+        log2 = SHA1Hash(sha1("log2"))
+        env1 = Dict("A" => "1", "B" => "2")
+        env2 = Dict("X" => "y")
+
+        # Write env files
+        write(joinpath(cache_dir, "envs", "$(bytes2hex(h1)).env"), serialize_env_block(env1))
+        write(joinpath(cache_dir, "envs", "$(bytes2hex(h2)).env"), serialize_env_block(env2))
+
+        # Write a valid build_entries.db
+        db = joinpath(cache_dir, "build_entries.db")
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(log1))\n$(bytes2hex(h2)) $(bytes2hex(log2))\n")
+
+        entries = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries, cache_dir)
+        @test length(entries) == 2
+        @test entries[h1] == BuildCacheBuildEntry(log1, env1)
+        @test entries[h2] == BuildCacheBuildEntry(log2, env2)
+
+        # Missing .env file → entry skipped
+        rm(joinpath(cache_dir, "envs", "$(bytes2hex(h2)).env"))
+        entries2 = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries2, cache_dir)
+        @test haskey(entries2, h1)
+        @test !haskey(entries2, h2)
+
+        # Malformed hash line → entry skipped
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(log1))\nnotahash notahash\n")
+        write(joinpath(cache_dir, "envs", "$(bytes2hex(h2)).env"), serialize_env_block(env2))
+        entries3 = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries3, cache_dir)
+        @test length(entries3) == 1
+        @test haskey(entries3, h1)
+
+        # Missing db file → empty result, no error
+        rm(db)
+        entries4 = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries4, cache_dir)
+        @test isempty(entries4)
+
+        # Pre-existing entries in the dict are preserved (merge semantics)
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(log1))\n")
+        existing_entry = BuildCacheBuildEntry(SHA1Hash(sha1("other")), Dict("Z" => "z"))
+        entries5 = Dict{SHA1Hash,BuildCacheBuildEntry}(h2 => existing_entry)
+        load_build_entries!(entries5, cache_dir)
+        @test haskey(entries5, h1)
+        @test entries5[h2] === existing_entry
+    end
+end
+
+@testset "load_extract_entries!" begin
+    using BinaryBuilder2: export_jll_lib_products
+
+    mktempdir() do cache_dir
+        mkpath(joinpath(cache_dir, "jll_lib_products"))
+
+        h1 = SHA1Hash(sha1("extract1"))
+        h2 = SHA1Hash(sha1("extract2"))
+        art1 = SHA1Hash(sha1("artifact1"))
+        art2 = SHA1Hash(sha1("artifact2"))
+        log1 = SHA1Hash(sha1("extlog1"))
+        log2 = SHA1Hash(sha1("extlog2"))
+        jlp1 = [JLLLibraryProduct(:libfoo, "lib/libfoo.so", [], flags=[:RTLD_LAZY])]
+        jlp2 = JLLLibraryProduct[]
+
+        # Write .jlp files
+        export_jll_lib_products(jlp1, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h1)).jlp"))
+        export_jll_lib_products(jlp2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
+
+        # Write a valid extract_entries.db
+        db = joinpath(cache_dir, "extract_entries.db")
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\n$(bytes2hex(h2)) $(bytes2hex(art2)) $(bytes2hex(log2))\n")
+
+        entries = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries, cache_dir)
+        @test length(entries) == 2
+        @test entries[h1] == BuildCacheExtractEntry(art1, log1, jlp1)
+        @test entries[h2] == BuildCacheExtractEntry(art2, log2, jlp2)
+
+        # Missing .jlp file → entry skipped
+        rm(joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
+        entries2 = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries2, cache_dir)
+        @test haskey(entries2, h1)
+        @test !haskey(entries2, h2)
+
+        # Malformed TOML in .jlp → entry skipped
+        write(joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"), "not valid toml [[[")
+        entries3 = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries3, cache_dir)
+        @test haskey(entries3, h1)
+        @test !haskey(entries3, h2)
+
+        # Malformed hash line → entry skipped
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\nnotahash notahash notahash\n")
+        export_jll_lib_products(jlp2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
+        entries4 = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries4, cache_dir)
+        @test length(entries4) == 1
+        @test haskey(entries4, h1)
+
+        # Missing db file → empty result, no error
+        rm(db)
+        entries5 = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries5, cache_dir)
+        @test isempty(entries5)
+
+        # Pre-existing entries in the dict are preserved (merge semantics)
+        write(db, "$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\n")
+        existing_entry = BuildCacheExtractEntry(SHA1Hash(sha1("other")), SHA1Hash(sha1("otherlog")), jlp2)
+        entries6 = Dict{SHA1Hash,BuildCacheExtractEntry}(h2 => existing_entry)
+        load_extract_entries!(entries6, cache_dir)
+        @test haskey(entries6, h1)
+        @test entries6[h2] === existing_entry
     end
 end
