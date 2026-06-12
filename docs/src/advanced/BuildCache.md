@@ -113,7 +113,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 └ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:287
 ┌ Debug: ExtractConfig hash buffer:
 │ [extraction_metadata]
-│   build_hash = 68ab520f17620647451edd4574d973d2c82e63d3
+│   build_hash = sha1:68ab520f17620647451edd4574d973d2c82e63d3
 │   script_hash = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [products]
 │   libfoo = ["libfoo"]
