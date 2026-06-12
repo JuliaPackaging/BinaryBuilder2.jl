@@ -13,18 +13,10 @@ High-priority list:
    - mkdir -p /storage/upper /storage/work /tmp/merged; mount -t overlay overlay -o lowerdir=/mount_test,upperdir=/storage/upper,workdir=/storage/work /tmp/merged
 
 
-- Add Binutils 2.28 (first version with `--push-state`?)
-  - `--enable-compressed-debug-sections=all`: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
-- Create enormous bootstrapping script to build everything to ensure it's all working.
-  - GCCBootstrap
-  - Binutils
-  - GCC
-  - ClangBootstrap
-  - Clang
-  - Libcxx, etc...
-- Add ability to specify an `on_load_callback` definition, then link to it from the `LibraryProduct`.
+- Add Binutils `--enable-compressed-debug-sections=all`: https://github.com/JuliaLang/julia/pull/45631#issuecomment-1529628736
 - Expand GCCBootstrap for Windows
-  - Ensure that we have the patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)
+  - Windows cross-compile targets already added to `GCCBootstrap/build_tarballs.jl`
+  - Still TODO: Add patches for long file support (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=107974)
 - Build GCC <-> Glibc baked header diff tarballs
   - Build easy "diff/core" packaging utility to analyze a set of outputs for
     shared content and create a `FooCore_jll` and `FooXYZ_jll` set of artifacts
@@ -32,10 +24,8 @@ High-priority list:
   - expected package `Zlib_jll [83775a58]` to exist at path `/home/sabae/.julia/scratchspaces/12aac903-9f7c-5d81-afc2-d9565ea332af/universes/GCCBoostrap/dev/Zlib_jll`
 - Finish implementation of `DepotCompactor.jl` to save disk space on Yggdrasil
   - Create torture-test-suite to run a bunch of builds in parallel on a new depot, to make sure that we can share resources properly
-- Create mappings from all old style syntax to new style
-  - `build_tarballs()` -> `BuildMeta()`, `BuildConfig()`, `build()`, `extract()`, `package()`, etc...
-  - `compilers = [:c]` => `toolchains = [CToolchain()]`.
-  - `HostBuildDependency()` => `JLLDependency` with appropriate platforms
+- Create mappings from all old style syntax to new style, one remaining:
+  - `compilers = [:c]` => `toolchains = [CToolchain()]` — not yet mapped in Compat
 - Copy over as many tests as possible from BB.jl and BBB.jl
 - Build `-debug` variants, deploy them in a JLL, show how to override preferences to switch to them.
   - This should be doable with separate `extract!()` steps, perhaps?
