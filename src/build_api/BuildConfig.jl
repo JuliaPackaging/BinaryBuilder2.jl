@@ -174,6 +174,7 @@ struct BuildConfig
 
             # ccache
             "CCACHE_DIR" => "/var/cache/ccache",
+            "CCACHE_STATSLOG" => "$(metadir_prefix())/ccache-statslog",
         ))
 
         return new(
@@ -548,6 +549,12 @@ function build!(config::BuildConfig;
         env = Dict{String,String}()
     end
 
+    # Try to capture the ccache statslog written to the metadir
+    ccache_log_artifact_hash = nothing
+    if run_status != :errored
+        ccache_log_artifact_hash = store_ccache_log_artifact(meta.universe, read_metadir_ccache_statslog(exe, config, mounts))
+    end
+
     result = BuildResult(
         config,
         run_status,
@@ -556,6 +563,7 @@ function build!(config::BuildConfig;
         mounts,
         log_artifact_hash,
         env,
+        ccache_log_artifact_hash,
     )
     meta.builds[config] = result
 

@@ -7,7 +7,25 @@ end
 
 @testset "BuildAPI" begin
 
-using BinaryBuilder2: next_jll_version
+using BinaryBuilder2: next_jll_version, store_ccache_log_artifact, read_metadir_ccache_statslog, artifact_path
+@testset "store_ccache_log_artifact" begin
+    mktempdir() do depot_path
+        uni = Universe(; depot_path, persistent=false)
+
+        # nothing and empty data both return nothing
+        @test store_ccache_log_artifact(uni, nothing) === nothing
+        @test store_ccache_log_artifact(uni, UInt8[]) === nothing
+
+        # non-empty data creates an artifact and returns its hash
+        data = b"Cachefile hits:    42\nCache misses:      7\n"
+        hash = store_ccache_log_artifact(uni, data)
+        @test hash isa SHA1Hash
+        statslog_file = joinpath(artifact_path(uni, hash), "ccache-statslog")
+        @test isfile(statslog_file)
+        @test read(statslog_file) == data
+    end
+end
+
 @testset "next_jll_version" begin
     versions = [
         v"1.0.0",
@@ -41,6 +59,31 @@ end
     @test failing_build_result.status == :failed
     @test failing_build_result.env["env_val"] == "pre"
     @test occursin("Previous command 'false' exited with code 1", build_log(failing_build_result))
+
+    # read_metadir_ccache_statslog returns nothing when ccache was never invoked
+    @test failing_build_result.ccache_log_artifact === nothing
+
+    # ccache_stats warns and returns nothing when no statslog is available
+    @test_logs (:warn, r"No ccache statslog") begin
+        @test ccache_stats(failing_build_result) === nothing
+    end
+
+    # ccache_stats runs ccache --show-log-stats against a real (dummy) statslog artifact
+    dummy_statslog = b"1234567890.000000 cache_miss\n1234567890.000001 cache_hit(preprocessed)\n"
+    dummy_ccache_artifact = store_ccache_log_artifact(meta.universe, dummy_statslog)
+    dummy_result = BuildResult(
+        bad_build_config,
+        :success,
+        nothing,
+        nothing,
+        Dict{String,MountInfo}(),
+        failing_build_result.log_artifact,
+        Dict{String,String}(),
+        dummy_ccache_artifact,
+    )
+    buf = IOBuffer()
+    @test ccache_stats(dummy_result; io=buf) === nothing
+    @test !isempty(String(take!(buf)))
 end
 
 include("BuildAPITests/LowLevelBuildTests.jl")
