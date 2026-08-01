@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, Random
+using Test, BinaryBuilder2, Random, Sandbox
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
@@ -69,7 +69,7 @@ end
     end
 
     # ccache_stats runs ccache --show-log-stats against a real (dummy) statslog artifact
-    dummy_statslog = b"1234567890.000000 cache_miss\n1234567890.000001 cache_hit(preprocessed)\n"
+    dummy_statslog = b"cache_miss\ncache_hit(preprocessed)\n"
     dummy_ccache_artifact = store_ccache_log_artifact(meta.universe, dummy_statslog)
     dummy_result = BuildResult(
         bad_build_config,
