@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, Random
+using Test, BinaryBuilder2, Random, Sandbox
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
