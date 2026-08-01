@@ -217,11 +217,11 @@ function target_platform_string(config::BuildConfig)
         # Canuck mode oot and aboot.  Only the bravest souls,
         # Tim Horton's in hand, will attempt a build like this.
         return string(
-            triplet(get_spec_by_name("build").platform.target),
+            triplet(get_target_spec_by_name(config, "build").platform.target),
             " => ",
-            triplet(get_spec_by_name("host").platform.target),
+            triplet(get_target_spec_by_name(config, "host").platform.target),
             " => ",
-            triplet(get_spec_by_name("target").platform.target),
+            triplet(get_target_spec_by_name(config, "target").platform.target),
         )
     else
         # Science has gone too far!
