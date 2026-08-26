@@ -1071,6 +1071,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1079,6 +1080,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1087,6 +1089,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1095,6 +1098,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1108,6 +1112,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1116,6 +1121,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1127,6 +1133,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1135,6 +1142,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1143,6 +1151,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1155,12 +1164,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1172,6 +1183,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1206,6 +1218,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1214,6 +1227,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1222,6 +1236,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1230,6 +1245,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1243,6 +1259,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1251,6 +1268,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1262,6 +1280,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1270,6 +1289,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1278,6 +1298,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1290,12 +1311,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1307,6 +1330,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1341,6 +1365,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1349,6 +1374,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1357,6 +1383,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1365,6 +1392,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1378,6 +1406,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1386,6 +1415,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1397,6 +1427,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1405,6 +1436,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1413,6 +1445,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1425,12 +1458,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1442,6 +1477,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1476,6 +1512,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1484,6 +1521,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1492,6 +1530,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1500,6 +1539,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1513,6 +1553,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1521,6 +1562,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1532,6 +1574,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1540,6 +1583,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1548,6 +1592,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1560,12 +1605,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1577,6 +1624,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1611,6 +1659,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1619,6 +1668,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1627,6 +1677,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1635,6 +1686,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1648,6 +1700,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1656,6 +1709,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1667,6 +1721,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1675,6 +1730,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1683,6 +1739,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1695,12 +1752,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1712,6 +1771,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1746,6 +1806,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1754,6 +1815,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1762,6 +1824,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1770,6 +1833,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1783,6 +1847,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1791,6 +1856,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1802,6 +1868,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1810,6 +1877,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1818,6 +1886,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1830,12 +1899,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1847,6 +1918,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -1881,6 +1953,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -1889,6 +1962,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -1897,6 +1971,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -1905,6 +1980,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -1918,6 +1994,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -1926,6 +2003,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -1937,6 +2015,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -1945,6 +2024,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -1953,6 +2033,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -1965,12 +2046,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -1982,6 +2065,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2016,6 +2100,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2024,6 +2109,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2032,6 +2118,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2040,6 +2127,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2053,6 +2141,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2061,6 +2150,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2072,6 +2162,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2080,6 +2171,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2088,6 +2180,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2100,12 +2193,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2117,6 +2212,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2151,6 +2247,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2159,6 +2256,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2167,6 +2265,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2175,6 +2274,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2188,6 +2288,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2196,6 +2297,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2207,6 +2309,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2215,6 +2318,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2223,6 +2327,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2235,12 +2340,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2252,6 +2359,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2286,6 +2394,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2294,6 +2403,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2302,6 +2412,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2310,6 +2421,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2323,6 +2435,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2331,6 +2444,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2342,6 +2456,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2350,6 +2465,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2358,6 +2474,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2370,12 +2487,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2387,6 +2506,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2421,6 +2541,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2429,6 +2550,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2437,6 +2559,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2445,6 +2568,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2458,6 +2582,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2466,6 +2591,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2477,6 +2603,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2485,6 +2612,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2493,6 +2621,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2505,12 +2634,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2522,6 +2653,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2556,6 +2688,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2564,6 +2697,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2572,6 +2706,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2580,6 +2715,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2593,6 +2729,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2601,6 +2738,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2612,6 +2750,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2620,6 +2759,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2628,6 +2768,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2640,12 +2781,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2657,6 +2800,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2691,6 +2835,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2699,6 +2844,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2707,6 +2853,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2715,6 +2862,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2728,6 +2876,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2736,6 +2885,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2747,6 +2897,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2755,6 +2906,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2763,6 +2915,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2775,12 +2928,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2792,6 +2947,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2826,6 +2982,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2834,6 +2991,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2842,6 +3000,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2850,6 +3009,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2863,6 +3023,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -2871,6 +3032,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -2882,6 +3044,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -2890,6 +3053,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -2898,6 +3062,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -2910,12 +3075,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -2927,6 +3094,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -2961,6 +3129,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -2969,6 +3138,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -2977,6 +3147,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -2985,6 +3156,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -2998,6 +3170,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -3006,6 +3179,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -3017,6 +3191,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -3025,6 +3200,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -3033,6 +3209,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -3045,12 +3222,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -3062,6 +3241,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -3096,6 +3276,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -3104,6 +3285,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -3112,6 +3294,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -3120,6 +3303,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -3133,6 +3317,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -3141,6 +3326,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -3152,6 +3338,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -3160,6 +3347,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -3168,6 +3356,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -3180,12 +3369,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -3197,6 +3388,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],
@@ -3231,6 +3423,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("b52ea570-a705-5852-94e8-597e8c4d021c"),
                 ),
                 JLLLibraryProduct(
                     :libbtf,
@@ -3239,6 +3432,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("5f6cac12-ce37-514c-b7af-c0d63522c89f"),
                 ),
                 JLLLibraryProduct(
                     :libcamd,
@@ -3247,6 +3441,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("7794f09e-a135-532d-8bfa-870421d4eff3"),
                 ),
                 JLLLibraryProduct(
                     :libccolamd,
@@ -3255,6 +3450,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("47fec7c9-b3a9-5bd9-8303-42249ca0ffb5"),
                 ),
                 JLLLibraryProduct(
                     :libcholmod,
@@ -3268,6 +3464,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("fa15f4e3-cf5d-5430-8ed4-3fb8a1002ab6"),
                 ),
                 JLLLibraryProduct(
                     :libcolamd,
@@ -3276,6 +3473,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("84f95f3a-f557-5166-9866-6274f522430a"),
                 ),
                 JLLLibraryProduct(
                     :libklu,
@@ -3287,6 +3485,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("77606314-8c57-52ee-8dce-d7d60bc753e9"),
                 ),
                 JLLLibraryProduct(
                     :libldl,
@@ -3295,6 +3494,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("383f8c85-7609-5578-a388-ce1a7daa2f2d"),
                 ),
                 JLLLibraryProduct(
                     :librbio,
@@ -3303,6 +3503,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("3f9b0109-ba9c-5fc9-a6be-908263760788"),
                 ),
                 JLLLibraryProduct(
                     :libspqr,
@@ -3315,12 +3516,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("20148d4d-cf58-52f3-a15f-79966c9048c8"),
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("86611fa3-9125-5ef1-8104-5a485b512144"),
                 ),
                 JLLLibraryProduct(
                     :libumfpack,
@@ -3332,6 +3535,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                    dlid = Base.UUID("f7cc2ba2-8590-5ecd-b848-9eeff80f8b0f"),
                 ),
             ],
             licenses = [suitesparse_license],

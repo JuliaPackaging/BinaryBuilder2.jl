@@ -82,6 +82,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -139,6 +140,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -196,6 +198,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -253,6 +256,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -310,6 +314,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -367,6 +372,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -424,6 +430,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -481,6 +488,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -538,6 +546,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -595,6 +604,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -652,6 +662,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -709,6 +720,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -766,6 +778,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -823,6 +836,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -880,6 +894,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -937,6 +952,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(
@@ -994,6 +1010,7 @@ jll = JLLInfo(;
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libcurl_on_load_callback_def,
+                    dlid = Base.UUID("74243a6b-163a-512d-a5b8-6566d607bc67"),
                 ),
             ],
             callback_defs = Dict(

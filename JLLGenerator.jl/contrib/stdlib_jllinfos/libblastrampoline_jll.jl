@@ -35,6 +35,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -66,6 +67,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -97,6 +99,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -128,6 +131,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -159,6 +163,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -190,6 +195,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -221,6 +227,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -252,6 +259,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -283,6 +291,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -314,6 +323,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -345,6 +355,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -376,6 +387,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -407,6 +419,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -438,6 +451,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -469,6 +483,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -500,6 +515,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
@@ -531,6 +547,7 @@ jll = JLLInfo(;
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     on_load_callback = :libblastrampoline_on_load_callback,
+                    dlid = Base.UUID("4114344b-adca-5d9d-b4ae-fbb7c6187582"),
                 ),
             ],
             callback_defs = Dict(
