@@ -29,7 +29,7 @@ that are per build, not per extraction.
 @struct_hash_equal struct BuildCacheExtractEntry
     artifact::SHA1Hash
     log_artifact::SHA1Hash
-    jll_lib_products::Vector{JLLLibraryProduct}
+    jll_lib_products::Vector{AbstractJLLProduct}
 end
 
 """
@@ -103,7 +103,7 @@ end
 function Base.put!(bc::BuildCache,
                    build_hash::SHA1Hash, extract_hash::SHA1Hash,
                    build_log_artifact_hash::SHA1Hash, env::Dict{String,String},
-                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{JLLLibraryProduct})
+                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct})
     put!(
         bc,
         build_hash, extract_hash,
@@ -230,7 +230,7 @@ function import_archives(bc::BuildCache, dir::String)
             extract_entry = BuildCacheExtractEntry(
                 extract_artifact,
                 extract_log_artifact,
-                parse_toml_dict.(JLLLibraryProduct, jll_lib_products),
+                parse_toml_dict.(AbstractJLLProduct, jll_lib_products),
             )
         catch ex
             @debug("Unable to import BuildCacheExtractEntry", exception=ex, build_hash=bh, extract_hash=eh)
@@ -292,7 +292,7 @@ function load_extract_entries!(extract_entries::Dict{SHA1Hash,BuildCacheExtractE
                 extract_entries[extract_hash] = BuildCacheExtractEntry(
                     artifact_hash,
                     log_artifact_hash,
-                    parse_toml_dict.(JLLLibraryProduct, jll_lib_products),
+                    parse_toml_dict.(AbstractJLLProduct, jll_lib_products),
                 )
             catch
                 @debug("skip: extract entry malformed", extract_hash=extract_hash_str)
