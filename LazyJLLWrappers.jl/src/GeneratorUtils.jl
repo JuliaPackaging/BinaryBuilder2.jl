@@ -229,7 +229,7 @@ function init_footer(jb::JLLBlocks, build)
         if product["type"] == "executable"
             push!(jb.init_blocks, :(push!(PATH_list, $(path_var_name))))
         end
-        if product["type"] == "library"
+        if product["type"] == "library" && get(product, "linkage", "dynamic") == "dynamic"
             push!(jb.init_blocks, :(push!(LIBPATH_list, $(path_var_name))))
         end
     end

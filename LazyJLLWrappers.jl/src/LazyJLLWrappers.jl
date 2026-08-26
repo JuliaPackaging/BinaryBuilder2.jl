@@ -90,6 +90,20 @@ include("FileProduct.jl")
 include("LibraryProduct.jl")
 include("Runtime.jl")
 
+function check_format_version(jll, toml_path)
+    if !haskey(jll, "format_version")
+        return v"1.0.0"
+    end
+    format = tryparse(VersionNumber, string(jll["format_version"]))
+    if format === nothing
+        error("`$(toml_path)` declares an invalid `format_version`")
+    end
+    if format.major != 1
+        error("`$(toml_path)` is a v$(format.major) JLL TOML manifest. This wrapper supports v1 only.")
+    end
+    return format
+end
+
 macro generate_jll_from_toml()
     # Lookup TOML location from this module
     toml_path = joinpath(pkgdir(__module__), "JLL.toml")
@@ -102,6 +116,7 @@ macro generate_jll_from_toml()
         toml_path = load_preference(__module__, "toml_path", toml_path)
     end
     jll = TOML.parsefile(toml_path)
+    check_format_version(jll, toml_path)
 
     # The `JLLBlocks` object is where we store up each of the pieces of code
     # that will constitute this JLL, including top-level statements, `__init__()`
@@ -145,7 +160,7 @@ macro generate_jll_from_toml()
     top_level_statements(jb, build, platform)
 
     # Sort our library products so that they are in dependency-order:
-    lib_products = [p for p in build["products"] if p["type"] == "library"]
+    is_dynamic_library(p) = (p["type"] == "library" && get(p, "linkage", "dynamic") == "dynamic")
     function calc_depths(lib_products)
         # We ignore external dependencies
         ignored = Set{String}()
@@ -174,6 +189,7 @@ macro generate_jll_from_toml()
         end
         return depths
     end
+    lib_products = filter(is_dynamic_library, build["products"])
     lib_depths = calc_depths(lib_products)
     function product_isless(p1, p2)
         if lib_depths[p1["name"]] != lib_depths[p2["name"]]

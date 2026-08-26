@@ -408,6 +408,136 @@ end
     @test_throws ArgumentError make_on_load_callback(true)
 end
 
+@testset "Build binding shape" begin
+    binding = JLLArtifactBinding(treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                                 download_sources = [])
+    mkbuild(; kwargs...) = JLLBuildInfo(; src_version = v"1.0.0",
+                                        platform = Platform("x86_64", "linux"),
+                                        name = "Demo",
+                                        products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [])],
+                                        licenses = [mit_license], kwargs...)
+    roundtrip_build(b) = parse_toml_dict(JLLBuildInfo, generate_toml_dict(b))
+
+    # Anything we generate lives in an artifact, and its products' paths are
+    # relative to the artifact root
+    build = mkbuild(; artifact = binding)
+    @test build.artifact === binding
+    d = generate_toml_dict(build)
+    @test d["artifact"]["treehash"] == "sha1:0c6c284985577758b3a339c6215c9d4e3d71420e"
+    @test !haskey(d["artifact"], "bundled_path")
+    @test roundtrip_build(build) == build
+
+    # A hand-written record whose libraries ship inside Julia names the directory
+    # they ship in instead, in the same table
+    shlibdir_build = mkbuild()
+    @test shlibdir_build.artifact == JuliaBundledPath("private_shlibdir")
+    d = generate_toml_dict(shlibdir_build)
+    @test d["artifact"] == Dict("bundled_path" => "private_shlibdir")
+    @test roundtrip_build(shlibdir_build) == shlibdir_build
+
+    # Any Julia directory can be named, not just the shared library one
+    bindir_build = mkbuild(; artifact = JuliaBundledPath("private_bindir"))
+    @test generate_toml_dict(bindir_build)["artifact"]["bundled_path"] == "private_bindir"
+    @test roundtrip_build(bindir_build) == bindir_build
+
+    # `location` is gone: the table's own fields say which kind of binding it is,
+    # and a table that says both or neither says nothing we can act on
+    @test !any(haskey(generate_toml_dict(b), "location") for b in (build, shlibdir_build))
+    @test_throws ArgumentError JLLGenerator.parse_artifact_dict(
+        Dict("treehash" => "sha1:0c6c284985577758b3a339c6215c9d4e3d71420e",
+             "download_sources" => [], "bundled_path" => "private_shlibdir"))
+    @test_throws ArgumentError JLLGenerator.parse_artifact_dict(Dict("somewhere" => "else"))
+    @test_throws ArgumentError JLLGenerator.parse_artifact_dict(Dict{String,Any}())
+
+    # ... and a bundled build cannot be generated into a package, since
+    # there is nothing to bind into `Artifacts.toml`
+    jll = JLLInfo(; name = "Demo", version = v"1.0.0", builds = [shlibdir_build])
+    mktempdir() do dir
+        @test_throws ArgumentError generate_jll(dir, jll)
+    end
+
+    # A library entry must always state its path
+    @test_throws KeyError parse_toml_dict(JLLLibraryProduct,
+                        Dict("type" => "library", "name" => "libz", "soname" => "libz.so.1",
+                             "deps" => [], "flags" => String[]))
+end
+
+@testset "JLL.toml format marker" begin
+    jll = JLLInfo(; name = "Demo", version = v"1.0.0", builds = [
+        JLLBuildInfo(; src_version = v"1.0.0", platform = Platform("x86_64", "linux"),
+                     name = "Demo",
+                     artifact = JLLArtifactBinding(
+                        treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                        download_sources = []),
+                     products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [])],
+                     licenses = [mit_license])])
+    d = generate_toml_dict(jll)
+    # We are versioning the format published JLLs already speak, not declaring a new one
+    @test d["format_version"] == "1.0"
+    @test d["format_version"] isa String
+    @test parse_toml_dict(d) == jll
+
+    # A published record predates the marker, and must still read
+    legacy = copy(d); delete!(legacy, "format_version")
+    @test parse_toml_dict(legacy) == jll
+    # ... but a future major version has moved somewhere we cannot follow
+    future = copy(d); future["format_version"] = "2.0"
+    @test_throws ArgumentError parse_toml_dict(future)
+    nonsense = copy(d); nonsense["format_version"] = "not-a-version"
+    @test_throws ArgumentError parse_toml_dict(nonsense)
+
+    # A JLL with no static library asks for nothing newer than any released wrapper
+    mktempdir() do dir
+        generate_jll(dir, jll)
+        @test TOML.parsefile(joinpath(dir, "JLL.toml"))["format_version"] == "1.0"
+        @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == "1.0.0"
+    end
+end
+
+@testset "Legacy v1 records" begin
+    # A record exactly as published JLLs write one today: no `format_version` and no
+    # `linkage`.  It must read, with sane defaults.
+    legacy = Dict{String,Any}(
+        "name" => "Legacy", "version" => "1.0.0", "julia_compat" => "1.6",
+        "platform_augmentation_code" => "",
+        "builds" => [Dict{String,Any}(
+            "name" => "Legacy", "platform" => "x86_64-linux-gnu", "deps" => [],
+            "lazy" => "false", "src_version" => "1.0.0", "sources" => [],
+            "callback_defs" => Dict(), "auxilliary_artifacts" => Dict(),
+            "licenses" => [Dict("filename" => "LICENSE.md", "license_text" => "x")],
+            "artifact" => Dict("treehash" => "sha1:0c6c284985577758b3a339c6215c9d4e3d71420e",
+                               "download_sources" => []),
+            "products" => [
+                Dict{String,Any}("type" => "library", "name" => "libz",
+                                 "path" => "lib/libz.so.1", "soname" => "libz.so.1",
+                                 "flags" => ["RTLD_LAZY"], "deps" => []),
+                Dict{String,Any}("type" => "executable", "name" => "tool", "path" => "bin/tool"),
+            ])])
+    info = parse_toml_dict(legacy)
+    build = only(info.builds)
+    # A build whose `artifact` table carries a treehash binds an artifact, whether or
+    # not the record ever said so in a `location`
+    @test build.artifact isa JLLArtifactBinding
+    @test string(build.artifact.treehash) == "sha1:0c6c284985577758b3a339c6215c9d4e3d71420e"
+    libz = only([p for p in build.products if isa(p, JLLLibraryProduct)])
+    # A library with no stated linkage is a shared library
+    @test libz.path == "lib/libz.so.1"
+    @test libz.soname == "libz.so.1"
+    # The executable comes back untouched
+    @test only([p for p in build.products if isa(p, JLLExecutableProduct)]).path == "bin/tool"
+
+    # No released generator ever wrote a record without an `artifact` table (the v1
+    # parser required the key), so absence is refused rather than defaulted
+    bundled = deepcopy(legacy)
+    delete!(only(bundled["builds"]), "artifact")
+    @test_throws KeyError parse_toml_dict(bundled)
+
+    # A stale `location` key is no longer read, and no longer stops a record parsing
+    stale = deepcopy(legacy)
+    only(stale["builds"])["location"] = "artifact"
+    @test only(parse_toml_dict(stale).builds).artifact isa JLLArtifactBinding
+end
+
 # Test that we can generate all of the stdlib JLLs in `contrib/`
 @testset "stdlib JLL generation" begin
     include(joinpath(dirname(@__DIR__), "contrib", "gen_julia_jlls.jl"))
