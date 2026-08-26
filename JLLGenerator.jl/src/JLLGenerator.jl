@@ -6,8 +6,8 @@ import Base: UUID
 
 export JLLInfo, JLLBuildInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
-       JLLPackageDependency, JLLArtifactBinding, AbstractProducts, JLLBuildLicense,
-       generate_jll, generate_toml_dict, parse_toml_dict
+       JLLPackageDependency, JLLArtifactBinding, JuliaBundledPath, AbstractProducts,
+       JLLBuildLicense, generate_jll, generate_toml_dict, parse_toml_dict
 
 include("RTLD_flags.jl")
 include("PkgCompatHacks.jl")
@@ -123,6 +123,7 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     d = Dict(
         "type" => "library",
         "name" => string(lp.varname),
+        "linkage" => "dynamic",
         "path" => lp.path,
         "deps" => generate_toml_dict.(lp.deps),
         "soname" => lp.soname,
@@ -134,6 +135,10 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     return d
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
+    linkage = get(d, "linkage", "dynamic")
+    if linkage != "dynamic"
+        throw(ArgumentError("Invalid linkage '$(linkage)' for library '$(d["name"])'; expected \"dynamic\""))
+    end
     on_load_callback = nothing
     if haskey(d, "on_load_callback")
         on_load_callback = Symbol(d["on_load_callback"])
@@ -301,6 +306,53 @@ end
 
 
 """
+    JuliaBundledPath
+
+The products of a build that ships inside the Julia distribution rather than in an
+artifact, as Julia's own pseudo-JLLs do. The `bundled_path` can be "private_shlibdir",
+"private_bindir", or "private_libdir".
+"""
+@struct_hash_equal struct JuliaBundledPath
+    bundled_path::String
+
+    function JuliaBundledPath(bundled_path)
+        return new(String(bundled_path))
+    end
+end
+
+function JuliaBundledPath(; bundled_path)
+    return JuliaBundledPath(bundled_path)
+end
+
+function generate_toml_dict(info::JuliaBundledPath)
+    return Dict(
+        "bundled_path" => info.bundled_path,
+    )
+end
+
+function parse_toml_dict(::Type{JuliaBundledPath}, d::Dict)
+    return JuliaBundledPath(;
+        bundled_path = d["bundled_path"],
+    )
+end
+
+function parse_artifact_dict(d::Dict)
+    binds_artifact = haskey(d, "treehash") || haskey(d, "download_sources")
+    is_bundled = haskey(d, "bundled_path")
+    if binds_artifact && is_bundled
+        throw(ArgumentError("This `artifact` table binds an artifact and also names a bundled path; it must do one or the other!"))
+    elseif binds_artifact
+        return parse_toml_dict(JLLArtifactBinding, d)
+    elseif is_bundled
+        return parse_toml_dict(JuliaBundledPath, d)
+    else
+        keylist = join(repr.(sort(collect(string.(keys(d))))), ", ")
+        throw(ArgumentError("Unrecognized `artifact` table with keys [$(keylist)]; expected a `treehash` or a `bundled_path`!"))
+    end
+end
+
+
+"""
     JLLBuildLicense
 
 Describes the license a JLL build is released under.  Contains a `filename`, and the
@@ -371,9 +423,12 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # The platform this is built for
     platform::AbstractPlatform
 
-    # The name and artifact bindings for this artifact
+    # The name of this build
     name::String
-    artifact::JLLArtifactBinding
+
+    # The location where the products are to be found: either bound
+    # to an artifact, or bundled with Julia (stdlib pseudo-JLLs).
+    artifact::Union{JLLArtifactBinding,JuliaBundledPath}
     auxilliary_artifacts::Dict{String,JLLArtifactBinding}
 
     # List of products in cut-down JLL format
@@ -398,8 +453,8 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     # __init__ snippet definition as a string, or `nothing` if not needed.
     init_def::Union{Nothing,String}
 
-    function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
-                          deps, sources, licenses, lazy, callback_defs, init_def)
+    function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts,
+                          products, deps, sources, licenses, lazy, callback_defs, init_def)
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
             if isa(p, JLLLibraryProduct)
@@ -447,22 +502,23 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     end
 end
 
-function JLLBuildInfo(;src_version, platform, name, artifact, products, licenses,
+function JLLBuildInfo(;src_version, platform, name,
+                          artifact = JuliaBundledPath("private_shlibdir"), products, licenses,
                           deps = [], sources = [], lazy = false, callback_defs = Dict(),
                           init_def = nothing, auxilliary_artifacts = Dict())
-    return JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts, products,
-                           deps, sources, licenses, lazy, callback_defs, init_def)
+    return JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts,
+                           products, deps, sources, licenses, lazy, callback_defs, init_def)
 end
 
 function generate_toml_dict(info::JLLBuildInfo)
     d = Dict(
+        "artifact" => generate_toml_dict(info.artifact),
         "src_version" => info.src_version,
         "deps" => generate_toml_dict.(info.deps),
         "sources" => generate_toml_dict.(info.sources),
         "licenses" => generate_toml_dict.(info.licenses),
         "platform" => triplet(info.platform),
         "name" => string(info.name),
-        "artifact" => generate_toml_dict(info.artifact),
         "auxilliary_artifacts" => Dict(string(name) => generate_toml_dict(art) for (name, art) in info.auxilliary_artifacts),
         "lazy" => string(info.lazy),
         "callback_defs" => Dict(string(k) => v for (k, v) in info.callback_defs),
@@ -482,7 +538,7 @@ function parse_toml_dict(::Type{JLLBuildInfo}, d::Dict)
         licenses = parse_toml_dict.(JLLBuildLicense, d["licenses"]),
         platform = parse(AbstractPlatform, d["platform"]),
         name = d["name"],
-        artifact = parse_toml_dict(JLLArtifactBinding, d["artifact"]),
+        artifact = parse_artifact_dict(d["artifact"]),
         auxilliary_artifacts = Dict(name => parse_toml_dict(JLLArtifactBinding, art) for (name, art) in d["auxilliary_artifacts"]),
         lazy = parse(Bool, d["lazy"]),
         callback_defs = Dict{Symbol,String}(Symbol(k) => string(v) for (k,v) in d["callback_defs"]),
@@ -514,7 +570,7 @@ end
     JLLInfo
 
 A structure representing a JLL that is to be generated.  All relevant information on the
-JLL is stored within, including sources 
+JLL is stored within, including sources
 """
 @struct_hash_equal struct JLLInfo
     # Name of the JLL, e.g. `libfoo_jll`
@@ -580,6 +636,7 @@ UUID(info::JLLInfo) = jll_specific_uuid5(uuid_package, "$(info.name)_jll_jll")
 
 function generate_toml_dict(info::JLLInfo)
     return Dict(
+        "format_version" => "1.0",
         "name" => info.name,
         "version" => string(info.version),
         "builds" => generate_toml_dict.(info.builds),
@@ -589,6 +646,7 @@ function generate_toml_dict(info::JLLInfo)
 end
 
 function parse_toml_dict(::Type{JLLInfo}, d::Dict)
+    check_format_version(d)
     return JLLInfo(;
         name = d["name"],
         version = VersionNumber(d["version"]),
@@ -597,6 +655,21 @@ function parse_toml_dict(::Type{JLLInfo}, d::Dict)
         julia_compat = d["julia_compat"],
     )
 end
+
+function check_format_version(jll)
+    if !haskey(jll, "format_version")
+        return v"1.0.0"
+    end
+    format = tryparse(VersionNumber, string(jll["format_version"]))
+    if format === nothing
+        throw(ArgumentError("invalid `format_version`"))
+    end
+    if format.major != 1
+        throw(ArgumentError("unsupported `format_version` v$(format.major); expected v1"))
+    end
+    return format
+end
+
 parse_toml_dict(d::Dict) = parse_toml_dict(JLLInfo, d)
 
 function bind_jll_artifact!(artifacts_toml_path::String, name::String, platform::AbstractPlatform,
@@ -658,6 +731,10 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
 
     # Sort builds to make this more deterministic
     for build in sort(info.builds; by=b->triplet(b.platform))
+        if !isa(build.artifact, JLLArtifactBinding)
+            throw(ArgumentError("Cannot generate a JLL for build '$(build.name)', whose products are bundled with Julia at '$(build.artifact.bundled_path)' rather than bound to an artifact!"))
+        end
+
         # Bind the main artifact
         bind_jll_artifact!(artifacts_toml_path, build.name, build.platform, build.artifact; lazy=build.lazy)
 
