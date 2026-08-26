@@ -33,7 +33,9 @@ struct HostToolsToolchain <: AbstractToolchain
 
         default_tools = [
             # Build tools
-            "automake_jll",
+            # Our wrappers and environment hardcode automake's versioned layout
+            # (`bin/automake-1.16`, `share/automake-1.16`, etc.) so it must be pinned
+            PackageSpec(;name="automake_jll", version=v"1.16.5+0"),
             # We explicitly ask for this version until this issue is addressed:
             # https://github.com/JuliaPackaging/Yggdrasil/pull/12026#issuecomment-3331916149
             PackageSpec(;name="autoconf_jll", version=v"2.71+2"),
