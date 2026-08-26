@@ -218,7 +218,7 @@ function JLLProducts(result::ExtractResult)
     products = AbstractJLLProduct[]
     for product in result.config.products
         # Skip library products, as those were translated by the auditor
-        if isa(product, LibraryProduct)
+        if isa(product, LibraryProduct) || isa(product, StaticLibraryProduct)
             continue
         end
 
@@ -236,7 +236,7 @@ function JLLProducts(result::ExtractResult)
         )
     end
 
-    # Copy over the LibraryProducts that were translated by the auditor
+    # Copy over the library products that were translated by the auditor
     append!(products, result.jll_lib_products)
     return products
 end
