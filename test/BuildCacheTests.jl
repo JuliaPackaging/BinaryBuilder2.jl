@@ -35,7 +35,10 @@ using JLLGenerator
         build_env1 = Dict("1" => "1")
         build_env2 = Dict("2" => "2")
         extract1_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.1.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
-        extract2_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.2.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
+        extract2_jlp = AbstractJLLProduct[
+            JLLLibraryProduct(:libfoo, "lib/libfoo.2.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND]),
+            JLLStaticLibraryProduct(:libfoo_a, "lib/libfoo.a"; system_deps = ["m"], roots = ["init"]),
+        ]
 
         put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp )
         put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp)
@@ -70,7 +73,9 @@ using JLLGenerator
         patchelf_extract_entry = BuildCacheExtractEntry(
             patchelf_artifact_hash,
             SHA1Hash(sha1("patchelf_extract_log")),
-            JLLLibraryProduct[],
+            # Include a static archive entry so that `load_cache()` exercises the
+            # linkage-dispatched deserialization of `jll_lib_products`.
+            AbstractJLLProduct[JLLStaticLibraryProduct(:libpatchelf_a, "lib/libpatchelf.a"; system_deps = ["c"])],
         )
         put!(bc, patchelf_build_hash, patchelf_extract_hash, patchelf_build_entry, patchelf_extract_entry)
         save_cache(bc)
