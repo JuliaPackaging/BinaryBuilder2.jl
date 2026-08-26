@@ -107,15 +107,17 @@ end
     soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
+    dlid::Union{Nothing,UUID}
 
     function JLLLibraryProduct(varname, path, deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
-                               on_load_callback = nothing)
+                               on_load_callback = nothing,
+                               dlid = nothing)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, soname, flags, on_load_callback)
+        return new(varname, path, deps, soname, flags, on_load_callback, dlid)
     end
 end
 
@@ -131,12 +133,19 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     if lp.on_load_callback !== nothing
         d["on_load_callback"] = string(lp.on_load_callback)
     end
+    if lp.dlid !== nothing
+        d["dlid"] = string(lp.dlid)
+    end
     return d
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     on_load_callback = nothing
     if haskey(d, "on_load_callback")
         on_load_callback = Symbol(d["on_load_callback"])
+    end
+    dlid = nothing
+    if haskey(d, "dlid")
+        dlid = UUID(d["dlid"])
     end
     return JLLLibraryProduct(
         Symbol(d["name"]),
@@ -145,6 +154,7 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
         soname = d["soname"],
         flags = Symbol.(d["flags"]),
         on_load_callback,
+        dlid,
     )
 end
 
@@ -575,7 +585,8 @@ end
 const uuid_package = UUID("cfb74b52-ec16-5bb7-a574-95d9e393895e")
 # For even more interesting historical reasons, we append an extra
 # "_jll" to the name of the new package before computing its UUID.
-UUID(info::JLLInfo) = jll_specific_uuid5(uuid_package, "$(info.name)_jll_jll")
+jll_package_uuid(name::AbstractString) = jll_specific_uuid5(uuid_package, "$(name)_jll_jll")
+UUID(info::JLLInfo) = jll_package_uuid(info.name)
 
 
 function generate_toml_dict(info::JLLInfo)

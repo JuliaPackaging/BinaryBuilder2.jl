@@ -1,6 +1,18 @@
 using BinaryBuilderProducts, Test, BinaryBuilderSources, JLLGenerator
 using JLLGenerator: rtld_symbols, rtld_flags
 
+@testset "LibraryProduct dlid" begin
+    # By default, a library declares no identity: the packaging pipeline
+    # derives one once the JLL package is known.
+    lp = LibraryProduct("libfoo", :libfoo)
+    @test lp.dlid === nothing
+
+    # A declared identity is stored as-given
+    dlid = Base.UUID("2fa9b87e-ecfa-4b46-8b6a-27ac02c17e18")
+    lp = LibraryProduct("libfoo", :libfoo; dlid)
+    @test lp.dlid == dlid
+end
+
 @testset "BinaryBuilderProducts" begin
     function test_xz_products(dir, as, env; kwargs...)
         # Download and unpack that JLL build, then define a set of products on it:

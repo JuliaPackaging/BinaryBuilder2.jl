@@ -185,7 +185,7 @@ end
     end
 
     # Test that if we try to build it again, we get a cached version
-    cached_build_result = build!(build_config; extract_arg_hints=[(extract_script, products)])
+    cached_build_result = build!(build_config; extract_arg_hints=[(extract_script, products, "Zlib")])
     @test cached_build_result.status == :cached
     cached_extract_result = extract!(extract_config)
     @test cached_extract_result.status == :cached

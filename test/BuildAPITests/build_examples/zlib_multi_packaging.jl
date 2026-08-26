@@ -12,7 +12,7 @@ using BinaryBuilder2: get_default_target_spec
 ## command line arguments that change the shape of the output of your build
 ## but if you need it, know that it's there.
 
-function zlib_extract_generator(;zlib_deps = String[])
+function zlib_extract_generator(;zlib_deps = String[], slim_jll_name = "Zlib")
     return (build_config, platform) -> begin
         return Dict(
             # The "slim" extraction contains only the shared library
@@ -21,7 +21,8 @@ function zlib_extract_generator(;zlib_deps = String[])
                 [
                     LibraryProduct("libz", :libz),
                 ],
-                get_default_target_spec(build_config),
+                get_default_target_spec(build_config);
+                jll_name = slim_jll_name,
             ),
             # The default extraction (denoted by matching the JLL name) contains everything
             "Zlib" => ExtractSpec(
@@ -30,7 +31,8 @@ function zlib_extract_generator(;zlib_deps = String[])
                     FileProduct("include/zlib.h", :zlib_h),
                     LibraryProduct("libz", :libz),
                 ],
-                get_default_target_spec(build_config),
+                get_default_target_spec(build_config);
+                jll_name = "Zlib",
                 inter_deps = zlib_deps,
             ),
         )
@@ -54,17 +56,10 @@ build_tarballs_args = Dict(
 )
 
 if "--multi-extractions" ∈ ARGS
-    build_tarballs_args[:jll_extraction_map] = Dict(
-        "Zlib" => ["Zlib", "ZlibSlim"],
-    )
     build_tarballs_args[:extract_spec_generator] = zlib_extract_generator()
     filter!(x -> x != "--multi-extractions", ARGS)
 elseif "--multi-jlls" ∈ ARGS
-    build_tarballs_args[:jll_extraction_map] = Dict(
-        "Zlib" => ["Zlib", "ZlibSlim"],
-        "ZlibSlim" => ["ZlibSlim"],
-    )
-    build_tarballs_args[:extract_spec_generator] = zlib_extract_generator(;zlib_deps=["ZlibSlim"])
+    build_tarballs_args[:extract_spec_generator] = zlib_extract_generator(;zlib_deps=["ZlibSlim"], slim_jll_name="ZlibSlim")
     filter!(x -> x != "--multi-jlls", ARGS)
 else
     error("You must specify either --multi-extractions or --multi-jlls!")

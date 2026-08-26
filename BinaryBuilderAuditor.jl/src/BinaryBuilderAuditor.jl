@@ -25,7 +25,8 @@ function audit!(prefix::String,
                     "bb_full_target" => triplet(platform),
                 ),
                 verbose::Bool = false,
-                readonly::Bool = false)
+                readonly::Bool = false,
+                pkg_uuid::Union{Nothing,Base.UUID} = nothing)
     # First, scan the prefix:
     scan = scan_files(
         prefix,
@@ -46,7 +47,7 @@ function audit!(prefix::String,
     end
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
-    jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs)
+    jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs; pkg_uuid)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly

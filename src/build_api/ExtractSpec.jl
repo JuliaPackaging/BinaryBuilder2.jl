@@ -4,6 +4,10 @@ struct ExtractSpec
     script::String
     products::Vector{AbstractProduct}
 
+    # The name of the JLL package this extraction is destined for. The audit
+    # assigns each library product an identity derived from this name.
+    jll_name::String
+
     # Allows overriding the default choice for target platform
     target_spec::BuildTargetSpec
     platform::AbstractPlatform
@@ -11,10 +15,11 @@ struct ExtractSpec
     # If this extraction depends on others, list them here.
     inter_deps::Vector{String}
 
-    function ExtractSpec(script, products, target_spec; platform = target_spec.platform.target, inter_deps = String[])
+    function ExtractSpec(script, products, target_spec; jll_name, platform = target_spec.platform.target, inter_deps = String[])
         return new(
             string(script),
             Vector{AbstractProduct}(products),
+            String(jll_name),
             target_spec,
             platform,
             inter_deps,
@@ -30,6 +35,7 @@ function default_extract_spec_generator(src_name::String, extract_script::String
                 extract_script,
                 products,
                 get_default_target_spec(build_config);
+                jll_name = src_name,
                 platform,
                 inter_deps = String[],
             ),
@@ -46,13 +52,14 @@ function extract!(extract_specs::Dict{String,ExtractSpec},
     # Results for this build's extractions
     extract_results = Dict{String,ExtractResult}()
 
-    # Sort extraction specs based on their dependencies 
+    # Sort extraction specs based on their dependencies
     for extract_name in sorted_extract_names
         extract_spec = extract_specs[extract_name]
         extract_config = @auto_extract_kwargs ExtractConfig(
             build_result,
             extract_spec.script,
             extract_spec.products;
+            jll_name = extract_spec.jll_name,
             target_spec = extract_spec.target_spec,
             platform = extract_spec.platform,
             inter_deps = Dict(name => extract_results[name] for name in extract_spec.inter_deps),

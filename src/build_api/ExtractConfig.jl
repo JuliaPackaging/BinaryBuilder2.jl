@@ -12,6 +12,9 @@ struct ExtractConfig
     # The products that this package will ensure are available
     products::Vector{<:AbstractProduct}
 
+    # The name of the JLL package these extracted products are destined for.
+    jll_name::String
+
     # A `BuildResult` can actually contain multiple output prefixes; depending on how
     # many different toolchains with different targets you ask for.  Here, you must
     # declare which toolchain you want to extract from.  We will only allow access
@@ -42,6 +45,7 @@ struct ExtractConfig
     function ExtractConfig(build::BuildResult,
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
+                           jll_name::AbstractString = build.config.src_name,
                            target_spec::BuildTargetSpec = get_default_target_spec(build.config),
                            platform::AbstractPlatform = target_spec.platform.target,
                            inter_deps::Dict{String,<:Any} = Dict{String,Any}(),
@@ -50,6 +54,7 @@ struct ExtractConfig
             build,
             String(script),
             products,
+            String(jll_name),
             target_spec,
             platform,
             inter_deps,
@@ -65,7 +70,8 @@ function Base.show(io::IO, config::ExtractConfig)
     print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(config.platform))")
 end
 
-function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, products::Vector{<:AbstractProduct})
+function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, products::Vector{<:AbstractProduct},
+                           jll_name::String)
     # Similar to the `spec_hash()` definition for `BuildConfig`, we construct
     # a string in `hash_buffer` then hash it at the end for the final `spec_hash()`.
     hash_buffer = IOBuffer()
@@ -73,9 +79,13 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     println(hash_buffer, "[extraction_metadata]")
     println(hash_buffer, "  build_hash = $(bytes2hex(build_hash))")
     println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(extract_script)))")
+    println(hash_buffer, "  jll_name = $(jll_name)")
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
+        if isa(product, LibraryProduct) && product.dlid !== nothing
+            println(hash_buffer, "  $(product.varname).dlid = $(product.dlid)")
+        end
     end
 
     # I think we probably don't need to be sensitive to these, since they're only used in packaging?
@@ -90,7 +100,7 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
 end
 function BinaryBuilderSources.spec_hash(config::ExtractConfig)
     build_hash = spec_hash(config.build.config)
-    return extract_spec_hash(build_hash, config.script, config.products)
+    return extract_spec_hash(build_hash, config.script, config.products, config.jll_name)
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)
@@ -191,6 +201,7 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
             prefix_alias,
             env = config.build.env,
             platform,
+            pkg_uuid = JLLGenerator.jll_package_uuid(config.jll_name),
             kwargs...
         )
     end

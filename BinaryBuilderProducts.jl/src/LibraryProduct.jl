@@ -31,18 +31,22 @@ struct LibraryProduct <: AbstractProduct
     varname::Symbol
     dlopen_flags::typeof(default_rtld_flags)
     on_load_callback::Union{Nothing,Symbol}
+    # dlid override, if specified. If nothing, dlid is chosen automatically
+    # based on JLL package UUID and varname
+    dlid::Union{Nothing,Base.UUID}
 
     function LibraryProduct(paths::Vector{<:AbstractString},
                             varname::Symbol;
                             dlopen_flags::Union{Vector{Symbol},typeof(default_rtld_flags)} = default_rtld_flags,
-                            on_load_callback::Union{Nothing,Symbol} = nothing)
+                            on_load_callback::Union{Nothing,Symbol} = nothing,
+                            dlid::Union{Nothing,Base.UUID} = nothing)
         if isa(dlopen_flags, Vector{Symbol})
             dlopen_flags = rtld_flags(dlopen_flags)
         end
         if isdefined(Base, varname)
             error("`$(varname)` is already defined in Base")
         end
-        return new(string.(paths), varname, dlopen_flags, on_load_callback)
+        return new(string.(paths), varname, dlopen_flags, on_load_callback, dlid)
     end
 end
 LibraryProduct(path::AbstractString, args...; kwargs...) = LibraryProduct([path], args...; kwargs...)

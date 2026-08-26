@@ -1,4 +1,4 @@
-using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival
+using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival, UUIDs
 
 include("ScanningTests.jl")
 include("passes/RelativeSymlinkTests.jl")
@@ -48,6 +48,29 @@ include("passes/DynamicLinkageTests.jl")
         @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 2
         @test success(result)
+
+        # Without a `pkg_uuid`, the products carry no library identity...
+        @test all(p.dlid === nothing for p in result.jll_lib_products)
+        # ... and with one, each is born with an identity namespaced under it
+        pkg_uuid = Base.UUID("bfe6b9e6-b96c-4ffe-b444-b032dd7326b0")
+        result = audit!(prefix, library_products, empty_dep_libs; readonly=true, pkg_uuid)
+        @test success(result)
+        for p in result.jll_lib_products
+            @test p.dlid == UUIDs.uuid5(pkg_uuid, string(p.varname))
+        end
+
+        # A declared identity survives auditing untouched, while its siblings
+        # still receive the derived default
+        override = Base.UUID("2fa9b87e-ecfa-4b46-8b6a-27ac02c17e18")
+        overridden_products = [
+            LibraryProduct("libplus", :libplus; dlid=override),
+            LibraryProduct("libmult", :libmult),
+        ]
+        result = audit!(prefix, overridden_products, empty_dep_libs; readonly=true, pkg_uuid)
+        @test success(result)
+        by_name = Dict(p.varname => p for p in result.jll_lib_products)
+        @test by_name[:libplus].dlid == override
+        @test by_name[:libmult].dlid == UUIDs.uuid5(pkg_uuid, "libmult")
 
         # Also check to see that this works if we say that `libplus` belongs
         # to another JLL/extraction:

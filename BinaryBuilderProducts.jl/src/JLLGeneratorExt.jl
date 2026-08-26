@@ -53,6 +53,7 @@ function JLLLibraryProduct(lp::LibraryProduct, prefix::String; kwargs...)
         [];
         flags = lp.dlopen_flags,
         on_load_callback = lp.on_load_callback,
+        dlid = lp.dlid,
     )
 end
 function AbstractJLLProduct(lp::LibraryProduct, prefix::String; kwargs...)

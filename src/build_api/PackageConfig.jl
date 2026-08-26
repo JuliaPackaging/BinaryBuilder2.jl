@@ -41,6 +41,14 @@ struct PackageConfig
             throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
 
+        for (name, extract_results) in extractions
+            for er in extract_results
+                if er.config.jll_name != jll_name
+                    throw(ArgumentError("Extraction '$(name)' was extracted for JLL '$(er.config.jll_name)', but is being packaged as '$(jll_name)'!"))
+                end
+            end
+        end
+
         if jll_name ∉ keys(extractions)
             throw(ArgumentError("One of the extractions must have the same name as the JLL itself!"))
         end

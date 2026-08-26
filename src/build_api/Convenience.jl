@@ -103,7 +103,6 @@ function build_tarballs(src_name::String,
                             extract_script,
                             products,
                         ),
-                        jll_extraction_map::Dict{String,Vector{String}} = Dict(src_name => [src_name]),
 
                         # When running a `build_tarballs.jl` script directly, this will default to the
                         # script name.  When using `run_build_tarballs()`, this gets filled in properly
@@ -160,6 +159,7 @@ function build_tarballs(src_name::String,
 
     # First, build for all platforms
     extract_results = Dict{String,Vector{ExtractResult}}()
+    jll_extraction_map = Dict{String,Vector{String}}()
     cleanup_tasks = Task[]
     for platform in platforms
         build_config = @auto_extract_kwargs BuildConfig(
@@ -176,24 +176,21 @@ function build_tarballs(src_name::String,
 
         extract_specs = extract_spec_generator(build_config, platform)
         # Ensure that all JLL names match up
-        for (jll_name, extraction_names) in jll_extraction_map
-            for extraction_name in extraction_names
-                if extraction_name ∉ keys(extract_specs)
-                    throw(ArgumentError("JLL '$(jll_name)' uses extraction '$(extraction_name)' that does not exist in `extract_specs`!"))
+        for (extraction_name, es) in extract_specs
+            for (other_jll, extraction_names) in jll_extraction_map
+                if other_jll != es.jll_name && extraction_name ∈ extraction_names
+                    throw(ArgumentError("Extraction '$(extraction_name)' is destined for JLL '$(es.jll_name)' on $(triplet(platform)), but for JLL '$(other_jll)' on another platform!"))
                 end
             end
-        end
-
-        # Ensure that there are no "unused" extractions:
-        for extraction_name in keys(extract_specs)
-            if !any(extraction_name ∈ extraction_names for extraction_names in values(jll_extraction_map))
-                throw(ArgumentError("Extraction '$(extraction_name)' not used by any JLLs!"))
+            extraction_names = get!(Vector{String}, jll_extraction_map, es.jll_name)
+            if extraction_name ∉ extraction_names
+                push!(extraction_names, extraction_name)
             end
         end
 
         build_result = @auto_extract_kwargs build!(
             build_config;
-            extract_arg_hints = [(es.script, es.products) for es in values(extract_specs)],
+            extract_arg_hints = [(es.script, es.products, es.jll_name) for es in values(extract_specs)],
             kwargs...,
         )
         if build_result.status ∉ acceptable_statuses

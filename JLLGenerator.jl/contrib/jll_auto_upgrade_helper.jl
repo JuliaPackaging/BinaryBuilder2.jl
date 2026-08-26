@@ -5,7 +5,7 @@
 ## completely automatic, but it's much better than having to sift through
 ## a bunch of artifact URLs and hashes by hand.
 
-using TOML, Artifacts, BinaryBuilderGitUtils, Scratch, BinaryBuilderPlatformExtensions
+using TOML, Artifacts, BinaryBuilderGitUtils, Scratch, BinaryBuilderPlatformExtensions, JLLGenerator, UUIDs
 
 if length(ARGS) ∉ (1, 2)
     println("Usage: $(@__FILE__) <JLL repo> [treelike]")
@@ -115,6 +115,7 @@ function print_artifact_info(entry, platform, version, name)
                 products = [
     """)
 
+    pkg_uuid = JLLGenerator.jll_package_uuid(name)
     for (name, path, flags, soname) in library_products[platform]
         print("""
                         JLLLibraryProduct(
@@ -123,6 +124,7 @@ function print_artifact_info(entry, platform, version, name)
                             [<deps>];
                             flags = $(repr(flags)),
                             soname = $(repr(soname)),
+                            dlid = Base.UUID("$(UUIDs.uuid5(pkg_uuid, String(name)))"),
                         ),
         """)
     end

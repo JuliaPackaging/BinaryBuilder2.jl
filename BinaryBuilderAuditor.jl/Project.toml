@@ -22,13 +22,15 @@ JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
 ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 
 [extras]
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
+UUIDs = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
 LazyJLLWrappers = "21706172-204c-4d4f-5420-656854206f44"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [targets]
-test = ["BinaryBuilderToolchains", "JLLPrefixes", "LazyJLLWrappers", "Test", "TreeArchival"]
+test = ["BinaryBuilderToolchains", "JLLPrefixes", "LazyJLLWrappers", "Test", "TreeArchival", "UUIDs"]

@@ -1,8 +1,9 @@
-using BinaryBuilderProducts, JLLGenerator
+using BinaryBuilderProducts, JLLGenerator, UUIDs
 
 function resolve_dynamic_links!(scan::ScanResult,
                                 pass_results::Dict{String,Vector{PassResult}},
-                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}};
+                                pkg_uuid::Union{Nothing,Base.UUID} = nothing)
     # We need to generate a graph showing which libraries are needed by the
     # `library_products` in our `scan`.
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
@@ -93,6 +94,8 @@ function resolve_dynamic_links!(scan::ScanResult,
             push!(jll_deps, JLLLibraryDep(jll_name, lib_varname))
         end
 
+        # A declared identity wins; otherwise derive one from the package
+        derived_dlid = pkg_uuid === nothing ? nothing : UUIDs.uuid5(pkg_uuid, string(lib.varname))
         push!(jll_lib_products, JLLLibraryProduct(
             lib.varname,
             rel_path,
@@ -100,6 +103,7 @@ function resolve_dynamic_links!(scan::ScanResult,
             flags = lib.dlopen_flags,
             soname = lib_soname,
             on_load_callback = lib.on_load_callback,
+            dlid = lib.dlid !== nothing ? lib.dlid : derived_dlid,
         ))
     end
 

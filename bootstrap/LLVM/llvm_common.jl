@@ -151,6 +151,7 @@ function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlat
                 LibraryProduct("libclang-cpp", :libclang_cpp),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = llvm_name_prefix("Clang"; is_bootstrap),
             platform,
             inter_deps = [llvm_name_prefix("libLLVM"; is_bootstrap)],
         ),
@@ -163,17 +164,9 @@ function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlat
                 LibraryProduct(["libLLVM", "libLLVM-$(VersionNumber(build.src_version).major)jl"], :libLLVM),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = llvm_name_prefix("libLLVM"; is_bootstrap),
             platform = platform.host,
         ),
-    )
-end
-
-function clang_extraction_map(;is_bootstrap::Bool = false)
-    clang_name = llvm_name_prefix("Clang"; is_bootstrap)
-    libllvm_name = llvm_name_prefix("libLLVM"; is_bootstrap)
-    return Dict(
-        clang_name => [clang_name],
-        libllvm_name => [libllvm_name],
     )
 end
 
