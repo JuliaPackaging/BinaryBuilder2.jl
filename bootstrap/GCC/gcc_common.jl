@@ -421,13 +421,13 @@ function gcc_build_spec_generator(host, platform)
         if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le")
             # v2.17
             glibc_repo = Pkg.Types.GitRepo(
-                rev="e5b3b44098fd3ca7a67c7a0e439091a79027a7ee",
+                rev="aaa18d2db4bc6bb4e3d8ec5e094d4b71807ef951",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         else
             # v2.19
             glibc_repo = Pkg.Types.GitRepo(
-                rev="b4779ca103670a2cc631da614c7eecc9e126c98f",
+                rev="dae6e7aebaa51599c0a6a7c2f8ca95ff45d88f87",
                 source="https://github.com/staticfloat/Glibc_jll.jl"
             )
         end
