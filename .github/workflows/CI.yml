@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+  # Allow julia-actions/cache to delete old caches it has created
+  actions: write
+
+jobs:
+  discover:
+    name: Discover subprojects
+    runs-on: ubuntu-latest
+    outputs:
+      projects: ${{ steps.set-matrix.outputs.projects }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-matrix
+        run: |
+          projects=$( { echo '.'; for f in */Project.toml; do d=$(dirname "$f"); [ "$d" = docs ] && continue; echo "$d"; done; } | jq -R . | jq -cs .)
+          echo "projects=$projects" >> "$GITHUB_OUTPUT"
+
+  test:
+    name: ${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }} - Julia ${{ matrix.julia-version }} - ${{ matrix.runner.arch }}
+    needs: discover
+    runs-on: ${{ matrix.runner.os }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        project: ${{ fromJSON(needs.discover.outputs.projects) }}
+        julia-version:
+          - '1'
+        runner:
+          - os: ubuntu-latest
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure git identity for tests
+        run: |
+          git config --global user.email "ci@julialang.org"
+          git config --global user.name "GitHub Actions"
+      - name: Allow unprivileged user namespaces (sandbox support)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - uses: julia-actions/setup-julia@v2
+        with:
+          version: ${{ matrix.julia-version }}
+      - uses: julia-actions/cache@v2
+      - uses: julia-actions/julia-buildpkg@v1
+        with:
+          project: ${{ matrix.project }}
+      - uses: julia-actions/julia-runtest@v1
+        with:
+          project: ${{ matrix.project }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-files-${{ matrix.runner.arch }}-${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }}
+          path: BinaryBuilderToolchains.jl/test/*-files.tar.gz
+          if-no-files-found: ignore
