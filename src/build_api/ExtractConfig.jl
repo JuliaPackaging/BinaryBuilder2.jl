@@ -94,6 +94,12 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
+        archive = isa(product, LibraryProduct) ? product.static :
+                  isa(product, StaticLibraryProduct) ? product : nothing
+        if archive !== nothing
+            deps = archive.deps === nothing ? nothing : ["$(d.pkg):$(d.varname)" for d in archive.deps]
+            println(hash_buffer, "  $(product.varname).static = $(archive.paths); deps = $(deps); system_deps = $(archive.system_deps)")
+        end
     end
 
     # I think we probably don't need to be sensitive to these, since they're only used in packaging?
@@ -196,7 +202,7 @@ end
     platform = host_if_crossplatform(config.platform)
 
     # Get libraries for all JLL dependencies
-    get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
+    get_library_products(jart::JLLBuildInfo) = filter((x)->isa(x, JLLLibraryProduct) || isa(x, JLLStaticLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
     deps = Dict{Symbol,AuditDependencyInfo}()
     for dep in dep_jll_infos
@@ -208,7 +214,7 @@ end
     end
     return audit!(
         artifact_dir,
-        LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
+        config.products,
         AuditInfo(deps);
         prefix_alias,
         env = config.build.env,
@@ -219,11 +225,17 @@ end
 
 function find_unlocatable_products(config::ExtractConfig, prefix)
     unlocatable_products = []
-    for product in config.products
+    function check(product)
         if locate(product, prefix;
                   env=config.build.env,
                   platform=host_if_crossplatform(config.platform)) === nothing
             push!(unlocatable_products, product)
+        end
+    end
+    for product in config.products
+        check(product)
+        if isa(product, LibraryProduct) && product.static !== nothing
+            check(product.static)
         end
     end
     return unlocatable_products
@@ -235,7 +247,7 @@ end
                   verbose::Bool = AbstractBuildMeta(config).verbose)
     local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
-    jll_lib_products = JLLLibraryProduct[]
+    jll_lib_products = AbstractJLLProduct[]
     build_config = BuildConfig(config)
     meta = AbstractBuildMeta(config)
     meta.extractions[config] = nothing
