@@ -26,7 +26,7 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
         end
     end
 
-    if isdefined(Libdl, :LazyLibrary)
+    if use_lazy_libraries()
         # On Julia v1.11+ we can use `LazyLibrary`
         push!(jb.top_level_blocks, emit_typed_global(
             var_name, LazyLibrary, quote
