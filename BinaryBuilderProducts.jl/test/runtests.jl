@@ -1,6 +1,5 @@
 using BinaryBuilderProducts, Test, BinaryBuilderSources, JLLGenerator
 using JLLGenerator: rtld_symbols, rtld_flags
-
 @testset "BinaryBuilderProducts" begin
     function test_xz_products(dir, as, env; kwargs...)
         # Download and unpack that JLL build, then define a set of products on it:
@@ -55,6 +54,18 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 @test JLLGenerator.AbstractJLLProduct(product, dir; env, kwargs...) !== nothing
             end
         end
+
+        # Static archives live in `libdir` on every platform, and can be found with
+        # or without their extension, or with an explicit directory.
+        for path in ("\${libdir}/liblzma.a", "\${libdir}/liblzma", "liblzma", "liblzma.a")
+            slp = StaticLibraryProduct(path)
+            located = locate(slp, dir; env, kwargs...)
+            @test located !== nothing
+            @test isfile(joinpath(dir, located))
+            @test basename(located) == "liblzma.a"
+        end
+        @test locate(StaticLibraryProduct("libnope"), dir; env, kwargs...) === nothing
+
     end
 
     # We'll test with the `XZ_jll` tarball, which contains three of our products
@@ -130,6 +141,73 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 env["bb_full_target"] = "any"
                 test_xz_products(dir, as, env; platform=parse(Platform, target))
             end
+        end
+    end
+
+    @testset "LibraryDependency" begin
+        @test LibraryDependency(:libz).pkg === nothing
+        @test LibraryDependency(:libz).varname == :libz
+        @test LibraryDependency(:Zlib_jll, :libz) == LibraryDependency("Zlib_jll", "libz")
+        @test LibraryDependency(:Zlib_jll, :libz).pkg == :Zlib_jll
+    end
+
+    @testset "StaticLibraryProduct construction" begin
+        # An archive declared for a `LibraryProduct` has no name of its own until it is
+        # attached, inherits by default, and takes the library's name when attached
+        subordinate = StaticLibraryProduct("libfoo")
+        @test subordinate.varname === nothing
+        @test subordinate.deps === nothing
+        @test subordinate.system_deps === nothing
+        attached = LibraryProduct("libfoo", :libfoo; static=subordinate).static
+        @test attached.varname == :libfoo
+        @test attached.paths == subordinate.paths && attached.deps === nothing
+        # Naming it the same is harmless; naming it differently is a contradiction
+        @test LibraryProduct("libfoo", :libfoo; static=StaticLibraryProduct("libfoo"; varname=:libfoo)).static.varname == :libfoo
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo;
+            static=StaticLibraryProduct("libfoo"; varname=:libfoo_a))
+
+        # A standalone product that inherits is only a declaration here; that there is
+        # no dynamic variant to inherit from is found out by the auditor, which resolves it.
+        @test StaticLibraryProduct("libfoo"; varname=:libfoo_a).deps === nothing
+        standalone = StaticLibraryProduct("libfoo"; varname=:libfoo_a,
+                                          deps=[LibraryDependency(:Bar_jll, :libbar), LibraryDependency(:libbaz)],
+                                          system_deps=["m"])
+        @test standalone.varname == :libfoo_a
+        @test standalone.deps == [LibraryDependency(:Bar_jll, :libbar), LibraryDependency(:libbaz)]
+
+        # A declaration is `:inherit` or a vector of the right kind, and nothing else; in
+        # particular, `:inherit` does not mix with explicit entries
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=:audit)
+        # `nothing` is how inheritance is stored, not how it is spelled
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=nothing)
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=[:inherit, LibraryDependency(:libbar)])
+        # Edges are declared as `LibraryDependency`, never as spelled-out strings
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=["Bar_jll.libbar"])
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=[1])
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; system_deps=17)
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; system_deps=[LibraryDependency(:libm)])
+        @test StaticLibraryProduct("libfoo"; deps=[]).deps == LibraryDependency[]
+        @test StaticLibraryProduct("libfoo"; system_deps=["m"]).system_deps == ["m"]
+    end
+
+    @testset "StaticLibraryProduct archive extensions" begin
+        mktempdir() do prefix
+            mkpath(joinpath(prefix, "lib"))
+            env = Dict("prefix" => prefix)
+            windows = Platform("x86_64", "windows")
+            linux = Platform("x86_64", "linux")
+
+            # MSVC-style archives are found on Windows, and only there
+            touch(joinpath(prefix, "lib", "foo.lib"))
+            @test locate(StaticLibraryProduct("foo"), prefix; env, platform=windows) == joinpath("lib", "foo.lib")
+            @test locate(StaticLibraryProduct("foo.lib"), prefix; env, platform=windows) == joinpath("lib", "foo.lib")
+            @test locate(StaticLibraryProduct("foo"), prefix; env, platform=linux) === nothing
+
+            # A MinGW import library is never taken for the archive
+            touch(joinpath(prefix, "lib", "libbar.dll.a"))
+            @test locate(StaticLibraryProduct("libbar"), prefix; env, platform=windows) === nothing
+            touch(joinpath(prefix, "lib", "libbar.a"))
+            @test locate(StaticLibraryProduct("libbar"), prefix; env, platform=windows) == joinpath("lib", "libbar.a")
         end
     end
 end
