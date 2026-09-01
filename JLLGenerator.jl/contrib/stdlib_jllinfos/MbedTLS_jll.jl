@@ -24,6 +24,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.2.28.2.dylib",
                     [],
+                    ["System"],
                     soname = "@rpath/libmbedcrypto.7.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -34,6 +35,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["System"],
                     soname = "@rpath/libmbedtls.14.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -43,6 +45,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["System"],
                     soname = "@rpath/libmbedx509.1.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -71,6 +74,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -81,6 +85,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -90,6 +95,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -118,6 +124,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -128,6 +135,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -137,6 +145,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -165,6 +174,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -175,6 +185,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -184,6 +195,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -212,6 +224,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -222,6 +235,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -231,6 +245,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -259,6 +274,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -269,6 +285,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -278,6 +295,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -306,6 +324,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -316,6 +335,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -325,6 +345,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -353,6 +374,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -363,6 +385,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -372,6 +395,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -400,6 +424,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -410,6 +435,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -419,6 +445,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -447,6 +474,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "bin\\libmbedcrypto.dll",
                     [],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt"],
                     soname = "libmbedcrypto.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -457,6 +485,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["kernel32", "msvcrt", "ws2_32"],
                     soname = "libmbedtls.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -466,6 +495,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["kernel32", "msvcrt"],
                     soname = "libmbedx509.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -494,6 +524,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -504,6 +535,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -513,6 +545,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -541,6 +574,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.2.28.2.dylib",
                     [],
+                    ["System"],
                     soname = "@rpath/libmbedcrypto.7.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -551,6 +585,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["System"],
                     soname = "@rpath/libmbedtls.14.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -560,6 +595,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["System"],
                     soname = "@rpath/libmbedx509.1.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -588,6 +624,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -598,6 +635,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -607,6 +645,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -635,6 +674,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -645,6 +685,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -654,6 +695,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -682,6 +724,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -692,6 +735,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -701,6 +745,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -729,6 +774,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "lib/libmbedcrypto.so",
                     [],
+                    ["c"],
                     soname = "libmbedcrypto.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -739,6 +785,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["c"],
                     soname = "libmbedtls.so.14",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -748,6 +795,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["c"],
                     soname = "libmbedx509.so.1",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -776,6 +824,7 @@ jll = JLLInfo(;
                     :libmbedcrypto,
                     "bin\\libmbedcrypto.dll",
                     [],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt"],
                     soname = "libmbedcrypto.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -786,6 +835,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libmbedcrypto),
                         JLLLibraryDep(nothing, :libmbedx509),
                     ],
+                    ["kernel32", "msvcrt", "ws2_32"],
                     soname = "libmbedtls.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -795,6 +845,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libmbedcrypto)
                     ],
+                    ["kernel32", "msvcrt"],
                     soname = "libmbedx509.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),

@@ -37,6 +37,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["System", "c++"],
                     soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -81,6 +82,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["System", "c++"],
                     soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -125,6 +127,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -168,6 +171,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -211,6 +215,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -254,6 +259,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -297,6 +303,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -340,6 +347,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -383,6 +391,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -426,6 +435,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -469,6 +479,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -512,6 +523,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -555,6 +567,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -598,6 +611,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -641,6 +655,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -684,6 +699,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -727,6 +743,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -770,6 +787,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -813,6 +831,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -856,6 +875,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -899,6 +919,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -942,6 +963,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -985,6 +1007,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1028,6 +1051,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1071,6 +1095,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1114,6 +1139,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1157,6 +1183,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1200,6 +1227,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1243,6 +1271,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1286,6 +1315,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1329,6 +1359,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1373,6 +1404,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1417,6 +1449,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1461,6 +1494,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1505,6 +1539,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1548,6 +1583,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1591,6 +1627,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1634,6 +1671,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1677,6 +1715,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["System", "c++"],
                     soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1721,6 +1760,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["System", "c++"],
                     soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1765,6 +1805,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1808,6 +1849,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1851,6 +1893,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1894,6 +1937,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1937,6 +1981,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1980,6 +2025,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "dl", "gcc_s", "m", "pthread", "rt", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2023,6 +2069,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2066,6 +2113,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2109,6 +2157,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2152,6 +2201,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "gcc_s", "stdc++"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2195,6 +2245,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "c++", "cxxrt", "execinfo", "gcc_s", "m", "rt", "thr"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2238,6 +2289,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["c", "c++", "cxxrt", "execinfo", "gcc_s", "m", "rt", "thr"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2281,6 +2333,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2325,6 +2378,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2369,6 +2423,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2413,6 +2468,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    ["advapi32", "gcc_s", "kernel32", "msvcrt", "ole32", "shell32", "stdc++", "winpthread"],
                     soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
