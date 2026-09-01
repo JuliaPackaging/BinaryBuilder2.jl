@@ -60,9 +60,6 @@ function audit!(prefix::String,
         show(pass_results)
     end
 
-    # Cleanup temporary directories containing toolchains
-    cleanup_toolchains!(scan)
-
     return AuditResult(
         scan,
         pass_results,
