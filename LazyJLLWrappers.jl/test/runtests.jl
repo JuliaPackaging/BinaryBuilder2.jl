@@ -218,3 +218,27 @@ using Base.BinaryPlatforms: Platform
     @test !contains(code, "system_deps")
     @test !contains(code, "stdc++")
 end
+
+@testset "static libraries are ignored by the wrapper" begin
+    # The wrapper defines nothing for a static library, so it must export nothing for
+    # one either.  `libxlsreader` also ships as an archive (a same-named second entry)
+    # and `libxls_static` ships only as one.
+    jllinfo = include(joinpath(example_jllinfos_path, "libxls_jll.jl"))
+    jllinfo = @set jllinfo.builds = map(jllinfo.builds) do build
+        static_products = [
+            JLLStaticLibraryProduct(:libxlsreader, "lib/libxlsreader.a"),
+            JLLStaticLibraryProduct(:libxls_static, "lib/libxls_static.a"),
+        ]
+        return @set build.products = vcat(build.products, static_products)
+    end
+    generate_and_load_jll(
+        jllinfo,
+        """
+        exported = names(libxls_jll)
+        @test count(==(:libxlsreader), exported) == 1
+        @test :libxls_static ∉ exported
+        @test !isdefined(libxls_jll, :libxls_static)
+        @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+        """,
+    )
+end
