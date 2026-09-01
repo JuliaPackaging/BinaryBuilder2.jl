@@ -6,8 +6,8 @@ import Base: UUID
 
 export JLLInfo, JLLBuildInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
-       JLLPackageDependency, JLLArtifactBinding, JuliaBundledPath, AbstractProducts,
-       JLLBuildLicense, generate_jll, generate_toml_dict, parse_toml_dict
+       JLLStaticLibraryProduct, JLLPackageDependency, JLLArtifactBinding, JuliaBundledPath,
+       AbstractProducts, JLLBuildLicense, generate_jll, generate_toml_dict, parse_toml_dict
 
 include("RTLD_flags.jl")
 include("PkgCompatHacks.jl")
@@ -104,10 +104,8 @@ end
     varname::Symbol
     path::String
     deps::Vector{JLLLibraryDep}
-    # System libraries this one links against, by linker library name (`"m"`,
-    # `"gcc_s"`, `"System"`, `"framework:CoreFoundation"`), as mapped from the
-    # observed SONAMEs by the auditor.  A shared library records its own needs;
-    # this is what linking against a static archive requires.
+    # System libraries this links against, by linker library name
+    # (e.g. `m`, `gcc_s`, `System`, `framework:CoreFoundation`).
     system_deps::Vector{String}
     soname::String
     flags::Vector{Symbol}
@@ -162,6 +160,45 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     )
 end
 
+# JLLLibraryProduct, but for static libraries.
+@struct_hash_equal struct JLLStaticLibraryProduct <: AbstractJLLProduct
+    varname::Symbol
+    path::String
+    deps::Vector{JLLLibraryDep}
+    system_deps::Vector{String}
+
+    function JLLStaticLibraryProduct(varname, path;
+                                     deps = JLLLibraryDep[],
+                                     system_deps = String[])
+        return new(Symbol(varname), String(path),
+                   empty_convert(JLLLibraryDep, deps),
+                   empty_convert(String, String[string(d) for d in system_deps]))
+    end
+end
+
+function generate_toml_dict(sp::JLLStaticLibraryProduct)
+    d = Dict(
+        "type" => "library",
+        "name" => string(sp.varname),
+        "linkage" => "static",
+        "path" => sp.path,
+        "deps" => generate_toml_dict.(sp.deps),
+        "system_deps" => sp.system_deps,
+    )
+    return d
+end
+function parse_toml_dict(::Type{JLLStaticLibraryProduct}, d)
+    linkage = get(d, "linkage", "dynamic")
+    if linkage != "static"
+        throw(ArgumentError("Invalid linkage '$(linkage)' for static library '$(d["name"])'; expected \"static\""))
+    end
+    return JLLStaticLibraryProduct(
+        Symbol(d["name"]),
+        d["path"];
+        deps = [parse_toml_dict(JLLLibraryDep, dep) for dep in get(d, "deps", String[])],
+        system_deps = String[string(sd) for sd in get(d, "system_deps", String[])],
+    )
+end
 
 function parse_toml_dict(::Type{AbstractJLLProduct}, d)
     if d["type"] == "executable"
@@ -169,7 +206,14 @@ function parse_toml_dict(::Type{AbstractJLLProduct}, d)
     elseif d["type"] == "file"
         return parse_toml_dict(JLLFileProduct, d)
     elseif d["type"] == "library"
-        return parse_toml_dict(JLLLibraryProduct, d)
+        linkage = get(d, "linkage", "dynamic")
+        if linkage == "dynamic"
+            return parse_toml_dict(JLLLibraryProduct, d)
+        elseif linkage == "static"
+            return parse_toml_dict(JLLStaticLibraryProduct, d)
+        else
+            throw(ArgumentError("Invalid linkage '$(linkage)' for library '$(d["name"])'; expected \"dynamic\" or \"static\""))
+        end
     else
         throw(ArgumentError("Unknown JLL product type '$(d["type"])'"))
     end
@@ -464,9 +508,21 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
 
     function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts,
                           products, deps, sources, licenses, lazy, callback_defs, init_def)
+        # Libraries should be unique up to their 'linkage'
+        seen_linkages = Dict{Tuple{Symbol,String},Bool}()
+        for p in products
+            if isa(p, JLLLibraryProduct) || isa(p, JLLStaticLibraryProduct)
+                linkage = isa(p, JLLStaticLibraryProduct) ? "static" : "dynamic"
+                if haskey(seen_linkages, (p.varname, linkage))
+                    throw(ArgumentError("Library '$(p.varname)' is described by more than one `linkage = \"$(linkage)\"` entry for platform '$(triplet(platform))'!"))
+                end
+                seen_linkages[(p.varname, linkage)] = true
+            end
+        end
+
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
-            if isa(p, JLLLibraryProduct)
+            if isa(p, JLLLibraryProduct) || isa(p, JLLStaticLibraryProduct)
                 for d in p.deps
                     # A "nothing" module means it's an intra-package dependency
                     if d.mod === nothing
@@ -482,7 +538,7 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
                     end
                 end
 
-                if p.on_load_callback !== nothing
+                if isa(p, JLLLibraryProduct) && p.on_load_callback !== nothing
                     if p.on_load_callback ∉ keys(callback_defs)
                         throw(ArgumentError("Product '$(p.varname)' references on-load callback '$(p.on_load_callback)', but matching definition not found!"))
                     end
@@ -717,6 +773,16 @@ function coalesce_licenses(info::JLLInfo)
     return ret
 end
 
+# The lowest `LazyJLLWrappers` able to read this JLL.
+function lazy_jll_wrappers_compat(info::JLLInfo)
+    for build in info.builds
+        if any(isa(p, JLLStaticLibraryProduct) for p in build.products)
+            return "1.1.2"
+        end
+    end
+    return "1.0.0"
+end
+
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
         for child in readdir(out_dir)
@@ -864,7 +930,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             ),
 
             "compat" => Dict{String,Any}(
-                "LazyJLLWrappers" => "1.0.0",
+                "LazyJLLWrappers" => lazy_jll_wrappers_compat(info),
                 "julia" => info.julia_compat,
             )
         )
