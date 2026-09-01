@@ -16,6 +16,23 @@ export Universe, in_universe
 
 const allow_github_authentication::Ref{Bool} = Ref(true)
 
+# The `(depot, registry name)` pairs we have already downloaded during this session.
+const downloaded_registries = Set{Tuple{String,String}}()
+
+"""
+    registries_to_download(registries, depot_path)
+
+Return the subset of `registries` that we still need to fetch into `depot_path`: those
+we have not already downloaded during this session, plus any that have since gone
+missing from the depot.
+"""
+function registries_to_download(registries::Vector{RegistrySpec}, depot_path::String)
+    return filter(registries) do reg
+        return (depot_path, reg.name) ∉ downloaded_registries ||
+               !ispath(registry_path(depot_path, reg.name))
+    end
+end
+
 function update_registries!(registries::Vector{RegistrySpec},
                             depot_path::String;
                             verbose::Bool = false)
@@ -29,7 +46,20 @@ function update_registries!(registries::Vector{RegistrySpec},
         registry_update_log = TOML.parsefile(registry_update_toml_path)
     end
 
-    Pkg.Registry.download_registries(verbose ? stdout : devnull, registries, depot_path)
+    # Always start a session from an up-to-date registry, but download it only once:
+    # `Universe()` is constructed once per `build_tarballs.jl` invocation, and picking up
+    # a new `General` commit partway through a session would change the registry out from
+    # underneath a build that is already in flight.  Note that landing on a newer registry
+    # is no longer a threat to our caches either way: `spec_hash(::JLLSource)` hashes only
+    # the slice of the registries that the JLL in question resolves against, so unrelated
+    # `General` commits don't invalidate anything.
+    to_download = registries_to_download(registries, depot_path)
+    if !isempty(to_download)
+        Pkg.Registry.download_registries(verbose ? stdout : devnull, to_download, depot_path)
+        for reg in to_download
+            push!(downloaded_registries, (depot_path, reg.name))
+        end
+    end
     
     for reg in registries
         # We arbitrarily add a month onto here, making the (hopefully well-founded) assertion
