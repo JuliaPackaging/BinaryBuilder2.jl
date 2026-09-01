@@ -105,6 +105,8 @@ for version in keys(glibc_version_sources)
             LibraryProduct("lib/libm-$(version.major).$(version.minor)", :libm),
             LibraryProduct("lib/libpthread-$(version.major).$(version.minor)", :libpthread),
             LibraryProduct("lib/librt-$(version.major).$(version.minor)", :librt),
+            LibraryProduct("lib/libresolv-$(version.major).$(version.minor)", :libresolv),
+            LibraryProduct("lib/libutil-$(version.major).$(version.minor)", :libutil),
         ],
         host_toolchains = [CToolchain(;vendor=:bootstrap), HostToolsToolchain()],
         target_toolchains = [CToolchain(;vendor=:bootstrap)],
