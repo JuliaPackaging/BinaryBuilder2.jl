@@ -134,6 +134,7 @@ include("FileArchiveSource.jl")
 include("DirectorySource.jl")
 include("GeneratedSource.jl")
 include("GitSource.jl")
+include("RegistrySlices.jl")
 include("JLLSource.jl")
 
 # This is purposefully a Ref{Function} so that it can be replaced by `BinaryBuilder2`,
