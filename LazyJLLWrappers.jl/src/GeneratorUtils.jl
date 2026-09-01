@@ -180,6 +180,8 @@ function product_names(product)
     return var_name, path_var_name, lazy_path_var_name
 end
 
+use_lazy_libraries() = isdefined(Libdl, :LazyLibrary)
+
 function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     # The hashes in this TOML are `MultiHashParsing` hashes,
     # but we only support `sha1` hashes:
@@ -190,11 +192,24 @@ function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     treehash = Base.SHA1(treehash[6:end])
     var_name, path_var_name, lazy_path_var_name = product_names(product)
 
-    # Luckily, our `LazyArtifactPath` is generic enough that it can run on any Julia
-    # version that understands Artifacts (v1.3+) otherwise this would be a _huge_ pain.
+    if !use_lazy_libraries()
+        # Fully-eager regime: no lazy path object at all.  Every path variable
+        # is a plain `String`, resolved in `__init__()`.
+        path_expr = :(joinpath(artifact_path($(treehash)), $(product["path"])))
+        if VERSION >= v"1.6.0"
+            # An overriding preference substitutes the path outright
+            path_expr = load_preference(jb.mod, string(path_var_name), path_expr)
+        end
+        push!(jb.top_level_blocks, emit_typed_global(path_var_name, String, ""; isconst=false))
+        push!(jb.init_blocks, :(global $(path_var_name) = $(path_expr)))
+
+        # There is no lazy path object in this regime.
+        return var_name, path_var_name, nothing
+    end
+
     lazy_artifact_path = quote
-        LazyArtifactPath(
-            $(treehash),
+        Libdl.LazyLibraryPath(
+            LazyArtifactDir($(treehash)),
             $(product["path"]),
         )
     end
@@ -203,7 +218,7 @@ function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     if VERSION >= v"1.6.0"
         # This is some crazy dynamism; if we have a preference set, we
         # return a String pointing to the object, otherwise we return an `Expr`
-        # that defines the `LazyArtifactPath`, both of which can be interpolated
+        # that defines the `Libdl.LazyLibraryPath`, both of which can be interpolated
         # `jb.top_level_blocks` just fine.
         lazy_artifact_path = load_preference(
             jb.mod,

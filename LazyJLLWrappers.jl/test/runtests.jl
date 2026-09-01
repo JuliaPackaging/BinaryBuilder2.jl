@@ -141,8 +141,8 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
     )
 end
 
-# Test that `LazyLirary` support works on Julias new enough to use it
-if isdefined(Libdl, :LazyLibrary)
+# Test that `LazyLibrary` support works on Julias new enough to use it
+if LazyJLLWrappers.use_lazy_libraries()
     @testset "Laziness" begin
         generate_and_load_jll(
             include(joinpath(example_jllinfos_path, "Ncurses_jll.jl")),
@@ -154,6 +154,18 @@ if isdefined(Libdl, :LazyLibrary)
             @test unsafe_string(ccall((:curses_version, libncurses), Cstring, ())) == "ncurses 6.4.20221231"
             @test !isempty(filter(l -> occursin("libncurses", l), Libdl.dllist()))
             @test isempty(filter(l -> occursin("libpanel", l), Libdl.dllist()))
+            """,
+        )
+    end
+
+    @testset "LazyLibrary path contract" begin
+        generate_and_load_jll(
+            include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
+            """
+            import Libdl, LazyJLLWrappers
+            @test libxlsreader.path isa Union{String, Libdl.LazyLibraryPath}
+            @test libxlsreader.path.pieces[1] isa LazyJLLWrappers.LazyArtifactDir
+            @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
             """,
         )
     end

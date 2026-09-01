@@ -1,6 +1,6 @@
 module LazyJLLWrappers
 
-export LazyArtifactPath, @generate_jll_from_toml
+export LazyArtifactDir, @generate_jll_from_toml
 using Libdl
 
 if VERSION >= v"1.6.0"
@@ -10,30 +10,15 @@ else
 end
 
 """
-    LazyArtifactPath
+    LazyArtifactDir
 
-Helper type that stores an artifact hash and a subpath, then lazily resolves it
-on-demand for e.g. `ccall()` and friends.  Caches its result so that lookup only
-happens once.
+Helper type that stores an artifact hash and supports conversion via `string`
+to the corresponding artifact directory.
 """
-struct LazyArtifactPath
+struct LazyArtifactDir
     artifact_hash::Base.SHA1
-    subpath::String
-    result::Ref{String}
-
-    function LazyArtifactPath(artifact_hash, subpath)
-        return new(artifact_hash, subpath, Ref{String}())
-    end
 end
-function Base.string(lap::LazyArtifactPath)
-    if !isassigned(lap.result)
-        lap.result[] = joinpath(
-            artifact_path(lap.artifact_hash),
-            lap.subpath,
-        )
-    end
-    return lap.result[]
-end
+Base.string(lad::LazyArtifactDir) = artifact_path(lad.artifact_hash)
 
 """
     JLLBlocks
