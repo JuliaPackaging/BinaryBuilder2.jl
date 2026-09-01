@@ -83,6 +83,36 @@ using JLLGenerator: rtld_symbols, rtld_flags
             error("Unrecognized triplet '$(triplet)' for our little `dlext()` mockup")
         end
     end
+    @testset "exactly-declared paths are authoritative" begin
+        # Exact path matches take priority over other sorting / ordering, even
+        # for names that would appear to be versioned copies of the same library.
+        platform = Platform("x86_64", "macos")
+        mktempdir() do dir
+            env = Dict(
+                "prefix" => dir,
+                "libdir" => joinpath(dir, "lib"),
+                "bb_full_target" => triplet(platform),
+            )
+            mkpath(joinpath(dir, "lib"))
+
+            # These libraries have distinct ABI and are shipped together on macOS
+            touch(joinpath(dir, "lib", "libgcc_s.1.dylib"))
+            touch(joinpath(dir, "lib", "libgcc_s.1.1.dylib"))
+
+            # Both exact declarations bind their exact file
+            @test locate(LibraryProduct("lib/libgcc_s.1.dylib", :libgcc_s), dir; env, platform) ==
+                joinpath("lib", "libgcc_s.1.dylib")
+            @test locate(LibraryProduct("lib/libgcc_s.1.1.dylib", :libgcc_s), dir; env, platform) ==
+                joinpath("lib", "libgcc_s.1.1.dylib")
+
+            # A stem declaration still matches by name, version-agnostically
+            @test locate(LibraryProduct("lib/libgcc_s", :libgcc_s), dir; env, platform) !== nothing
+
+            # A declared version that does not exist still falls back to matching
+            @test locate(LibraryProduct("lib/libgcc_s.2.dylib", :libgcc_s), dir; env, platform) !== nothing
+        end
+    end
+
     for (target, as) in artifacts_downloads
         @testset "$(target)" begin
             env = Dict(
