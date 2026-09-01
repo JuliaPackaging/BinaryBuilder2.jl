@@ -1070,6 +1070,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1078,6 +1079,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libbtf.2.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1086,6 +1088,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libcamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1094,6 +1097,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libccolamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1107,12 +1111,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "@rpath/libcholmod.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.4.0.4.dylib",
                     [],
+                    soname = "@rpath/libcholmod_cuda.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1121,6 +1127,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libcolamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1133,6 +1140,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "@rpath/libklu.2.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1141,6 +1149,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libldl.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1149,6 +1158,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/librbio.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1162,18 +1172,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "@rpath/libspqr.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.4.0.0.dylib",
                     [],
+                    soname = "@rpath/libspqr_cuda.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
+                    soname = "@rpath/libsuitesparseconfig.7.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1186,6 +1199,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "@rpath/libumfpack.6.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1220,6 +1234,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1228,6 +1243,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1236,6 +1252,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1244,6 +1261,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1257,12 +1275,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1271,6 +1291,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1283,6 +1304,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1291,6 +1313,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1299,6 +1322,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1312,18 +1336,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1336,6 +1363,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1370,6 +1398,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1378,6 +1407,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1386,6 +1416,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1394,6 +1425,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1407,12 +1439,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1421,6 +1455,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1433,6 +1468,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1441,6 +1477,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1449,6 +1486,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1462,18 +1500,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1486,6 +1527,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1520,6 +1562,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1528,6 +1571,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1536,6 +1580,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1544,6 +1589,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1557,12 +1603,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1571,6 +1619,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1583,6 +1632,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1591,6 +1641,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1599,6 +1650,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1612,18 +1664,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1636,6 +1691,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1670,6 +1726,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1678,6 +1735,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1686,6 +1744,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1694,6 +1753,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1707,12 +1767,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1721,6 +1783,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1733,6 +1796,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1741,6 +1805,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1749,6 +1814,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1762,18 +1828,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1786,6 +1855,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1820,6 +1890,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1828,6 +1899,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1836,6 +1908,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1844,6 +1917,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1857,12 +1931,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1871,6 +1947,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1883,6 +1960,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1891,6 +1969,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1899,6 +1978,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1912,18 +1992,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1936,6 +2019,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1970,6 +2054,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1978,6 +2063,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1986,6 +2072,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1994,6 +2081,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2007,12 +2095,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2021,6 +2111,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2033,6 +2124,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2041,6 +2133,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2049,6 +2142,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2062,18 +2156,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2086,6 +2183,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2120,6 +2218,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2128,6 +2227,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2136,6 +2236,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2144,6 +2245,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2157,12 +2259,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2171,6 +2275,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2183,6 +2288,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2191,6 +2297,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2199,6 +2306,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2212,18 +2320,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2236,6 +2347,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2270,6 +2382,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2278,6 +2391,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2286,6 +2400,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2294,6 +2409,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2307,12 +2423,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2321,6 +2439,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2333,6 +2452,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2341,6 +2461,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2349,6 +2470,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2362,18 +2484,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2386,6 +2511,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2420,6 +2546,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2428,6 +2555,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2436,6 +2564,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2444,6 +2573,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2457,6 +2587,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2465,6 +2596,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2476,6 +2608,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
+                    soname = "libklu.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2484,6 +2617,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2492,6 +2626,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2504,12 +2639,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libspqr.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
+                    soname = "libsuitesparseconfig.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2521,6 +2658,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
+                    soname = "libumfpack.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2555,6 +2693,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2563,6 +2702,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2571,6 +2711,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2579,6 +2720,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2592,12 +2734,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2606,6 +2750,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2618,6 +2763,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2626,6 +2772,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2634,6 +2781,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2647,18 +2795,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2671,6 +2822,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2705,6 +2857,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2713,6 +2866,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libbtf.2.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2721,6 +2875,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libcamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2729,6 +2884,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libccolamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2742,12 +2898,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "@rpath/libcholmod.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.4.0.4.dylib",
                     [],
+                    soname = "@rpath/libcholmod_cuda.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2756,6 +2914,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libcolamd.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2768,6 +2927,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "@rpath/libklu.2.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2776,6 +2936,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/libldl.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2784,6 +2945,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "@rpath/librbio.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2797,18 +2959,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "@rpath/libspqr.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.4.0.0.dylib",
                     [],
+                    soname = "@rpath/libspqr_cuda.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.7.1.0.dylib",
                     [],
+                    soname = "@rpath/libsuitesparseconfig.7.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2821,6 +2986,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "@rpath/libumfpack.6.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2855,6 +3021,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2863,6 +3030,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2871,6 +3039,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2879,6 +3048,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2892,12 +3062,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2906,6 +3078,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2918,6 +3091,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2926,6 +3100,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2934,6 +3109,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2947,18 +3123,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2971,6 +3150,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -3005,6 +3185,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3013,6 +3194,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3021,6 +3203,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3029,6 +3212,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3042,12 +3226,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3056,6 +3242,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3068,6 +3255,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3076,6 +3264,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3084,6 +3273,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3097,18 +3287,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3121,6 +3314,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -3155,6 +3349,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3163,6 +3358,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3171,6 +3367,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3179,6 +3376,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3192,12 +3390,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3206,6 +3406,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3218,6 +3419,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3226,6 +3428,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3234,6 +3437,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3247,18 +3451,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3271,6 +3478,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -3305,6 +3513,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3313,6 +3522,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3321,6 +3531,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3329,6 +3540,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3342,12 +3554,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libcholmod_cuda,
                     "lib/libcholmod_cuda.so.4.0.4",
                     [],
+                    soname = "libcholmod_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3356,6 +3570,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3368,6 +3583,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libbtf),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libklu.so.2",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3376,6 +3592,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.so.3",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3384,6 +3601,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3397,18 +3615,21 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    soname = "libspqr.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libspqr_cuda,
                     "lib/libspqr_cuda.so.4.0.0",
                     [],
+                    soname = "libspqr_cuda.so.4",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "lib/libsuitesparseconfig.so",
                     [],
+                    soname = "libsuitesparseconfig.so.7",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3421,6 +3642,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
+                    soname = "libumfpack.so.6",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -3455,6 +3677,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3463,6 +3686,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libbtf.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3471,6 +3695,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3479,6 +3704,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libccolamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3492,6 +3718,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libcholmod.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3500,6 +3727,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libcolamd.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3511,6 +3739,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
                     ],
+                    soname = "libklu.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3519,6 +3748,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "libldl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3527,6 +3757,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libsuitesparseconfig),
                     ],
+                    soname = "librbio.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3539,12 +3770,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                     ],
+                    soname = "libspqr.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libsuitesparseconfig,
                     "bin\\libsuitesparseconfig.dll",
                     [],
+                    soname = "libsuitesparseconfig.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3556,6 +3789,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
                     ],
+                    soname = "libumfpack.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
