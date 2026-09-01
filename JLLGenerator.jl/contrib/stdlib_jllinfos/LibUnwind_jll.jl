@@ -53,6 +53,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -88,6 +89,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Musl_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -123,6 +125,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -158,6 +161,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Musl_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -193,6 +197,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -228,6 +233,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Musl_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -263,6 +269,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -298,6 +305,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Musl_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -333,6 +341,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -368,6 +377,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -403,6 +413,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Glibc_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -438,6 +449,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:Musl_jll, :libc)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -473,6 +485,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s)],
                     soname = "libunwind.so.8",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
