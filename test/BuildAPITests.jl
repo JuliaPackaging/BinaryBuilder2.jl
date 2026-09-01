@@ -1,4 +1,5 @@
 using Test, BinaryBuilder2, Random, Sandbox
+import ChromeTracing
 using ChromeTracing: clear_trace!, snapshot_default_buffer
 
 if !isdefined(@__MODULE__, :TestingUtils)
