@@ -1,6 +1,6 @@
 using TreeArchival, TimerOutputs, TOML
 
-using Base.BinaryPlatforms, JLLPrefixes, Pkg, Dates
+using Base.BinaryPlatforms, JLLPrefixes, Pkg
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
 
 export JLLSource, deduplicate_jlls
@@ -146,8 +146,11 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         something(pkg.repo.rev, ""),
         triplet(jll.platform),
         jll.target,
-        # And then we add in registry information to be sensitive to that as well.
-        bytes2hex.([reg.tree_info.bytes for reg in registries if reg.tree_info !== nothing])...,
+        # And then we add in registry information to be sensitive to that as well.  We
+        # only mix in the slice of the registries that this JLL can actually resolve
+        # against, so that the constant churn of unrelated packages in `General` doesn't
+        # invalidate our caches.
+        registry_slice_hash(pkg, registries),
     )))
 end
 function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry.RegistryInstance})
@@ -168,27 +171,24 @@ function prepare(jlls::Vector{JLLSource};
                  verbose::Bool = false,
                  force::Bool = false,
                  registries::Vector{Pkg.Registry.RegistryInstance} = Pkg.Registry.reachable_registries(; depots=[depot]),
-                 registry_refresh_interval::TimePeriod = Hour(1),
                  to::TimerOutput = TimerOutput(),
                  ignore_empty_registries::Bool = false)
     # Split JLLs by platform:
     jlls_by_platform_by_prefix = Dict{AbstractPlatform,Dict{String,Vector{JLLSource}}}()
 
-    # Look up our extant registries immediately, and mark if they're out of date.
+    # Look up our extant registries immediately.
     if isempty(registries) && !ignore_empty_registries
         # This should never happen, because `default_jll_source_depot()` should
         # automatically fill it out, so this only happens if someone gives us something weird.
         @warn("No reachable registries in depot '$(depot)'?")
     end
 
-    time_thresh = Dates.datetime2unix(Dates.now() - registry_refresh_interval)
-    registries_outdated = any(stat(reg.path).mtime < time_thresh for reg in registries)
-
     # We're going to cache the jlls by serializing the output of this preparation process
     # (that is, the `artifact_paths`) into a file named by the input of this preparation
-    # process (that is, a hash of everything coming in).  While the output depends on
-    # the state of the registry as well, we will avoid updating that (and thus invalidating
-    # the results) unless the registry hasn't been updated in a while.
+    # process (that is, a hash of everything coming in).  That input hash covers the
+    # registry entries of these JLLs and their dependencies (see `registry_slice_hash()`),
+    # so a cache hit means the registries still describe the same resolution problem;
+    # there is no need to second-guess it based on how long ago we last downloaded them.
     function jll_cache_path(jlls::Vector{JLLSource})
         return joinpath(jll_resolve_cache(jll_cache_name(jlls, registries)), "cache.toml")
     end
@@ -243,8 +243,8 @@ function prepare(jlls::Vector{JLLSource};
 
             # If `force` is set, drop any previously-stored artifact paths,
             # delete any cache files, and force resolution.
-            if force || registries_outdated
-                @debug("Emptying", force, registries_outdated)
+            if force
+                @debug("Emptying", force)
                 clear_cache!()
             end
 

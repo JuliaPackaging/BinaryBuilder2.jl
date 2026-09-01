@@ -1,5 +1,6 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
 using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
+using BinaryBuilder2: update_registries!, registries_to_download, registry_path
 
 @testset "Universes" begin
     # Create a universe holding just `General`
@@ -43,5 +44,26 @@ using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
         # Test that `reset_timeline!` eliminates our registrations:
         reset_timeline!(uni)
         @test isempty(get_package_versions(uni, "HelloWorldC2_jll"))
+    end
+end
+
+@testset "Registry downloads" begin
+    # We want every session to start from an up-to-date registry, but we only want to
+    # pay for that once, no matter how many `Universe`s get built on top of it.
+    mktempdir() do depot
+        registries = copy(Pkg.Registry.DEFAULT_REGISTRIES)
+        @test !isempty(registries_to_download(registries, depot))
+
+        update_registries!(registries, depot)
+        @test isempty(registries_to_download(registries, depot))
+
+        # A registry that goes missing gets fetched again regardless.
+        rm(registry_path(depot, "General"); recursive=true, force=true)
+        @test !isempty(registries_to_download(registries, depot))
+
+        # ...and a depot we've never filled out obviously needs its own download.
+        mktempdir() do other_depot
+            @test !isempty(registries_to_download(registries, other_depot))
+        end
     end
 end

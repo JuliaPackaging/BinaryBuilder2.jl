@@ -1,5 +1,7 @@
 using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
+using BinaryBuilderSources: registry_slice_hash, full_registries_hash
+using Pkg.Registry: RegistryInstance
 
 include("common.jl")
 
@@ -448,5 +450,85 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 end
             end
         end
+    end
+end
+
+@testset "Registry slicing" begin
+    # A tiny synthetic registry: `Root_jll` -> `Mid_jll` -> `Leaf_jll`, plus an
+    # `Other_jll` that nothing depends on.
+    uuids = Dict(
+        "Root_jll"  => "00000000-0000-0000-0000-000000000001",
+        "Mid_jll"   => "00000000-0000-0000-0000-000000000002",
+        "Leaf_jll"  => "00000000-0000-0000-0000-000000000003",
+        "Other_jll" => "00000000-0000-0000-0000-000000000004",
+    )
+    function make_registry(dir; versions = Dict{String,Vector{String}}(), mid_deps = ["Leaf_jll"])
+        mkpath(dir)
+        open(joinpath(dir, "Registry.toml"); write=true) do io
+            println(io, "name = \"TestReg\"")
+            println(io, "uuid = \"00000000-0000-0000-0000-0000000000aa\"")
+            println(io, "[packages]")
+            for (name, uuid) in uuids
+                println(io, "\"$(uuid)\" = { name = \"$(name)\", path = \"$(name[1])/$(name)\" }")
+            end
+        end
+        for (name, uuid) in uuids
+            pkg_dir = joinpath(dir, string(name[1]), name)
+            mkpath(pkg_dir)
+            write(joinpath(pkg_dir, "Package.toml"),
+                  "name = \"$(name)\"\nuuid = \"$(uuid)\"\nrepo = \"https://example.com/$(name).git\"\n")
+            open(joinpath(pkg_dir, "Versions.toml"); write=true) do io
+                for (idx, v) in enumerate(get(versions, name, ["1.0.0"]))
+                    println(io, "[\"$(v)\"]\ngit-tree-sha1 = \"$(string(idx; pad=40, base=16))\"\n")
+                end
+            end
+            deps = name == "Root_jll" ? ["Mid_jll"] : (name == "Mid_jll" ? mid_deps : String[])
+            if !isempty(deps)
+                open(joinpath(pkg_dir, "Deps.toml"); write=true) do io
+                    println(io, "[\"1\"]")
+                    for dep in deps
+                        println(io, "$(dep) = \"$(uuids[dep])\"")
+                    end
+                end
+            end
+        end
+        return RegistryInstance(dir)
+    end
+
+    mktempdir() do dir
+        root = PackageSpec(;name="Root_jll")
+        base = [make_registry(joinpath(dir, "base"))]
+        base_hash = registry_slice_hash(root, base)
+
+        # An unrelated package gaining a version must not change the slice, even though
+        # it changes the registry as a whole.  This is the entire point of slicing.
+        unrelated = [make_registry(joinpath(dir, "unrelated"); versions=Dict("Other_jll" => ["1.0.0", "2.0.0"]))]
+        @test registry_slice_hash(root, unrelated) == base_hash
+        @test full_registries_hash(unrelated) != full_registries_hash(base)
+
+        # A transitive dependency gaining a version must change the slice.
+        relevant = [make_registry(joinpath(dir, "relevant"); versions=Dict("Leaf_jll" => ["1.0.0", "1.1.0"]))]
+        @test registry_slice_hash(root, relevant) != base_hash
+
+        # So must a change in the shape of the dependency graph, and thereafter changes
+        # to the package that graph newly reaches.
+        regraphed = [make_registry(joinpath(dir, "regraphed"); mid_deps=["Leaf_jll", "Other_jll"])]
+        @test registry_slice_hash(root, regraphed) != base_hash
+        regraphed_bumped = [make_registry(joinpath(dir, "regraphed_bumped");
+                                          mid_deps=["Leaf_jll", "Other_jll"],
+                                          versions=Dict("Other_jll" => ["1.0.0", "2.0.0"]))]
+        @test registry_slice_hash(root, regraphed_bumped) != registry_slice_hash(root, regraphed)
+
+        # Identical content in a different location hashes identically...
+        @test registry_slice_hash(root, [make_registry(joinpath(dir, "copy"))]) == base_hash
+        # ...and a package we can't slice falls back to hashing the registries wholesale.
+        @test registry_slice_hash(PackageSpec(;name="Unregistered_jll"), base) == full_registries_hash(base)
+
+        # A `JLLSource`'s `spec_hash()` must not depend on whether `prepare()` has
+        # filled out its UUID for us.
+        jll = JLLSource("Root_jll", HostPlatform())
+        unresolved_hash = spec_hash(jll; registries=base)
+        jll.package.uuid = Base.UUID(uuids["Root_jll"])
+        @test spec_hash(jll; registries=base) == unresolved_hash
     end
 end
