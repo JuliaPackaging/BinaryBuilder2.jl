@@ -71,6 +71,28 @@ declared_of(spec) = canonicalize_static_dep_spec(spec, "deps", nothing)
         end
         @test locate(StaticLibraryProduct("libnope"), dir; env, kwargs...) === nothing
 
+        # A subordinate archive is converted with its parent library's name, since
+        # the two are one library described once per linkage.
+        lp = LibraryProduct("\${shlibdir}/liblzma", :liblzma;
+                            static=StaticLibraryProduct("\${libdir}/liblzma.a"))
+        static_product = JLLGenerator.JLLStaticLibraryProduct(lp.static, dir;
+                                                              varname=lp.varname, env, kwargs...)
+        @test static_product.varname == :liblzma
+        @test basename(static_product.path) == "liblzma.a"
+        @test isfile(joinpath(dir, static_product.path))
+        # A subordinate archive has no name of its own to fall back on
+        @test_throws ArgumentError JLLGenerator.JLLStaticLibraryProduct(lp.static, dir; env, kwargs...)
+
+        # A standalone archive carries its own name
+        standalone = StaticLibraryProduct("\${libdir}/liblzma.a"; varname=:liblzma_a,
+                                          deps=String[], system_deps=String[])
+        @test JLLGenerator.AbstractJLLProduct(standalone, dir; env, kwargs...).varname == :liblzma_a
+
+        # ... and a `LibraryProduct` converts to the dynamic entry alone
+        plain_product = JLLGenerator.AbstractJLLProduct(
+            LibraryProduct("\${shlibdir}/liblzma", :liblzma), dir; env, kwargs...)
+        @test isa(plain_product, JLLGenerator.JLLLibraryProduct)
+
     end
 
     # We'll test with the `XZ_jll` tarball, which contains three of our products

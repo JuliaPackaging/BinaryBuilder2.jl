@@ -8,8 +8,10 @@
 # directly in `BinaryBuilderProducts`.
 
 using BinaryBuilderProducts, JLLGenerator
-import BinaryBuilderProducts: AbstractProduct, ExecutableProduct, FileProduct, LibraryProduct
-import JLLGenerator: AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct, JLLLibraryDep, AbstractProducts
+import BinaryBuilderProducts: AbstractProduct, ExecutableProduct, FileProduct, LibraryProduct,
+                              StaticLibraryProduct
+import JLLGenerator: AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
+                     JLLStaticLibraryProduct, JLLLibraryDep, AbstractProducts
 
 # I feel this should be in Base Julia
 macro extract_kwargs(kwargs, keys...)
@@ -37,6 +39,26 @@ function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
 end
 function AbstractJLLProduct(fp::FileProduct, prefix::String; kwargs...)
     return JLLFileProduct(fp, prefix; kwargs...)
+end
+
+"""
+    JLLStaticLibraryProduct(slp::StaticLibraryProduct, prefix; varname, kwargs...)
+
+Locate a static archive within `prefix`.  A subordinate archive has no name of its
+own and is given its parent library's, since the two are one library.  Note that this
+un-audited conversion can only fill in where the archive is; what must be linked
+alongside it is learned by the auditor.
+"""
+function JLLStaticLibraryProduct(slp::StaticLibraryProduct, prefix::String;
+                                 varname::Union{Nothing,Symbol} = nothing, kwargs...)
+    name = varname === nothing ? slp.varname : varname
+    if name === nothing
+        throw(ArgumentError("A subordinate StaticLibraryProduct has no name of its own; pass the parent library's `varname`"))
+    end
+    return JLLStaticLibraryProduct(name, locate(slp, prefix; kwargs...))
+end
+function AbstractJLLProduct(slp::StaticLibraryProduct, prefix::String; kwargs...)
+    return @auto_extract_kwargs JLLStaticLibraryProduct(slp, prefix; kwargs...)
 end
 
 function JLLLibraryDep(lp::LibraryProduct, jll::Union{Symbol,Nothing} = nothing)
@@ -130,12 +152,25 @@ function AbstractProduct(ld::JLLLibraryDep; artifact, artifacts, cache)
 end
 function AbstractProduct(lp::JLLLibraryProduct; artifact, artifacts, cache)
     return get!(cache, lp) do
-        # For each dep, look up the appropriate library product in our dependency
         return LibraryProduct(
             lp.path,
             lp.varname;
-            deps = LibraryProduct[AbstractProduct(dep; artifact, artifacts, cache) for dep in lp.deps],
             dlopen_flags = lp.flags,
+            on_load_callback = lp.on_load_callback,
+        )
+    end
+end
+
+function AbstractProduct(sp::JLLStaticLibraryProduct; artifact, artifacts, cache)
+    return get!(cache, sp) do
+        # A record states each linkage separately, so an archive comes back as a
+        # standalone product carrying its own name.  Its dependencies are given
+        # explicitly; there is nothing left to inherit at this point.
+        return StaticLibraryProduct(
+            sp.path;
+            varname = sp.varname,
+            deps = String[generate_toml_dict(dep) for dep in sp.deps],
+            system_deps = copy(sp.system_deps),
         )
     end
 end
