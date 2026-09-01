@@ -331,7 +331,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
     )
 end
 
-function package!(config::PackageConfig; verbose::Bool = AbstractBuildMeta(config).verbose)
+@trace_function args=(jll_name=config.name,) function package!(config::PackageConfig; verbose::Bool = AbstractBuildMeta(config).verbose)
     meta = AbstractBuildMeta(config)
     meta.packagings[config] = nothing
 
@@ -349,7 +349,7 @@ function package!(config::PackageConfig; verbose::Bool = AbstractBuildMeta(confi
         end
     end
 
-    @timeit to "package" begin
+    with_trace(meta, "bb2.package_phase"; to, timer_name="package", args=(jll_name=config.name,)) do
         builds = vcat(
             ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
         )
@@ -360,7 +360,7 @@ function package!(config::PackageConfig; verbose::Bool = AbstractBuildMeta(confi
             julia_compat = config.julia_compat,
         )
 
-        @timeit to "register_jll!" begin
+        with_trace(meta, "bb2.register_jll"; to, timer_name="register_jll!", args=(jll_name=config.name,)) do
             # Register this JLL out into our universe
             register_jll!(meta.universe, jll; verbose)
         end

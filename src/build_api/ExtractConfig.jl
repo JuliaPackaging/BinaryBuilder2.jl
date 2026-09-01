@@ -58,6 +58,7 @@ struct ExtractConfig
     end
 end
 AbstractBuildMeta(config::ExtractConfig) = AbstractBuildMeta(config.build)
+timer_output(config::ExtractConfig) = config.to
 BuildConfig(config::ExtractConfig) = config.build.config
 
 function Base.show(io::IO, config::ExtractConfig)
@@ -164,36 +165,34 @@ function load_dep_jllinfos(config::ExtractConfig)
 end
 
 
-function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; verbose::Bool = AbstractBuildMeta(config).verbose, kwargs...)
+@trace_function args=(src_name=config.build.config.src_name, platform=string(config.platform)) function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String; verbose::Bool = AbstractBuildMeta(config).verbose, kwargs...)
     build_config = config.build.config
     meta = AbstractBuildMeta(config)
-    @timeit config.to "audit" begin
-        prefix_alias = target_prefix(config.target_spec)
-        # Load JLLInfo structures for each dependency
-        dep_jll_infos = load_dep_jllinfos(config)
-        platform = host_if_crossplatform(config.platform)
+    prefix_alias = target_prefix(config.target_spec)
+    # Load JLLInfo structures for each dependency
+    dep_jll_infos = load_dep_jllinfos(config)
+    platform = host_if_crossplatform(config.platform)
 
-        # Get libraries for all JLL dependencies
-        get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
-        get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
-        dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}()
-        for dep in dep_jll_infos
-            dep_libs[Symbol(dep.name)] = get_library_products(dep, platform)
-        end
-        # Get libraries for all inter-dependencies
-        for (inter_dep_name, inter_dep) in config.inter_deps
-            dep_libs[Symbol(inter_dep_name)] = inter_dep.audit_result.jll_lib_products
-        end
-        return audit!(
-            artifact_dir,
-            LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
-            dep_libs;
-            prefix_alias,
-            env = config.build.env,
-            platform,
-            kwargs...
-        )
+    # Get libraries for all JLL dependencies
+    get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
+    get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
+    dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}()
+    for dep in dep_jll_infos
+        dep_libs[Symbol(dep.name)] = get_library_products(dep, platform)
     end
+    # Get libraries for all inter-dependencies
+    for (inter_dep_name, inter_dep) in config.inter_deps
+        dep_libs[Symbol(inter_dep_name)] = inter_dep.audit_result.jll_lib_products
+    end
+    return audit!(
+        artifact_dir,
+        LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
+        dep_libs;
+        prefix_alias,
+        env = config.build.env,
+        platform,
+        kwargs...
+    )
 end
 
 function find_unlocatable_products(config::ExtractConfig, prefix)
@@ -208,7 +207,7 @@ function find_unlocatable_products(config::ExtractConfig, prefix)
     return unlocatable_products
 end
 
-function extract!(config::ExtractConfig;
+@trace_function args=(src_name=config.build.config.src_name, platform=string(config.platform)) function extract!(config::ExtractConfig;
                   disable_cache::Bool = !build_cache_enabled(AbstractBuildMeta(config)),
                   debug_modes = config.build.config.meta.debug_modes,
                   verbose::Bool = AbstractBuildMeta(config).verbose)
@@ -230,6 +229,7 @@ function extract!(config::ExtractConfig;
     if !disable_cache
         _, extract_entry = get(meta.build_cache, config)
         if extract_entry !== nothing
+            trace_event(meta, "bb2.extract_cache_hit"; args=(extract_hash=string(spec_hash(config)),))
             if verbose
                 extract_hash = spec_hash(config)
                 build_hash = spec_hash(config.build.config)
@@ -246,6 +246,7 @@ function extract!(config::ExtractConfig;
         else
             extract_hash = spec_hash(config)
             build_hash = spec_hash(config.build.config)
+            trace_event(meta, "bb2.extract_cache_miss"; args=(extract_hash=string(extract_hash), build_hash=string(build_hash)))
             @debug("Extraction not cached", config, extract_hash, build_hash)
         end
     end
@@ -256,11 +257,13 @@ function extract!(config::ExtractConfig;
     end
 
     extract_log_io = IOBuffer()
-    @timeit config.to "extract" begin
+    with_trace(config, "bb2.extract_artifact"; timer_name="extract") do
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
                 sandbox_config, collector = sandbox_and_collector(extract_log_io, config, artifact_dir; verbose)
-                run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix())/extract_script.sh`)
+                with_trace(config, "bb2.extract_script"; args=(script="extract_script.sh",)) do
+                    run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix())/extract_script.sh`)
+                end
 
                 # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success
