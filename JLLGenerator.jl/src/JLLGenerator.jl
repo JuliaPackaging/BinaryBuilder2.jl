@@ -104,18 +104,23 @@ end
     varname::Symbol
     path::String
     deps::Vector{JLLLibraryDep}
+    # System libraries this one links against, by linker library name (`"m"`,
+    # `"gcc_s"`, `"System"`, `"framework:CoreFoundation"`), as mapped from the
+    # observed SONAMEs by the auditor.  A shared library records its own needs;
+    # this is what linking against a static archive requires.
+    system_deps::Vector{String}
     soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
 
-    function JLLLibraryProduct(varname, path, deps;
+    function JLLLibraryProduct(varname, path, deps, system_deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
                                on_load_callback = nothing)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, soname, flags, on_load_callback)
+        return new(varname, path, deps, system_deps, soname, flags, on_load_callback)
     end
 end
 
@@ -132,6 +137,9 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     if lp.on_load_callback !== nothing
         d["on_load_callback"] = string(lp.on_load_callback)
     end
+    if !isempty(lp.system_deps)
+        d["system_deps"] = copy(lp.system_deps)
+    end
     return d
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
@@ -146,7 +154,8 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     return JLLLibraryProduct(
         Symbol(d["name"]),
         d["path"],
-        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]];
+        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]],
+        get(d, "system_deps", String[])::Vector{String};
         soname = d["soname"],
         flags = Symbol.(d["flags"]),
         on_load_callback,
