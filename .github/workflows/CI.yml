@@ -62,7 +62,7 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         with:
           project: ${{ matrix.project }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-files-${{ matrix.runner.arch }}-${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }}
