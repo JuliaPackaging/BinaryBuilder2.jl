@@ -696,3 +696,81 @@ using BinaryBuilderSources: PkgSpec
         end
     end
 end
+
+@testset "Static library products" begin
+    # A static library is a library product written with `linkage = "static"`, and
+    # carries what a link line needs rather than what a loader needs
+    sp = JLLStaticLibraryProduct(:libgfortran, "lib/gcc/libgfortran.a";
+                                 deps = [JLLLibraryDep(nothing, :libquadmath)],
+                                 system_deps = ["c", "m"],
+                                 roots = ["_gfortran_set_args"])
+    d = generate_toml_dict(sp)
+    @test d["type"] == "library"
+    @test d["linkage"] == "static"
+    @test d["name"] == "libgfortran"
+    @test d["path"] == "lib/gcc/libgfortran.a"
+    @test d["deps"] == ["libquadmath"]
+    @test d["system_deps"] == ["c", "m"]
+    @test d["roots"] == ["_gfortran_set_args"]
+    # Nothing about loading belongs on a static entry
+    @test !haskey(d, "soname") && !haskey(d, "flags") && !haskey(d, "on_load_callback")
+    @test parse_toml_dict(JLLStaticLibraryProduct, d) == sp
+    # The type of a library entry is decided by its linkage
+    @test parse_toml_dict(AbstractJLLProduct, d) == sp
+    @test isa(parse_toml_dict(AbstractJLLProduct, generate_toml_dict(
+        JLLLibraryProduct(:libz, "lib/libz.so.1", [], []))), JLLLibraryProduct)
+
+    # A linkage we do not understand is refused
+    bogus = copy(d); bogus["linkage"] = "sideways"
+    @test_throws ArgumentError parse_toml_dict(AbstractJLLProduct, bogus)
+
+    function make_jll(products)
+        return JLLInfo(; name = "CSL", version = v"1.0.0", builds = [
+            JLLBuildInfo(; src_version = v"1.0.0", platform = Platform("x86_64", "linux"),
+                         name = "CSL",
+                         artifact = JLLArtifactBinding(
+                            treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                            download_sources = []),
+                         products, licenses = [mit_license]),
+        ])
+    end
+
+    # A library that ships both ways is two entries sharing a name
+    jll = make_jll([
+        JLLLibraryProduct(:libquadmath, "lib/libquadmath.so.0", [], []),
+        JLLLibraryProduct(:libgfortran, "lib/libgfortran.so.5",
+                          [JLLLibraryDep(nothing, :libquadmath)], []),
+        JLLStaticLibraryProduct(:libgfortran, "lib/gcc/libgfortran.a";
+                                deps = [JLLLibraryDep(nothing, :libquadmath)],
+                                system_deps = ["c", "m"]),
+    ])
+    d, new_jll = roundtrip_jll_through_toml(jll)
+    @test new_jll == jll
+    entries = [e for e in only(d["builds"])["products"] if e["name"] == "libgfortran"]
+    @test sort([e["linkage"] for e in entries]) == ["dynamic", "static"]
+
+    # ... but never twice with the same linkage
+    @test_throws ArgumentError make_jll([
+        JLLStaticLibraryProduct(:libz, "lib/libz.a"),
+        JLLStaticLibraryProduct(:libz, "lib/other/libz.a"),
+    ])
+    @test_throws ArgumentError make_jll([
+        JLLLibraryProduct(:libz, "lib/libz.so.1", [], []),
+        JLLLibraryProduct(:libz, "lib/libz.so.2", [], []),
+    ])
+
+    # A static library's dependency edges are held to the same coherence standard
+    @test_throws ArgumentError make_jll([
+        JLLStaticLibraryProduct(:libz, "lib/libz.a"; deps = [JLLLibraryDep(nothing, :nope)]),
+    ])
+    # ... and an archive-only library can be depended upon like any other
+    @test make_jll([
+        JLLStaticLibraryProduct(:libfoo, "lib/libfoo.a"),
+        JLLStaticLibraryProduct(:libbar, "lib/libbar.a"; deps = [JLLLibraryDep(nothing, :libfoo)]),
+    ]) !== nothing
+
+    # A record with a static entry needs a wrapper that knows to ignore it
+    @test JLLGenerator.lazy_jll_wrappers_compat(jll) == "1.1.2"
+    @test JLLGenerator.lazy_jll_wrappers_compat(
+        make_jll([JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])])) == "1.0.0"
+end
