@@ -19,6 +19,7 @@ include("PlatformlessWrappers.jl")
 
 abstract type AbstractBuildMeta; end
 
+include("build_api/Tracing.jl")
 include("build_api/BuildTargetSpec.jl")
 include("build_api/BuildConfigDefaults.jl")
 include("build_api/BuildConfig.jl")
