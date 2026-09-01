@@ -120,7 +120,7 @@ function print_artifact_info(entry, platform, version, name)
                         JLLLibraryProduct(
                             :$(name),
                             "$(path)",
-                            [<deps>];
+                            [<deps>], [];
                             flags = $(repr(flags)),
                             soname = $(repr(soname)),
                         ),

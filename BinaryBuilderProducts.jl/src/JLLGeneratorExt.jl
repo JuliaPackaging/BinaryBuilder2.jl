@@ -50,7 +50,7 @@ function JLLLibraryProduct(lp::LibraryProduct, prefix::String; kwargs...)
     return JLLLibraryProduct(
         lp.varname,
         locate(lp, prefix; kwargs...),
-        [];
+        [], [];
         flags = lp.dlopen_flags,
         on_load_callback = lp.on_load_callback,
     )

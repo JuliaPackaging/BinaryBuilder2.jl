@@ -34,6 +34,20 @@ end
 
 mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))
 
+@testset "library system_deps round-trip" begin
+    lp = JLLLibraryProduct(:libfoo, "lib/libfoo.so.1", JLLLibraryDep[], ["c", "m"])
+    d = generate_toml_dict(lp)
+    @test d["system_deps"] == ["c", "m"]
+    @test parse_toml_dict(JLLLibraryProduct, d) == lp
+
+    # A library with no system dependencies writes no key, and a record from
+    # before the key existed reads back as having none
+    bare = JLLLibraryProduct(:libfoo, "lib/libfoo.so.1", JLLLibraryDep[], [])
+    d = generate_toml_dict(bare)
+    @test !haskey(d, "system_deps")
+    @test parse_toml_dict(JLLLibraryProduct, d) == bare
+end
+
 @testset "Hand-crafted XZ_jll" begin
     # Hand-crafted XZ_jll impersonation
     xz_sources = [
@@ -68,7 +82,7 @@ mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT")
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
-                    JLLLibraryProduct(:liblzma, "lib/liblzma.so.5", liblzma_deps),
+                    JLLLibraryProduct(:liblzma, "lib/liblzma.so.5", liblzma_deps, []),
                 ],
                 licenses = [mit_license],
             ),
@@ -90,7 +104,7 @@ mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT")
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz.exe"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
-                    JLLLibraryProduct(:liblzma, "bin/liblzma-5.dll", liblzma_deps),
+                    JLLLibraryProduct(:liblzma, "bin/liblzma-5.dll", liblzma_deps, []),
                 ],
                 licenses = [mit_license],
             ),
@@ -112,7 +126,7 @@ mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT")
                 products = [
                     JLLExecutableProduct(:xz, "bin/xz"),
                     JLLFileProduct(:liblzma_a, "lib/liblzma.a"),
-                    JLLLibraryProduct(:liblzma, "lib/liblzma.5.dylib", liblzma_deps),
+                    JLLLibraryProduct(:liblzma, "lib/liblzma.5.dylib", liblzma_deps, []),
                 ],
                 licenses = [mit_license],
             ),
@@ -261,7 +275,7 @@ end
                     JLLLibraryProduct(
                         :libz,
                         "bin\\libz.dll",
-                        [JLLLibraryDep("Glibc_jll", "libc")],
+                        [JLLLibraryDep("Glibc_jll", "libc")], [],
                         flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                     ),
                 ],
@@ -314,25 +328,25 @@ end
                         JLLLibraryProduct(
                             :libgcc_s,
                             "lib/libgcc_s.1.1.dylib",
-                            [],
+                            [], [],
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libquadmath,
                             "lib/libquadmath.1.dylib",
-                            incoherent ? [JLLLibraryDep(nothing, :does_not_exist)] : [],
+                            incoherent ? [JLLLibraryDep(nothing, :does_not_exist)] : [], [],
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libgfortran,
                             "lib/libgfortran.5.dylib",
-                            [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libquadmath)],
+                            [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libquadmath)], [],
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                         JLLLibraryProduct(
                             :libstdcxx,
                             "lib/libstdc++.6.dylib",
-                            [JLLLibraryDep(nothing, :libgcc_s)],
+                            [JLLLibraryDep(nothing, :libgcc_s)], [],
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                         ),
                     ],
@@ -381,7 +395,7 @@ end
                         JLLLibraryProduct(
                             :libblastrampoline,
                             "lib/libblastrampoline.5.4.0.dylib",
-                            [];
+                            [], [];
                             flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                             on_load_callback = incoherent ? :callback_does_not_exist : :libblastrampoline_on_load_callback,
                         ),
@@ -414,7 +428,7 @@ end
     mkbuild(; kwargs...) = JLLBuildInfo(; src_version = v"1.0.0",
                                         platform = Platform("x86_64", "linux"),
                                         name = "Demo",
-                                        products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [])],
+                                        products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])],
                                         licenses = [mit_license], kwargs...)
     roundtrip_build(b) = parse_toml_dict(JLLBuildInfo, generate_toml_dict(b))
 
@@ -469,7 +483,7 @@ end
                      artifact = JLLArtifactBinding(
                         treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                         download_sources = []),
-                     products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [])],
+                     products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])],
                      licenses = [mit_license])])
     d = generate_toml_dict(jll)
     # We are versioning the format published JLLs already speak, not declaring a new one
@@ -575,7 +589,7 @@ end
 
 @testset "Upgrade" begin
     zlib_products = [
-        JLLLibraryProduct(:libz, "lib/libz.so.1", []),
+        JLLLibraryProduct(:libz, "lib/libz.so.1", [], []),
     ]
     old_zlib_jll = JLLInfo(;
         name = "Zlib",
