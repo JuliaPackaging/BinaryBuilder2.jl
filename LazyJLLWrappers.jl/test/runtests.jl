@@ -218,3 +218,24 @@ using Base.BinaryPlatforms: Platform
     @test !contains(code, "system_deps")
     @test !contains(code, "stdc++")
 end
+
+@testset "static libraries are ignored by the wrapper" begin
+    # The Julia side deliberately ignores static libraries for now: they exist in
+    # `JLL.toml` for record-side consumers, and a wrapper neither loads nor binds them,
+    # so it must not export a name it never defines.
+    lib(name, linkage = nothing) = begin
+        d = Dict{String,Any}("type" => "library", "name" => name,
+                             "path" => "lib/$(name)", "deps" => String[])
+        linkage === nothing || (d["linkage"] = linkage)
+        d
+    end
+    @test LazyJLLWrappers.defines_binding(lib("libz", "dynamic"))
+    # An entry from before linkages were spelled out is a shared library
+    @test LazyJLLWrappers.defines_binding(lib("libz"))
+    @test !LazyJLLWrappers.defines_binding(lib("libonly", "static"))
+    # Executables and files are unaffected
+    @test LazyJLLWrappers.defines_binding(
+        Dict{String,Any}("type" => "executable", "name" => "tool", "path" => "bin/tool"))
+    @test LazyJLLWrappers.defines_binding(
+        Dict{String,Any}("type" => "file", "name" => "data", "path" => "share/data"))
+end

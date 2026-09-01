@@ -111,8 +111,11 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
     # Add `is_available()` definition (this is false in `dead_jll_definition()`)
     push!(jb.top_level_blocks, :(is_available() = true))
 
-    # Add `export $foo` for every product
+    # Add `export $foo` for every product we actually define
     for product in artifact["products"]
+        if !defines_binding(product)
+            continue
+        end
         push!(jb.top_level_blocks, :(export $(Symbol(product["name"]))))
     end
 
@@ -171,6 +174,23 @@ function emit_typed_global(name, type, val; isconst::Bool = false)
         ret = Expr(:const, Base.remove_linenums!(ret).args...)
     end
     return ret
+end
+
+"""
+    defines_binding(product)
+
+Whether the wrapper defines anything for this product, and so has a name to export.
+
+A library provided only as a static archive is deliberately ignored by the Julia side
+for now: there is nothing to load and nothing to bind, and the entry exists in
+`JLL.toml` for consumers that read the record rather than the wrapper.  Exporting its
+name would leave the module exporting something it never defines.
+"""
+function defines_binding(product)
+    if product["type"] == "library"
+        return get(product, "linkage", "dynamic") == "dynamic"
+    end
+    return true
 end
 
 function product_names(product)
