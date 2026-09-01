@@ -22,7 +22,7 @@ jobs:
     outputs:
       projects: ${{ steps.set-matrix.outputs.projects }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - id: set-matrix
         run: |
           projects=$( { echo '.'; for f in */Project.toml; do d=$(dirname "$f"); [ "$d" = docs ] && continue; echo "$d"; done; } | jq -R . | jq -cs .)
@@ -45,7 +45,7 @@ jobs:
           - os: ubuntu-24.04-arm
             arch: aarch64
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Configure git identity for tests
         run: |
           git config --global user.email "ci@julialang.org"
