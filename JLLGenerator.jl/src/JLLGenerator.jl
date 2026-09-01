@@ -100,22 +100,36 @@ function parse_toml_dict(::Type{JLLLibraryDep}, s)
     end
 end
 
+"""
+    JLLLibraryProduct(varname, path, deps, system_deps; flags, soname, on_load_callback)
+
+A dynamic library within a JLL.  `deps` are the libraries it links against that a
+JLL provides: another product of this JLL, or a product of one of this JLL's
+dependencies.  `system_deps` are the libraries it links against that the target
+system provides instead (its C runtime, `libSystem`, `kernel32`, ...), named by the
+identity `BinaryBuilderAuditor` assigns them, e.g. `Glibc_jll.libc`.  A shared
+library records what it needs itself, so `system_deps` only matters for linking
+against a static archive, which cannot.
+"""
 @struct_hash_equal struct JLLLibraryProduct <: AbstractJLLProduct
     varname::Symbol
     path::String
     deps::Vector{JLLLibraryDep}
+    system_deps::Vector{JLLLibraryDep}
     soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
 
-    function JLLLibraryProduct(varname, path, deps;
+    function JLLLibraryProduct(varname, path, deps, system_deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
                                on_load_callback = nothing)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, soname, flags, on_load_callback)
+        # A bare `[]` is accepted for either list
+        return new(varname, path, collect(JLLLibraryDep, deps), collect(JLLLibraryDep, system_deps),
+                   soname, flags, on_load_callback)
     end
 end
 
@@ -132,6 +146,9 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     if lp.on_load_callback !== nothing
         d["on_load_callback"] = string(lp.on_load_callback)
     end
+    if !isempty(lp.system_deps)
+        d["system_deps"] = generate_toml_dict.(lp.system_deps)
+    end
     return d
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
@@ -146,7 +163,8 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     return JLLLibraryProduct(
         Symbol(d["name"]),
         d["path"],
-        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]];
+        [parse_toml_dict(JLLLibraryDep, s) for s in d["deps"]],
+        [parse_toml_dict(JLLLibraryDep, s) for s in get(d, "system_deps", String[])];
         soname = d["soname"],
         flags = Symbol.(d["flags"]),
         on_load_callback,

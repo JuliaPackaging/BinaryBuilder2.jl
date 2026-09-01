@@ -170,3 +170,59 @@ if LazyJLLWrappers.use_lazy_libraries()
         )
     end
 end
+
+using Base.BinaryPlatforms: Platform
+@testset "system_deps are ignored, toolchain-runtime edges are dependencies" begin
+    # A record may name the system libraries a product links against
+    # (`system_deps`), and may depend on a `CompilerSupportLibraries_jll` product
+    # for its toolchain runtime.  The former is of no concern to the wrapper; the
+    # latter is an ordinary cross-JLL dependency edge.
+    platform = Platform("x86_64", "linux")
+    csl_uuid = Base.UUID("e66e0078-7015-5450-92f7-15fbd957f2ae")
+    jllinfo = JLLInfo(;
+        name = "Foo",
+        version = v"1.0.0",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.0.0",
+                deps = [JLLPackageDependency("CompilerSupportLibraries_jll", csl_uuid, "*")],
+                sources = [],
+                platform,
+                name = "Foo",
+                artifact = JLLArtifactBinding(;
+                    treehash = "0000000000000000000000000000000000000000",
+                    download_sources = [],
+                ),
+                products = [
+                    JLLLibraryProduct(
+                        :libfoo,
+                        "lib/libfoo.so.1",
+                        [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s)],
+                        [JLLLibraryDep(:Glibc_jll, :libc), JLLLibraryDep(:CompilerSupportLibraries_jll, :libstdcxx)];
+                        soname = "libfoo.so.1",
+                    ),
+                ],
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
+            ),
+        ],
+    )
+    toml = JLLGenerator.generate_toml_dict(jllinfo)
+    build = only(toml["builds"])
+    @test only(build["products"])["system_deps"] == ["Glibc_jll.libc", "CompilerSupportLibraries_jll.libstdcxx"]
+
+    # Generate the wrapper for this build directly, as `@generate_jll_from_toml`
+    # would.  The generator consults the JLL module only for its preferences, so
+    # any loaded package module stands in for it here.
+    jb = LazyJLLWrappers.JLLBlocks(LazyJLLWrappers)
+    LazyJLLWrappers.top_level_statements(jb, build, platform)
+    LazyJLLWrappers.library_product_definition(jb, build, only(build["products"]))
+    code = string(LazyJLLWrappers.synthesize(jb))
+
+    # The dependency package is loaded and the edge is expressed against its product
+    @test contains(code, "using CompilerSupportLibraries_jll")
+    @test contains(code, "CompilerSupportLibraries_jll.libgcc_s")
+    # The system libraries do not appear anywhere in the wrapper, whoever owns them
+    @test !contains(code, "system_deps")
+    @test !contains(code, "Glibc_jll")
+    @test !contains(code, "libstdcxx")
+end

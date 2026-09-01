@@ -57,7 +57,7 @@ include("passes/DynamicLinkageTests.jl")
                 JLLLibraryProduct(
                     :libplus,
                     joinpath("lib", libplus_soname),
-                    [],
+                    [], [],
                 ),
             ]
         )

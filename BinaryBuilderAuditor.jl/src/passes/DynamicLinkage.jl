@@ -1,5 +1,9 @@
 using BinaryBuilderProducts, JLLGenerator
 
+# The toolchain-runtime JLL.  A build that links one of its libraries without
+# depending on it gets the library from the system instead, which the audit points out.
+const toolchain_runtime_jll = :CompilerSupportLibraries_jll
+
 function resolve_dynamic_links!(scan::ScanResult,
                                 pass_results::Dict{String,Vector{PassResult}},
                                 dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
@@ -51,14 +55,9 @@ function resolve_dynamic_links!(scan::ScanResult,
         # Resolve each dependency to one of the `LibraryLink` objects
         # we created above, use that to construct a `JLLLibraryDep`
         jll_deps = JLLLibraryDep[]
+        system_deps = JLLLibraryDep[]
         for lib_dep_soname in lib_deps
             lib_dep_soname = basename(lib_dep_soname)
-            # Skip system libraries that we don't want to track, because
-            # we don't redistribute them.
-            if is_system_library(lib_dep_soname, scan.platform)
-                @debug("Skipping system library", lib_dep_soname, lib_path=rel_path)
-                continue
-            end
 
             # First, is this a library from a dependency?
             local jll_name, lib_varname
@@ -77,6 +76,23 @@ function resolve_dynamic_links!(scan::ScanResult,
                 end
 
                 if !haskey(scan.soname_locator, lib_dep_soname)
+                    # System libraries are checked as the last fallback so that we do not e.g.
+                    # treat libgcc provided by the CSL JLL as system-provided
+                    if is_system_library(lib_dep_soname, scan.platform)
+                        identity = system_library_identity(lib_dep_soname, scan.platform)
+                        # A dynamic loader or a ucrt forwarder is not something we depend on
+                        if identity !== nothing
+                            # The system resolves this one; record which library that is
+                            push!(system_deps, identity)
+                            # If a JLL ships this library, the build could have depended on
+                            # it and had the edge resolved through `dep_soname_map` above.
+                            # Point that out without failing the audit.
+                            if identity.mod == toolchain_runtime_jll
+                                @warn("Links '$(lib_dep_soname)', which `$(toolchain_runtime_jll)` provides, but the build does not depend on `$(toolchain_runtime_jll)`", lib_path=rel_path)
+                            end
+                        end
+                        continue
+                    end
                     push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Unable to map dependency '$(lib_dep_soname)'")
                     continue
                 end
@@ -96,7 +112,8 @@ function resolve_dynamic_links!(scan::ScanResult,
         push!(jll_lib_products, JLLLibraryProduct(
             lib.varname,
             rel_path,
-            jll_deps;
+            jll_deps,
+            sort(unique(system_deps); by=d->(string(d.mod), string(d.varname)));
             flags = lib.dlopen_flags,
             soname = lib_soname,
             on_load_callback = lib.on_load_callback,
