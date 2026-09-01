@@ -159,6 +159,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "psapi.dll",
             "bcrypt.dll",
             "version.dll",
+            "dbghelp.dll",
         ]
 
         csl_libs = [
