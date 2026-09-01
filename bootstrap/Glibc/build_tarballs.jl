@@ -101,7 +101,7 @@ for version in keys(glibc_version_sources)
             # We use the versioned filenames here, because the `.so` files are linker scripts
             # and ObjectFile can't handle those, sadly.
             LibraryProduct("lib/libc-$(version.major).$(version.minor)", :libc),
-            LibraryProduct("lib/libdl-$(version.major).$(version.minor)", :libld),
+            LibraryProduct("lib/libdl-$(version.major).$(version.minor)", :libdl),
             LibraryProduct("lib/libm-$(version.major).$(version.minor)", :libm),
             LibraryProduct("lib/libpthread-$(version.major).$(version.minor)", :libpthread),
             LibraryProduct("lib/librt-$(version.major).$(version.minor)", :librt),
