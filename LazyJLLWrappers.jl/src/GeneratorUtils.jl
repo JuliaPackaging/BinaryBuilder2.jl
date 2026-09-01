@@ -111,11 +111,6 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
     # Add `is_available()` definition (this is false in `dead_jll_definition()`)
     push!(jb.top_level_blocks, :(is_available() = true))
 
-    # Add `export $foo` for every product
-    for product in artifact["products"]
-        push!(jb.top_level_blocks, :(export $(Symbol(product["name"]))))
-    end
-
     # Add callback function definitions.  Even if we're not using `LazyLibrary` objects
     # that are actually capable of calling callback functions, we call these in `__init__()`.
     append!(jb.top_level_blocks, Meta.parse.(values(artifact["callback_defs"])))
@@ -238,15 +233,16 @@ function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     return var_name, path_var_name, lazy_path_var_name
 end
 
-function init_footer(jb::JLLBlocks, build)
+function init_footer(jb::JLLBlocks, build, lib_products)
     for product in build["products"]
-        var_name, path_var_name, lazy_path_var_name = product_names(product)
         if product["type"] == "executable"
+            _, path_var_name, _ = product_names(product)
             push!(jb.init_blocks, :(push!(PATH_list, $(path_var_name))))
         end
-        if product["type"] == "library" && get(product, "linkage", "dynamic") == "dynamic"
-            push!(jb.init_blocks, :(push!(LIBPATH_list, $(path_var_name))))
-        end
+    end
+    for lib in lib_products
+        _, path_var_name, _ = product_names(lib)
+        push!(jb.init_blocks, :(push!(LIBPATH_list, $(path_var_name))))
     end
 
     # Append our dependencies' PATH and LIBPATH:

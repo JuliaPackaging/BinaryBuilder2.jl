@@ -4,4 +4,5 @@ function file_product_definition(jb, artifact, product)
         var_name, String, ""; isconst=false,
     ))
     push!(jb.init_blocks, :(global $(var_name) = $(path_var_name)))
+    push!(jb.exports, var_name)
 end
