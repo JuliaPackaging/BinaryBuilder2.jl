@@ -3,14 +3,20 @@ using JLLGenerator: default_rtld_flags, rtld_flags
 
 """
     LibraryProduct(paths::Vector{String}, varname::Symbol;
-                   deps=LibraryProduct[],
-                   dlopen_flags=Symbol[])
+                   dlopen_flags=Symbol[],
+                   static=nothing)
 
 Declares a `LibraryProduct` that points to a library located within the prefix.
 `paths` contain valid paths for this library, `varname` is the name of the
 variable in the JLL package that can be used to call into the library.  The
 flags to pass to `dlopen` can be specified as a vector of `Symbols` with the
 `dlopen_flags` keyword argument.
+
+If this library is also shipped as a static archive, declare that archive by
+passing a [`StaticLibraryProduct`](@ref) as the `static` keyword argument.  The
+dynamic library is the primary one and defines the identity of the
+product, so the subordinate `StaticLibraryProduct` must not carry a `varname`
+of its own.
 
 Each element of `path` takes the form `[dirname/]basename[.versioned-ext]`
 where `dirname` and `versioned-ext` are optional and can be omitted.
@@ -31,18 +37,25 @@ struct LibraryProduct <: AbstractProduct
     varname::Symbol
     dlopen_flags::typeof(default_rtld_flags)
     on_load_callback::Union{Nothing,Symbol}
+    # A static archive of the same library, shipped alongside the shared one and
+    # recorded as a second entry sharing this product's name.
+    static::Union{Nothing,StaticLibraryProduct}
 
     function LibraryProduct(paths::Vector{<:AbstractString},
                             varname::Symbol;
                             dlopen_flags::Union{Vector{Symbol},typeof(default_rtld_flags)} = default_rtld_flags,
-                            on_load_callback::Union{Nothing,Symbol} = nothing)
+                            on_load_callback::Union{Nothing,Symbol} = nothing,
+                            static::Union{Nothing,StaticLibraryProduct} = nothing)
         if isa(dlopen_flags, Vector{Symbol})
             dlopen_flags = rtld_flags(dlopen_flags)
         end
         if isdefined(Base, varname)
             error("`$(varname)` is already defined in Base")
         end
-        return new(string.(paths), varname, dlopen_flags, on_load_callback)
+        if static !== nothing && static.varname !== nothing
+            throw(ArgumentError("Subordinate StaticLibraryProduct of '$(varname)' must not declare its own `varname` (got '$(static.varname)'); the name comes from the parent LibraryProduct"))
+        end
+        return new(string.(paths), varname, dlopen_flags, on_load_callback, static)
     end
 end
 LibraryProduct(path::AbstractString, args...; kwargs...) = LibraryProduct([path], args...; kwargs...)

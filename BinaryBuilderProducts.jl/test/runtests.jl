@@ -1,5 +1,9 @@
 using BinaryBuilderProducts, Test, BinaryBuilderSources, JLLGenerator
 using JLLGenerator: rtld_symbols, rtld_flags
+using BinaryBuilderProducts: inherits_deps, declared_deps, resolve_deps, canonicalize_static_dep_spec
+
+# Little helper to build a canonicalized declaration the way the constructor would
+declared_of(spec) = canonicalize_static_dep_spec(spec, "deps", nothing)
 
 @testset "BinaryBuilderProducts" begin
     function test_xz_products(dir, as, env; kwargs...)
@@ -55,6 +59,18 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 @test JLLGenerator.AbstractJLLProduct(product, dir; env, kwargs...) !== nothing
             end
         end
+
+        # Static archives live in `libdir` on every platform, and can be found with
+        # or without their extension, or with an explicit directory.
+        for path in ("\${libdir}/liblzma.a", "\${libdir}/liblzma", "liblzma", "liblzma.a")
+            slp = StaticLibraryProduct(path)
+            located = locate(slp, dir; env, kwargs...)
+            @test located !== nothing
+            @test isfile(joinpath(dir, located))
+            @test basename(located) == "liblzma.a"
+        end
+        @test locate(StaticLibraryProduct("libnope"), dir; env, kwargs...) === nothing
+
     end
 
     # We'll test with the `XZ_jll` tarball, which contains three of our products
@@ -101,5 +117,48 @@ using JLLGenerator: rtld_symbols, rtld_flags
                 test_xz_products(dir, as, env; platform=parse(Platform, target))
             end
         end
+    end
+
+    @testset "StaticLibraryProduct construction" begin
+        # Subordinate products carry no identity of their own, and inherit by default
+        subordinate = StaticLibraryProduct("libfoo")
+        @test subordinate.varname === nothing
+        @test subordinate.deps === :inherit
+        @test subordinate.system_deps === :inherit
+        @test LibraryProduct("libfoo", :libfoo; static=subordinate).static === subordinate
+
+        # ... and are refused if they try to name themselves
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo;
+            static=StaticLibraryProduct("libfoo"; varname=:libfoo_a, deps=String[]))
+
+        # Standalone products must declare their dependencies explicitly, as there is
+        # no dynamic sibling for them to inherit from.
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; varname=:libfoo_a)
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; varname=:libfoo_a, deps=String[],
+                                                        system_deps=:inherit)
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; varname=:libfoo_a,
+                                                        deps=[:inherit, "libbar"])
+        standalone = StaticLibraryProduct("libfoo"; varname=:libfoo_a, deps=["Bar_jll.libbar"],
+                                          system_deps=["m"])
+        @test standalone.varname == :libfoo_a
+        @test declared_deps(standalone.deps) == ["Bar_jll.libbar"]
+        @test !inherits_deps(standalone.deps)
+
+        # Only the `:inherit` sentinel is understood, and only once
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=:audit)
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=[:audit])
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=[:inherit, :inherit])
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; deps=[1])
+        @test_throws ArgumentError StaticLibraryProduct("libfoo"; system_deps=17)
+
+        # The three spellings of a dependency declaration
+        inherited = ["libgcc_s", "CSL_jll.libquadmath"]
+        @test resolve_deps(:inherit, inherited) == (inherited, String[])
+        @test resolve_deps(declared_of(["libgcc_s"]), inherited) ==
+            (["libgcc_s"], ["CSL_jll.libquadmath"])
+        @test resolve_deps(declared_of([:inherit, "Zlib_jll.libz"]), inherited) ==
+            (vcat(inherited, "Zlib_jll.libz"), String[])
+        # Augmenting with something already inherited is not a duplicate
+        @test resolve_deps(declared_of([:inherit, "libgcc_s"]), inherited) == (inherited, String[])
     end
 end
