@@ -37,6 +37,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -80,6 +81,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1327,6 +1329,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1370,6 +1373,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1413,6 +1417,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1456,6 +1461,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1671,6 +1677,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -1714,6 +1721,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "@rpath/libLLVM.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2273,6 +2281,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2316,6 +2325,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2359,6 +2369,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
@@ -2402,6 +2413,7 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(:Zlib_jll, :libz),
                     ],
+                    soname = "libLLVM-15jl.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLExecutableProduct(
