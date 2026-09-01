@@ -1110,6 +1110,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.4.0.4.dylib",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.3.0.4.dylib",
                     [
@@ -1125,6 +1131,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1153,7 +1160,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.4.0.0.dylib",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1170,6 +1184,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1245,6 +1260,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1260,6 +1281,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1288,7 +1310,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1305,6 +1334,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1380,6 +1410,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1395,6 +1431,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1423,7 +1460,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1440,6 +1484,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1515,6 +1560,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1530,6 +1581,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1558,7 +1610,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1575,6 +1634,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1650,6 +1710,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1665,6 +1731,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1693,7 +1760,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1710,6 +1784,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1785,6 +1860,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1800,6 +1881,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1828,7 +1910,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1845,6 +1934,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1920,6 +2010,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -1935,6 +2031,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1963,7 +2060,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1980,6 +2084,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2055,6 +2160,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -2070,6 +2181,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2098,7 +2210,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2115,6 +2234,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2190,6 +2310,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -2205,6 +2331,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2233,7 +2360,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2250,6 +2384,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2460,6 +2595,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -2475,6 +2616,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2503,7 +2645,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2520,6 +2669,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2595,6 +2745,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.4.0.4.dylib",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.3.0.4.dylib",
                     [
@@ -2610,6 +2766,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2638,7 +2795,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.4.0.0.dylib",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2655,6 +2819,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2730,6 +2895,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -2745,6 +2916,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2773,7 +2945,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2790,6 +2969,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2865,6 +3045,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -2880,6 +3066,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2908,7 +3095,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2925,6 +3119,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -3000,6 +3195,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -3015,6 +3216,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -3043,7 +3245,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3060,6 +3269,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -3135,6 +3345,12 @@ jll = JLLInfo(;
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libcholmod_cuda,
+                    "lib/libcholmod_cuda.so.4.0.4",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libcolamd,
                     "lib/libcolamd.so",
                     [
@@ -3150,6 +3366,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libamd),
                         JLLLibraryDep(nothing, :libcolamd),
                         JLLLibraryDep(nothing, :libbtf),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -3178,7 +3395,14 @@ jll = JLLInfo(;
                         JLLLibraryDep(nothing, :libcamd),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
+                        JLLLibraryDep(nothing, :libspqr_cuda)
                     ],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
+                    :libspqr_cuda,
+                    "lib/libspqr_cuda.so.4.0.0",
+                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3195,6 +3419,7 @@ jll = JLLInfo(;
                         JLLLibraryDep(:libblastrampoline_jll, :libblastrampoline),
                         JLLLibraryDep(nothing, :libcholmod),
                         JLLLibraryDep(nothing, :libamd),
+                        JLLLibraryDep(nothing, :libcholmod_cuda)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),

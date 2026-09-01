@@ -97,8 +97,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -120,12 +119,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -164,8 +157,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -187,12 +179,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -231,8 +217,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -254,12 +239,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -292,8 +271,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -309,12 +287,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -353,8 +325,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -370,12 +341,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -414,8 +379,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -431,12 +395,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -475,8 +433,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -498,12 +455,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -542,8 +493,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -565,12 +515,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -609,8 +553,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -632,12 +575,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -676,8 +613,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -693,12 +629,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -737,8 +667,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -754,12 +683,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -798,8 +721,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -815,12 +737,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -859,8 +775,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -882,12 +797,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -926,8 +835,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -949,12 +857,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -993,8 +895,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1016,12 +917,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1060,8 +955,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1077,12 +971,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1121,8 +1009,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1138,12 +1025,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1182,8 +1063,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1199,12 +1079,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1614,7 +1488,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1622,14 +1496,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-3.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1643,12 +1518,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1691,13 +1573,13 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libatomic,
                     "bin\\libatomic-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1705,14 +1587,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-4.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1726,12 +1609,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1774,13 +1664,13 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libatomic,
                     "bin\\libatomic-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_sjlj-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1788,14 +1678,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-5.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -1809,12 +1700,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1870,8 +1768,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1893,12 +1790,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -1937,8 +1828,7 @@ jll = JLLInfo(;
                     :libgfortran,
                     "lib/libgfortran.so",
                     [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libgcc_s)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1960,12 +1850,6 @@ jll = JLLInfo(;
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
                     ],
-                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                ),
-                JLLLibraryProduct(
-                    :libquadmath,
-                    "lib/libquadmath.so",
-                    [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
             ],
@@ -2063,7 +1947,7 @@ jll = JLLInfo(;
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
-                    "lib/libgcc_s.1.1.dylib",
+                    "lib/libgcc_s.1.dylib",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2130,7 +2014,7 @@ jll = JLLInfo(;
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
-                    "lib/libgcc_s.1.1.dylib",
+                    "lib/libgcc_s.1.dylib",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2844,7 +2728,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2852,14 +2736,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-3.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2873,12 +2758,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -2921,13 +2813,13 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libatomic,
                     "bin\\libatomic-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2935,14 +2827,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-4.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -2956,12 +2849,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -3004,13 +2904,13 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libatomic,
                     "bin\\libatomic-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgcc_s,
                     "bin\\libgcc_s_seh-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3018,14 +2918,15 @@ jll = JLLInfo(;
                     "bin\\libgfortran-5.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
+                        JLLLibraryDep(nothing, :libquadmath),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libwinpthread)],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
@@ -3039,12 +2940,19 @@ jll = JLLInfo(;
                     "bin\\libstdc++-6.dll",
                     [
                         JLLLibraryDep(nothing, :libgcc_s),
+                        JLLLibraryDep(nothing, :libwinpthread)
                     ],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
                 JLLLibraryProduct(
+                    :libwinpthread,
+                    "bin\\libwinpthread-1.dll",
+                    [],
+                    flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
+                ),
+                JLLLibraryProduct(
                     :libquadmath,
-                    "bin\\libquadmath.6.dll",
+                    "bin\\libquadmath-0.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
