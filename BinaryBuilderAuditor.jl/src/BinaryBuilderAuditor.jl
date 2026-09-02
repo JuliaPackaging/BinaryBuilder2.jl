@@ -12,18 +12,20 @@ include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
+include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
 
 
 function audit!(prefix::String,
                 library_products::Vector{LibraryProduct},
-                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}};
+                dep_libs::Dict{Symbol,<:Vector{<:AbstractJLLProduct}};
                 prefix_alias::String = prefix,
                 platform::AbstractPlatform = HostPlatform(),
                 env::Dict{String,String} = Dict{String,String}(
                     "prefix" => prefix,
                     "bb_full_target" => triplet(platform),
                 ),
+                static_library_products::Vector{StaticLibraryProduct} = StaticLibraryProduct[],
                 verbose::Bool = false,
                 readonly::Bool = false)
     # First, scan the prefix:
@@ -31,7 +33,8 @@ function audit!(prefix::String,
         prefix,
         platform,
         library_products,
-        env,
+        env;
+        static_library_products,
     )
     pass_results = Dict{String,Vector{PassResult}}()
 
@@ -47,6 +50,9 @@ function audit!(prefix::String,
 
     # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
     jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs)
+
+    # Describe the static archive of each library product, and the standalone archives
+    jll_lib_products = resolve_static_libraries!(scan, pass_results, jll_lib_products)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly

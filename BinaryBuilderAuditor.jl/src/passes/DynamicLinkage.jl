@@ -2,19 +2,23 @@ using BinaryBuilderProducts, JLLGenerator
 
 function resolve_dynamic_links!(scan::ScanResult,
                                 pass_results::Dict{String,Vector{PassResult}},
-                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+                                dep_libs::Dict{Symbol,<:Vector{<:AbstractJLLProduct}})
     # We need to generate a graph showing which libraries are needed by the
     # `library_products` in our `scan`.
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
     for (jll_name, libs) in dep_libs
         for lib in libs
+            # Only a library we could load can satisfy a `DT_NEEDED`
+            if !isa(lib, JLLLibraryProduct)
+                continue
+            end
             dep_soname_map[basename(lib.soname)] = (Symbol(string(jll_name, "_jll")), lib.varname)
         end
     end
 
     # Iterate over our own library products, get list of dependencies,
     # resolve each dep to its matching value in `soname_map`
-    jll_lib_products = JLLLibraryProduct[]
+    jll_lib_products = AbstractJLLProduct[]
     for (rel_path, lib) in scan.library_products
         local lib_soname, lib_deps
 
@@ -142,7 +146,7 @@ end
 
 function rpaths_consistent!(scan::ScanResult,
                             pass_results::Dict{String,Vector{PassResult}},
-                            dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+                            dep_libs::Dict{Symbol,<:Vector{<:AbstractJLLProduct}})
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
         return
@@ -152,6 +156,9 @@ function rpaths_consistent!(scan::ScanResult,
     soname_locator = copy(scan.soname_locator)
     for (_, libs) in dep_libs
         for lib in libs
+            if !isa(lib, JLLLibraryProduct)
+                continue
+            end
             soname_locator[basename(lib.soname)] = lib.path
         end
     end

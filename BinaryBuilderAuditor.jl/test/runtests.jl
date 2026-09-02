@@ -6,6 +6,7 @@ include("passes/RelativeSymlinkTests.jl")
 include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
 include("passes/DynamicLinkageTests.jl")
+include("passes/StaticLibrariesTests.jl")
 
 @testset "audit!" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
@@ -41,6 +42,24 @@ include("passes/DynamicLinkageTests.jl")
         @test readlink(joinpath(prefix, "lib", "libplus$(dlext(platform))")) == libplus_soname
         @test length(result.jll_lib_products) == 2
         @test success(result)
+
+        # A library shipped both ways is described once per linkage
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -c -o $(joinpath(prefix, "lib", "libplus.o")) $(libplus_c_path)`, env))
+            run(setenv(`$(get(env, "AR", "ar")) rcs $(joinpath(prefix, "lib", "libplus.a")) $(joinpath(prefix, "lib", "libplus.o"))`, env))
+            rm(joinpath(prefix, "lib", "libplus.o"))
+        end
+        both_ways = [
+            LibraryProduct("libplus", :libplus; static = StaticLibraryProduct("libplus")),
+            LibraryProduct("libmult", :libmult),
+        ]
+        result = audit!(prefix, both_ways, empty_dep_libs; readonly=true)
+        @test success(result)
+        @test length(result.jll_lib_products) == 3
+        libplus_a = only(p for p in result.jll_lib_products if isa(p, JLLStaticLibraryProduct))
+        @test libplus_a.varname == :libplus && libplus_a.path == "lib/libplus.a"
+        @test libplus_a.system_deps == only(p for p in result.jll_lib_products if isa(p, JLLLibraryProduct) && p.varname == :libplus).system_deps
+        rm(joinpath(prefix, "lib", "libplus.a"))
 
         # Run audit a second time with `readonly=true`, ensure that the treehash does not change
         pre_treehash = treehash(prefix)
