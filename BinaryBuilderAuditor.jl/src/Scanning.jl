@@ -32,6 +32,9 @@ struct ScanResult
     # This maps `rel_path` to a library product `LibraryProduct`
     library_products::Dict{String,LibraryProduct}
 
+    # This maps the `rel_path` of a static archive to its `StaticLibraryProduct`.
+    static_library_products::Dict{String,StaticLibraryProduct}
+
     # For easy lookup of things by symlink alias
     symlinks::Dict{String,String}
 
@@ -57,13 +60,14 @@ function get_object_handle(path::String, platform::AbstractPlatform)
 end
 
 function scan_files(prefix::String, platform::AbstractPlatform,
-                    library_products::Vector{LibraryProduct} = LibraryProduct[],
+                    products::Vector{<:AbstractProduct} = AbstractProduct[],
                     env::Dict{String,String} = Dict{String,String}(
                         "prefix" => prefix,
                         "bb_full_target" => triplet(platform),
                     );
                     prefix_alias::String = prefix)
     prefix = safe_realpath(prefix)
+    library_products = LibraryProduct[p for p in products if isa(p, LibraryProduct)]
 
     # Do a scan over the prefix, find all symlinks, binary objects, etc....
     all_files = Dict{String,StatStruct}()
@@ -150,6 +154,27 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         library_product_map[relpath_search(symlinks, lib_located_path)] = lib
     end
 
+    # Locate all static libraries
+    static_product_map = Dict{String,StaticLibraryProduct}()
+    function locate_static(slp::StaticLibraryProduct)
+        located_path = locate(slp, prefix; env, platform)
+        if located_path === nothing
+            @error("Unable to locate static library", slp, prefix, platform)
+            error()
+        end
+        static_product_map[relpath_search(symlinks, located_path)] = slp
+    end
+    for lib in library_products
+        if lib.static !== nothing
+            locate_static(lib.static)
+        end
+    end
+    for slp in products
+        if isa(slp, StaticLibraryProduct)
+            locate_static(slp)
+        end
+    end
+
     # Get the (memoized) toolchain that holds our third-party tools
     at, at_prefix = deployed_auditor_toolchain(
         CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)),
@@ -167,6 +192,7 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         missing_sonames,
         soname_forwards,
         library_product_map,
+        static_product_map,
         symlinks,
     )
 end
