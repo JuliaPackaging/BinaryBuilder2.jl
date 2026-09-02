@@ -1773,7 +1773,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1808,7 +1808,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1880,7 +1880,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1915,7 +1915,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1987,7 +1987,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -2022,7 +2022,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -2304,10 +2304,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgfortran,
                     "lib/libgfortran.3.dylib",
-                    [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
-                    ],
+                    [JLLLibraryDep(nothing, :libquadmath)],
                     ["System"],
                     soname = "@rpath/libgfortran.3.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -2385,10 +2382,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgfortran,
                     "lib/libgfortran.4.dylib",
-                    [
-                        JLLLibraryDep(nothing, :libgcc_s),
-                        JLLLibraryDep(nothing, :libquadmath)
-                    ],
+                    [JLLLibraryDep(nothing, :libquadmath)],
                     ["System"],
                     soname = "@rpath/libgfortran.4.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3249,7 +3243,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3284,7 +3278,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3356,7 +3350,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3391,7 +3385,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3463,7 +3457,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgomp,
                     "bin\\libgomp-1.dll",
-                    [JLLLibraryDep(nothing, :libwinpthread)],
+                    [JLLLibraryDep(nothing, :libgcc_s), JLLLibraryDep(nothing, :libwinpthread)],
                     ["kernel32", "msvcrt"],
                     soname = "libgomp-1.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -3498,7 +3492,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libquadmath,
                     "bin\\libquadmath-0.dll",
-                    [],
+                    [JLLLibraryDep(nothing, :libgcc_s)],
                     ["kernel32", "msvcrt"],
                     soname = "libquadmath-0.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],

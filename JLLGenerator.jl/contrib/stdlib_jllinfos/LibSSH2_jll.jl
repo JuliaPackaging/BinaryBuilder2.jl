@@ -415,11 +415,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libssh2,
                     "bin\\libssh2.dll",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                    ],
+                    [JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto)],
                     ["gcc_s", "kernel32", "msvcrt", "user32", "ws2_32"],
                     soname = "libssh2.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -681,11 +677,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libssh2,
                     "bin\\libssh2.dll",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                    ],
+                    [JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto)],
                     ["kernel32", "msvcrt", "user32", "ws2_32"],
                     soname = "libssh2.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
