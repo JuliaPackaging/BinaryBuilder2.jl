@@ -3,7 +3,7 @@ export AuditInfo, AuditDependencyInfo
 
 struct AuditDependencyInfo
     # library products of the JLL, for the platform being audited
-    libs::Vector{JLLLibraryProduct}
+    libs::Vector{AbstractJLLProduct}
 end
 
 struct AuditLibraryInfo
@@ -24,6 +24,7 @@ end
 function AuditInfo(deps::Dict{Symbol,AuditDependencyInfo})
     sonames = Dict{String,AuditLibraryInfo}()
     for (jll_name, dep) in deps, lib in dep.libs
+        isa(lib, JLLLibraryProduct) || continue # ignore static libraries
         sonames[basename(lib.soname)] = AuditLibraryInfo(jll_name, lib.varname, lib.path)
     end
     return AuditInfo(deps, sonames)
