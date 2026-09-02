@@ -79,7 +79,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.0.3.23.dylib",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libquadmath)],
                     ["System"],
                     soname = "@rpath/libopenblas64_.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -930,7 +930,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -965,7 +965,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1000,7 +1000,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1035,7 +1035,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.so",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgomp)],
                     ["c", "m", "pthread"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1069,7 +1069,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.so",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgomp)],
                     ["c", "m", "pthread"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1103,7 +1103,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.so",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgomp)],
                     ["c", "m", "pthread"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1137,7 +1137,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.0.3.23.dylib",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libquadmath)],
                     ["System", "gcc_s"],
                     soname = "@rpath/libopenblas64_.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1172,7 +1172,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.0.3.23.dylib",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libquadmath)],
                     ["System", "gcc_s"],
                     soname = "@rpath/libopenblas64_.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1207,7 +1207,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.0.3.23.dylib",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran), JLLLibraryDep(:CompilerSupportLibraries_jll, :libquadmath)],
                     ["System", "gcc_s"],
                     soname = "@rpath/libopenblas64_.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1344,7 +1344,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "lib/libopenblas64_.so",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [],
                     ["c", "m", "pthread", "rt"],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
                 ),
@@ -1582,7 +1582,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas64_.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas64_.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1617,7 +1617,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas64_.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas64_.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1652,7 +1652,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libopenblas,
                     "bin\\libopenblas64_.dll",
-                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
+                    [JLLLibraryDep(:CompilerSupportLibraries_jll, :libgcc_s), JLLLibraryDep(:CompilerSupportLibraries_jll, :libgfortran)],
                     ["kernel32", "msvcrt"],
                     soname = "libopenblas64_.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],

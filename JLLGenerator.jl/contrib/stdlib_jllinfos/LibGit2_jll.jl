@@ -1251,12 +1251,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgit2,
                     "lib/libgit2.1.6.4.dylib",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                        JLLLibraryDep(:LibSSH2_jll, :libssh2),
-                    ],
+                    [JLLLibraryDep(:LibSSH2_jll, :libssh2), JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto)],
                     ["System", "framework:CoreFoundation", "framework:Security", "iconv"],
                     soname = "@rpath/libgit2.1.6.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1647,12 +1642,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgit2,
                     "bin\\libgit2.dll",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                        JLLLibraryDep(:LibSSH2_jll, :libssh2),
-                    ],
+                    [JLLLibraryDep(:LibSSH2_jll, :libssh2)],
                     ["advapi32", "crypt32", "gcc_s", "kernel32", "msvcrt", "ole32", "rpcrt4", "winhttp", "ws2_32"],
                     soname = "libgit2.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1735,12 +1725,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgit2,
                     "lib/libgit2.1.6.4.dylib",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                        JLLLibraryDep(:LibSSH2_jll, :libssh2),
-                    ],
+                    [JLLLibraryDep(:LibSSH2_jll, :libssh2), JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto)],
                     ["System", "framework:CoreFoundation", "framework:Security", "iconv"],
                     soname = "@rpath/libgit2.1.6.dylib",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
@@ -1955,12 +1940,7 @@ jll = JLLInfo(;
                 JLLLibraryProduct(
                     :libgit2,
                     "bin\\libgit2.dll",
-                    [
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedtls),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedx509),
-                        JLLLibraryDep(:MbedTLS_jll, :libmbedcrypto),
-                        JLLLibraryDep(:LibSSH2_jll, :libssh2),
-                    ],
+                    [JLLLibraryDep(:LibSSH2_jll, :libssh2)],
                     ["advapi32", "crypt32", "kernel32", "msvcrt", "ole32", "rpcrt4", "winhttp", "ws2_32"],
                     soname = "libgit2.dll",
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
