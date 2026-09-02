@@ -32,6 +32,16 @@ struct ScanResult
     # This maps `rel_path` to a library product `LibraryProduct`
     library_products::Dict{String,LibraryProduct}
 
+    # This maps the `rel_path` of a static archive to its `StaticLibraryProduct`.
+    # Both archives subordinate to a `LibraryProduct` and standalone archives appear
+    # here.  Archives are not dynamic objects, so they never show up in
+    # `binary_objects` and are exempt from the SONAME/DT_NEEDED/RPATH passes.
+    static_library_products::Dict{String,StaticLibraryProduct}
+
+    # This maps the varname of a `LibraryProduct` to the `rel_path` of its
+    # subordinate static archive, for those library products that declared one.
+    static_archives::Dict{Symbol,String}
+
     # For easy lookup of things by symlink alias
     symlinks::Dict{String,String}
 
@@ -62,7 +72,8 @@ function scan_files(prefix::String, platform::AbstractPlatform,
                         "prefix" => prefix,
                         "bb_full_target" => triplet(platform),
                     );
-                    prefix_alias::String = prefix)
+                    prefix_alias::String = prefix,
+                    static_library_products::Vector{StaticLibraryProduct} = StaticLibraryProduct[])
     prefix = safe_realpath(prefix)
 
     # Do a scan over the prefix, find all symlinks, binary objects, etc....
@@ -150,6 +161,33 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         library_product_map[relpath_search(symlinks, lib_located_path)] = lib
     end
 
+    # Locate all static archives; both the ones subordinate to a library product
+    # and the standalone ones.  Note that archives are not dynamic objects, so
+    # `binary_objects` (and therefore the SONAME/DT_NEEDED/RPATH passes) never sees them.
+    static_product_map = Dict{String,StaticLibraryProduct}()
+    static_archives = Dict{Symbol,String}()
+    function locate_static(slp::StaticLibraryProduct, owner::Union{Nothing,LibraryProduct})
+        located_path = locate(slp, prefix; env, platform)
+        if located_path === nothing
+            @error("Unable to locate static library", slp, owner, prefix, platform)
+            error()
+        end
+        rel_path = relpath_search(symlinks, located_path)
+        static_product_map[rel_path] = slp
+        if owner !== nothing
+            static_archives[owner.varname] = rel_path
+        end
+        return rel_path
+    end
+    for lib in library_products
+        if lib.static !== nothing
+            locate_static(lib.static, lib)
+        end
+    end
+    for slp in static_library_products
+        locate_static(slp, nothing)
+    end
+
     # Create toolchain for our third-party tools
     at = AuditorToolchain(CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)))
     at_srcs = toolchain_sources(at)
@@ -169,6 +207,8 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         missing_sonames,
         soname_forwards,
         library_product_map,
+        static_product_map,
+        static_archives,
         symlinks,
     )
 end

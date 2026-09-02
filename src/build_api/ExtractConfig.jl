@@ -76,6 +76,14 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
+        # A library's static archive is subordinate, and so would otherwise be
+        # invisible to the hash even though it changes what we extract.
+        if isa(product, LibraryProduct) && product.static !== nothing
+            static = product.static
+            println(hash_buffer, "  $(product.varname).static = $(static.paths)")
+            println(hash_buffer, "  $(product.varname).static_deps = $(static.deps)")
+            println(hash_buffer, "  $(product.varname).static_system_deps = $(static.system_deps)")
+        end
     end
 
     # I think we probably don't need to be sensitive to these, since they're only used in packaging?
@@ -174,9 +182,12 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
         platform = host_if_crossplatform(config.platform)
 
         # Get libraries for all JLL dependencies
-        get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
+        # A dependency's libraries, however they are linked: an archive is as much a
+        # library a dependent can link against as a shared object is.
+        get_library_products(jart::JLLBuildInfo) = AbstractJLLProduct[
+            x for x in jart.products if isa(x, JLLLibraryProduct) || isa(x, JLLStaticLibraryProduct)]
         get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
-        dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}()
+        dep_libs = Dict{Symbol, Vector{AbstractJLLProduct}}()
         for dep in dep_jll_infos
             dep_libs[Symbol(dep.name)] = get_library_products(dep, platform)
         end
@@ -191,6 +202,7 @@ function BinaryBuilderAuditor.audit!(config::ExtractConfig, artifact_dir::String
             prefix_alias,
             env = config.build.env,
             platform,
+            static_library_products = StaticLibraryProduct[p for p in config.products if isa(p, StaticLibraryProduct)],
             kwargs...
         )
     end
@@ -198,11 +210,18 @@ end
 
 function find_unlocatable_products(config::ExtractConfig, prefix)
     unlocatable_products = []
-    for product in config.products
+    function check(product)
         if locate(product, prefix;
                   env=config.build.env,
                   platform=host_if_crossplatform(config.platform)) === nothing
             push!(unlocatable_products, product)
+        end
+    end
+    for product in config.products
+        check(product)
+        # Static libraries are subordinate, so they never appear in `config.products`
+        if isa(product, LibraryProduct) && product.static !== nothing
+            check(product.static)
         end
     end
     return unlocatable_products
@@ -214,7 +233,7 @@ function extract!(config::ExtractConfig;
                   verbose::Bool = AbstractBuildMeta(config).verbose)
     local artifact_hash, run_status, run_exception, collector
     audit_result = nothing
-    jll_lib_products = JLLLibraryProduct[]
+    jll_lib_products = AbstractJLLProduct[]
     build_config = BuildConfig(config)
     meta = AbstractBuildMeta(config)
     meta.extractions[config] = nothing

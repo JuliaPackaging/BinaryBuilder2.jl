@@ -170,3 +170,72 @@ if LazyJLLWrappers.use_lazy_libraries()
         )
     end
 end
+
+using Base.BinaryPlatforms: Platform
+@testset "system_deps are ignored by the wrapper" begin
+    # A record may name the system libraries a product links against; the
+    # wrapper has no use for them and must not mention them.
+    platform = Platform("x86_64", "linux")
+    jllinfo = JLLInfo(;
+        name = "Foo",
+        version = v"1.0.0",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.0.0",
+                deps = [],
+                sources = [],
+                platform,
+                name = "Foo",
+                artifact = JLLArtifactBinding(;
+                    treehash = "0000000000000000000000000000000000000000",
+                    download_sources = [],
+                ),
+                products = [
+                    JLLLibraryProduct(
+                        :libfoo,
+                        "lib/libfoo.so.1",
+                        [],
+                        ["c", "m", "stdc++"];
+                        soname = "libfoo.so.1",
+                    ),
+                ],
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
+            ),
+        ],
+    )
+    toml = JLLGenerator.generate_toml_dict(jllinfo)
+    build = only(toml["builds"])
+    @test only(build["products"])["system_deps"] == ["c", "m", "stdc++"]
+
+    # Generate the wrapper for this build directly, as `@generate_jll_from_toml`
+    # would.  The generator consults the JLL module only for its preferences, so
+    # any loaded package module stands in for it here.
+    jb = LazyJLLWrappers.JLLBlocks(LazyJLLWrappers)
+    LazyJLLWrappers.top_level_statements(jb, build, platform)
+    LazyJLLWrappers.library_product_definition(jb, build, only(build["products"]))
+    code = string(LazyJLLWrappers.synthesize(jb))
+    @test contains(code, "libfoo")
+    @test !contains(code, "system_deps")
+    @test !contains(code, "stdc++")
+end
+
+@testset "static libraries are ignored by the wrapper" begin
+    # The Julia side deliberately ignores static libraries for now: they exist in
+    # `JLL.toml` for record-side consumers, and a wrapper neither loads nor binds them,
+    # so it must not export a name it never defines.
+    lib(name, linkage = nothing) = begin
+        d = Dict{String,Any}("type" => "library", "name" => name,
+                             "path" => "lib/$(name)", "deps" => String[])
+        linkage === nothing || (d["linkage"] = linkage)
+        d
+    end
+    @test LazyJLLWrappers.defines_binding(lib("libz", "dynamic"))
+    # An entry from before linkages were spelled out is a shared library
+    @test LazyJLLWrappers.defines_binding(lib("libz"))
+    @test !LazyJLLWrappers.defines_binding(lib("libonly", "static"))
+    # Executables and files are unaffected
+    @test LazyJLLWrappers.defines_binding(
+        Dict{String,Any}("type" => "executable", "name" => "tool", "path" => "bin/tool"))
+    @test LazyJLLWrappers.defines_binding(
+        Dict{String,Any}("type" => "file", "name" => "data", "path" => "share/data"))
+end

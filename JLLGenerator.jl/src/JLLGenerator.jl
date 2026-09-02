@@ -6,6 +6,7 @@ import Base: UUID
 
 export JLLInfo, JLLBuildInfo, JLLSourceRecord, JLLArtifactSource, JLLLibraryDep,
        AbstractJLLProduct, JLLExecutableProduct, JLLFileProduct, JLLLibraryProduct,
+       JLLStaticLibraryProduct,
        JLLPackageDependency, JLLArtifactBinding, JuliaBundledPath, AbstractProducts,
        JLLBuildLicense, generate_jll, generate_toml_dict, parse_toml_dict
 
@@ -104,18 +105,23 @@ end
     varname::Symbol
     path::String
     deps::Vector{JLLLibraryDep}
+    # System libraries this one links against, by linker library name (`"m"`,
+    # `"gcc_s"`, `"System"`, `"framework:CoreFoundation"`), as mapped from the
+    # observed SONAMEs by the auditor.  A shared library records its own needs;
+    # this is what linking against a static archive requires.
+    system_deps::Vector{String}
     soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
 
-    function JLLLibraryProduct(varname, path, deps;
+    function JLLLibraryProduct(varname, path, deps, system_deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
                                on_load_callback = nothing)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, soname, flags, on_load_callback)
+        return new(varname, path, deps, system_deps, soname, flags, on_load_callback)
     end
 end
 
@@ -132,6 +138,9 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     if lp.on_load_callback !== nothing
         d["on_load_callback"] = string(lp.on_load_callback)
     end
+    if !isempty(lp.system_deps)
+        d["system_deps"] = copy(lp.system_deps)
+    end
     return d
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
@@ -146,7 +155,8 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     return JLLLibraryProduct(
         Symbol(d["name"]),
         d["path"],
-        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]];
+        [parse_toml_dict(JLLLibraryDep, d) for d in d["deps"]],
+        get(d, "system_deps", String[])::Vector{String};
         soname = d["soname"],
         flags = Symbol.(d["flags"]),
         on_load_callback,
@@ -154,13 +164,78 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
 end
 
 
+"""
+    JLLStaticLibraryProduct
+
+A library provided as a static archive rather than as something to load.  It is a
+library product like any other -- written as `type = "library"` with
+`linkage = "static"` -- but what a consumer needs from it is what to put on a link
+line: the libraries it depends on, the bare system library names the system provides
+(`"m"`, `"pthread"`, with no `-l` prefix), and the symbols that must be kept alive so
+that its initializers survive `--gc-sections`.
+
+A library that ships both ways is two entries sharing a name, one per linkage.
+"""
+@struct_hash_equal struct JLLStaticLibraryProduct <: AbstractJLLProduct
+    varname::Symbol
+    path::String
+    deps::Vector{JLLLibraryDep}
+    system_deps::Vector{String}
+    roots::Vector{String}
+
+    function JLLStaticLibraryProduct(varname, path;
+                                     deps = JLLLibraryDep[],
+                                     system_deps = String[],
+                                     roots = String[])
+        return new(Symbol(varname), String(path),
+                   empty_convert(JLLLibraryDep, deps),
+                   empty_convert(String, String[string(d) for d in system_deps]),
+                   empty_convert(String, String[string(r) for r in roots]))
+    end
+end
+
+function generate_toml_dict(sp::JLLStaticLibraryProduct)
+    d = Dict(
+        "type" => "library",
+        "name" => string(sp.varname),
+        "linkage" => "static",
+        "path" => sp.path,
+        "deps" => generate_toml_dict.(sp.deps),
+        "system_deps" => sp.system_deps,
+        "roots" => sp.roots,
+    )
+    return d
+end
+function parse_toml_dict(::Type{JLLStaticLibraryProduct}, d)
+    linkage = get(d, "linkage", "dynamic")
+    if linkage != "static"
+        throw(ArgumentError("Invalid linkage '$(linkage)' for static library '$(d["name"])'; expected \"static\""))
+    end
+    return JLLStaticLibraryProduct(
+        Symbol(d["name"]),
+        d["path"];
+        deps = [parse_toml_dict(JLLLibraryDep, dep) for dep in get(d, "deps", String[])],
+        system_deps = String[string(sd) for sd in get(d, "system_deps", String[])],
+        roots = String[string(r) for r in get(d, "roots", String[])],
+    )
+end
+
 function parse_toml_dict(::Type{AbstractJLLProduct}, d)
     if d["type"] == "executable"
         return parse_toml_dict(JLLExecutableProduct, d)
     elseif d["type"] == "file"
         return parse_toml_dict(JLLFileProduct, d)
     elseif d["type"] == "library"
-        return parse_toml_dict(JLLLibraryProduct, d)
+        # A library is written once per linkage, so the linkage says which kind of
+        # product this entry describes.
+        linkage = get(d, "linkage", "dynamic")
+        if linkage == "dynamic"
+            return parse_toml_dict(JLLLibraryProduct, d)
+        elseif linkage == "static"
+            return parse_toml_dict(JLLStaticLibraryProduct, d)
+        else
+            throw(ArgumentError("Invalid linkage '$(linkage)' for library '$(d["name"])'; expected \"dynamic\" or \"static\""))
+        end
     else
         throw(ArgumentError("Unknown JLL product type '$(d["type"])'"))
     end
@@ -456,8 +531,21 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
     function JLLBuildInfo(src_version, platform, name, artifact, auxilliary_artifacts,
                           products, deps, sources, licenses, lazy, callback_defs, init_def)
         # Quick verification of dependency structure, to ensure we're not incoherent.
+        # A library is written once per linkage, so the same name may appear twice --
+        # once dynamic, once static -- but never twice for the same linkage.
+        seen_linkages = Dict{Tuple{Symbol,String},Bool}()
         for p in products
-            if isa(p, JLLLibraryProduct)
+            if isa(p, JLLLibraryProduct) || isa(p, JLLStaticLibraryProduct)
+                linkage = isa(p, JLLStaticLibraryProduct) ? "static" : "dynamic"
+                if haskey(seen_linkages, (p.varname, linkage))
+                    throw(ArgumentError("Library '$(p.varname)' is described by more than one `linkage = \"$(linkage)\"` entry for platform '$(triplet(platform))'!"))
+                end
+                seen_linkages[(p.varname, linkage)] = true
+            end
+        end
+
+        for p in products
+            if isa(p, JLLLibraryProduct) || isa(p, JLLStaticLibraryProduct)
                 for d in p.deps
                     # A "nothing" module means it's an intra-package dependency
                     if d.mod === nothing
@@ -473,7 +561,7 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
                     end
                 end
 
-                if p.on_load_callback !== nothing
+                if isa(p, JLLLibraryProduct) && p.on_load_callback !== nothing
                     if p.on_load_callback ∉ keys(callback_defs)
                         throw(ArgumentError("Product '$(p.varname)' references on-load callback '$(p.on_load_callback)', but matching definition not found!"))
                     end
@@ -708,6 +796,23 @@ function coalesce_licenses(info::JLLInfo)
     return ret
 end
 
+"""
+    lazy_jll_wrappers_compat(info::JLLInfo)
+
+The lowest `LazyJLLWrappers` able to read this JLL.  A wrapper that predates static
+libraries would take a static entry for something to load, so a record containing one
+requires a newer wrapper; a record without one is exactly what every released wrapper
+already reads.
+"""
+function lazy_jll_wrappers_compat(info::JLLInfo)
+    for build in info.builds
+        if any(isa(p, JLLStaticLibraryProduct) for p in build.products)
+            return "1.1.2"
+        end
+    end
+    return "1.0.0"
+end
+
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
         for child in readdir(out_dir)
@@ -855,7 +960,10 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             ),
 
             "compat" => Dict{String,Any}(
-                "LazyJLLWrappers" => "1.0.0",
+                # A record containing static entries needs a wrapper that knows to
+                # ignore them; anything else keeps the historical floor and stays
+                # installable against every released wrapper.
+                "LazyJLLWrappers" => lazy_jll_wrappers_compat(info),
                 "julia" => info.julia_compat,
             )
         )

@@ -206,6 +206,11 @@ function JLLProducts(result::ExtractResult)
             continue
         end
 
+        # Archive-only products are translated by the auditor, just like library products
+        if isa(product, StaticLibraryProduct)
+            continue
+        end
+
         push!(products, 
             # Convert from ExecutableProduct/FileProduct to JLLProduct types
             AbstractJLLProduct(
@@ -220,7 +225,8 @@ function JLLProducts(result::ExtractResult)
         )
     end
 
-    # Copy over the LibraryProducts that were translated by the auditor
+    # Copy over the library products that were translated by the auditor; archive-only
+    # products are among them, since a library is a library however it is linked.
     append!(products, result.jll_lib_products)
     return products
 end

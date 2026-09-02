@@ -2,19 +2,23 @@ using BinaryBuilderProducts, JLLGenerator
 
 function resolve_dynamic_links!(scan::ScanResult,
                                 pass_results::Dict{String,Vector{PassResult}},
-                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+                                dep_libs::Dict{Symbol,<:Vector{<:AbstractJLLProduct}})
     # We need to generate a graph showing which libraries are needed by the
     # `library_products` in our `scan`.
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
     for (jll_name, libs) in dep_libs
         for lib in libs
+            # Only a library we could load can satisfy a `DT_NEEDED`
+            if !isa(lib, JLLLibraryProduct)
+                continue
+            end
             dep_soname_map[basename(lib.soname)] = (Symbol(string(jll_name, "_jll")), lib.varname)
         end
     end
 
     # Iterate over our own library products, get list of dependencies,
     # resolve each dep to its matching value in `soname_map`
-    jll_lib_products = JLLLibraryProduct[]
+    jll_lib_products = AbstractJLLProduct[]
     for (rel_path, lib) in scan.library_products
         local lib_soname, lib_deps
 
@@ -51,14 +55,9 @@ function resolve_dynamic_links!(scan::ScanResult,
         # Resolve each dependency to one of the `LibraryLink` objects
         # we created above, use that to construct a `JLLLibraryDep`
         jll_deps = JLLLibraryDep[]
+        system_deps = String[]
         for lib_dep_soname in lib_deps
             lib_dep_soname = basename(lib_dep_soname)
-            # Skip system libraries that we don't want to track, because
-            # we don't redistribute them.
-            if is_system_library(lib_dep_soname, scan.platform)
-                @debug("Skipping system library", lib_dep_soname, lib_path=rel_path)
-                continue
-            end
 
             # First, is this a library from a dependency?
             local jll_name, lib_varname
@@ -77,6 +76,15 @@ function resolve_dynamic_links!(scan::ScanResult,
                 end
 
                 if !haskey(scan.soname_locator, lib_dep_soname)
+                    # System libraries are checked as the last fallback so that we do not e.g.
+                    # treat libgcc provided by the CSL JLL as system-provided
+                    if is_system_library(lib_dep_soname, scan.platform)
+                        name = system_library_linker_name(lib_dep_soname, scan.platform)
+                        if name !== nothing
+                            push!(system_deps, name)
+                        end
+                        continue
+                    end
                     push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Unable to map dependency '$(lib_dep_soname)'")
                     continue
                 end
@@ -96,7 +104,8 @@ function resolve_dynamic_links!(scan::ScanResult,
         push!(jll_lib_products, JLLLibraryProduct(
             lib.varname,
             rel_path,
-            jll_deps;
+            jll_deps,
+            sort(unique(system_deps));
             flags = lib.dlopen_flags,
             soname = lib_soname,
             on_load_callback = lib.on_load_callback,
@@ -137,7 +146,7 @@ end
 
 function rpaths_consistent!(scan::ScanResult,
                             pass_results::Dict{String,Vector{PassResult}},
-                            dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+                            dep_libs::Dict{Symbol,<:Vector{<:AbstractJLLProduct}})
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
         return
@@ -147,6 +156,9 @@ function rpaths_consistent!(scan::ScanResult,
     soname_locator = copy(scan.soname_locator)
     for (_, libs) in dep_libs
         for lib in libs
+            if !isa(lib, JLLLibraryProduct)
+                continue
+            end
             soname_locator[basename(lib.soname)] = lib.path
         end
     end
