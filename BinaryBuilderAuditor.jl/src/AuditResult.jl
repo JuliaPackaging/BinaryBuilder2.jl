@@ -19,10 +19,10 @@ struct AuditResult
     pass_results::Dict{String,Vector{PassResult}}
 
     # These contain the learned interdependency structure of the libraries
-    jll_lib_products::Vector{JLLLibraryProduct}
+    jll_lib_products::Vector{AbstractJLLProduct}
 end
 
-AuditResult(scan::ScanResult) = AuditResult(scan, Dict{String,Vector{PassResult}}(), JLLLibraryProduct[])
+AuditResult(scan::ScanResult) = AuditResult(scan, Dict{String,Vector{PassResult}}(), AbstractJLLProduct[])
 
 Base.success(ar::AuditResult) = success(ar.pass_results)
 function Base.success(pass_results::Dict{String,Vector{PassResult}})
