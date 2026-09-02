@@ -574,10 +574,10 @@ jll = JLLInfo(;
                 ),
                 JLLLibraryProduct(
                     :libncurses,
-                    "bin\\libncurses6.dll",
+                    "bin\\libncursesw6.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                    soname = "libncurses6.dll",
+                    soname = "libncursesw6.dll",
                 ),
                 JLLLibraryProduct(
                     :libpanel,
@@ -898,10 +898,10 @@ jll = JLLInfo(;
                 ),
                 JLLLibraryProduct(
                     :libncurses,
-                    "bin\\libncurses6.dll",
+                    "bin\\libncursesw6.dll",
                     [],
                     flags = [:RTLD_LAZY, :RTLD_DEEPBIND],
-                    soname = "libncurses6.dll",
+                    soname = "libncursesw6.dll",
                 ),
                 JLLLibraryProduct(
                     :libpanel,

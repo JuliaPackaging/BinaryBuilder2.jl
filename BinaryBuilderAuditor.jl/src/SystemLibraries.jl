@@ -159,6 +159,7 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "psapi.dll",
             "bcrypt.dll",
             "version.dll",
+            "dbghelp.dll",
         ]
 
         csl_libs = [
@@ -189,6 +190,8 @@ function is_system_library(soname::AbstractString, platform::AbstractPlatform)
             "libthr.so.3",
             "libm.so.5",
             "libm.so.6",
+            # zlib ships in the FreeBSD base system
+            "libz.so.6",
 
             # compiler support libraries
             "libc++.so.1",
