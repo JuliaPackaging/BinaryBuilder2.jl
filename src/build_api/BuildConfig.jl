@@ -345,7 +345,8 @@ end
         "/var/cache/ccache" => MountInfo(ccache_cache("ccache"), MountType.ReadWrite),
     )
 
-    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
+    # Key our deployment directories off of the same universe repository
+    registries = Pkg.Registry.reachable_registries(; depots=[depot_path(config.meta.universe)])
     for (idx, (prefix, srcs)) in enumerate(config.source_trees)
         srcs_hashes = bytes2hex.(spec_hash.(srcs; registries))
         combined_hash = bytes2hex(sha1(string(srcs_hashes)))
