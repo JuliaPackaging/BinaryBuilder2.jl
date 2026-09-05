@@ -1,14 +1,14 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderToolchains"
 uuid = "33566f4c-336c-3150-6d30-4374274e6143"
-version = "0.3.0"
+version = "0.3.1"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
 BinaryBuilderSources = "0.2"
 HistoricalStdlibVersions = "2.0.1"
 JLLPrefixes = "0.3.8, 0.4"
-LazyJLLWrappers = "1.1"
+LazyJLLWrappers = "2.0"
 PrecompileTools = "1.2.1"
 Reexport = "1.2.2"
 Scratch = "1.2"
