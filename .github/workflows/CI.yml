@@ -52,17 +52,17 @@ jobs:
           git config --global user.name "GitHub Actions"
       - name: Allow unprivileged user namespaces (sandbox support)
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
-      - uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.julia-version }}
-      - uses: julia-actions/cache@v2
+      - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
         with:
           project: ${{ matrix.project }}
       - uses: julia-actions/julia-runtest@v1
         with:
           project: ${{ matrix.project }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: test-files-${{ matrix.runner.arch }}-${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }}

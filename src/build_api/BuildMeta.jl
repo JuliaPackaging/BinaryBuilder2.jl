@@ -1,4 +1,5 @@
 using TimerOutputs, Pkg
+using ChromeTracing: @tracepoint, save_trace, clear_trace!
 
 # And then our exports
 export BuildMeta
@@ -9,6 +10,7 @@ const BUILD_HELP = (
                              [--universe=<name>] [--deploy=<org>] [--register]
                              [--output-dir=<dir>] [--dry-run=<tags>]
                              [--disable-caches=<list> [--build-hashes=<list>]
+                             [--trace-file=<path>]
 
     Options:
         targets                   By default `build_tarballs.jl` will build a tarball for every
@@ -84,6 +86,10 @@ const BUILD_HELP = (
                                   builds not identified by this list of hashes to be skipped.
                                   To determine what build hashes to use, do a dry-run build and
                                   use `spec_hash(::BuildConfig)`.
+
+        --trace-file=<path>       Emit Chrome Trace events as JSON at the given path.
+                                  This traces high-level build/extract/package activity,
+                                  cache checks, and script execution boundaries.
 
         --help                    Print out this message.
 
@@ -205,6 +211,12 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:build_hash_list] = MultiHash.(split(build_hashes, ","))
     end
 
+    # Trace output path
+    trace_file_set, trace_file_path = extract_flag!(ARGS, "--trace-file", nothing)
+    if trace_file_set
+        parsed_kwargs[:trace_file] = trace_file_path
+    end
+
     # Slurp up the last argument as platforms
     if length(ARGS) == 1
         parsed_kwargs[:target_list] = parse.(AbstractPlatform, split(ARGS[1], ","))
@@ -272,6 +284,9 @@ struct BuildMeta <: AbstractBuildMeta
     # from these caches, but does not disable writing to them.
     disabled_caches::Set{String}
 
+    # If set, emit Chrome Trace JSON to this file path.
+    trace_file::Union{Nothing,String}
+
     # Most steps have a JSON representation that they can output, to allow us to
     # "trace" through a build and see what steps were run.  On Yggdrasil, we combine
     # this with the "dry run" mode, to allow us to generate a series of jobs.
@@ -287,6 +302,7 @@ struct BuildMeta <: AbstractBuildMeta
                         disabled_caches = Set{String}(),
                         dry_run = Set{String}(),
                         build_hash_list = Set{MultiHash}(),
+                        trace_file::Union{AbstractString,Nothing} = nothing,
                         register::Bool = false,
                        )
         if !isa(debug_modes, Set)
@@ -379,6 +395,7 @@ struct BuildMeta <: AbstractBuildMeta
             load_cache(),
             archive_dir,
             Set{String}(disabled_caches),
+            trace_file === nothing ? nothing : String(trace_file),
             Set{String}(dry_run),
             register,
         )
@@ -387,6 +404,69 @@ struct BuildMeta <: AbstractBuildMeta
     end
 end
 AbstractBuildMeta(meta::BuildMeta) = meta
+trace_enabled(meta::BuildMeta) = meta.trace_file !== nothing
+
+function trace_begin(meta::BuildMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing)
+    if !trace_enabled(meta)
+        return nothing
+    end
+    if args === nothing
+        @tracepoint name ph="B" cat=cat
+    else
+        @tracepoint name ph="B" cat=cat args=args
+    end
+    return nothing
+end
+
+function trace_end(meta::BuildMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing)
+    if !trace_enabled(meta)
+        return nothing
+    end
+    if args === nothing
+        @tracepoint name ph="E" cat=cat
+    else
+        @tracepoint name ph="E" cat=cat args=args
+    end
+    return nothing
+end
+
+function trace_event(meta::BuildMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing)
+    if !trace_enabled(meta)
+        return nothing
+    end
+    if args === nothing
+        @tracepoint name ph="i" cat=cat
+    else
+        @tracepoint name ph="i" cat=cat args=args
+    end
+    return nothing
+end
+
+function start_trace_session!(meta::BuildMeta)
+    if !trace_enabled(meta)
+        return nothing
+    end
+    clear_trace!()
+    trace_event(
+        meta,
+        "bb2.trace_session_start";
+        args=(
+            universe=meta.universe.depot_path,
+            verbose=meta.verbose,
+        ),
+    )
+    return nothing
+end
+
+function finish_trace_session!(meta::BuildMeta; status::AbstractString = "success")
+    if !trace_enabled(meta)
+        return nothing
+    end
+    trace_event(meta, "bb2.trace_session_end"; args=(status=status,))
+    num_events = save_trace(meta.trace_file)
+    @info("Saved build trace", trace_file=meta.trace_file, events=num_events)
+    return nothing
+end
 
 function build_cache_enabled(meta::BuildMeta)
     # If the user has specifically requested we not use the cache, return `false`

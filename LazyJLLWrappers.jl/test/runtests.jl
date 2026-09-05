@@ -170,3 +170,51 @@ if LazyJLLWrappers.use_lazy_libraries()
         )
     end
 end
+
+using Base.BinaryPlatforms: Platform
+@testset "system_deps are ignored by the wrapper" begin
+    # A record may name the system libraries a product links against; the
+    # wrapper has no use for them and must not mention them.
+    platform = Platform("x86_64", "linux")
+    jllinfo = JLLInfo(;
+        name = "Foo",
+        version = v"1.0.0",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.0.0",
+                deps = [],
+                sources = [],
+                platform,
+                name = "Foo",
+                artifact = JLLArtifactBinding(;
+                    treehash = "0000000000000000000000000000000000000000",
+                    download_sources = [],
+                ),
+                products = [
+                    JLLLibraryProduct(
+                        :libfoo,
+                        "lib/libfoo.so.1",
+                        [],
+                        ["c", "m", "stdc++"];
+                        soname = "libfoo.so.1",
+                    ),
+                ],
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
+            ),
+        ],
+    )
+    toml = JLLGenerator.generate_toml_dict(jllinfo)
+    build = only(toml["builds"])
+    @test only(build["products"])["system_deps"] == ["c", "m", "stdc++"]
+
+    # Generate the wrapper for this build directly, as `@generate_jll_from_toml`
+    # would.  The generator consults the JLL module only for its preferences, so
+    # any loaded package module stands in for it here.
+    jb = LazyJLLWrappers.JLLBlocks(LazyJLLWrappers)
+    LazyJLLWrappers.top_level_statements(jb, build, platform)
+    LazyJLLWrappers.library_product_definition(jb, build, only(build["products"]))
+    code = string(LazyJLLWrappers.synthesize(jb))
+    @test contains(code, "libfoo")
+    @test !contains(code, "system_deps")
+    @test !contains(code, "stdc++")
+end

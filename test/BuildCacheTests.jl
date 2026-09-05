@@ -34,8 +34,8 @@ using JLLGenerator
         extract_log2_hash = make_hashdir("extract_log2")
         build_env1 = Dict("1" => "1")
         build_env2 = Dict("2" => "2")
-        extract1_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.1.dylib", [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
-        extract2_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.2.dylib", [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
+        extract1_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.1.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
+        extract2_jlp = [JLLLibraryProduct(:libfoo, "lib/libfoo.2.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND])]
 
         put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp )
         put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp)
@@ -181,7 +181,7 @@ end
         art2 = SHA1Hash(sha1("artifact2"))
         log1 = SHA1Hash(sha1("extlog1"))
         log2 = SHA1Hash(sha1("extlog2"))
-        jlp1 = [JLLLibraryProduct(:libfoo, "lib/libfoo.so", [], flags=[:RTLD_LAZY])]
+        jlp1 = [JLLLibraryProduct(:libfoo, "lib/libfoo.so", [], [], flags=[:RTLD_LAZY])]
         jlp2 = JLLLibraryProduct[]
 
         # Write .jlp files

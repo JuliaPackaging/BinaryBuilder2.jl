@@ -50,7 +50,6 @@ function Base.atexit(eh::ExitHooks)
     empty!(eh.build_results)
 
     for meta in eh.build_metas
-        @warn("About to check $(meta.universe.depot_path) $(length(meta.build_hash_list)) $(length(meta.build_hash_list_used))")
         if length(meta.build_hash_list) != length(meta.build_hash_list_used)
             message = strip("""
             Not all build hashes provided were used, this should never happen!

@@ -15,6 +15,7 @@ BinaryBuilderProducts = "21737265-7a69-6e4f-4974-6375646f7270"
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 Ccache_jll = "c6bc53e4-e6d8-51d9-af6d-d7969aa08f60"
+ChromeTracing = "845b99d9-bb87-4db2-9e0c-3c6f94fbefc3"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 Git = "d7ba0133-e1db-5d97-8f8c-041e4b3a1eb2"
@@ -58,6 +59,7 @@ BinaryBuilderPlatformExtensions = {path = "BinaryBuilderPlatformExtensions.jl"}
 BinaryBuilderProducts = {path = "BinaryBuilderProducts.jl"}
 BinaryBuilderSources = {path = "BinaryBuilderSources.jl"}
 BinaryBuilderToolchains = {path = "BinaryBuilderToolchains.jl"}
+ChromeTracing = {rev = "main", url = "https://github.com/staticfloat/ChromeTracing.jl.git"}
 HistoricalStdlibVersions = {rev = "main", url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"}
 JLLGenerator = {path = "JLLGenerator.jl"}
 KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
@@ -74,6 +76,7 @@ BinaryBuilderPlatformExtensions = "0.2"
 BinaryBuilderProducts = "0.2"
 BinaryBuilderSources = "0.2"
 BinaryBuilderToolchains = "0.3"
+ChromeTracing = "0.1.0"
 Git = "1.5.0"
 HistoricalStdlibVersions = "2"
 Infiltrator = "1.9.2"
@@ -97,6 +100,7 @@ Sandbox = "2.1.1"
 Scratch = "1.3.0"
 ScratchSpaceGarbageCollector = "0.1.1"
 StructEquality = "2.1.0"
+StyledStrings = "1.0.3"
 TimerOutputs = "0.5.29"
 TreeArchival = "0.2"
 gh_cli_jll = "2.63.2"

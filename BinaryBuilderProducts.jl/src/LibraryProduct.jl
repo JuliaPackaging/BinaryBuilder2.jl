@@ -88,6 +88,12 @@ function locate(lp::LibraryProduct, prefix::String;
     @debug("Locating LibraryProduct", lp)
     for path in lp.paths
         path = path_prefix_transformation(LibraryProduct, path, prefix, platform, env)
+
+        if isfile(path) && valid_dl_path(basename(path), platform)
+            @debug("Found exact match for path", path)
+            return prefix_remove(path, prefix)
+        end
+
         libname = basename(path)
         try
             libname = first(parse_dl_name_version(libname, os(platform)))
