@@ -1,11 +1,21 @@
 version: 2
 updates:
   - package-ecosystem: "julia"
-    directory: "/"
+    directories:
+      - "/"
+      - "/*.jl"
     schedule:
       interval: "weekly"
+    groups:
+      julia-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
