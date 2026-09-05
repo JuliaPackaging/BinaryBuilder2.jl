@@ -1,5 +1,8 @@
 # BinaryBuilder2
 
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://JuliaPackaging.github.io/BinaryBuilder2.jl/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaPackaging.github.io/BinaryBuilder2.jl/dev/)
+
 `BinaryBuilder2` represents the next evolution of [`BinaryBuilder.jl`](https://github.com/JuliaPackaging/BinaryBuilder.jl).
 It is a greenfield rewrite of the entire stack, from the isolation layer now using [`Sandbox.jl`](https://github.com/staticfloat/Sandbox.jl), git utilities, tree archival, binary object analysis and more being provided in separate modular packages.
 The `BinaryBuilder2.jl` package itself is the top-level project that includes all these sub-packages, but each sub-package itself is useful and independently tested.
