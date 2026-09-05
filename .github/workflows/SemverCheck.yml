@@ -1,0 +1,54 @@
+name: Version bump
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
+  # Allow julia-actions/cache to delete old caches it has created
+  actions: write
+
+jobs:
+  semver:
+    name: Check version bumps
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Allow unprivileged user namespaces (sandbox support)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
+      # SemverChecker installs and precompiles the *released* copy of every
+      # package as well as the working tree, so the depot cache matters more
+      # here than in a normal job: ~15s warm versus ~3.5min cold.
+      - uses: julia-actions/cache@v3
+
+      # --skip=contrib prunes JLLGenerator.jl/contrib/stdlib/, which holds 21
+      # pinned stdlib JLL stubs used as test fixtures. They are not packages
+      # this repository releases, and checking them buries the real report.
+      - name: Check that versions are bumped
+        run: |
+          julia --color=yes -e '
+            using Pkg
+            Pkg.activate(temp=true)
+            # TODO: switch to Pkg.add("SemverChecker") once it is registered.
+            Pkg.add(url="https://github.com/staticfloat/SemverChecker.jl")
+            using SemverChecker
+            exit(SemverChecker.main())' -- --skip=contrib --summary --logdir=semver-logs
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: semver-logs
+          path: semver-logs/
+          if-no-files-found: ignore
