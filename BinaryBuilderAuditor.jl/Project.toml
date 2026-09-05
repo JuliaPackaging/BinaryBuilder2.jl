@@ -1,14 +1,14 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderAuditor"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
 BinaryBuilderProducts = "0.2"
 BinaryBuilderSources = "0.2"
 BinaryBuilderToolchains = "0.3"
-JLLGenerator = "0.4"
+JLLGenerator = "0.5"
 ObjectFile = "0.4, 0.5"
 Pkg = "1.9.0"
 julia = "1.9"
