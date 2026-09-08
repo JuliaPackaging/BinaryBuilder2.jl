@@ -39,13 +39,15 @@ struct ExtractConfig
     # Timing
     to::TimerOutput
 
+    # Our spec hash; we cache it because we may need to ask for it multiple times
+    spec_hash::Ref{Union{Nothing,SHA1Hash}}
+
     function ExtractConfig(build::BuildResult,
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
                            target_spec::BuildTargetSpec = get_default_target_spec(build.config),
                            platform::AbstractPlatform = target_spec.platform.target,
-                           inter_deps::Dict{String,<:Any} = Dict{String,Any}(),
-                           audit_config = nothing)
+                           inter_deps::Dict{String,<:Any} = Dict{String,Any}())
         return new(
             build,
             String(script),
@@ -54,6 +56,7 @@ struct ExtractConfig
             platform,
             inter_deps,
             copy(build.config.to),
+            Ref{Union{SHA1Hash,Nothing}}(nothing),
         )
     end
 end
@@ -89,9 +92,14 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     @debug("ExtractConfig hash buffer:\n$(hash_buffer)")
     return SHA1Hash(sha1(hash_buffer))
 end
-function BinaryBuilderSources.spec_hash(config::ExtractConfig)
-    build_hash = spec_hash(config.build.config)
-    return extract_spec_hash(build_hash, config.script, config.products)
+function BinaryBuilderSources.spec_hash(config::ExtractConfig; force_recompute::Bool = false)
+    if config.spec_hash[] !== nothing && !force_recompute
+        return config.spec_hash[]::SHA1Hash
+    end
+
+    build_hash = spec_hash(config.build.config; force_recompute)
+    config.spec_hash[] = extract_spec_hash(build_hash, config.script, config.products)
+    return config.spec_hash[]::SHA1Hash
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)

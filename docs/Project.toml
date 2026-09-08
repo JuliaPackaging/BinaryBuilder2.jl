@@ -1,4 +1,5 @@
 [deps]
 BinaryBuilder2 = "12aac903-9f7c-5d81-afc2-d9565ea332af"
+BinaryBuilderPlatformExtensions = "213f2928-4d72-6f46-7461-4c705f634367"
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"

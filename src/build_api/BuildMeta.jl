@@ -316,6 +316,7 @@ struct BuildMeta <: AbstractBuildMeta
         example_list(vals) = return join([string(" - ", v) for v in vals], "\n")
 
         function validate_list(name, list, valids)
+            valids = Set(valids)
             for l in list
                 # Skip special value `all`
                 if l == "all"
@@ -323,12 +324,14 @@ struct BuildMeta <: AbstractBuildMeta
                 end
 
                 if l ∉ valids
-                    throw(ArgumentError("Invalid $(name) \"$(l)\".  Try one of the following:\n$(example_list(valids))"))
+                    valids_and_all = copy(valids)
+                    push!(valids_and_all, "all")
+                    throw(ArgumentError("Invalid $(name) \"$(l)\".  Try one of the following:\n$(example_list(valids_and_all))"))
                 end
             end
 
             if "all" ∈ list
-                return Set(valids)
+                return valids
             end
             return Set(list)
         end

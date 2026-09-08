@@ -237,63 +237,66 @@ function Base.show(io::IO, config::BuildConfig)
     print(io, "BuildConfig($(config.src_name), $(config.src_version), $(target_platform_string(config)))")
 end
 
-function BinaryBuilderSources.spec_hash(config::BuildConfig)
-    if config.spec_hash[] === nothing
-        depot = depot_path(AbstractBuildMeta(config).universe)
-        registries = Pkg.Registry.reachable_registries(; depots=[depot])
-        # We will collect all information as a string (including hashes of dependencies)
-        # and then hash that whole thing to generate our content-hash.
-        hash_buffer = IOBuffer()
-
-        with_trace(config, "bb2.spec_hash"; args=(src_name=config.src_name,)) do
-            # Metadata about the build itslef,
-            println(hash_buffer, "[build_metadata]")
-            println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
-
-            # A section on our targets
-            println(hash_buffer, "[target_specs]")
-            for bts in config.target_specs
-                println(hash_buffer, "  $(bts.name): ", triplet(bts.platform))
-            end
-
-            # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
-            println(hash_buffer, "[source_trees]")
-            for prefix in sort(collect(keys(config.source_trees)))
-                deps = config.source_trees[prefix]
-                println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
-
-                # For debugging build cache issues
-                # source_str(gs::GitSource) = "GitSource: $(gs.target)"
-                # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
-                # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
-                # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
-                # for dep in deps
-                #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
-                # end
-            end
-
-            # Next, the subset of the environment that includes all `BinaryBuilder*` packages
-            # and anything with the name `JLL` in it:
-            println(hash_buffer, "[environment]")
-            package_treehashes = bb_package_treehashes()
-            for pkg_name in sort(collect(keys(package_treehashes)))
-                println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
-            end
-        end
-        hash_buffer = String(take!(hash_buffer))
-        @debug("BuildConfig hash buffer:\n$(hash_buffer)")
-        config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
-
-        # Add `bb_build_identifier` to our environment which is primarily used
-        # as the hostname in our vscode tunnel to `bb2.cflo.at`.
-        config.env["bb_build_identifier"] = string(
-            config.src_name,
-            "-v",
-            config.src_version,
-            "-",
-            bytes2hex(config.spec_hash[])[1:8],
-        )
+function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bool = false)
+    if config.spec_hash[] !== nothing && !force_recompute
+        return config.spec_hash[]::SHA1Hash
     end
+
+    depot = depot_path(AbstractBuildMeta(config).universe)
+    registries = Pkg.Registry.reachable_registries(; depots=[depot])
+    # We will collect all information as a string (including hashes of dependencies)
+    # and then hash that whole thing to generate our content-hash.
+    hash_buffer = IOBuffer()
+
+    with_trace(config, "bb2.spec_hash"; args=(src_name=config.src_name,)) do
+        # Metadata about the build itslef,
+        println(hash_buffer, "[build_metadata]")
+        println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
+
+        # A section on our targets
+        println(hash_buffer, "[target_specs]")
+        for bts in config.target_specs
+            println(hash_buffer, "  $(bts.name): ", triplet(bts.platform))
+        end
+
+        # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
+        println(hash_buffer, "[source_trees]")
+        for prefix in sort(collect(keys(config.source_trees)))
+            deps = config.source_trees[prefix]
+            println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
+
+            # For debugging build cache issues
+            # source_str(gs::GitSource) = "GitSource: $(gs.target)"
+            # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
+            # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
+            # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
+            # for dep in deps
+            #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
+            # end
+        end
+
+        # Next, the subset of the environment that includes all `BinaryBuilder*` packages
+        # and anything with the name `JLL` in it:
+        println(hash_buffer, "[environment]")
+        package_treehashes = bb_package_treehashes()
+        for pkg_name in sort(collect(keys(package_treehashes)))
+            println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
+        end
+    end
+    hash_buffer = String(take!(hash_buffer))
+    @debug("BuildConfig hash buffer:\n$(hash_buffer)")
+    config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
+
+    # Add `bb_build_identifier` to our environment which is primarily used
+    # as the hostname in our vscode tunnel to `bb2.cflo.at`.
+    config.env["bb_build_identifier"] = string(
+        config.src_name,
+        "-v",
+        config.src_version,
+        "-",
+        bytes2hex(config.spec_hash[])[1:8],
+    )
+
     return config.spec_hash[]::SHA1Hash
 end
 

@@ -23,6 +23,7 @@ makedocs(
         "Advanced" => [
             "Nomenclature" => "advanced/Nomenclature.md",
             "VSCode debugging" => "advanced/launch_code_server.md",
+            "Build Cache" => "advanced/BuildCache.md",
             "BuildTargetSpec" => "advanced/BuildTargetSpec.md",
             "PlatformlessWrapper" => "advanced/PlatformlessWrapper.md",
         ],
