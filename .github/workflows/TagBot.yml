@@ -9,12 +9,33 @@ on:
         description: "[DEPRECATED] No longer has any effect"
         default: "3"
 jobs:
-  TagBot:
+  discover:
+    name: Discover subprojects
     if: github.event_name == 'workflow_dispatch' || github.actor == 'JuliaTagBot'
+    runs-on: ubuntu-latest
+    outputs:
+      subdirs: ${{ steps.set-matrix.outputs.subdirs }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: set-matrix
+        # Same discovery as in CI.yml, except the top-level package is `""` rather than `.`:
+        # TagBot prefixes tags with the package name whenever `subdir` is non-empty.
+        run: |
+          subdirs=$( { echo ''; for f in */Project.toml; do d=$(dirname "$f"); [ "$d" = docs ] && continue; echo "$d"; done; } | jq -R . | jq -cs .)
+          echo "subdirs=$subdirs" >> "$GITHUB_OUTPUT"
+
+  TagBot:
+    name: TagBot - ${{ matrix.subdir == '' && 'BinaryBuilder2.jl' || matrix.subdir }}
+    needs: discover
     # ubuntu-slim doesn't support containers, and thus won't work
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        subdir: ${{ fromJSON(needs.discover.outputs.subdirs) }}
     steps:
       - uses: JuliaRegistries/TagBot@cded32665b34ca0496d3ac10a67d08ddfc726963 # v1.25.11
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ssh: ${{ secrets.DOCUMENTER_KEY }}
+          subdir: ${{ matrix.subdir }}
