@@ -59,7 +59,6 @@ BinaryBuilderPlatformExtensions = {path = "BinaryBuilderPlatformExtensions.jl"}
 BinaryBuilderProducts = {path = "BinaryBuilderProducts.jl"}
 BinaryBuilderSources = {path = "BinaryBuilderSources.jl"}
 BinaryBuilderToolchains = {path = "BinaryBuilderToolchains.jl"}
-ChromeTracing = {rev = "main", url = "https://github.com/staticfloat/ChromeTracing.jl.git"}
 HistoricalStdlibVersions = {rev = "main", url = "https://github.com/JuliaPackaging/HistoricalStdlibVersions.jl.git"}
 JLLGenerator = {path = "JLLGenerator.jl"}
 KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
