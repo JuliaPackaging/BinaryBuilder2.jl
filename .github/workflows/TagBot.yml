@@ -27,6 +27,9 @@ jobs:
   TagBot:
     name: TagBot - ${{ matrix.subdir == '' && 'BinaryBuilder2.jl' || matrix.subdir }}
     needs: discover
+    permissions:
+      contents: write
+      issues: write
     # ubuntu-slim doesn't support containers, and thus won't work
     runs-on: ubuntu-latest
     strategy:
