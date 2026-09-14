@@ -1,5 +1,5 @@
 using TimerOutputs, Pkg
-using ChromeTracing: @tracepoint, save_trace, clear_trace!
+using ChromeTracing: @trace_event, save_trace, clear_trace!
 
 # And then our exports
 export BuildMeta
@@ -414,9 +414,9 @@ function trace_begin(meta::BuildMeta, name::AbstractString; cat::AbstractString 
         return nothing
     end
     if args === nothing
-        @tracepoint name ph="B" cat=cat
+        @trace_event name ph="B" cat=cat
     else
-        @tracepoint name ph="B" cat=cat args=args
+        @trace_event name ph="B" cat=cat args=args
     end
     return nothing
 end
@@ -426,9 +426,9 @@ function trace_end(meta::BuildMeta, name::AbstractString; cat::AbstractString = 
         return nothing
     end
     if args === nothing
-        @tracepoint name ph="E" cat=cat
+        @trace_event name ph="E" cat=cat
     else
-        @tracepoint name ph="E" cat=cat args=args
+        @trace_event name ph="E" cat=cat args=args
     end
     return nothing
 end
@@ -438,9 +438,9 @@ function trace_event(meta::BuildMeta, name::AbstractString; cat::AbstractString 
         return nothing
     end
     if args === nothing
-        @tracepoint name ph="i" cat=cat
+        @trace_event name ph="i" cat=cat
     else
-        @tracepoint name ph="i" cat=cat args=args
+        @trace_event name ph="i" cat=cat args=args
     end
     return nothing
 end

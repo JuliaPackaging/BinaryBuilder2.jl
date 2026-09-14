@@ -16,12 +16,12 @@ end
     BinaryBuilder2.trace_enabled(::TraceEnabledMeta) = true
     BinaryBuilder2.trace_begin(::TraceEnabledMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing) =
         args === nothing ?
-            (ChromeTracing.@tracepoint name ph="B" cat=cat) :
-            (ChromeTracing.@tracepoint name ph="B" cat=cat args=args)
+            (ChromeTracing.@trace_event name ph="B" cat=cat) :
+            (ChromeTracing.@trace_event name ph="B" cat=cat args=args)
     BinaryBuilder2.trace_end(::TraceEnabledMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing) =
         args === nothing ?
-            (ChromeTracing.@tracepoint name ph="E" cat=cat) :
-            (ChromeTracing.@tracepoint name ph="E" cat=cat args=args)
+            (ChromeTracing.@trace_event name ph="E" cat=cat) :
+            (ChromeTracing.@trace_event name ph="E" cat=cat args=args)
 
     BinaryBuilder2.@trace_function meta=meta name="bb2.test_span" args=(phase="span",) function traced_with_meta(meta, x)
         return x + 1
@@ -121,12 +121,12 @@ end
     BinaryBuilder2.timer_output(meta::TimedMeta) = meta.to
     BinaryBuilder2.trace_begin(::TimedMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing) =
         args === nothing ?
-            (ChromeTracing.@tracepoint name ph="B" cat=cat) :
-            (ChromeTracing.@tracepoint name ph="B" cat=cat args=args)
+            (ChromeTracing.@trace_event name ph="B" cat=cat) :
+            (ChromeTracing.@trace_event name ph="B" cat=cat args=args)
     BinaryBuilder2.trace_end(::TimedMeta, name::AbstractString; cat::AbstractString = "bb2", args = nothing) =
         args === nothing ?
-            (ChromeTracing.@tracepoint name ph="E" cat=cat) :
-            (ChromeTracing.@tracepoint name ph="E" cat=cat args=args)
+            (ChromeTracing.@trace_event name ph="E" cat=cat) :
+            (ChromeTracing.@trace_event name ph="E" cat=cat args=args)
 
     # Even with tracing disabled, we still record the zone in `to`
     meta = TimedMeta(BinaryBuilder2.TimerOutput(), false)
