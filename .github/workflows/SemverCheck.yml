@@ -26,7 +26,7 @@ jobs:
 
       - uses: julia-actions/setup-julia@v3
         with:
-          version: '1'
+          version: '1.12'
 
       # SemverChecker installs and precompiles the *released* copy of every
       # package as well as the working tree, so the depot cache matters more

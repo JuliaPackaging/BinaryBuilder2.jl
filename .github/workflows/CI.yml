@@ -38,7 +38,7 @@ jobs:
       matrix:
         project: ${{ fromJSON(needs.discover.outputs.projects) }}
         julia-version:
-          - '1'
+          - '1.12'
         runner:
           - os: ubuntu-latest
             arch: x86_64
