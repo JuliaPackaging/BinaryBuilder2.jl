@@ -35,8 +35,8 @@ Map a BinaryBuilder1-style `compilers` list (e.g. `[:c]`) to a `(target_toolchai
 host_toolchains)` tuple.  The host always receives `HostToolsToolchain()`.
 """
 function compilers_to_toolchains(compilers::Vector{Symbol})
-    target_toolchains = AbstractToolchain[]
-    host_toolchains = AbstractToolchain[]
+    target_toolchains = []
+    host_toolchains = []
     for compiler in unique(compilers)
         if compiler == :c
             # BinaryBuilder1's `:c` compiler set always came with CMake as well
