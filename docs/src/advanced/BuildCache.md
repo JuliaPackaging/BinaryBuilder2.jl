@@ -47,31 +47,31 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   host: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │   target: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │ [source_trees]
-│   /opt/host-tools = sha1:aeb59bf95e69f2599e56e06bbd560414d887361b
-│   /opt/host-x86_64-linux-gnu = sha1:aa6297d3c8acd81aa25afacb35c2aeeec7988b6a
-│   /opt/target-x86_64-linux-gnu = sha1:b5835167191deda8a82f7e5e80a7b3b1ed9547ac
+│   /opt/host-tools = sha1:a57234ff529dc3fa30382935abee0a5d8007fe65
+│   /opt/host-x86_64-linux-gnu = sha1:03d3df1856c3b5780665ed6a787a748d03ab81e0
+│   /opt/target-x86_64-linux-gnu = sha1:da1cc815fcc5b8f7e79311c505e297e9e132d889
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │   /workspace/destdir/target-x86_64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:dd4533abf3378d54aa8fa4a16fdf257ce5483883
+│   /workspace/metadir = sha1:084f94c9181f34e7466e53eae6bfffcec61903eb
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 = sha1:fe79e373b1dfa4c7f97bae0dc6cbe47d4d543a79
+│   BinaryBuilder2 = sha1:aac51e4d4aba12ae6618aa804cda9d68125076bf
 │   BinaryBuilderAuditor = sha1:a1cb1172a8fa24028feba7361d6950a3fa2fa7d8
 │   BinaryBuilderGitUtils = sha1:3ed475af33b46cdd85519443096409c850286e4b
 │   BinaryBuilderPlatformExtensions = sha1:88784383a64abcf571e47ed19a0a97349aaf6564
 │   BinaryBuilderProducts = sha1:5fa7cd339ed1f8d5b8d074512da6569354ff9ac2
 │   BinaryBuilderSources = sha1:6afda911aa3216dd9fb42f2c1f38c14e1c0590dc
 │   BinaryBuilderToolchains = sha1:ed992a365101e14803f3615af90a75d19fdf8c00
-│   JLLGenerator = sha1:586186eb59d71f70dd47d6b84e3b9e0e0819d54c
+│   JLLGenerator = sha1:cb958a5e87299c4789cdeab4573f2e2f4706bd80
 │   JLLPrefixes = sha1:6e132d90cd5e9bdb8025908e7a7971d72c0defa3
 │   LazyJLLWrappers = sha1:063a7e939eb688406e360542f12e73828fea55f2
 │   MultiHashParsing = sha1:f5d0a4ceb55dff17e345b169ca9564cc173afede
 │   Sandbox = sha1:c7156ad981aa1501a83f5a140f08ee30692c3674
 │   TreeArchival = sha1:7ea07d94f984690a10879d06491661a1270423bb
-└ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:284
-sha1:988d8904171fc0560755647628e3aca453dc77db
+└ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:287
+sha1:b5c29c56ec883b47fda84b0a960c742e591bfbdf
 ```
 
 The same can be done for an `ExtractConfig` object (note that it prints out the `BuildConfig` object as well during debugging, because it hashes that as an input as well!)
@@ -87,24 +87,24 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   host: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │   target: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │ [source_trees]
-│   /opt/host-tools = sha1:f1cf082434c34192196f61fbdbb1ed16aa86e439
-│   /opt/host-x86_64-linux-gnu = sha1:37563a29022b22ec71ee081e5797eee6f2f09a06
-│   /opt/target-x86_64-linux-gnu = sha1:87d462bc8c33bdf1db4f6f84f3a74109276c2ef7
+│   /opt/host-tools = sha1:a57234ff529dc3fa30382935abee0a5d8007fe65
+│   /opt/host-x86_64-linux-gnu = sha1:03d3df1856c3b5780665ed6a787a748d03ab81e0
+│   /opt/target-x86_64-linux-gnu = sha1:a239c3ea36916f77024d49ee0797232dcc0578c8
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │   /workspace/destdir/target-x86_64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:08ae08a034cce835ed7908dcccec5e7120f29748
+│   /workspace/metadir = sha1:084f94c9181f34e7466e53eae6bfffcec61903eb
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 = sha1:93e1cd8e0093aa24a37741f8398400f074ddfd43
+│   BinaryBuilder2 = sha1:aac51e4d4aba12ae6618aa804cda9d68125076bf
 │   BinaryBuilderAuditor = sha1:a1cb1172a8fa24028feba7361d6950a3fa2fa7d8
 │   BinaryBuilderGitUtils = sha1:3ed475af33b46cdd85519443096409c850286e4b
 │   BinaryBuilderPlatformExtensions = sha1:88784383a64abcf571e47ed19a0a97349aaf6564
 │   BinaryBuilderProducts = sha1:5fa7cd339ed1f8d5b8d074512da6569354ff9ac2
 │   BinaryBuilderSources = sha1:6afda911aa3216dd9fb42f2c1f38c14e1c0590dc
 │   BinaryBuilderToolchains = sha1:ed992a365101e14803f3615af90a75d19fdf8c00
-│   JLLGenerator = sha1:586186eb59d71f70dd47d6b84e3b9e0e0819d54c
+│   JLLGenerator = sha1:cb958a5e87299c4789cdeab4573f2e2f4706bd80
 │   JLLPrefixes = sha1:6e132d90cd5e9bdb8025908e7a7971d72c0defa3
 │   LazyJLLWrappers = sha1:063a7e939eb688406e360542f12e73828fea55f2
 │   MultiHashParsing = sha1:f5d0a4ceb55dff17e345b169ca9564cc173afede
@@ -113,12 +113,12 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 └ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:287
 ┌ Debug: ExtractConfig hash buffer:
 │ [extraction_metadata]
-│   build_hash = 5639f2e7f32018b0cd8faefa4f1aca99654b21f6
+│   build_hash = 68ab520f17620647451edd4574d973d2c82e63d3
 │   script_hash = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [products]
 │   libfoo = ["libfoo"]
 └ @ BinaryBuilder2 ~/src/BB2/src/build_api/ExtractConfig.jl:92
-sha1:cea343e31a62a6ad42c3dd9404d3e5d1c36d3c03
+sha1:e016baf0e743c75d85dc26f540eda8572117b83c
 ```
 
 
