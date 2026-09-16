@@ -30,8 +30,15 @@ DocTestSetup = quote
 end
 DocTestTeardown = nothing
 DocTestFilters = [
+    # Don't be sensitive to line numbers
     r"└ @ BinaryBuilder2 .*:\d+" => "",
+
+    # Don't be sensitive to hashes changing
     r"sha1:[0-9a-f]*" => "sha1:",
+
+    # Don't be sensitive to triplets changing; remove this once we're on Julia v1.14+
+    # which contains this fix: https://github.com/JuliaLang/julia/pull/63169
+    r"[^ ]+-linux-gnu-target[^ ]+" => "",
 ]
 ```
 
