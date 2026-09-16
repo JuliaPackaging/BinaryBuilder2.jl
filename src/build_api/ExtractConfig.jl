@@ -75,7 +75,7 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     hash_buffer = IOBuffer()
 
     println(hash_buffer, "[extraction_metadata]")
-    println(hash_buffer, "  build_hash = $(bytes2hex(build_hash))")
+    println(hash_buffer, "  build_hash = $(build_hash)")
     println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(extract_script)))")
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
