@@ -41,8 +41,7 @@ jobs:
           julia --color=yes -e '
             using Pkg
             Pkg.activate(temp=true)
-            # TODO: switch to Pkg.add("SemverChecker") once it is registered.
-            Pkg.add(url="https://github.com/staticfloat/SemverChecker.jl")
+            Pkg.add(url="SemverChecker")
             using SemverChecker
             exit(SemverChecker.main())' -- --skip=contrib --summary --logdir=semver-logs
 
