@@ -242,13 +242,13 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
         return config.spec_hash[]::SHA1Hash
     end
 
-    depot = depot_path(AbstractBuildMeta(config).universe)
-    registries = Pkg.Registry.reachable_registries(; depots=[depot])
-    # We will collect all information as a string (including hashes of dependencies)
-    # and then hash that whole thing to generate our content-hash.
-    hash_buffer = IOBuffer()
-
     with_trace(config, "bb2.spec_hash"; args=(src_name=config.src_name,)) do
+        depot = depot_path(AbstractBuildMeta(config).universe)
+        registries = Pkg.Registry.reachable_registries(; depots=[depot])
+        # We will collect all information as a string (including hashes of dependencies)
+        # and then hash that whole thing to generate our content-hash.
+        hash_buffer = IOBuffer()
+
         # Metadata about the build itslef,
         println(hash_buffer, "[build_metadata]")
         println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
@@ -282,20 +282,21 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
         for pkg_name in sort(collect(keys(package_treehashes)))
             println(hash_buffer, "  $(pkg_name) v$(package_treehashes[pkg_name].version) = $(package_treehashes[pkg_name].hash)")
         end
-    end
-    hash_buffer = String(take!(hash_buffer))
-    @debug("BuildConfig hash buffer:\n$(hash_buffer)")
-    config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
 
-    # Add `bb_build_identifier` to our environment which is primarily used
-    # as the hostname in our vscode tunnel to `bb2.cflo.at`.
-    config.env["bb_build_identifier"] = string(
-        config.src_name,
-        "-v",
-        config.src_version,
-        "-",
-        bytes2hex(config.spec_hash[])[1:8],
-    )
+        hash_buffer = String(take!(hash_buffer))
+        @debug("BuildConfig hash buffer:\n$(hash_buffer)")
+        config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
+
+        # Add `bb_build_identifier` to our environment which is primarily used
+        # as the hostname in our vscode tunnel to `bb2.cflo.at`.
+        config.env["bb_build_identifier"] = string(
+            config.src_name,
+            "-v",
+            config.src_version,
+            "-",
+            bytes2hex(config.spec_hash[])[1:8],
+        )
+    end
 
     return config.spec_hash[]::SHA1Hash
 end
