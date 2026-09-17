@@ -174,6 +174,7 @@ struct BuildConfig
 
             # ccache
             "CCACHE_DIR" => "/var/cache/ccache",
+            "CCACHE_STATSLOG" => "$(metadir_prefix())/ccache-statslog",
         ))
 
         return new(
@@ -191,6 +192,7 @@ struct BuildConfig
     end
 end
 AbstractBuildMeta(config::BuildConfig) = config.meta
+timer_output(config::BuildConfig) = config.to
 get_host_target_spec(config::BuildConfig) = get_host_target_spec(config.target_specs)
 function get_target_spec(config::BuildConfig, name::String)
     for bts in config.target_specs
@@ -217,11 +219,11 @@ function target_platform_string(config::BuildConfig)
         # Canuck mode oot and aboot.  Only the bravest souls,
         # Tim Horton's in hand, will attempt a build like this.
         return string(
-            triplet(get_spec_by_name("build").platform.target),
+            triplet(get_target_spec_by_name(config, "build").platform.target),
             " => ",
-            triplet(get_spec_by_name("host").platform.target),
+            triplet(get_target_spec_by_name(config, "host").platform.target),
             " => ",
-            triplet(get_spec_by_name("target").platform.target),
+            triplet(get_target_spec_by_name(config, "target").platform.target),
         )
     else
         # Science has gone too far!
@@ -235,63 +237,66 @@ function Base.show(io::IO, config::BuildConfig)
     print(io, "BuildConfig($(config.src_name), $(config.src_version), $(target_platform_string(config)))")
 end
 
-function BinaryBuilderSources.spec_hash(config::BuildConfig)
-    if config.spec_hash[] === nothing
-        depot = depot_path(AbstractBuildMeta(config).universe)
-        registries = Pkg.Registry.reachable_registries(; depots=[depot])
-        # We will collect all information as a string (including hashes of dependencies)
-        # and then hash that whole thing to generate our content-hash.
-        hash_buffer = IOBuffer()
-
-        @timeit config.to "spec_hash" begin
-            # Metadata about the build itslef,
-            println(hash_buffer, "[build_metadata]")
-            println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
-
-            # A section on our targets
-            println(hash_buffer, "[target_specs]")
-            for bts in config.target_specs
-                println(hash_buffer, "  $(bts.name): ", triplet(bts.platform))
-            end
-
-            # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
-            println(hash_buffer, "[source_trees]")
-            for prefix in sort(collect(keys(config.source_trees)))
-                deps = config.source_trees[prefix]
-                println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
-
-                # For debugging build cache issues
-                # source_str(gs::GitSource) = "GitSource: $(gs.target)"
-                # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
-                # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
-                # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
-                # for dep in deps
-                #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
-                # end
-            end
-
-            # Next, the subset of the environment that includes all `BinaryBuilder*` packages
-            # and anything with the name `JLL` in it:
-            println(hash_buffer, "[environment]")
-            package_treehashes = bb_package_treehashes()
-            for pkg_name in sort(collect(keys(package_treehashes)))
-                println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
-            end
-        end
-        hash_buffer = String(take!(hash_buffer))
-        @debug("BuildConfig hash buffer:\n$(hash_buffer)")
-        config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
-
-        # Add `bb_build_identifier` to our environment which is primarily used
-        # as the hostname in our vscode tunnel to `bb2.cflo.at`.
-        config.env["bb_build_identifier"] = string(
-            config.src_name,
-            "-v",
-            config.src_version,
-            "-",
-            bytes2hex(config.spec_hash[])[1:8],
-        )
+function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bool = false)
+    if config.spec_hash[] !== nothing && !force_recompute
+        return config.spec_hash[]::SHA1Hash
     end
+
+    depot = depot_path(AbstractBuildMeta(config).universe)
+    registries = Pkg.Registry.reachable_registries(; depots=[depot])
+    # We will collect all information as a string (including hashes of dependencies)
+    # and then hash that whole thing to generate our content-hash.
+    hash_buffer = IOBuffer()
+
+    with_trace(config, "bb2.spec_hash"; args=(src_name=config.src_name,)) do
+        # Metadata about the build itslef,
+        println(hash_buffer, "[build_metadata]")
+        println(hash_buffer, "  script_hash = $(SHA1Hash(sha1(config.script)))")
+
+        # A section on our targets
+        println(hash_buffer, "[target_specs]")
+        for bts in config.target_specs
+            println(hash_buffer, "  $(bts.name): ", triplet(bts.platform))
+        end
+
+        # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
+        println(hash_buffer, "[source_trees]")
+        for prefix in sort(collect(keys(config.source_trees)))
+            deps = config.source_trees[prefix]
+            println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
+
+            # For debugging build cache issues
+            # source_str(gs::GitSource) = "GitSource: $(gs.target)"
+            # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
+            # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
+            # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
+            # for dep in deps
+            #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
+            # end
+        end
+
+        # Next, the subset of the environment that includes all `BinaryBuilder*` packages
+        # and anything with the name `JLL` in it:
+        println(hash_buffer, "[environment]")
+        package_treehashes = bb_package_treehashes()
+        for pkg_name in sort(collect(keys(package_treehashes)))
+            println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
+        end
+    end
+    hash_buffer = String(take!(hash_buffer))
+    @debug("BuildConfig hash buffer:\n$(hash_buffer)")
+    config.spec_hash[] = SHA1Hash(sha1(hash_buffer))
+
+    # Add `bb_build_identifier` to our environment which is primarily used
+    # as the hostname in our vscode tunnel to `bb2.cflo.at`.
+    config.env["bb_build_identifier"] = string(
+        config.src_name,
+        "-v",
+        config.src_version,
+        "-",
+        bytes2hex(config.spec_hash[])[1:8],
+    )
+
     return config.spec_hash[]::SHA1Hash
 end
 
@@ -303,39 +308,37 @@ metadir_prefix() = "/workspace/metadir"
 
 # Helper function to better control when we download all our deps
 # Ideally, this would be paralellized somehow.
-function prepare(config::BuildConfig; verbose::Bool = false)
-    @timeit config.to "prepare" begin
-        universe = config.meta.universe
-        depot = depot_path(universe)
-        registries = Pkg.Registry.reachable_registries(; depots=[depot])
-        disable_jll_cache = "jll" ∈ config.meta.disabled_caches
-        for (prefix, deps) in config.source_trees
-            # We install different source trees in different environments.
-            @timeit config.to prefix begin
-                mktempdir() do project_dir
-                    # We have some special magic to work here; oftentimes, when we perform
-                    # multiple builds within the same universe, we do so because we want to
-                    # make use of a previous build in a new one.  To effect this, we copy
-                    # our universe's environment in to all of our source trees, so that
-                    # if we build, e.g. `Zlib_jll`, we use that `Zlib_jll` for everything
-                    # in the rest of the build.
-                    cp(dirname(environment_path(universe)), project_dir; force=true)
-                    # This verbose needs like a `verbose = verbose_level >= 2` or something
-                    prepare(deps;
-                        verbose=false,
-                        force=disable_jll_cache,
-                        project_dir,
-                        registries,
-                        depot,
-                        to=config.to,
-                    )
-                end
+@trace_function args=(src_name=config.src_name,) function prepare(config::BuildConfig; verbose::Bool = false)
+    universe = config.meta.universe
+    depot = depot_path(universe)
+    registries = Pkg.Registry.reachable_registries(; depots=[depot])
+    disable_jll_cache = "jll" ∈ config.meta.disabled_caches
+    for (prefix, deps) in config.source_trees
+        # We install different source trees in different environments.
+        with_trace(config, "bb2.prepare_source_tree"; timer_name=prefix, args=(prefix=prefix,)) do
+            mktempdir() do project_dir
+                # We have some special magic to work here; oftentimes, when we perform
+                # multiple builds within the same universe, we do so because we want to
+                # make use of a previous build in a new one.  To effect this, we copy
+                # our universe's environment in to all of our source trees, so that
+                # if we build, e.g. `Zlib_jll`, we use that `Zlib_jll` for everything
+                # in the rest of the build.
+                cp(dirname(environment_path(universe)), project_dir; force=true)
+                # This verbose needs like a `verbose = verbose_level >= 2` or something
+                prepare(deps;
+                    verbose=false,
+                    force=disable_jll_cache,
+                    project_dir,
+                    registries,
+                    depot,
+                    to=config.to,
+                )
             end
         end
     end
 end
 
-function deploy(config::BuildConfig; verbose::Bool = false)
+@trace_function args=(src_name=config.src_name,) function deploy(config::BuildConfig; verbose::Bool = false)
     # Ensure the `config` has been prepared
     prepare(config; verbose)
 
@@ -345,19 +348,20 @@ function deploy(config::BuildConfig; verbose::Bool = false)
         "/var/cache/ccache" => MountInfo(ccache_cache("ccache"), MountType.ReadWrite),
     )
 
-    registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
-    @timeit config.to "deploy" begin
-        for (idx, (prefix, srcs)) in enumerate(config.source_trees)
-            srcs_hashes = bytes2hex.(spec_hash.(srcs; registries))
-            combined_hash = bytes2hex(sha1(string(srcs_hashes)))
-            host_path = builds_dir(string(idx, "-", combined_hash))
-            @debug("BuildConfig source", prefix, srcs_hashes, combined_hash)
-            mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
+    # Key our deployment directories off of the same universe repository
+    registries = Pkg.Registry.reachable_registries(; depots=[depot_path(config.meta.universe)])
+    for (idx, (prefix, srcs)) in enumerate(config.source_trees)
+        srcs_hashes = bytes2hex.(spec_hash.(srcs; registries))
+        combined_hash = bytes2hex(sha1(string(srcs_hashes)))
+        host_path = builds_dir(string(idx, "-", combined_hash))
+        @debug("BuildConfig source", prefix, srcs_hashes, combined_hash)
+        mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
 
-            # Avoid deploying a second time if we're coming at this a second time
-            if !isdir(host_path) || isempty(readdir(host_path))
-                mkpath(host_path)
-                @timeit config.to prefix deploy(srcs, host_path)
+        # Avoid deploying a second time if we're coming at this a second time
+        if !isdir(host_path) || isempty(readdir(host_path))
+            mkpath(host_path)
+            with_trace(config, "bb2.deploy_source_tree"; timer_name=prefix, args=(prefix=prefix,)) do
+                deploy(srcs, host_path)
             end
         end
     end
@@ -449,7 +453,7 @@ function run_trycatch(exe::SandboxExecutor, config::SandboxConfig, cmd::Cmd)
     return run_status, run_exception, run_backtrace
 end
 
-function build!(config::BuildConfig;
+@trace_function args=(src_name=config.src_name, platform=target_platform_string(config)) function build!(config::BuildConfig;
                 extract_arg_hints::Vector{<:Tuple} = Tuple[],
                 disable_cache::Bool = !build_cache_enabled(AbstractBuildMeta(config)),
                 debug_modes = AbstractBuildMeta(config).debug_modes,
@@ -469,6 +473,7 @@ function build!(config::BuildConfig;
         try
             build_hash = spec_hash(config)
             if all(haskey(meta.build_cache, build_hash, extract_spec_hash(build_hash, args...)) for args in extract_arg_hints)
+                trace_event(meta, "bb2.build_cache_hit"; args=(build_hash=string(build_hash),))
                 if verbose
                     @info("Build cached", config, build_hash)
                 else
@@ -483,6 +488,7 @@ function build!(config::BuildConfig;
                     @error("Error while reading from build cache", exception=(e, catch_backtrace()))
                 end
             else
+                trace_event(meta, "bb2.build_cache_miss"; args=(build_hash=string(build_hash),))
                 @debug("Build not cached", config)
                 for extract_args in extract_arg_hints
                     @debug(" -> FAIL: ", build_hash, extract_hash=extract_spec_hash(build_hash, extract_args...))
@@ -496,7 +502,7 @@ function build!(config::BuildConfig;
     end
 
     # Declare these all as `local` so that we can inspect them in the `@infiltrate` below
-    local run_status, run_exception, build_log
+    local run_status, run_exception, run_backtrace, build_log
 
     # Write build script out into a logfile
     build_log_io = IOBuffer()
@@ -513,7 +519,7 @@ function build!(config::BuildConfig;
             runshell(config; verbose)
         end
 
-        @timeit config.to "build" begin
+        with_trace(config, "bb2.build_script"; timer_name="build", args=(script="build_script.sh",)) do
             run_status, run_exception, run_backtrace = run_trycatch(exe, sandbox_config, `$(metadir_prefix())/build_script.sh`)
         end
 
@@ -548,6 +554,12 @@ function build!(config::BuildConfig;
         env = Dict{String,String}()
     end
 
+    # Try to capture the ccache statslog written to the metadir
+    ccache_log_artifact_hash = nothing
+    if run_status != :errored
+        ccache_log_artifact_hash = store_ccache_log_artifact(meta.universe, read_metadir_ccache_statslog(exe, config, mounts))
+    end
+
     result = BuildResult(
         config,
         run_status,
@@ -556,6 +568,7 @@ function build!(config::BuildConfig;
         mounts,
         log_artifact_hash,
         env,
+        ccache_log_artifact_hash,
     )
     meta.builds[config] = result
 

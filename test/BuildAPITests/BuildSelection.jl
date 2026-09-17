@@ -1,11 +1,17 @@
 using BinaryBuilder2, Test, SHA
 import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
 
+if !isdefined(@__MODULE__, :TestingUtils)
+    include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
+end
+
+build_examples_dir = joinpath(pkgdir(BinaryBuilder2), "test", "BuildAPITests", "build_examples")
+multi_stage_build = joinpath(build_examples_dir, "multi_stage_build.jl")
+
 @testset "Build Selection" begin
     meta = BuildMeta(; verbose=false)
     # First, pretend that these build recipes have been changed:
-    build_examples_dir = joinpath(dirname(dirname(Base.pathof(BinaryBuilder2))), "test", "BuildAPITests", "build_examples")
-    run_build_tarballs(meta, joinpath(build_examples_dir, "multi_stage_build.jl"); dry_run=true)
+    run_build_tarballs(meta, multi_stage_build; dry_run=true)
 
     # Invoke a build that builds only libstring for x86_64-linux-gnu and i686-linux-gnu, identified by hashes:
     should_build_target(p) = os(p) == "linux" && arch(p) ∈ ("x86_64", "i686") && libc(p) == "glibc"
@@ -21,7 +27,7 @@ import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
 
     # Run a build with that build hash list applied
     filtered_meta = BuildMeta(; verbose=true, build_hash_list)
-    run_build_tarballs(filtered_meta, joinpath(build_examples_dir, "multi_stage_build.jl"))
+    run_build_tarballs(filtered_meta, multi_stage_build)
 
     # Ensure that the extraction results show that only the builds with our
     # selected targets actually built
@@ -70,9 +76,20 @@ import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
 
     # Ensure that running with a hash that never gets selected fails when we trigger `atexit()`
     failing_meta = BuildMeta(; verbose=false, build_hash_list=[SHA1Hash(sha1(""))])
-    run_build_tarballs(failing_meta, joinpath(build_examples_dir, "multi_stage_build.jl"))
-    @test_throws InvalidStateException Base.atexit(BinaryBuilder2.get_exit_hooks())
+    run_build_tarballs(failing_meta, multi_stage_build)
+    @test_logs (:error, r"Not all build hashes provided were used") match_mode=:any Base.atexit(BinaryBuilder2.get_exit_hooks(); exit_process=false)
 
-    # Clear out the failing_meta from the exit_hooks object so that we don't error out on actual exit here
-    @test pop!(BinaryBuilder2.get_exit_hooks().build_metas) == failing_meta
+    # Do the same thing, but out-of-process, to ensure that the `atexit()` hook actually
+    # causes the process to exit with a nonzero exit code, rather than just logging an error.
+    bogus_hash = string("sha1:", "0"^40)
+    native_triplet = triplet(Platform(arch(HostPlatform()), "linux"))
+    cmd = `$(Base.julia_cmd()) --project=$(Base.active_project()) $(multi_stage_build) --build-hashes=$(bogus_hash) $(native_triplet)`
+    out_io = IOBuffer()
+    proc = run(pipeline(ignorestatus(cmd); stdout=out_io, stderr=out_io))
+    output = String(take!(out_io))
+    @test !success(proc)
+    @test occursin("Not all build hashes provided were used", output)
+    if success(proc) || !occursin("Not all build hashes provided were used", output)
+        @error("Unexpected output from bogus build hash invocation", output)
+    end
 end

@@ -141,8 +141,8 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
     )
 end
 
-# Test that `LazyLirary` support works on Julias new enough to use it
-if isdefined(Libdl, :LazyLibrary)
+# Test that `LazyLibrary` support works on Julias new enough to use it
+if LazyJLLWrappers.use_lazy_libraries()
     @testset "Laziness" begin
         generate_and_load_jll(
             include(joinpath(example_jllinfos_path, "Ncurses_jll.jl")),
@@ -157,4 +157,64 @@ if isdefined(Libdl, :LazyLibrary)
             """,
         )
     end
+
+    @testset "LazyLibrary path contract" begin
+        generate_and_load_jll(
+            include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
+            """
+            import Libdl, LazyJLLWrappers
+            @test libxlsreader.path isa Union{String, Libdl.LazyLibraryPath}
+            @test libxlsreader.path.pieces[1] isa LazyJLLWrappers.LazyArtifactDir
+            @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+            """,
+        )
+    end
+end
+
+using Base.BinaryPlatforms: Platform
+@testset "system_deps are ignored by the wrapper" begin
+    # A record may name the system libraries a product links against; the
+    # wrapper has no use for them and must not mention them.
+    platform = Platform("x86_64", "linux")
+    jllinfo = JLLInfo(;
+        name = "Foo",
+        version = v"1.0.0",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.0.0",
+                deps = [],
+                sources = [],
+                platform,
+                name = "Foo",
+                artifact = JLLArtifactBinding(;
+                    treehash = "0000000000000000000000000000000000000000",
+                    download_sources = [],
+                ),
+                products = [
+                    JLLLibraryProduct(
+                        :libfoo,
+                        "lib/libfoo.so.1",
+                        [],
+                        ["c", "m", "stdc++"];
+                        soname = "libfoo.so.1",
+                    ),
+                ],
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
+            ),
+        ],
+    )
+    toml = JLLGenerator.generate_toml_dict(jllinfo)
+    build = only(toml["builds"])
+    @test only(build["products"])["system_deps"] == ["c", "m", "stdc++"]
+
+    # Generate the wrapper for this build directly, as `@generate_jll_from_toml`
+    # would.  The generator consults the JLL module only for its preferences, so
+    # any loaded package module stands in for it here.
+    jb = LazyJLLWrappers.JLLBlocks(LazyJLLWrappers)
+    LazyJLLWrappers.top_level_statements(jb, build, platform)
+    LazyJLLWrappers.library_product_definition(jb, build, only(build["products"]))
+    code = string(LazyJLLWrappers.synthesize(jb))
+    @test contains(code, "libfoo")
+    @test !contains(code, "system_deps")
+    @test !contains(code, "stdc++")
 end

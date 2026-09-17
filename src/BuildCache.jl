@@ -244,6 +244,64 @@ function import_archives(bc::BuildCache, dir::String)
 end
 
 
+function load_build_entries!(build_entries::Dict{SHA1Hash,BuildCacheBuildEntry}, cache_dir::String)
+    safe_open(joinpath(cache_dir, "build_entries.db"); read=true) do io
+        for line in readlines(io)
+            parts = split(line, " ")
+            length(parts) == 2 || continue
+            build_hash_str, log_artifact_hash_str = parts
+            env_path = joinpath(cache_dir, "envs", "$(build_hash_str).env")
+            if !isfile(env_path)
+                continue
+            end
+            try
+                build_hash = SHA1Hash(build_hash_str)
+                log_artifact_hash = SHA1Hash(log_artifact_hash_str)
+                env = parse_env_block(String(read(env_path)))
+                build_entries[build_hash] = BuildCacheBuildEntry(log_artifact_hash, env)
+            catch
+                @debug("skip: build entry malformed", build_hash=build_hash_str)
+                continue
+            end
+        end
+    end
+end
+
+function load_extract_entries!(extract_entries::Dict{SHA1Hash,BuildCacheExtractEntry}, cache_dir::String)
+    safe_open(joinpath(cache_dir, "extract_entries.db"); read=true) do io
+        for line in readlines(io)
+            parts = split(line, " ")
+            length(parts) == 3 || continue
+            extract_hash_str, artifact_hash_str, log_artifact_hash_str = parts
+            jlp_path = joinpath(cache_dir, "jll_lib_products", "$(extract_hash_str).jlp")
+            if !isfile(jlp_path)
+                @debug("skip: jlp nonexistent", extract_hash=extract_hash_str)
+                continue
+            end
+            local jll_lib_products
+            try
+                jll_lib_products = TOML.parsefile(jlp_path)["jll_lib_products"]
+            catch
+                @debug("skip: jlp malformed", extract_hash=extract_hash_str)
+                continue
+            end
+            try
+                extract_hash = SHA1Hash(extract_hash_str)
+                artifact_hash = SHA1Hash(artifact_hash_str)
+                log_artifact_hash = SHA1Hash(log_artifact_hash_str)
+                extract_entries[extract_hash] = BuildCacheExtractEntry(
+                    artifact_hash,
+                    log_artifact_hash,
+                    parse_toml_dict.(JLLLibraryProduct, jll_lib_products),
+                )
+            catch
+                @debug("skip: extract entry malformed", extract_hash=extract_hash_str)
+                continue
+            end
+        end
+    end
+end
+
 function save_cache(bc::BuildCache)
     # Only try to save if the cache_dir still exists.  For temporary universes, this will not be the case.
     if !isdir(bc.cache_dir)
@@ -255,10 +313,21 @@ function save_cache(bc::BuildCache)
         println(io, bc.artifacts_dir)
     end
 
+    # Reload the on-disk state and merge with our in-memory entries before writing.
+    # This prevents data loss when multiple BuildCache objects share the same cache_dir
+    # (e.g. multiple BuildMeta objects in one process) and save sequentially at exit.
+    merged_build_entries = Dict{SHA1Hash,BuildCacheBuildEntry}()
+    load_build_entries!(merged_build_entries, bc.cache_dir)
+    merge!(merged_build_entries, bc.build_entries)
+
+    merged_extract_entries = Dict{SHA1Hash,BuildCacheExtractEntry}()
+    load_extract_entries!(merged_extract_entries, bc.cache_dir)
+    merge!(merged_extract_entries, bc.extract_entries)
+
     # Serialize out build entries
     mkpath(joinpath(bc.cache_dir, "envs"))
     open(joinpath(bc.cache_dir, "build_entries.db"); write=true) do io
-        for (build_hash, b) in bc.build_entries
+        for (build_hash, b) in merged_build_entries
             println(io, "$(bytes2hex(build_hash)) $(bytes2hex(b.log_artifact))")
 
             # Environment mappings get saved to a separate file, to ease serialization
@@ -275,7 +344,7 @@ function save_cache(bc::BuildCache)
     # Serialize out extraction output cache
     mkpath(joinpath(bc.cache_dir, "jll_lib_products"))
     open(joinpath(bc.cache_dir, "extract_entries.db"); write=true) do io
-        for (extract_hash, e) in bc.extract_entries
+        for (extract_hash, e) in merged_extract_entries
             println(io, "$(bytes2hex(extract_hash)) $(bytes2hex(e.artifact)) $(bytes2hex(e.log_artifact))")
 
             # JLL library information gets saved to a separate file, to ease serialization
@@ -303,74 +372,11 @@ end
 function load_cache(cache_dir::String = default_buildcache_dir())
     artifacts_dir = Ref(joinpath(first(Base.DEPOT_PATH), "artifacts"))
 
-    # Iterate over `build_entries.db`, try to reconstitute `BuildCacheBuildEntry` objects
     build_entries = Dict{SHA1Hash,BuildCacheBuildEntry}()
-    safe_open(joinpath(cache_dir, "build_entries.db"); read=true) do io
-        for line in readlines(io)
-            # Try to read this line's hashes
-            build_hash, log_artifact_hash = split(line, " ")
+    load_build_entries!(build_entries, cache_dir)
 
-            # Immediately look to see if we have an environment mapping
-            env_path = joinpath(cache_dir, "envs", "$(build_hash).env")
-            if !isfile(env_path)
-                continue
-            end
-
-            # Parse them as SHA1Hash'es
-            try
-                build_hash = SHA1Hash(build_hash)
-                log_artifact_hash = SHA1Hash(log_artifact_hash)
-            catch
-                continue
-            end
-
-            env = parse_env_block(String(read(env_path)))
-            build_entries[build_hash] = BuildCacheBuildEntry(
-                log_artifact_hash,
-                env,
-            )
-        end
-    end
-
-    # Iterate over `extract_entries.db`, try to reconstitute `BuildCacheExtractEntry` objects
     extract_entries = Dict{SHA1Hash,BuildCacheExtractEntry}()
-    safe_open(joinpath(cache_dir, "extract_entries.db"); read=true) do io
-        for line in readlines(io)
-            # Try to read this line's hashes
-            extract_hash, artifact_hash, log_artifact_hash = split(line, " ")
-            
-            # Immediately look to see if we have a jll_lib_products mapping
-            jlp_path = joinpath(cache_dir, "jll_lib_products", "$(extract_hash).jlp")
-            if !isfile(jlp_path)
-                @debug("skip: jlp nonexistent", extract_hash)
-                continue
-            end
-
-            local jll_lib_products
-            try
-                jll_lib_products = TOML.parsefile(jlp_path)["jll_lib_products"]
-            catch
-                @debug("skip: jlp malformed", extract_hash)
-                continue
-            end
-
-            # Parse them as SHA1Hash'es, skipping if anything isn't working
-            try
-                extract_hash = SHA1Hash(extract_hash)
-                artifact_hash = SHA1Hash(artifact_hash)
-                log_artifact_hash = SHA1Hash(log_artifact_hash)
-            catch
-                @debug("skip: hashes malformed", extract_hash)
-                continue
-            end
-
-            extract_entries[extract_hash] = BuildCacheExtractEntry(
-                artifact_hash,
-                log_artifact_hash,
-                parse_toml_dict.(JLLLibraryProduct, jll_lib_products),
-            )
-        end
-    end
+    load_extract_entries!(extract_entries, cache_dir)
 
     safe_open(joinpath(cache_dir, "artifacts_dir"); read=true) do io
         new_artifacts_dir = first(readlines(io))

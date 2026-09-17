@@ -62,6 +62,17 @@ through the `source_download_cache` preference.
 
 
 """
+    jll_resolve_cache()
+
+Returns the path of the directory that maps a set of `JLLSource` specifications to the
+artifact paths they resolved to.  Note that this must live in a fixed depot rather than
+`Base.DEPOT_PATH[1]`, as `in_universe()` repoints that at an ephemeral universe depot,
+and anything cached there is thrown away when the universe is.  This can be set through
+the `jll_resolve_cache` preference.
+"""
+@define_storage_location jll_resolve_cache BinaryBuilderSources
+
+"""
     ccache_cache()
 
 Returns the path of the directory used to store `ccache` state.  This can be

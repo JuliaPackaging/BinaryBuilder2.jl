@@ -1015,6 +1015,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
     if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
         make_tool_wrappers(toolchain, dir, "cc", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
         make_tool_wrappers(toolchain, dir, "c++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "cpp", "clang-cpp"; wrapper=_clang_wrapper, toolchain_prefix)
     end
 end
 

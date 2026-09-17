@@ -18,9 +18,6 @@ CToolchain (CrossPlatform(Platform("x86_64", "linux"; libc = "glibc") -> Platfor
  - macOSSDK v11.1.0
  - Clang v17.0.7
  - libLLVM v17.0.7
- - CCTools v986.0.0
- - libtapi v1300.6.0
- - ldid v2.1.4+0
  - LLVMCompilerRT v17.0.7
 ```
 

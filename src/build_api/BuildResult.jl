@@ -1,5 +1,6 @@
+using Ccache_jll
 export BuildResult
-export build_log
+export build_log, ccache_stats
 
 """
     BuildResult
@@ -30,13 +31,17 @@ mutable struct BuildResult
     # The final environment of this build result.
     env::Dict{String,String}
 
+    # ccache per-build statistics log artifact (nothing if ccache was not invoked or build was cached)
+    ccache_log_artifact::Union{Nothing,SHA1Hash}
+
     function BuildResult(config::BuildConfig,
                          status::Symbol,
                          exception::Union{Nothing,Exception},
                          exe::Union{Nothing,SandboxExecutor},
                          mounts::Dict{String,MountInfo},
                          log_artifact::Union{Nothing,SHA1Hash},
-                         env::Dict{String,String})
+                         env::Dict{String,String},
+                         ccache_log_artifact::Union{Nothing,SHA1Hash} = nothing)
         obj = new(
             config,
             status,
@@ -45,6 +50,7 @@ mutable struct BuildResult
             mounts,
             log_artifact,
             env,
+            ccache_log_artifact,
         )
         # Make sure that this is cleaned up _before_ we're in a finalizer.
         push!(get_exit_hooks(), obj)
@@ -140,6 +146,18 @@ function Base.read(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{Strin
     return take!(stdout)
 end
 
+function store_ccache_log_artifact(universe, data::Union{AbstractVector{UInt8},Nothing})
+    (data === nothing || isempty(data)) && return nothing
+    hash = in_universe(universe) do _
+        Pkg.Artifacts.create_artifact() do artifact_dir
+            open(joinpath(artifact_dir, "ccache-statslog"); write=true) do io
+                write(io, data)
+            end
+        end
+    end
+    return SHA1Hash(hash)
+end
+
 function build_log(br::BuildResult)
     if br.log_artifact === nothing
         throw(ArgumentError("Skipped BuildResult's don't have a build log!"))
@@ -148,8 +166,38 @@ function build_log(br::BuildResult)
     return String(read(joinpath(build_log_path, "$(br.config.src_name)-build.log")))
 end
 
+"""
+    ccache_stats(result::BuildResult; io::IO = stdout)
+
+Display per-build ccache statistics for the given `BuildResult`.  Statistics are
+collected via `CCACHE_STATSLOG` during the build and shown using `ccache --show-log-stats`.
+Returns `nothing` if ccache was not invoked during the build or if the build was cached/skipped.
+"""
+function ccache_stats(result::BuildResult; io::IO = stdout)
+    if result.ccache_log_artifact === nothing
+        @warn("No ccache statslog available for this BuildResult (build may have been cached/skipped, or ccache was not invoked)")
+        return nothing
+    end
+    ccache_log_path = artifact_path(result.config.meta.universe, result.ccache_log_artifact)
+    statslog_file = joinpath(ccache_log_path, "ccache-statslog")
+    run(pipeline(
+        addenv(`$(ccache()) --show-log-stats`, "CCACHE_STATSLOG" => statslog_file, "CCACHE_DIR" => ccache_cache("ccache")),
+        stdout = io,
+    ))
+    return nothing
+end
+
 function parse_metadir_env(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})
     return parse_env_block(String(read(exe, config, mounts, "$(metadir_prefix())/env")))
+end
+
+function read_metadir_ccache_statslog(exe::SandboxExecutor, config::BuildConfig, mounts::Dict{String,MountInfo})
+    try
+        return read(exe, config, mounts, "$(metadir_prefix())/ccache-statslog")
+    catch e
+        e isa ArgumentError || rethrow()
+        return nothing
+    end
 end
 
 function parse_env_block(env_string::AbstractString)

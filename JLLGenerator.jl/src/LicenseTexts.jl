@@ -2,6 +2,7 @@ const license_texts = Dict{String,String}()
 
 # NOTE: Adding a new license 
 for license_name in readdir(joinpath(@__DIR__, "license_raw_texts"))
+    include_dependency(joinpath(@__DIR__, "license_raw_texts", license_name))
     license_texts[license_name] = String(read(joinpath(@__DIR__, "license_raw_texts", license_name)))
 end
 

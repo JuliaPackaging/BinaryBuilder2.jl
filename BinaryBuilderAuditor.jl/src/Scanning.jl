@@ -150,12 +150,10 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         library_product_map[relpath_search(symlinks, lib_located_path)] = lib
     end
 
-    # Create toolchain for our third-party tools
-    at = AuditorToolchain(CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)))
-    at_srcs = toolchain_sources(at)
-    prepare(at_srcs)
-    at_prefix = mktempdir()
-    deploy(at_srcs, at_prefix)
+    # Get the (memoized) toolchain that holds our third-party tools
+    at, at_prefix = deployed_auditor_toolchain(
+        CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)),
+    )
 
     return ScanResult(
         prefix,
@@ -194,11 +192,6 @@ function relpath_search(symlinks::Dict{String,String}, rel_path::AbstractString)
         rel_path = new_rel_path
     end
     return rel_path
-end
-
-# After this function runs, `patchelf()` and `install_name_tool()` won't work.
-function cleanup_toolchains!(scan::ScanResult)
-    rm(scan.toolchain_prefix; force=true, recursive=true)
 end
 
 Base.relpath(scan::ScanResult, rel_path::AbstractString) = relpath_search(scan.symlinks, rel_path)

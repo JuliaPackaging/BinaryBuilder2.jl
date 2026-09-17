@@ -37,6 +37,10 @@ end
 function executable_product_definition(jb::JLLBlocks, artifact, product)
     var_name, path_var_name, lazy_path_var_name = gen_lazy_artifact_path(jb, artifact, product)
 
+    # If we emitted in eager mode there is no lazy path object; use the `String`
+    # path global, which is filled in by the time the wrapper can be called.
+    path_ref = something(lazy_path_var_name, path_var_name)
+
     push!(jb.top_level_blocks, quote
         function $(var_name)(; adjust_PATH::Bool = true, adjust_LIBPATH::Bool = true)
             env = Base.invokelatest(
@@ -47,7 +51,7 @@ function executable_product_definition(jb::JLLBlocks, artifact, product)
                 adjust_PATH,
                 adjust_LIBPATH,
             )
-            return Cmd(Cmd([string($(lazy_path_var_name))]); env)
+            return Cmd(Cmd([string($(path_ref))]); env)
         end
     end)
 end

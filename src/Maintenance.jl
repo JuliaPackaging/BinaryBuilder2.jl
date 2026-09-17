@@ -36,7 +36,8 @@ end
 
 function clear_sources_cache()
     rm(generated_source_cache("."); recursive=true, force=true)
-    rm(jll_resolve_cache("."); recursive=true, force=true)
+    # `normpath()` because arena-backed storage locations hand back `<arena>/.`
+    rm(normpath(jll_resolve_cache(".")); recursive=true, force=true)
 end
 
 # TODO:

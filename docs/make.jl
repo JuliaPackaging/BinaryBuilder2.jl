@@ -9,8 +9,10 @@ DocMeta.setdocmeta!(
 )
 
 makedocs(
-    sitename = "BinaryBuilder2",
-    format = Documenter.HTML(),
+    sitename = "BinaryBuilder2.jl",
+    format = Documenter.HTML(
+        repolink = "https://github.com/JuliaPackaging/BinaryBuilder2.jl",
+    ),
     modules = [BinaryBuilder2],
     pages = [
         "Overview" => "index.md",
@@ -23,6 +25,7 @@ makedocs(
         "Advanced" => [
             "Nomenclature" => "advanced/Nomenclature.md",
             "VSCode debugging" => "advanced/launch_code_server.md",
+            "Build Cache" => "advanced/BuildCache.md",
             "BuildTargetSpec" => "advanced/BuildTargetSpec.md",
             "PlatformlessWrapper" => "advanced/PlatformlessWrapper.md",
         ],
@@ -30,9 +33,7 @@ makedocs(
     checkdocs = :warnonly,
 )
 
-# Documenter can also automatically deploy documentation to gh-pages.
-# See "Hosting Documentation" and deploydocs() in the Documenter manual
-# for more information.
-#=deploydocs(
-    repo = "<repository url>"
-)=#
+deploydocs(
+    repo = "github.com/JuliaPackaging/BinaryBuilder2.jl",
+    devbranch = "main",
+)

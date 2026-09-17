@@ -26,6 +26,10 @@ to force the usage of a particular `meta` object.
 function get_default_meta()
     if _default_meta[] === nothing
         _default_meta[] = BuildMeta(ARGS)
+        meta = _default_meta[]
+        if trace_enabled(meta)
+            trace_event(meta, "bb2.default_meta_initialized")
+        end
     end
     return _default_meta[]
 end
@@ -88,7 +92,7 @@ end
 # These are the `Result` statuses that do not cause a `BuildError`
 const acceptable_statuses = (:success, :skipped, :cached)
 
-function build_tarballs(src_name::String,
+@trace_function args=(src_name=src_name, src_version=string(src_version)) function build_tarballs(src_name::String,
                         src_version::Union{String,VersionNumber},
                         sources::Vector,
                         script::String;
@@ -135,6 +139,12 @@ function build_tarballs(src_name::String,
                         
                         eager_cleanup::Bool = true,
                         kwargs...)
+    trace_status = "success"
+    if trace_enabled(meta)
+        start_trace_session!(meta)
+    end
+
+    try
     @ensure_all_kwargs_consumed_header()
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
@@ -162,6 +172,11 @@ function build_tarballs(src_name::String,
     extract_results = Dict{String,Vector{ExtractResult}}()
     cleanup_tasks = Task[]
     for platform in platforms
+        trace_begin(
+            meta,
+            "bb2.platform_iteration";
+            args=(platform=string(platform),),
+        )
         build_config = @auto_extract_kwargs BuildConfig(
             meta,
             src_name,
@@ -233,8 +248,18 @@ function build_tarballs(src_name::String,
         end
         # Break out of outer `for` loop if an extraction failed
         if build_error !== nothing
+            trace_end(
+                meta,
+                "bb2.platform_iteration";
+                args=(platform=string(platform), status="error"),
+            )
             break
         end
+        trace_end(
+            meta,
+            "bb2.platform_iteration";
+            args=(platform=string(platform), status="success"),
+        )
     end
 
     if build_error === nothing
@@ -252,6 +277,7 @@ function build_tarballs(src_name::String,
         end
         jll_packaging_order = toposort(jll_extraction_map, get_jll_deps)
         for jll_name in jll_packaging_order
+            trace_begin(meta, "bb2.package_iteration"; args=(jll_name=jll_name,))
             # Because we're packaging in topo-sorted order, we know that
             # all extra dependencies will be availalbe in `package_results`.
             extra_deps = PackageSpec[]
@@ -271,6 +297,7 @@ function build_tarballs(src_name::String,
                 package_result = package!(package_config)
                 if package_result.status ∉ acceptable_statuses
                     build_error = make_BuildError("Unknown packaging error", package_result)
+                    trace_end(meta, "bb2.package_iteration"; args=(jll_name=jll_name, status="error"))
                     # break out of `for` loop
                     break
                 end
@@ -278,6 +305,7 @@ function build_tarballs(src_name::String,
                 package_result = PackageResult_skipped(package_config)
             end
             push!(package_results, package_result)
+            trace_end(meta, "bb2.package_iteration"; args=(jll_name=jll_name, status=string(package_result.status)))
         end
     end
 
@@ -289,9 +317,18 @@ function build_tarballs(src_name::String,
     if build_error === nothing
         @ensure_all_kwargs_consumed_check(kwargs)
     else
+        trace_status = "failed"
         throw(build_error)
     end
     return meta
+    catch
+        if trace_status == "success"
+            trace_status = "errored"
+        end
+        rethrow()
+    finally
+        finish_trace_session!(meta; status=trace_status)
+    end
 end
 
 # For those that like to use keyword arguments to name everything

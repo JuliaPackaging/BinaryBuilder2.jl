@@ -1,7 +1,7 @@
 name = "ScratchSpaceGarbageCollector"
 uuid = "2b218182-314f-4389-a4eb-69d351d2272a"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
