@@ -52,10 +52,14 @@ function Base.atexit(eh::ExitHooks; exit_process::Bool=true)
     for meta in eh.build_metas
         if length(meta.build_hash_list) != length(meta.build_hash_list_used)
             message = strip("""
-            Not all build hashes provided were used, this should never happen!
+            Not all build hashes provided were used:
             Depot path: $(meta.universe.depot_path)
             Provided: $(meta.build_hash_list)
             Consumed: $(meta.build_hash_list_used)
+
+            This is either a bug in BinaryBuilder2, or a TOCTOU error.
+            Could someone have registered a new dependency between scheduling and actual build?
+            Use JULIA_DEBUG=BinaryBuilder2 to investigate.
             """)
             @error(message)
 
