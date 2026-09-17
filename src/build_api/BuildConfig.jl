@@ -81,7 +81,7 @@ struct BuildConfig
         # Cache key for our metadir generated source, it is sensitive to the BB2 hash and the script itself
         function metadir_cache_key(script)
             hash = sha1(string(
-                bytes2hex(bb_package_treehashes()["BinaryBuilder2"]),
+                bytes2hex(bb_package_treehashes()["BinaryBuilder2"].hash),
                 script,
             ))
             return string("BB2-", bytes2hex(hash)[1:4], "-metadir")
@@ -280,7 +280,7 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
         println(hash_buffer, "[environment]")
         package_treehashes = bb_package_treehashes()
         for pkg_name in sort(collect(keys(package_treehashes)))
-            println(hash_buffer, "  $(pkg_name) = $(package_treehashes[pkg_name])")
+            println(hash_buffer, "  $(pkg_name) v$(package_treehashes[pkg_name].version) = $(package_treehashes[pkg_name].hash)")
         end
     end
     hash_buffer = String(take!(hash_buffer))

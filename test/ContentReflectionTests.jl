@@ -5,13 +5,15 @@ using BinaryBuilder2: bb_package_treehashes
     ctx = Pkg.Types.Context()
     package_treehashes = bb_package_treehashes()
     
+    # Walk over all manifest entries
     for (uuid, pkg) in ctx.env.manifest
-        # If it's not a BB-related package, skip it
-        if !occursin("BinaryBuilder", pkg.name) && !occursin("JLL", pkg.name)
+        # If it's not stored in our monorepo, skip it
+        if !isdir(joinpath(pkgdir(BinaryBuilder2), "$(pkg.name).jl"))
             continue
         end
 
-        # Purposefull skip JLLWrappers, that's not one we want to pay attention to
+        # Purposefully skip these packages, we don't track their treehashes
+        # because they don't impact build output.
         pkgs_to_skip = [
             "JLLWrappers",
         ]
@@ -19,6 +21,9 @@ using BinaryBuilder2: bb_package_treehashes
             continue
         end
 
+        if pkg.name ∉ keys(package_treehashes)
+            @error("$(pkg.name) is a subproject of BB2, but not listed in bb_package_treehashes()!")
+        end
         @test pkg.name ∈ keys(package_treehashes)
         #=
         # This used to be true, but no longer because we now hash only `src/*`.
