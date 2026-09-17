@@ -22,7 +22,7 @@ Base.push!(eh::ExitHooks, meta::BuildMeta) = push!(eh.build_metas, meta)
 Perform cleanup of all objects registered with `eh`.  This is called automatically
 at process exit, but can be eagerly called at any time.
 """
-function Base.atexit(eh::ExitHooks)
+function Base.atexit(eh::ExitHooks; exit_process::Bool=true)
     for bc in eh.build_caches
         try
             save_cache(bc)
@@ -57,7 +57,11 @@ function Base.atexit(eh::ExitHooks)
             Provided: $(meta.build_hash_list)
             Consumed: $(meta.build_hash_list_used)
             """)
-            throw(InvalidStateException(message, :NotAllBuildHashesUsed))
+            @error(message)
+
+            if exit_process
+                exit(1)
+            end
         end
     end
     empty!(eh.build_metas)
