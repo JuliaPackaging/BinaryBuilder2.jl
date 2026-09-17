@@ -2,6 +2,15 @@ using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilde
 
 export ExtractConfig, extract!
 
+"""
+    ExtractConfig
+
+This structure holds the configuration of how the output of a build is arranged into
+a final JLL.  This can be a complicated script, although most recipes are content with
+just a few `mv` and `install` commands.  Note that any environment variables exported
+during the build will be available in the extractions, and many automatically defined
+variables are available for your use.
+"""
 struct ExtractConfig
     # The build result we're packaging up
     build::BuildResult

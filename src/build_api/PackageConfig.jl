@@ -2,6 +2,13 @@ using BinaryBuilderProducts, JLLGenerator, MultiHashParsing
 
 export PackageConfig, package!
 
+"""
+    PackageConfig
+
+Inputs needed to determine how a set of extractions are packaged.  Multiple extractions
+can be packaged together into the same JLL, for instance you can create a "library-only"
+variant of a JLL, and a variant with all headers and documentation included as well.
+"""
 struct PackageConfig
     # The name of the generated JLL; if not specified, defaults to `$(src_name)`. (no `_jll` at the end!)
     name::String
