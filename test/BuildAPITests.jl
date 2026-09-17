@@ -211,6 +211,17 @@ end
     @test failing_build_result.env["env_val"] == "pre"
     @test occursin("Previous command 'false' exited with code 1", build_log(failing_build_result))
 
+    # Run again with `verbose=true` to exercise the `@error("Build failed", ...)` path
+    verbose_logs, verbose_build_result = Test.collect_test_logs(; min_level=Base.CoreLogging.Error) do
+        build!(bad_build_config; verbose=true)
+    end
+    @test verbose_build_result.status == :failed
+    @test !any(l -> startswith(string(l.message), "Exception while generating log record"), verbose_logs)
+    build_failed_logs = filter(l -> l.message == "Build failed", verbose_logs)
+    @test length(build_failed_logs) == 1
+    @test build_failed_logs[1].kwargs[:run_status] == :failed
+    @test build_failed_logs[1].kwargs[:exception] == (nothing, nothing)
+
     # read_metadir_ccache_statslog returns nothing when ccache was never invoked
     @test failing_build_result.ccache_log_artifact === nothing
 

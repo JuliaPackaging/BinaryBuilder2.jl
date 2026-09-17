@@ -502,7 +502,7 @@ end
     end
 
     # Declare these all as `local` so that we can inspect them in the `@infiltrate` below
-    local run_status, run_exception, build_log
+    local run_status, run_exception, run_backtrace, build_log
 
     # Write build script out into a logfile
     build_log_io = IOBuffer()
