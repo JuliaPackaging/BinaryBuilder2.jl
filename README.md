@@ -13,8 +13,7 @@ See `TODO.md` for the current worklist.
 
 1. Install `BinaryBuilder2` (requires Julia 1.12+):
 ```julia
-using Pkg
-Pkg.add(url="https://github.com/JuliaPackaging/BinaryBuilder2.jl")
+pkg> add BinaryBuilder2
 ```
 
 2. Define a build recipe. The core API revolves around a `BuildMeta` object (analogous to the old `build_tarballs()` call) that describes the sources, toolchains, and extraction targets for your package:
