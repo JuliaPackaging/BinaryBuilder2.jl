@@ -54,31 +54,33 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   host: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │   target: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │ [source_trees]
-│   /opt/host-tools = sha1:a57234ff529dc3fa30382935abee0a5d8007fe65
-│   /opt/host-x86_64-linux-gnu = sha1:03d3df1856c3b5780665ed6a787a748d03ab81e0
-│   /opt/target-x86_64-linux-gnu = sha1:da1cc815fcc5b8f7e79311c505e297e9e132d889
+│   /opt/host-tools = sha1:1d4ecf643eebe9e4b731b0af45538904c8e95d89
+│   /opt/host-x86_64-linux-gnu = sha1:d50e1659ae2d8c757231737299a5b3906cecad41
+│   /opt/target-x86_64-linux-gnu = sha1:6c77f92e1cfc9bd8c377cb3e7a2c3a76f255c14c
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │   /workspace/destdir/target-x86_64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:084f94c9181f34e7466e53eae6bfffcec61903eb
+│   /workspace/metadir = sha1:298035f1ce8bd043c0d7f4fd532c553835faf873
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 = sha1:aac51e4d4aba12ae6618aa804cda9d68125076bf
-│   BinaryBuilderAuditor = sha1:a1cb1172a8fa24028feba7361d6950a3fa2fa7d8
-│   BinaryBuilderGitUtils = sha1:3ed475af33b46cdd85519443096409c850286e4b
-│   BinaryBuilderPlatformExtensions = sha1:88784383a64abcf571e47ed19a0a97349aaf6564
-│   BinaryBuilderProducts = sha1:5fa7cd339ed1f8d5b8d074512da6569354ff9ac2
-│   BinaryBuilderSources = sha1:6afda911aa3216dd9fb42f2c1f38c14e1c0590dc
-│   BinaryBuilderToolchains = sha1:ed992a365101e14803f3615af90a75d19fdf8c00
-│   JLLGenerator = sha1:cb958a5e87299c4789cdeab4573f2e2f4706bd80
-│   JLLPrefixes = sha1:6e132d90cd5e9bdb8025908e7a7971d72c0defa3
-│   LazyJLLWrappers = sha1:063a7e939eb688406e360542f12e73828fea55f2
-│   MultiHashParsing = sha1:f5d0a4ceb55dff17e345b169ca9564cc173afede
-│   Sandbox = sha1:c7156ad981aa1501a83f5a140f08ee30692c3674
-│   TreeArchival = sha1:7ea07d94f984690a10879d06491661a1270423bb
+│   BinaryBuilder2 v1.1.1 = sha1:4758218aa21f6c83f3fd16464f8c83ecb2ad55eb
+│   BinaryBuilderAuditor v0.2.1 = sha1:5e79774883047f008ce3e0d868be067644f3263f
+│   BinaryBuilderGitUtils v0.2.0 = sha1:1012f01043d47329fc976fdfe6ebb17d2feb4b35
+│   BinaryBuilderPlatformExtensions v0.2.0 = sha1:1b9c6386a00f29e6b6a7f423f59f4a97deac8e15
+│   BinaryBuilderProducts v0.2.1 = sha1:1a53e7003742d423374236453b61014bf144aae2
+│   BinaryBuilderSources v0.2.0 = sha1:488299903ba079e4ee6a202d1a34515ec0d30e25
+│   BinaryBuilderToolchains v0.3.2 = sha1:178bf48348178ea0ed3cd727faf1c3f99352b738
+│   JLLGenerator v0.5.1 = sha1:e4abe47e3b786a3d8ea54c3d2945eb364da6be7b
+│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
+│   LazyJLLWrappers v1.2.0 = sha1:4c752d4bd3bf91be149cb57cc7b62e5987f14d22
+│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
+│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
+│   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
 └ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:287
-sha1:b5c29c56ec883b47fda84b0a960c742e591bfbdf
+sha1:7f12c865b28ab25410fc9ca13a8086246a439fb6
 ```
 
 The same can be done for an `ExtractConfig` object (note that it prints out the `BuildConfig` object as well during debugging, because it hashes that as an input as well!)
@@ -94,38 +96,40 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   host: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │   target: x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+x86_64
 │ [source_trees]
-│   /opt/host-tools = sha1:a57234ff529dc3fa30382935abee0a5d8007fe65
-│   /opt/host-x86_64-linux-gnu = sha1:03d3df1856c3b5780665ed6a787a748d03ab81e0
-│   /opt/target-x86_64-linux-gnu = sha1:a239c3ea36916f77024d49ee0797232dcc0578c8
+│   /opt/host-tools = sha1:1d4ecf643eebe9e4b731b0af45538904c8e95d89
+│   /opt/host-x86_64-linux-gnu = sha1:d50e1659ae2d8c757231737299a5b3906cecad41
+│   /opt/target-x86_64-linux-gnu = sha1:2111269ff032099054985dda538d761ea64994c5
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │   /workspace/destdir/target-x86_64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:084f94c9181f34e7466e53eae6bfffcec61903eb
+│   /workspace/metadir = sha1:298035f1ce8bd043c0d7f4fd532c553835faf873
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 = sha1:aac51e4d4aba12ae6618aa804cda9d68125076bf
-│   BinaryBuilderAuditor = sha1:a1cb1172a8fa24028feba7361d6950a3fa2fa7d8
-│   BinaryBuilderGitUtils = sha1:3ed475af33b46cdd85519443096409c850286e4b
-│   BinaryBuilderPlatformExtensions = sha1:88784383a64abcf571e47ed19a0a97349aaf6564
-│   BinaryBuilderProducts = sha1:5fa7cd339ed1f8d5b8d074512da6569354ff9ac2
-│   BinaryBuilderSources = sha1:6afda911aa3216dd9fb42f2c1f38c14e1c0590dc
-│   BinaryBuilderToolchains = sha1:ed992a365101e14803f3615af90a75d19fdf8c00
-│   JLLGenerator = sha1:cb958a5e87299c4789cdeab4573f2e2f4706bd80
-│   JLLPrefixes = sha1:6e132d90cd5e9bdb8025908e7a7971d72c0defa3
-│   LazyJLLWrappers = sha1:063a7e939eb688406e360542f12e73828fea55f2
-│   MultiHashParsing = sha1:f5d0a4ceb55dff17e345b169ca9564cc173afede
-│   Sandbox = sha1:c7156ad981aa1501a83f5a140f08ee30692c3674
-│   TreeArchival = sha1:7ea07d94f984690a10879d06491661a1270423bb
+│   BinaryBuilder2 v1.1.1 = sha1:4758218aa21f6c83f3fd16464f8c83ecb2ad55eb
+│   BinaryBuilderAuditor v0.2.1 = sha1:5e79774883047f008ce3e0d868be067644f3263f
+│   BinaryBuilderGitUtils v0.2.0 = sha1:1012f01043d47329fc976fdfe6ebb17d2feb4b35
+│   BinaryBuilderPlatformExtensions v0.2.0 = sha1:1b9c6386a00f29e6b6a7f423f59f4a97deac8e15
+│   BinaryBuilderProducts v0.2.1 = sha1:1a53e7003742d423374236453b61014bf144aae2
+│   BinaryBuilderSources v0.2.0 = sha1:488299903ba079e4ee6a202d1a34515ec0d30e25
+│   BinaryBuilderToolchains v0.3.2 = sha1:178bf48348178ea0ed3cd727faf1c3f99352b738
+│   JLLGenerator v0.5.1 = sha1:e4abe47e3b786a3d8ea54c3d2945eb364da6be7b
+│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
+│   LazyJLLWrappers v1.2.0 = sha1:4c752d4bd3bf91be149cb57cc7b62e5987f14d22
+│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
+│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
+│   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
 └ @ BinaryBuilder2 ~/src/BB2/src/build_api/BuildConfig.jl:287
 ┌ Debug: ExtractConfig hash buffer:
 │ [extraction_metadata]
-│   build_hash = sha1:68ab520f17620647451edd4574d973d2c82e63d3
+│   build_hash = sha1:f811e60f4b3532774a19cf2cfaafdbbf8091b447
 │   script_hash = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [products]
 │   libfoo = ["libfoo"]
-└ @ BinaryBuilder2 ~/src/BB2/src/build_api/ExtractConfig.jl:92
-sha1:e016baf0e743c75d85dc26f540eda8572117b83c
+└ @ BinaryBuilder2 ~/src/BB2/src/build_api/ExtractConfig.jl:101
+sha1:3a128df517cc353985d1f0fac3371c974562e6df
 ```
 
 
