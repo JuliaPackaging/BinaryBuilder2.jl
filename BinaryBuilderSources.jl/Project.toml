@@ -1,7 +1,7 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderSources"
 uuid = "316c416d-4527-6863-7465-466137743047"
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
 BinaryBuilderGitUtils = "0.2"
