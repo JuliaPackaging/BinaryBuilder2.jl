@@ -41,7 +41,7 @@ jobs:
           julia --color=yes -e '
             using Pkg
             Pkg.activate(temp=true)
-            Pkg.add(url="SemverChecker")
+            Pkg.add("SemverChecker")
             using SemverChecker
             exit(SemverChecker.main())' -- --skip=contrib --summary --logdir=semver-logs
 
