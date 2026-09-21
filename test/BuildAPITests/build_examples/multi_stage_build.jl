@@ -38,30 +38,28 @@ build_tarballs(;
     target_toolchains = [CToolchain(;use_ccache=false)],
 
     extract_spec_generator = (build, platform) -> begin
-        return Dict(
-            "libstring" => ExtractSpec(
+        return ExtractSpec[
+            ExtractSpec(
                 raw"""
                 extract ${prefix}/lib
                 """,
                 [LibraryProduct("libstring", :libstring)],
                 get_default_target_spec(build);
+                jll_name = "libstring",
             ),
-            "libstring_headers" => ExtractSpec(
+            ExtractSpec(
                 raw"""
                 extract ${prefix}/include
                 """,
                 [FileProduct("include/libstring.h", :libstring_h)],
                 get_default_target_spec(build);
+                jll_name = "libstring_headers",
                 platform = AnyPlatform(),
             ),
-        )
+        ]
     end,
     # Must set this to use AnyPlatform extractions
     duplicate_extraction_handling = :ignore_identical,
-    jll_extraction_map = Dict(
-        "libstring" => ["libstring"],
-        "libstring_headers" => ["libstring_headers"],
-    ),
     disable_cache=true,
 )
 

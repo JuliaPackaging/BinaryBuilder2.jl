@@ -19,7 +19,6 @@ for version in (v"14.2.0",) #keys(gcc_version_sources)
         ],
         build_spec_generator = gcc_build_spec_generator,
         extract_spec_generator = gcc_extract_spec_generator,
-        jll_extraction_map = gcc_extraction_map,
         meta,
         duplicate_extraction_handling = :ignore_all,
     )

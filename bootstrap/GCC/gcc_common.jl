@@ -309,8 +309,8 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
         FileProduct([string(raw"lib/gcc/${target}/${gcc_version}/", name)],
                     Symbol(replace(name, "." => "_"))) for name in gcc_crt_object_names
     ]
-    return Dict(
-        "libstdcxx" => ExtractSpec(
+    return ExtractSpec[
+        ExtractSpec(
             raw"""
             extract ${prefix}/${target}/include
             extract ${prefix}/${target}/${lib64}/libstdc++*
@@ -321,9 +321,10 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 LibraryProduct([raw"${target}/${lib64}/libstdc++"], :libstdcxx),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = "libstdcxx",
             platform = platform.target,
         ),
-        "GCC_support_libraries" => ExtractSpec(
+        ExtractSpec(
             raw"""
             extract ${prefix}/${target}/${lib64}
             # Remove `libstdc++`, as that was extracted in `libstdcxx`
@@ -340,17 +341,19 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 ),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = "GCC_support_libraries",
             platform = platform.target,
         ),
-        "GCC_crt_objects" => ExtractSpec(
+        ExtractSpec(
             raw"""
             extract ${prefix}/lib/gcc/${target}/${gcc_version}
             """,
             gcc_crt_object_products,
             get_target_spec_by_name(build, "host");
+            jll_name = "GCC_crt_objects",
             platform = platform.target,
         ),
-        "GCC" => ExtractSpec(
+        ExtractSpec(
             raw"""
             # Remove things already extracted elsewhere
             extract ${prefix}/**
@@ -363,18 +366,14 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
                 ExecutableProduct("\${target}-g++", :gxx),
             ],
             get_target_spec_by_name(build, "host");
+            # The `GCC` extraction explicitly does not depend on the JLLs above,
+            # because they are `target` and not cross-platform, thus do not get
+            # installed at the same time in JLLPrefixes.
+            jll_name = "GCC",
             platform,
         ),
-    )
+    ]
 end
-gcc_extraction_map = Dict(
-    "libstdcxx" => ["libstdcxx"],
-    "GCC_support_libraries" => ["GCC_support_libraries"],
-    "GCC_crt_objects" => ["GCC_crt_objects"],
-    # We explicitly do not depend on the above libraries, because they are `target`
-    # and not cross-platform, thus do not get installed at the same time in JLLPrefixes.
-    "GCC" => ["GCC"],
-)
 
 # Build for these host platforms
 host_platforms = [

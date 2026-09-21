@@ -75,8 +75,8 @@ build_tarballs(;
         ),
     ],
     extract_spec_generator = (build_config, platform) -> begin
-        return Dict(
-            "LLVMLibunwind" => ExtractSpec(
+        return ExtractSpec[
+            ExtractSpec(
                 raw"""
                 extract ${prefix}/include/*unwind*
                 extract ${prefix}/include/mach-o
@@ -85,9 +85,10 @@ build_tarballs(;
                 [
                     LibraryProduct("libunwind", :libunwind),
                 ],
-                get_target_spec_by_name(build_config, "target"),
+                get_target_spec_by_name(build_config, "target");
+                jll_name = "LLVMLibunwind",
             ),
-            "LLVMLibcxx" => ExtractSpec(
+            ExtractSpec(
                 raw"""
                 extract ${prefix}/include/c++/**
                 extract ${shlibdir}/libc++\*
@@ -96,15 +97,12 @@ build_tarballs(;
                     LibraryProduct("libc++", :libcxx),
                 ],
                 get_default_target_spec(build_config);
+                jll_name = "LLVMLibcxx",
                 platform,
                 inter_deps = ["LLVMLibunwind"],
             ),
-        )
+        ]
     end,
-    jll_extraction_map = Dict(
-        "LLVMLibcxx" => ["LLVMLibcxx"],
-        "LLVMLibunwind" => ["LLVMLibunwind"],
-    ),
     host_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain(), HostToolsToolchain()],
     target_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain()],
 )

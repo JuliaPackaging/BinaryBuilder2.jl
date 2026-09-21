@@ -76,34 +76,32 @@ end
         end,
         # Create an extraction
         extract_spec_generator = (build_config, platform) -> begin
-            return Dict(
-                "libcxxstring_cross" => ExtractSpec(
+            return ExtractSpec[
+                ExtractSpec(
                     raw"extract ${host_prefix}/**",
                     [LibraryProduct("libstring", :libstring)],
                     get_default_target_spec(build_config);
+                    jll_name = "libcxxstring_cross",
                     platform,
                 ),
-                "libcxxstring_target" => ExtractSpec(
+                ExtractSpec(
                     raw"extract ${target_prefix}/**",
                     [LibraryProduct("libstring", :libstring)],
-                    get_target_spec_by_name(build_config, "target"),
+                    get_target_spec_by_name(build_config, "target");
+                    jll_name = "libcxxstring_target",
                 ),
-                "libcxxstring_source" => ExtractSpec(
+                ExtractSpec(
                     raw"extract ${build_prefix}/**",
                     [
                         FileProduct("src/libstring.h", :libstring_h),
                         FileProduct("src/libstring.cpp", :libstring_cpp),
                     ],
                     get_target_spec_by_name(build_config, "build");
+                    jll_name = "libcxxstring_source",
                     platform=AnyPlatform(),
                 ),
-            )
+            ]
         end,
-        jll_extraction_map = Dict(
-            "libcxxstring_cross" => ["libcxxstring_cross"],
-            "libcxxstring_target" => ["libcxxstring_target"],
-            "libcxxstring_source" => ["libcxxstring_source"],
-        ),
     )
 
     # Ensure that each extraction targeted the correct platform
