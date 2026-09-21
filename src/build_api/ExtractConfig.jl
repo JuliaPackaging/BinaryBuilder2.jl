@@ -21,6 +21,9 @@ struct ExtractConfig
     # The products that this package will ensure are available
     products::Vector{<:AbstractProduct}
 
+    # The name of the JLL package these extracted products are destined for.
+    jll_name::String
+
     # A `BuildResult` can actually contain multiple output prefixes; depending on how
     # many different toolchains with different targets you ask for.  Here, you must
     # declare which toolchain you want to extract from.  We will only allow access
@@ -54,6 +57,7 @@ struct ExtractConfig
     function ExtractConfig(build::BuildResult,
                            script::AbstractString,
                            products::Vector{<:AbstractProduct};
+                           jll_name::AbstractString = build.config.src_name,
                            target_spec::BuildTargetSpec = get_default_target_spec(build.config),
                            platform::AbstractPlatform = target_spec.platform.target,
                            inter_deps::Dict{String,<:Any} = Dict{String,Any}())
@@ -61,6 +65,7 @@ struct ExtractConfig
             build,
             String(script),
             products,
+            String(jll_name),
             target_spec,
             platform,
             inter_deps,

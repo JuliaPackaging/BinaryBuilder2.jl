@@ -137,8 +137,8 @@ function clang_buildscript(src_version::VersionNumber)
 end
 
 function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlatform; is_bootstrap::Bool=false)
-    return Dict(
-        llvm_name_prefix("Clang"; is_bootstrap) => ExtractSpec(
+    return ExtractSpec[
+        ExtractSpec(
             raw"""
             extract ${prefix}/**
             rm -f ${extract_dir}/lib/libLLVM*
@@ -151,10 +151,11 @@ function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlat
                 LibraryProduct("libclang-cpp", :libclang_cpp),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = llvm_name_prefix("Clang"; is_bootstrap),
             platform,
             inter_deps = [llvm_name_prefix("libLLVM"; is_bootstrap)],
         ),
-        llvm_name_prefix("libLLVM"; is_bootstrap) => ExtractSpec(
+        ExtractSpec(
             raw"""
             extract ${shlibdir}/libLLVM*
             extract ${shlibdir}/libLTO*
@@ -163,18 +164,10 @@ function clang_extract_spec_generator(build::BuildConfig, platform::AbstractPlat
                 LibraryProduct(["libLLVM", "libLLVM-$(VersionNumber(build.src_version).major)jl"], :libLLVM),
             ],
             get_target_spec_by_name(build, "host");
+            jll_name = llvm_name_prefix("libLLVM"; is_bootstrap),
             platform = platform.host,
         ),
-    )
-end
-
-function clang_extraction_map(;is_bootstrap::Bool = false)
-    clang_name = llvm_name_prefix("Clang"; is_bootstrap)
-    libllvm_name = llvm_name_prefix("libLLVM"; is_bootstrap)
-    return Dict(
-        clang_name => [clang_name],
-        libllvm_name => [libllvm_name],
-    )
+    ]
 end
 
 llvm_version = v"17.0.6"

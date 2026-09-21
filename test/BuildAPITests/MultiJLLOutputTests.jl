@@ -30,7 +30,7 @@ zlib_multi_packaging_jl = joinpath(@__DIR__, "build_examples", "zlib_multi_packa
     package_result = get_package_result(meta, "Zlib")
     @test package_result.config.name == "Zlib"
     @test package_result.status == :success
-    @test length(package_result.config.named_extractions) == 2
+    @test length(package_result.config.named_extractions) == 1
 
     function get_deps(package_result::PackageResult)
         pkg_dir = BinaryBuilder2.jll_dir(package_result)

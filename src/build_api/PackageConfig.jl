@@ -48,6 +48,14 @@ struct PackageConfig
             throw(ArgumentError("Package name '$(jll_name)' is not a valid identifier!"))
         end
 
+        for (name, extract_results) in extractions
+            for er in extract_results
+                if er.config.jll_name != jll_name
+                    throw(ArgumentError("Extraction '$(name)' was extracted for JLL '$(er.config.jll_name)', but is being packaged as '$(jll_name)'!"))
+                end
+            end
+        end
+
         if jll_name ∉ keys(extractions)
             throw(ArgumentError("One of the extractions must have the same name as the JLL itself!"))
         end
@@ -115,8 +123,9 @@ end
 AbstractBuildMeta(config::PackageConfig) = AbstractBuildMeta(config.named_extractions)
 AbstractBuildMeta(named_extractions::Dict{String,Vector{ExtractResult}}) = AbstractBuildMeta(first(first(values(named_extractions))))
 
-# We allow overriding the name, but default to `build_config.src_name`.
-default_jll_name(result::ExtractResult) = result.config.build.config.src_name
+# We allow overriding the name, but default to the destination the extraction
+# was aimed at, which is what the check in `PackageConfig` compares against.
+default_jll_name(result::ExtractResult) = result.config.jll_name
 default_jll_name(results::Vector{ExtractResult}) = default_jll_name(first(results))
 default_jll_name(extractions::Dict{String,Vector{ExtractResult}}) = default_jll_name(first(values(extractions)))
 
