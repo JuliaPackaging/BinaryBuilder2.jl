@@ -22,7 +22,7 @@ struct ExtractResult
     audit_result::Union{Nothing,AuditResult}
 
     # The JLL library product structure, comes from `audit_result`.
-    jll_lib_products::Vector{JLLLibraryProduct}
+    jll_lib_products::Vector{AbstractJLLProduct}
 
     # Logs generated during this extraction (audit logs, mostly)
     extract_log::String
@@ -33,7 +33,7 @@ struct ExtractResult
                            artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            log_artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            audit_result::Union{Nothing,AuditResult},
-                           jll_lib_products::Vector{JLLLibraryProduct},
+                           jll_lib_products::Vector{<:AbstractJLLProduct},
                            extract_log::String)
         return new(
             config,
@@ -49,7 +49,7 @@ struct ExtractResult
 end
 AbstractBuildMeta(result::ExtractResult) = AbstractBuildMeta(result.config)
 
-function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash}, jll_lib_products::Vector{JLLLibraryProduct})
+function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash}, jll_lib_products::Vector{<:AbstractJLLProduct})
     build_config = config.build.config
     extract_log = joinpath(artifact_path(build_config.meta.universe, log_artifact), "$(build_config.src_name)-extract.log")
     return ExtractResult(
@@ -72,7 +72,7 @@ function ExtractResult_skipped(config::ExtractConfig)
         nothing,
         nothing,
         nothing,
-        JLLLibraryProduct[],
+        AbstractJLLProduct[],
         "",
     )
 end
@@ -128,7 +128,7 @@ function ExtractResultSource(result::ExtractResult, target::String = "")
     )
 end
 
-function export_jll_lib_products(products::Vector{JLLLibraryProduct}, jlp_path::String)
+function export_jll_lib_products(products::Vector{<:AbstractJLLProduct}, jlp_path::String)
     toml_io = IOBuffer()
     TOML.print(toml_io, Dict("jll_lib_products" => generate_toml_dict.(products)))
     jll_lib_product_str = String(take!(toml_io))

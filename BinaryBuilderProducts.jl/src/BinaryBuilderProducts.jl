@@ -2,7 +2,8 @@ module BinaryBuilderProducts
 using Base.BinaryPlatforms
 using KeywordArgumentExtraction
 
-export ExecutableProduct, FileProduct, FrameworkProduct, LibraryProduct, AbstractProduct, locate
+export ExecutableProduct, FileProduct, FrameworkProduct, LibraryProduct, StaticLibraryProduct,
+       AbstractProduct, locate
 
 """
 An `AbstractProduct` is an expected result after building of a package.
@@ -93,6 +94,7 @@ end
 
 include("FileProduct.jl")
 include("ExecutableProduct.jl")
+include("StaticLibraryProduct.jl")
 include("LibraryProduct.jl")
 include("FrameworkProduct.jl")
 include("JLLGeneratorExt.jl")

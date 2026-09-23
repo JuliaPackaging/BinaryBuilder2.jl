@@ -18,8 +18,9 @@ struct AuditResult
     # These contain the results of our passes over the prefix
     pass_results::Dict{String,Vector{PassResult}}
 
-    # These contain the learned interdependency structure of the libraries
-    jll_lib_products::Vector{JLLLibraryProduct}
+    # These contain the learned interdependency structure of the libraries, one
+    # entry per library and linkage
+    jll_lib_products::Vector{AbstractJLLProduct}
 end
 
 Base.success(ar::AuditResult) = success(ar.pass_results)
