@@ -33,8 +33,9 @@ DocTestFilters = [
     # Don't be sensitive to line numbers
     r"└ @ BinaryBuilder2 .*:\d+" => "",
 
-    # Don't be sensitive to hashes changing
+    # Don't be sensitive to hashes or versions changing
     r"sha1:[0-9a-f]*" => "sha1:",
+    r" v[0-9\.]* " => " ",
 
     # Don't be sensitive to triplets changing; remove this once we're on Julia v1.14+
     # which contains this fix: https://github.com/JuliaLang/julia/pull/63169
