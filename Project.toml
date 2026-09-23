@@ -1,6 +1,6 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-version = "1.1.1"
+version = "1.2.0"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 
 [workspace]
