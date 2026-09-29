@@ -51,7 +51,7 @@ function audit!(prefix::String,
     # Solve dynamic linkage, deriving each library product's record
     resolve_dynamic_links!(result, info)
 
-    # Describe the static archive of each library product, if any, plus any standalone static libraries
+    # Describe and verify the static archive of each library product, and the standalone archives
     resolve_static_libraries!(result, info)
 
     # Ensure that all libraries and executables have the correct RPATH setup
