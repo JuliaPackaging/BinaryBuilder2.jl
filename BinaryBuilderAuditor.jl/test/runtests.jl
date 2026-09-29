@@ -2,6 +2,7 @@ using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBui
 
 include("ScanningTests.jl")
 include("SystemLibrariesTests.jl")
+include("StaticArchivesTests.jl")
 include("passes/RelativeSymlinkTests.jl")
 include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
