@@ -33,38 +33,34 @@ function audit!(prefix::String,
         library_products,
         env,
     )
-    pass_results = Dict{String,Vector{PassResult}}()
+    result = AuditResult(scan)
 
     # First pass; symlink translation
     if !readonly
-        absolute_to_relative_symlinks!(scan, pass_results, prefix_alias)
+        absolute_to_relative_symlinks!(result, prefix_alias)
     end
 
     # Ensure that all libraries have SONAMEs
     if !readonly
-        ensure_sonames!(scan, pass_results)
+        ensure_sonames!(result)
     end
 
-    # Solve dynamic linkage, obtaining the output JLLLibraryProduct objects
-    jll_lib_products = resolve_dynamic_links!(scan, pass_results, dep_libs)
+    # Solve dynamic linkage, deriving each library product's record
+    resolve_dynamic_links!(result, dep_libs)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
-        rpaths_consistent!(scan, pass_results, dep_libs)
+        rpaths_consistent!(result, dep_libs)
     end
 
     # Ensure that there are some licenses
-    licenses_present(scan, pass_results)
+    licenses_present(result)
 
     if verbose
-        show(pass_results)
+        show(result.pass_results)
     end
 
-    return AuditResult(
-        scan,
-        pass_results,
-        jll_lib_products,
-    )
+    return result
 end
 
 
