@@ -115,16 +115,18 @@ function update_linkage!(result::AuditResult, rel_path::AbstractString,
         return
     end
 
-    abs_path = abspath(scan, rel_path)
     if Sys.isapple(scan.platform)
+        # Nothing has been rewritten, so there is nothing to refresh either
         @warn("TODO: Do something with `install_name_tool` here")
-    else
-        cmd = patchelf(scan, `--replace-needed $(old_soname) $(new_soname) $(abs_path)`)
+        return
     end
 
-    proc, output = capture_output(cmd)
+    abs_path = abspath(scan, rel_path)
+    proc, output = with_writable(abs_path) do
+        capture_output(patchelf(scan, `--replace-needed $(old_soname) $(new_soname) $(abs_path)`))
+    end
     if !success(proc)
-        push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Failed to set RPATH '$(rpath_str)': $(output)")
+        push_result!(pass_results, "update_linkage!", :fail, rel_path, "Failed to update linkage '$(old_soname)' -> '$(new_soname)': $(output)")
     else
         push_result!(pass_results, "update_linkage!", :success, rel_path, "Updating linkage '$(old_soname)' -> '$(new_soname)'")
     end
