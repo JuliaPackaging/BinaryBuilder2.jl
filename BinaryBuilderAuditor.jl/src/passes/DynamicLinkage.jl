@@ -1,8 +1,8 @@
 using BinaryBuilderProducts, JLLGenerator
 
-function resolve_dynamic_links!(scan::ScanResult,
-                                pass_results::Dict{String,Vector{PassResult}},
+function resolve_dynamic_links!(result::AuditResult,
                                 dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+    scan, pass_results = result.scan, result.pass_results
     # We need to generate a graph showing which libraries are needed by the
     # `library_products` in our `scan`.
     dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
@@ -14,7 +14,6 @@ function resolve_dynamic_links!(scan::ScanResult,
 
     # Iterate over our own library products, get list of dependencies,
     # resolve each dep to its matching value in `soname_map`
-    jll_lib_products = JLLLibraryProduct[]
     for (rel_path, lib) in scan.library_products
         local lib_soname, lib_deps
 
@@ -67,7 +66,7 @@ function resolve_dynamic_links!(scan::ScanResult,
                 # compiled `libbar.so` to link against `libfoo.so`) then we need to update
                 # its linkage:
                 if haskey(scan.soname_forwards, lib_dep_soname)
-                    update_linkage!(scan, pass_results, rel_path, lib_dep_soname => scan.soname_forwards[lib_dep_soname])
+                    update_linkage!(result, rel_path, lib_dep_soname => scan.soname_forwards[lib_dep_soname])
                     lib_dep_soname = scan.soname_forwards[lib_dep_soname]
                 end
 
@@ -97,7 +96,7 @@ function resolve_dynamic_links!(scan::ScanResult,
             push!(jll_deps, JLLLibraryDep(jll_name, lib_varname))
         end
 
-        push!(jll_lib_products, JLLLibraryProduct(
+        push!(result.jll_lib_products, JLLLibraryProduct(
             lib.varname,
             rel_path,
             jll_deps,
@@ -108,16 +107,17 @@ function resolve_dynamic_links!(scan::ScanResult,
         ))
     end
 
-    # These returned products have all of their dependencies resolved as
-    # JLLLibraryDep objects, either pointing at other libraries wtihin this
-    # JLL, or to libraries from other JLLs.
-    sort!(jll_lib_products; by=jll->jll.varname)
-    return jll_lib_products
+    # These products have all of their dependencies resolved as JLLLibraryDep
+    # objects, either pointing at other libraries within this JLL, or to
+    # libraries from other JLLs.
+    sort!(result.jll_lib_products; by=jll->jll.varname)
+
+    return result
 end
 
-function update_linkage!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}},
-                         rel_path::AbstractString,
+function update_linkage!(result::AuditResult, rel_path::AbstractString,
                          (old_soname, new_soname)::Pair{<:AbstractString,<:AbstractString})
+    scan, pass_results = result.scan, result.pass_results
     if Sys.iswindows(scan.platform)
         return
     end
@@ -140,9 +140,9 @@ function update_linkage!(scan::ScanResult, pass_results::Dict{String,Vector{Pass
     refresh!(scan, rel_path)
 end
 
-function rpaths_consistent!(scan::ScanResult,
-                            pass_results::Dict{String,Vector{PassResult}},
+function rpaths_consistent!(result::AuditResult,
                             dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+    scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
         return

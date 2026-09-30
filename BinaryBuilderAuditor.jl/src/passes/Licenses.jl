@@ -3,7 +3,8 @@
 
 Returns `true` if there are any files in `share/licenses`, `false` otherwise.
 """
-function licenses_present(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}})
+function licenses_present(result::AuditResult)
+    scan, pass_results = result.scan, result.pass_results
     num_licenses = 0
     for (path, st) in scan.files
         if startswith(path, "share/licenses") && isfile(st)

@@ -7,7 +7,8 @@ Because we are generally operating on files outside of the sandbox environment,
 we allow passing in `prefix_alias` to serve as the in-sandbox path prefix, as
 that is the prefix that symlinks would have been pointing to.
 """
-function absolute_to_relative_symlinks!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}}, prefix_alias::String)
+function absolute_to_relative_symlinks!(result::AuditResult, prefix_alias::String)
+    scan, pass_results = result.scan, result.pass_results
     if !isabspath(prefix_alias)
         throw(ArgumentError("prefix_alias must be an absolute path!"))
     end

@@ -35,8 +35,8 @@ end
 
             # Run our audit pass on this prefix
             scan = scan_files(prefix, target)
-            pass_results = Dict{String,Vector{PassResult}}()
-            ensure_sonames!(scan, pass_results)
+            result = AuditResult(scan)
+            ensure_sonames!(result)
 
             @test isfile(joinpath(libfoo_path))
             curr_soname = readmeta(ohs -> get_soname(only(ohs)), libfoo_path)
@@ -45,23 +45,23 @@ end
             elseif Sys.islinux(target) || Sys.isbsd(target)
                 @test curr_soname == basename(libfoo_path)
             end
-            @test success(pass_results)
+            @test success(result.pass_results)
         end
 
         mktempdir() do prefix
             # Do this a second time, but this time mangle the library so our manipulation fails
             libfoo_path = make_libfoo(prefix, target)
             scan = scan_files(prefix, target)
-            pass_results = Dict{String,Vector{PassResult}}()
+            result = AuditResult(scan)
             open(libfoo_path; write=true) do io
                 println(io, "I am mangling the beginning of a library here")
             end
-            ensure_sonames!(scan, pass_results)
-            @test !success(pass_results)
+            ensure_sonames!(result)
+            @test !success(result.pass_results)
             io = IOBuffer()
-            show(io, pass_results)
+            show(io, result.pass_results)
             @test occursin("Failed to set SONAME:", String(take!(io)))
-            @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in pass_results["ensure_sonames!"])
+            @test any(r.identifier == relpath(libfoo_path, prefix) && r.status == :fail for r in result.pass_results["ensure_sonames!"])
         end
     end
 end
