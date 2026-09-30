@@ -8,6 +8,7 @@ include("SystemLibraries.jl")
 include("AuditorToolchain.jl")
 include("Scanning.jl")
 include("AuditResult.jl")
+include("AuditInfo.jl")
 include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/LibrarySONAME.jl")
@@ -17,7 +18,7 @@ include("passes/Licenses.jl")
 
 function audit!(prefix::String,
                 library_products::Vector{LibraryProduct},
-                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}};
+                info::AuditInfo;
                 prefix_alias::String = prefix,
                 platform::AbstractPlatform = HostPlatform(),
                 env::Dict{String,String} = Dict{String,String}(
@@ -46,11 +47,11 @@ function audit!(prefix::String,
     end
 
     # Solve dynamic linkage, deriving each library product's record
-    resolve_dynamic_links!(result, dep_libs)
+    resolve_dynamic_links!(result, info)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
-        rpaths_consistent!(result, dep_libs)
+        rpaths_consistent!(result, info)
     end
 
     # Ensure that there are some licenses

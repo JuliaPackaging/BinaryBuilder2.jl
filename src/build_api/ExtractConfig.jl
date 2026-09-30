@@ -198,18 +198,18 @@ end
     # Get libraries for all JLL dependencies
     get_library_products(jart::JLLBuildInfo) = filter(x -> isa(x, JLLLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
-    dep_libs = Dict{Symbol, Vector{JLLLibraryProduct}}()
+    deps = Dict{Symbol,AuditDependencyInfo}()
     for dep in dep_jll_infos
-        dep_libs[Symbol(dep.name)] = get_library_products(dep, platform)
+        deps[Symbol(dep.name, "_jll")] = AuditDependencyInfo(get_library_products(dep, platform))
     end
     # Get libraries for all inter-dependencies
     for (inter_dep_name, inter_dep) in config.inter_deps
-        dep_libs[Symbol(inter_dep_name)] = inter_dep.audit_result.jll_lib_products
+        deps[Symbol(inter_dep_name, "_jll")] = AuditDependencyInfo(inter_dep.audit_result.jll_lib_products)
     end
     return audit!(
         artifact_dir,
         LibraryProduct[p for p in config.products if isa(p, LibraryProduct)],
-        dep_libs;
+        AuditInfo(deps);
         prefix_alias,
         env = config.build.env,
         platform,
