@@ -1,19 +1,10 @@
 using BinaryBuilderProducts, JLLGenerator
 
-function resolve_dynamic_links!(result::AuditResult,
-                                dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+function resolve_dynamic_links!(result::AuditResult, info::AuditInfo)
     scan, pass_results = result.scan, result.pass_results
-    # We need to generate a graph showing which libraries are needed by the
-    # `library_products` in our `scan`.
-    dep_soname_map = Dict{String,Tuple{Symbol,Symbol}}()
-    for (jll_name, libs) in dep_libs
-        for lib in libs
-            dep_soname_map[basename(lib.soname)] = (Symbol(string(jll_name, "_jll")), lib.varname)
-        end
-    end
 
     # Iterate over our own library products, get list of dependencies,
-    # resolve each dep to its matching value in `soname_map`
+    # resolve each dep to the library providing it, in a dependency or in this JLL
     for (rel_path, lib) in scan.library_products
         local lib_soname, lib_deps
 
@@ -56,8 +47,10 @@ function resolve_dynamic_links!(result::AuditResult,
 
             # First, is this a library from a dependency?
             local jll_name, lib_varname
-            if haskey(dep_soname_map, lib_dep_soname)
-                jll_name, lib_varname = dep_soname_map[lib_dep_soname]
+            if haskey(info.sonames, lib_dep_soname)
+                dep_lib = info.sonames[lib_dep_soname]
+                jll_name = dep_lib.jll_name
+                lib_varname = dep_lib.varname
 
             # If not, does it come from our current JLL?
             else
@@ -140,20 +133,17 @@ function update_linkage!(result::AuditResult, rel_path::AbstractString,
     refresh!(scan, rel_path)
 end
 
-function rpaths_consistent!(result::AuditResult,
-                            dep_libs::Dict{Symbol,Vector{JLLLibraryProduct}})
+function rpaths_consistent!(result::AuditResult, info::AuditInfo)
     scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
         return
     end
 
-    # Augment `scan.soname_locator` with information from `dep_libs`:
+    # Augment `scan.soname_locator` with the dependencies' libraries
     soname_locator = copy(scan.soname_locator)
-    for (_, libs) in dep_libs
-        for lib in libs
-            soname_locator[basename(lib.soname)] = lib.path
-        end
+    for (soname, dep_lib) in info.sonames
+        soname_locator[soname] = dep_lib.path
     end
 
     # For each binary object, we need to build a list of the relative paths
