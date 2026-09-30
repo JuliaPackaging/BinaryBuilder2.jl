@@ -15,6 +15,7 @@ include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
+include("passes/Loadability.jl")
 
 function audit!(prefix::String,
                 products::Vector{<:AbstractProduct},
@@ -57,6 +58,9 @@ function audit!(prefix::String,
         rpaths_consistent!(result, info)
     end
 
+    # Ensure that every library can actually be loaded (only on our own platform)
+    libraries_loadable(result, info)
+
     # Ensure that there are some licenses
     licenses_present(result)
 
@@ -82,7 +86,7 @@ end
 #  - [!] dylib check
 #  - codesign check
 # library passes:
-#  - dlopen() check?
+#  - [!] dlopen() check
 #  - [!] SONAME and symlink check
 # prefix-wide passes:
 #  - [!] .la file removal
