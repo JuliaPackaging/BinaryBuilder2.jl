@@ -7,6 +7,7 @@ include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
 include("passes/DynamicLinkageTests.jl")
 include("passes/StaticLibrariesTests.jl")
+include("passes/LoadabilityTests.jl")
 
 @testset "audit!" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
