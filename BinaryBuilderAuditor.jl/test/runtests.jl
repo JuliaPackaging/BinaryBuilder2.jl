@@ -36,15 +36,15 @@ include("passes/DynamicLinkageTests.jl")
             LibraryProduct("libplus", :libplus),
             LibraryProduct("libmult", :libmult),
         ]
-        empty_dep_libs = Dict{Symbol,Vector{JLLLibraryProduct}}()
-        result = audit!(prefix, library_products, empty_dep_libs; verbose=true)
+        no_deps = AuditInfo()
+        result = audit!(prefix, library_products, no_deps; verbose=true)
         @test readlink(joinpath(prefix, "lib", "libplus$(dlext(platform))")) == libplus_soname
         @test length(result.jll_lib_products) == 2
         @test success(result)
 
         # Run audit a second time with `readonly=true`, ensure that the treehash does not change
         pre_treehash = treehash(prefix)
-        result = audit!(prefix, library_products, empty_dep_libs; readonly=true)
+        result = audit!(prefix, library_products, no_deps; readonly=true)
         post_treehash = treehash(prefix)
         @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 2
@@ -52,16 +52,16 @@ include("passes/DynamicLinkageTests.jl")
 
         # Also check to see that this works if we say that `libplus` belongs
         # to another JLL/extraction:
-        dep_libs = Dict{Symbol,Vector{JLLLibraryProduct}}(
-            :LibPlus => [
+        info = AuditInfo(Dict(
+            :LibPlus_jll => AuditDependencyInfo([
                 JLLLibraryProduct(
                     :libplus,
                     joinpath("lib", libplus_soname),
                     [], [],
                 ),
-            ]
-        )
-        result = audit!(prefix, [LibraryProduct("libmult", :libmult)], dep_libs; readonly=true)
+            ]),
+        ))
+        result = audit!(prefix, [LibraryProduct("libmult", :libmult)], info; readonly=true)
         post_treehash = treehash(prefix)
         @test pre_treehash == post_treehash
         @test length(result.jll_lib_products) == 1

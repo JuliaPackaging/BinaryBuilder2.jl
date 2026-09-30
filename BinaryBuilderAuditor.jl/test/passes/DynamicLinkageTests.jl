@@ -61,8 +61,7 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             @test success(result.pass_results)
 
             # First, resolve dynamic links when these are two librares in the same build:
-            jll_lib_products = resolve_dynamic_links!(result, Dict{Symbol,Vector{JLLLibraryProduct}}(),
-            ).jll_lib_products
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
             @test success(result.pass_results)
 
             @test length(jll_lib_products) == 2
@@ -104,15 +103,15 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             result = AuditResult(scan)
             ensure_sonames!(result)
 
-            jll_lib_products = resolve_dynamic_links!(result, Dict{Symbol,Vector{JLLLibraryProduct}}(
-                    :LibPlus => [
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo(Dict(
+                    :LibPlus_jll => AuditDependencyInfo([
                         JLLLibraryProduct(
                             :libplus,
                             joinpath("lib", libplus_soname),
                             [], [],
                         ),
-                    ]
-                ),
+                    ]),
+                )),
             ).jll_lib_products
             @test success(result.pass_results)
             @test length(jll_lib_products) == 1
@@ -142,9 +141,8 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
                 scan = scan_files(prefix, target_platform, [LibraryProduct("lib/plus/libplus", :libplus)])
                 result = AuditResult(scan)
                 ensure_sonames!(result)
-                jll_lib_products = resolve_dynamic_links!(result, Dict{Symbol,Vector{JLLLibraryProduct}}(),
-                ).jll_lib_products
-                rpaths_consistent!(result, Dict{Symbol,Vector{JLLLibraryProduct}}())
+                jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+                rpaths_consistent!(result, AuditInfo())
                 @test success(result.pass_results)
             end
             run_scan_and_rpaths()
@@ -204,7 +202,7 @@ end
         ])
         result = AuditResult(scan)
         ensure_sonames!(result)
-        jll_lib_products = resolve_dynamic_links!(result, Dict{Symbol,Vector{JLLLibraryProduct}}()).jll_lib_products
+        jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
         @test success(result.pass_results)
         libmult = only(p for p in jll_lib_products if p.varname == :libmult)
         # The edge is recorded as a real dependency...
