@@ -158,13 +158,42 @@ function rpaths_consistent!(scan::ScanResult,
 
     # For each binary object, we need to build a list of the relative paths
     # from it to its dependencies, then ensure that all of those paths are
-    # present in the RPATHs of that binary object
-    for (rel_path, oh) in scan.binary_objects
-        dep_relpaths = Set{String}()
-        if !isdynamic(oh)
+    # present in the RPATHs of that binary object.
+    #
+    # A file installed under several names (hard links, e.g. binutils' `bin/ld` and
+    # `bin/ld.bfd`) is one object on disk: setting the RPATH through one name changes
+    # the file behind the others, and invalidates their `ObjectHandle`s.  So we read
+    # each such file once, give it the RPATHs that each of its names needs (they can
+    # differ, as they are relative to the containing directory), and set them on all
+    # of its names.
+    files = Dict{Tuple{UInt64,UInt64},Vector{String}}()
+    for rel_path in keys(scan.binary_objects)
+        st = scan.files[rel_path]
+        push!(get!(Vector{String}, files, (st.device, st.inode)), rel_path)
+    end
+    for names in sort!(sort!.(collect(values(files))); by=first)
+        rel_path = first(names)
+        oh = scan.binary_objects[rel_path]
+
+        local dynamic, dep_sonames, obj_rpaths
+        try
+            dynamic = isdynamic(oh)
+            if dynamic
+                dep_sonames = [basename(path(dl)) for dl in DynamicLinks(oh)]
+                obj_rpaths = rpaths(RPath(oh))
+            end
+        catch e
+            # Don't fail the whole audit on an object that we cannot read
+            push_result!(pass_results, "rpaths_consistent!", :warn, rel_path, "Unable to read the object: $(sprint(showerror, e))")
             continue
         end
-        for soname in [basename(path(dl)) for dl in DynamicLinks(oh)]
+        if !dynamic
+            continue
+        end
+
+        # Resolve each dependency to the directory that holds it
+        dep_dirs = String[]
+        for soname in dep_sonames
             # Don't try to insert RPATHs for system libraries
             if is_system_library(soname, scan.platform)
                 continue
@@ -177,57 +206,72 @@ function rpaths_consistent!(scan::ScanResult,
                 push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
                 continue
             end
-            push!(dep_relpaths, relpath(dirname(soname_locator[soname]), dirname(rel_path)))
+            push!(dep_dirs, dirname(soname_locator[soname]))
         end
-
-        # Read RPATHs of this binary object
-        obj_rpaths = rpaths(RPath(oh))
 
         # Normalize the RPATHs, forcing them to be unique, and relative
         # to the originating object, (append all of our auto-detected RPATHs
         # onto the end of the RPATHs that already exist in the object)
-        all_rpaths = String[String(x) for x in vcat(obj_rpaths, collect(dep_relpaths))]
-        all_rpaths = normalize_rpaths(all_rpaths, scan.platform, scan.prefix, rel_path)
-
-        function run_and_log(cmd::Cmd, fatal::Bool, operation::String)
-            proc, output = capture_output(cmd)
-            if success(proc)
-                push_result!(pass_results, "rpaths_consistent!", :success, rel_path, operation)
-            else
-                push_result!(pass_results, "rpaths_consistent!", fatal ? :fail : :warn, rel_path, "Failed to $(operation): $(output)")
-            end
+        all_rpaths = String[]
+        for name in names
+            dep_relpaths = unique([relpath(d, dirname(name)) for d in dep_dirs])
+            name_rpaths = String[String(x) for x in vcat(obj_rpaths, dep_relpaths)]
+            append!(all_rpaths, normalize_rpaths(name_rpaths, scan.platform, scan.prefix, name))
         end
+        unique!(all_rpaths)
 
-        # Now, add them into the actual object
-        abs_path = abspath(scan, rel_path)
         rpath_str = join(all_rpaths, ':')
-        with_writable(abs_path) do
-            if Sys.isapple(scan.platform)
-                # Remove all rpaths from the object:
-                for rpath in obj_rpaths
-                    run_and_log(
-                        install_name_tool(scan, `-delete_rpath $(rpath) $(abs_path)`),
-                        false,
-                        "Delete RPATH '$(rpath)'",
-                    )
+        for name in names
+            function run_and_log(cmd::Cmd, fatal::Bool, operation::String)
+                proc, output = capture_output(cmd)
+                if success(proc)
+                    push_result!(pass_results, "rpaths_consistent!", :success, name, operation)
+                else
+                    push_result!(pass_results, "rpaths_consistent!", fatal ? :fail : :warn, name, "Failed to $(operation): $(output)")
                 end
+            end
 
-                # Build up our new rpath:
-                for rpath in all_rpaths
+            # Now, add them into the actual object
+            abs_path = abspath(scan, name)
+            with_writable(abs_path) do
+                if Sys.isapple(scan.platform)
+                    # An earlier name may already have changed this file's RPATHs (or,
+                    # if the tool replaced the file, not), so read them afresh.
+                    current_rpaths = obj_rpaths
+                    if name != rel_path
+                        name_oh = get_object_handle(abs_path, scan.platform)
+                        current_rpaths = name_oh === nothing ? String[] : rpaths(RPath(name_oh))
+                    end
+
+                    # Remove all rpaths from the object:
+                    for rpath in current_rpaths
+                        run_and_log(
+                            install_name_tool(scan, `-delete_rpath $(rpath) $(abs_path)`),
+                            false,
+                            "Delete RPATH '$(rpath)'",
+                        )
+                    end
+
+                    # Build up our new rpath:
+                    for rpath in all_rpaths
+                        run_and_log(
+                            install_name_tool(scan, `-add_rpath $(rpath) $(abs_path)`),
+                            true,
+                            "Add RPATH '$(rpath)'",
+                        )
+                    end
+                else
                     run_and_log(
-                        install_name_tool(scan, `-add_rpath $(rpath) $(abs_path)`),
+                        patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`),
                         true,
-                        "Add RPATH '$(rpath)'",
+                        "Set RPATH '$(rpath_str)'",
                     )
                 end
-            else
-                run_and_log(
-                    patchelf(scan, `--set-rpath $(rpath_str) $(abs_path)`),
-                    true,
-                    "Set RPATH '$(rpath_str)'",
-                )
             end
         end
+
+        # The file changed underneath our handles; re-read them
+        refresh!(scan, rel_path)
     end
 end
 
