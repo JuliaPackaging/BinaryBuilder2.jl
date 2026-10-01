@@ -259,6 +259,46 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             end
         end
     end
+
+    @testset "rpaths_consistent with hard links - $(triplet(target_platform))" begin
+        mktempdir() do prefix
+            # Build an executable linked against `libplus`, then install it under two more
+            # names, as hard links: one beside it and one in a deeper directory, the way
+            # binutils installs `bin/ld`, `bin/ld.bfd` and `<target>/bin/ld`.
+            mkpath(joinpath(prefix, "lib"))
+            mkpath(joinpath(prefix, "bin"))
+            mkpath(joinpath(prefix, "target", "bin"))
+            libplus_path = joinpath(prefix, "lib", libplus_soname)
+            main_c_path = joinpath(prefix, "main.c")
+            write(main_c_path, "int plus(int, int);\nint main() { return plus(1, -1); }\n")
+            tool_path = joinpath(prefix, "bin", "tool")
+            with_toolchains([toolchain]) do _, env
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_soname))`, env))
+                symlink(libplus_soname, joinpath(prefix, "lib", "libplus$(dlext(platform))"))
+                run(setenv(`$(env["CC"]) -o $(tool_path) $(main_c_path) -L $(prefix)/lib -lplus`, env))
+            end
+            rm(main_c_path)
+            hardlink(tool_path, joinpath(prefix, "bin", "tool.alias"))
+            hardlink(tool_path, joinpath(prefix, "target", "bin", "tool"))
+
+            scan = scan_files(prefix, target_platform, [LibraryProduct("libplus", :libplus)])
+            pass_results = Dict{String,Vector{PassResult}}()
+            ensure_sonames!(scan, pass_results)
+            resolve_dynamic_links!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
+            rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
+            @test success(pass_results)
+
+            # Every name gets the RPATHs that every name needs
+            origin = Sys.isapple(target_platform) ? "@loader_path" : "\$ORIGIN"
+            for name in ("bin/tool", "bin/tool.alias", "target/bin/tool")
+                readmeta(joinpath(prefix, name)) do ohs
+                    @test Set(rpaths(RPath(only(ohs)))) == Set(["$(origin)/../lib", "$(origin)/../../lib"])
+                end
+                # ... and the scan's handles were refreshed
+                @test Set(rpaths(RPath(scan.binary_objects[name]))) == Set(["$(origin)/../lib", "$(origin)/../../lib"])
+            end
+        end
+    end
 end
 
 @testset "own libraries are never system dependencies" begin
