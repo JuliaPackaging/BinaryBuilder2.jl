@@ -769,7 +769,17 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     in_universe(u) do env
         # Next, add that JLL to the universe's environment
-        Pkg.develop(;path=jll_path, io=verbose ? stdout : devnull)
+        # Pkg refuses to develop a package that is in the running Julia's sysimage
+        # (e.g. `CompilerSupportLibraries_jll`, `OpenBLAS_jll`) unless this check is
+        # off.  The universe's environment is never loaded into this process, so the
+        # sysimage's copy does not matter here.
+        respect = Pkg.RESPECT_SYSIMAGE_VERSIONS[]
+        Pkg.respect_sysimage_versions(false)
+        try
+            Pkg.develop(;path=jll_path, io=verbose ? stdout : devnull)
+        finally
+            Pkg.respect_sysimage_versions(respect)
+        end
     end
 
     # Finally, register it into the universe's local BB2 registry
