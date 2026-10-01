@@ -167,6 +167,11 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     return SandboxConfig(config.build.config, mounts; env, kwargs...)
 end
 
+function has_jll_toml(d::JLLSource; depot::String)
+    pkg_dir = BinaryBuilderSources.JLLPrefixes.with_depot_path(() -> pkgdir(d), depot)
+    return pkg_dir !== nothing && isfile(joinpath(pkg_dir, "JLL.toml"))
+end
+
 function load_dep_jllinfos(config::ExtractConfig)
     build_config = config.build.config
     meta = AbstractBuildMeta(config)
@@ -174,6 +179,14 @@ function load_dep_jllinfos(config::ExtractConfig)
     prefix_alias = target_prefix(config.target_spec)
     for d in build_config.source_trees[prefix_alias]
         if isa(d, JLLSource) && platforms_match(d.platform, host_if_crossplatform(config.platform))
+            # A JLL built by BinaryBuilder 1 (most of General, today) has no JLL.toml.
+            # The audit cannot map our products' libraries to its libraries, which
+            # only matters if we link against it; for a build-time-only dependency
+            # (headers, say) it does not matter at all.
+            if !has_jll_toml(d; depot=meta.universe.depot_path)
+                @warn("Dependency was not built by BinaryBuilder2 (no JLL.toml); the audit ignores it", dep=d.package.name)
+                continue
+            end
             jll_info = try
                 parse_toml_dict(d; depot=meta.universe.depot_path)
             catch
