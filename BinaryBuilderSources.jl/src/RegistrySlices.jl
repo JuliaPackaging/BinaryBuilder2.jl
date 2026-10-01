@@ -48,6 +48,10 @@ function registry_fingerprint(reg::RegistryInstance)
     return string(reg.uuid, "@", bytes2hex(reg.tree_info.bytes))
 end
 
+# Pkg 1.13 takes the registry too (`registry_info(reg, entry)`); older Pkgs take the entry.
+entry_info(reg::RegistryInstance, entry::PkgEntry) =
+    applicable(registry_info, reg, entry) ? registry_info(reg, entry) : registry_info(entry)
+
 """
     registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
 
@@ -61,7 +65,7 @@ function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
     cached = lock(() -> get(registry_entry_hashes, key, nothing), registry_slice_lock)
     cached !== nothing && return cached
 
-    info = registry_info(entry)
+    info = entry_info(reg, entry)
     io = IOBuffer()
     println(io, entry.uuid, " ", entry.name)
     println(io, "repo = ", something(info.repo, ""), ", subdir = ", something(info.subdir, ""))
@@ -74,8 +78,15 @@ function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
                           ("weak_deps", info.weak_deps), ("weak_compat", info.weak_compat))
         for vr in sort!(collect(keys(table)); by=string)
             entries = table[vr]
-            for dep_name in sort!(collect(keys(entries)))
-                println(io, "  ", name, "[", vr, "] ", dep_name, " = ", entries[dep_name])
+            if entries isa AbstractSet
+                # Pkg 1.13: the deps of a version range are a set of UUIDs.
+                for dep in sort!(collect(entries); by=string)
+                    println(io, "  ", name, "[", vr, "] ", dep)
+                end
+            else
+                for dep_name in sort!(collect(keys(entries)))
+                    println(io, "  ", name, "[", vr, "] ", dep_name, " = ", entries[dep_name])
+                end
             end
         end
     end
@@ -168,10 +179,11 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
             entry === nothing && continue
             push!(entry_hashes, (string(reg.uuid, "/", uuid), registry_entry_hash(reg, entry)))
 
-            info = registry_info(entry)
+            info = entry_info(reg, entry)
             for table in (info.deps, info.weak_deps)
                 for (_, deps) in table
-                    for (_, dep_uuid) in deps
+                    # Older Pkgs map names to UUIDs; Pkg 1.13 has a set of UUIDs.
+                    for dep_uuid in (deps isa AbstractSet ? deps : values(deps))
                         if dep_uuid != JULIA_UUID && dep_uuid ∉ seen
                             push!(seen, dep_uuid)
                             push!(frontier, dep_uuid)
