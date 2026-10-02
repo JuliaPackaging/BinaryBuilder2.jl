@@ -19,6 +19,9 @@ struct JLLSource <: AbstractSource
     # This is filled out by `prepare()`
     artifact_paths::Vector{String}
 
+    # The JLLs this one depends on, directly or not, as installed by `prepare()`
+    transitive_deps::Vector{PkgSpec}
+
     # Defaults to `true`, turn this off for collections of JLLs that
     # you know will clobber eachother, such as the bootstrap variants
     # of JLLs, which we don't control the contents of that closely.
@@ -34,6 +37,7 @@ function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "", wa
         HostPlatform(platform),
         string(target),
         String[],
+        PkgSpec[],
         warn_on_overwrite,
     )
 end
@@ -45,7 +49,7 @@ end
 
 function retarget(jll::JLLSource, new_target::String)
     noabspath!(new_target)
-    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths, jll.warn_on_overwrite)
+    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths, jll.transitive_deps, jll.warn_on_overwrite)
 end
 
 """
@@ -170,6 +174,40 @@ function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry
     return bytes2hex(sha1(string(bytes2hex.(spec_hash.(jlls; registries))...)))
 end
 
+# Every JLL that `pkg` depends on, directly or not, in the resolution `metas`
+function collect_transitive_deps(metas::Dict, pkg::PkgSpec)
+    by_uuid = Dict(Base.UUID(dep.uuid) => dep for dep in keys(metas))
+    deps = PkgSpec[]
+    function visit(dep::PkgSpec)
+        for uuid in metas[dep]["dep_uuids"]
+            if haskey(by_uuid, uuid) && !any(d -> d.uuid == by_uuid[uuid].uuid, deps)
+                push!(deps, by_uuid[uuid])
+                visit(by_uuid[uuid])
+            end
+        end
+    end
+    visit(only(dep for dep in keys(metas) if dep.uuid == pkg.uuid))
+    return deps
+end
+
+# (De)serialize a resolved dependency for the resolution cache
+function pkgspec_to_cache(pkg::PkgSpec)
+    d = Dict{String,String}("name" => pkg.name, "uuid" => string(pkg.uuid))
+    pkg.version isa VersionNumber && (d["version"] = string(pkg.version))
+    pkg.tree_hash !== nothing && (d["tree_hash"] = string(pkg.tree_hash))
+    pkg.path !== nothing && (d["path"] = pkg.path)
+    return d
+end
+function cache_to_pkgspec(d::Dict)
+    return PkgSpec(;
+        name = d["name"],
+        uuid = Base.UUID(d["uuid"]),
+        version = haskey(d, "version") ? VersionNumber(d["version"]) : Pkg.Types.VersionSpec(),
+        tree_hash = haskey(d, "tree_hash") ? Base.SHA1(d["tree_hash"]) : nothing,
+        path = get(d, "path", nothing),
+    )
+end
+
 """
     prepare(jlls::Vector{JLLSource}; verbose=false, force=false)
 
@@ -250,6 +288,7 @@ function prepare(jlls::Vector{JLLSource};
             function clear_cache!()
                 for jll in jlls_slice
                     empty!(jll.artifact_paths)
+                    empty!(jll.transitive_deps)
                 end
                 rm(cache_path; force=true)
             end
@@ -299,7 +338,7 @@ function prepare(jlls::Vector{JLLSource};
 
                     # Drop the package cache if has the wrong structure (this is how we gracefully deal with Elliot adding new fields)
                     package_cache = cache[string(jll.package.uuid)]
-                    if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash")
+                    if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash") || !haskey(package_cache, "transitive_deps")
                         @debug("JLLSource cache lacks artifact paths or tree_hash!  Cache corrupt?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
                         clear_cache!()
                         break
@@ -319,6 +358,7 @@ function prepare(jlls::Vector{JLLSource};
                         if all(isdir.(cached_paths)) && isdir(Pkg.Operations.find_installed(jll.package.name, jll.package.uuid, tree_hash))
                             @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths), platform, prefix)
                             append!(jll.artifact_paths, cached_paths)
+                            append!(jll.transitive_deps, cache_to_pkgspec.(package_cache["transitive_deps"]))
                             jll.package.tree_hash = tree_hash
                         end
                     end
@@ -347,6 +387,7 @@ function prepare(jlls::Vector{JLLSource};
                         jll.package.repo = pkg.repo
                     end
                     append!(jll.artifact_paths, art_paths[pkg])
+                    append!(jll.transitive_deps, collect_transitive_deps(artifact_metas, pkg))
                     @debug("Prepared", jll, pkg, cache_path, prefix, platform)
                 end
 
@@ -368,6 +409,7 @@ function prepare(jlls::Vector{JLLSource};
                                 "name" => jll.package.name,
                                 "artifact_paths" => jll.artifact_paths,
                                 "tree_hash" => string(jll.package.tree_hash),
+                                "transitive_deps" => pkgspec_to_cache.(jll.transitive_deps),
                             )
                             for jll in jlls_slice)...,
 
