@@ -30,9 +30,10 @@ struct JLLBlocks
     mod::Module
     top_level_blocks::Vector{Expr}
     init_blocks::Vector{Expr}
+    exports::Vector{Symbol}
 
     function JLLBlocks(mod)
-        return new(mod, Expr[], Expr[])
+        return new(mod, Expr[], Expr[], Symbol[])
     end
 end
 
@@ -52,7 +53,9 @@ function excat(ex_type::Symbol, exs::Union{Expr,Nothing}...)
 end
 
 function synthesize(jb::JLLBlocks)
+    exports = isempty(jb.exports) ? nothing : Expr(:export, unique(jb.exports)...)
     ret = excat(:block,
+        exports,
         jb.top_level_blocks...,
         quote
             function __init__()
@@ -213,7 +216,7 @@ macro generate_jll_from_toml()
         push!(jb.init_blocks, Meta.parse(init_def))
     end
 
-    init_footer(jb, build)
+    init_footer(jb, build, lib_products)
     return synthesize(jb)
 end
 

@@ -59,4 +59,5 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
             push!(jb.init_blocks, :(global $(var_name) = $(path_var_name)))
         end
     end
+    push!(jb.exports, var_name)
 end
