@@ -347,7 +347,16 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             # Test that subprefix works
             ccache_dep = JLLSource("Ccache_jll", HostPlatform(); target="ext")
             @test ccache_dep.target == "ext"
+            @test isempty(ccache_dep.transitive_deps)
             prepare([ccache_dep])
+            # `prepare()` records what Ccache depends on, pinned to what it installed...
+            zstd_pkg = only(d for d in ccache_dep.transitive_deps if d.name == "Zstd_jll")
+            @test zstd_pkg.uuid == zstd_dep.package.uuid && zstd_pkg.tree_hash !== nothing
+            # ... and so does a resolution served from its cache
+            ccache_again = JLLSource("Ccache_jll", HostPlatform(); target="ext")
+            prepare([ccache_again])
+            @test [(d.name, d.uuid, d.tree_hash) for d in ccache_again.transitive_deps] ==
+                  [(d.name, d.uuid, d.tree_hash) for d in ccache_dep.transitive_deps]
             mktempdir() do prefix
                 deploy([bzip2_dep, ccache_dep], prefix)
                 # Ccache depends on zstd_jll, and that also gets installed in `ext`

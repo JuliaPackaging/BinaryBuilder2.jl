@@ -217,23 +217,65 @@ end
     # Get libraries for all JLL dependencies
     get_library_products(jart::JLLBuildInfo) = filter((x)->isa(x, JLLLibraryProduct) || isa(x, JLLStaticLibraryProduct), jart.products)
     get_library_products(jll::JLLInfo, platform::AbstractPlatform) = get_library_products(select_platform(jll, platform))
+    # Each dependency's libraries, and where its artifact is unpacked (when it is)
     deps = Dict{Symbol,AuditDependencyInfo}()
     for dep in dep_jll_infos
-        deps[Symbol(dep.name, "_jll")] = AuditDependencyInfo(get_library_products(dep, platform))
+        deps[Symbol(dep.name, "_jll")] = AuditDependencyInfo(get_library_products(dep, platform);
+                                                     artifact_dir = dep_artifact_dir(meta, dep, platform))
     end
     # Get libraries for all inter-dependencies
     for (inter_dep_name, inter_dep) in config.inter_deps
-        deps[Symbol(inter_dep_name, "_jll")] = AuditDependencyInfo(inter_dep.audit_result.jll_lib_products)
+        deps[Symbol(inter_dep_name, "_jll")] = AuditDependencyInfo(inter_dep.audit_result.jll_lib_products;
+                                                           artifact_dir = artifact_path(inter_dep))
+    end
+    # Get libraries for all transitive dependencies
+    transitive_deps = Dict{Symbol,AuditDependencyInfo}()
+    for d in build_config.source_trees[prefix_alias]
+        if !isa(d, JLLSource) || !platforms_match(d.platform, platform)
+            continue
+        end
+        for pkg in d.transitive_deps
+            name = Symbol(pkg.name)
+            if haskey(deps, name) || haskey(transitive_deps, name)
+                continue
+            end
+            jll_info = try
+                parse_toml_dict(JLLSource(pkg, d.platform); depot=meta.universe.depot_path)
+            catch
+                @error("Unable to parse JLLInfo TOML dict for transitive dependency", dep=pkg, of=d)
+                rethrow()
+            end
+            transitive_deps[name] = AuditDependencyInfo(get_library_products(jll_info, platform);
+                                                        artifact_dir = dep_artifact_dir(meta, jll_info, platform))
+        end
     end
     return audit!(
         artifact_dir,
         config.products,
-        AuditInfo(deps);
+        AuditInfo(deps; transitive_deps);
         prefix_alias,
         env = config.build.env,
         platform,
         kwargs...
     )
+end
+
+"""
+    dep_artifact_dir(meta, jll_info, platform)
+
+The directory a dependency JLL's artifact for `platform` is unpacked in within the
+universe's depot, or `nothing` if it has none there (its products may be bundled
+with Julia rather than bound to an artifact, or the artifact may not be present).
+"""
+function dep_artifact_dir(meta, jll_info::JLLInfo, platform::AbstractPlatform)
+    build = try
+        select_platform(jll_info, platform)
+    catch
+        return nothing
+    end
+    isa(build.artifact, JLLArtifactBinding) || return nothing
+    dir = artifact_path(meta.universe, build.artifact.treehash)
+    return isdir(dir) ? dir : nothing
 end
 
 function find_unlocatable_products(config::ExtractConfig, prefix)
