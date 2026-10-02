@@ -1,6 +1,7 @@
 using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash
+using BinaryBuilderSources: strict_tags, check_strict_tags, exempt_from_strict_tags
 using Pkg.Registry: RegistryInstance
 
 include("common.jl")
@@ -372,6 +373,53 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 prepare(bzip2_foreign_dep)
                 deploy(bzip2_foreign_dep, prefix)
                 @test isfile(joinpath(prefix, "lib", "libbz2$(foreign_soext)"))
+            end
+
+            @testset "strict tags" begin
+                msan = Platform("x86_64", "linux"; sanitize="memory")
+                plain = Platform("x86_64", "linux")
+                meta(; kwargs...) = Dict{String,Any}("git-tree-sha1" => "0"^40, "arch" => "x86_64", "os" => "linux",
+                                                     (string(k) => v for (k, v) in kwargs)...)
+                metas(m) = Dict(PackageSpec(; name="Foo_jll") => m)
+
+                @test "sanitize" in strict_tags
+                # Same value, or absent on both sides: fine
+                @test check_strict_tags(metas(meta(; sanitize="memory")), msan) === nothing
+                @test check_strict_tags(metas(meta()), plain) === nothing
+                # Any difference is an error, including a tag present on only one side
+                @test_throws r"Foo_jll.*`sanitize=memory`.*no `sanitize` tag" check_strict_tags(metas(meta()), msan)
+                @test_throws r"Foo_jll.*no `sanitize` tag.*`sanitize=memory`" check_strict_tags(metas(meta(; sanitize="memory")), plain)
+                @test_throws ErrorException check_strict_tags(metas(meta(; sanitize="address")), msan)
+                # Platform-independent artifacts, and JLLs without an artifact for this platform, are fine
+                @test check_strict_tags(metas(delete!(meta(), "arch")), msan) === nothing
+                @test check_strict_tags(metas(Dict{String,Any}("paths" => String[], "dep_uuids" => Base.UUID[])), msan) === nothing
+                # Other tags are matched as usual
+                @test check_strict_tags(metas(meta(; cxxstring_abi="cxx11")), plain) === nothing
+                # The list can be extended
+                push!(strict_tags, "mytag")
+                try
+                    @test_throws r"mytag" check_strict_tags(metas(meta(; mytag="1")), plain)
+                    @test check_strict_tags(metas(meta(; mytag="1")), Platform("x86_64", "linux"; mytag="1")) === nothing
+                finally
+                    delete!(strict_tags, "mytag")
+                end
+
+                # Toolchain-internal JLLs (pinned to a repository, installed into a subdirectory) are exempt
+                repo = Pkg.Types.GitRepo(; source="https://github.com/JuliaBinaryWrappers/Bzip2_jll.jl")
+                @test exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; repo, target="sysroot"))
+                @test !exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; repo))
+                @test !exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; target="sysroot"))
+
+                # `prepare()` checks what it selects, including transitive dependencies
+                @test_throws r"Bzip2_jll.*sanitize" prepare([JLLSource("Bzip2_jll", msan)])
+                @test_throws r"Zstd_jll.*sanitize" prepare([JLLSource("LibCURL_jll", msan)])
+                zlib_msan = JLLSource("Zlib_jll", msan)
+                zlib_plain = JLLSource("Zlib_jll", plain)
+                prepare([zlib_msan])
+                prepare([zlib_plain])
+                @test !isempty(zlib_msan.artifact_paths)
+                @test !isempty(zlib_plain.artifact_paths)
+                @test zlib_msan.artifact_paths != zlib_plain.artifact_paths
             end
 
             # retarget works
