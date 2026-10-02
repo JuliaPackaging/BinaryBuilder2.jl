@@ -120,6 +120,16 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             @test length(jll_lib_products[1].deps) == 1
             @test jll_lib_products[1].deps[1].mod == :LibPlus_jll
             @test jll_lib_products[1].deps[1].varname == :libplus
+
+            # A transitive dependency is never linked against, so it never satisfies a `DT_NEEDED`
+            result = resolve_dynamic_links!(AuditResult(scan), AuditInfo(
+                Dict{Symbol,AuditDependencyInfo}();
+                transitive_deps = Dict(:LibPlus_jll => AuditDependencyInfo([
+                    JLLLibraryProduct(:libplus, joinpath("lib", libplus_soname), [], []),
+                ])),
+            ))
+            @test !success(result.pass_results)
+            @test all(d -> d.mod != :LibPlus_jll, only(result.jll_lib_products).deps)
         end
     end
 
