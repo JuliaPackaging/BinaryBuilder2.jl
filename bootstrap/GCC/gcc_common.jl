@@ -347,6 +347,8 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
         ExtractSpec(
             raw"""
             extract ${prefix}/lib/gcc/${target}/${gcc_version}
+            # The plugin headers describe the host GCC runs on, they go with `GCC`
+            rm -rf ${extract_dir}/lib/gcc/${target}/${gcc_version}/plugin
             """,
             gcc_crt_object_products,
             get_target_spec_by_name(build, "host");
@@ -359,7 +361,17 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
             extract ${prefix}/**
             rm -rf ${extract_dir}/${target}/include
             rm -rf ${extract_dir}/${target}/${lib64}
+            # Except for the plugin headers, which describe the host GCC runs on
+            # (`GCC_crt_objects` is per target only, so it can't carry them)
+            plugin_dir=lib/gcc/${target}/${gcc_version}/plugin
+            if [[ -d ${extract_dir}/${plugin_dir} ]]; then
+                mv ${extract_dir}/${plugin_dir} ${extract_dir}/gcc_plugin
+            fi
             rm -rf ${extract_dir}/lib/gcc
+            if [[ -d ${extract_dir}/gcc_plugin ]]; then
+                mkdir -p $(dirname ${extract_dir}/${plugin_dir})
+                mv ${extract_dir}/gcc_plugin ${extract_dir}/${plugin_dir}
+            fi
             """,
             [
                 ExecutableProduct("\${target}-gcc", :gcc),
