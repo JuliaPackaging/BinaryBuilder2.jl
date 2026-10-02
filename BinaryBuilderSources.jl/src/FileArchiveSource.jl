@@ -115,6 +115,25 @@ function retarget(fas::T, new_target::String) where {T <: FileArchiveSource}
     return T(fas.url, fas.hash, new_target)
 end
 
+"""
+    download_headers(url)
+
+A GitHub release asset given by its API URL (`https://api.github.com/repos/<owner>/<repo>/
+releases/assets/<id>`) is the way to download one from a private repository: it needs
+`Accept: application/octet-stream`, and a token from `GITHUB_TOKEN` or `GH_TOKEN`.
+"""
+function download_headers(url::AbstractString)
+    headers = Pair{String,String}[]
+    if occursin(r"^https://api\.github\.com/repos/[^/]+/[^/]+/releases/assets/\d+$", url)
+        push!(headers, "Accept" => "application/octet-stream")
+        token = get(ENV, "GITHUB_TOKEN", get(ENV, "GH_TOKEN", ""))
+        if !isempty(token)
+            push!(headers, "Authorization" => "Bearer $(token)")
+        end
+    end
+    return headers
+end
+
 function prepare(fas::FileArchiveSource; verbose::Bool = false)
     # Only download if verification fails
     if !verify(fas)
@@ -122,7 +141,7 @@ function prepare(fas::FileArchiveSource; verbose::Bool = false)
 
         # Ensure the directory that should hold this source exists, otherwise `download()` fails
         mkpath(dirname(download_target))
-        Downloads.download(fas.url, download_target)
+        Downloads.download(fas.url, download_target; headers=download_headers(fas.url))
 
         # If we still don't verify properly, throw an error
         if !verify(fas)

@@ -619,3 +619,24 @@ end
         @test spec_hash(dev_jll; registries=base) != artifacts_hash
     end
 end
+
+@testset "Download headers" begin
+    using BinaryBuilderSources: download_headers
+    asset_url = "https://api.github.com/repos/JuliaPackaging/Yggdrasil/releases/assets/12345"
+    withenv("GITHUB_TOKEN" => nothing, "GH_TOKEN" => nothing) do
+        # Ordinary URLs get no special headers
+        @test isempty(download_headers("https://github.com/JuliaPackaging/Yggdrasil/releases/download/v1/foo.tar.gz"))
+        @test isempty(download_headers("https://api.github.com/repos/JuliaPackaging/Yggdrasil/releases/12345"))
+        @test isempty(download_headers(asset_url * "/foo"))
+        # A release asset by its API URL asks for the asset's content, even without a token
+        @test download_headers(asset_url) == ["Accept" => "application/octet-stream"]
+    end
+    withenv("GITHUB_TOKEN" => nothing, "GH_TOKEN" => "gh_token") do
+        @test download_headers(asset_url) == ["Accept" => "application/octet-stream", "Authorization" => "Bearer gh_token"]
+    end
+    withenv("GITHUB_TOKEN" => "github_token", "GH_TOKEN" => "gh_token") do
+        @test download_headers(asset_url) == ["Accept" => "application/octet-stream", "Authorization" => "Bearer github_token"]
+        # The token is never sent anywhere else
+        @test isempty(download_headers("https://example.com/repos/a/b/releases/assets/1"))
+    end
+end
