@@ -56,17 +56,13 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
                     LibraryProduct("libmult", :libmult),
                 ],
             )
-            pass_results = Dict{String,Vector{PassResult}}()
-            ensure_sonames!(scan, pass_results)
-            @test success(pass_results)
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            @test success(result.pass_results)
 
             # First, resolve dynamic links when these are two librares in the same build:
-            jll_lib_products = resolve_dynamic_links!(
-                scan,
-                pass_results,
-                Dict{Symbol,Vector{JLLLibraryProduct}}(),
-            )
-            @test success(pass_results)
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+            @test success(result.pass_results)
 
             @test length(jll_lib_products) == 2
             @test jll_lib_products[2].varname == :libplus
@@ -104,23 +100,20 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
                 target_platform,
                 [LibraryProduct("libmult", :libmult)],
             )
-            pass_results = Dict{String,Vector{PassResult}}()
-            ensure_sonames!(scan, pass_results)
+            result = AuditResult(scan)
+            ensure_sonames!(result)
 
-            jll_lib_products = resolve_dynamic_links!(
-                scan,
-                pass_results,
-                Dict{Symbol,Vector{JLLLibraryProduct}}(
-                    :LibPlus => [
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo(Dict(
+                    :LibPlus_jll => AuditDependencyInfo([
                         JLLLibraryProduct(
                             :libplus,
                             joinpath("lib", libplus_soname),
                             [], [],
                         ),
-                    ]
-                ),
-            )
-            @test success(pass_results)
+                    ]),
+                )),
+            ).jll_lib_products
+            @test success(result.pass_results)
             @test length(jll_lib_products) == 1
             @test jll_lib_products[1].varname == :libmult
             @test jll_lib_products[1].path == joinpath("lib", libmult_soname)
@@ -146,15 +139,11 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
 
             function run_scan_and_rpaths()
                 scan = scan_files(prefix, target_platform, [LibraryProduct("lib/plus/libplus", :libplus)])
-                pass_results = Dict{String,Vector{PassResult}}()
-                ensure_sonames!(scan, pass_results)
-                jll_lib_products = resolve_dynamic_links!(
-                    scan,
-                    pass_results,
-                    Dict{Symbol,Vector{JLLLibraryProduct}}(),
-                )
-                rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
-                @test success(pass_results)
+                result = AuditResult(scan)
+                ensure_sonames!(result)
+                jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+                rpaths_consistent!(result, AuditInfo())
+                @test success(result.pass_results)
             end
             run_scan_and_rpaths()
 
@@ -211,11 +200,10 @@ end
             LibraryProduct("lib/libgcc_s.so.1", :libgcc_s),
             LibraryProduct("libmult", :libmult),
         ])
-        pass_results = Dict{String,Vector{PassResult}}()
-        ensure_sonames!(scan, pass_results)
-        jll_lib_products = resolve_dynamic_links!(scan, pass_results,
-                                                  Dict{Symbol,Vector{JLLLibraryProduct}}())
-        @test success(pass_results)
+        result = AuditResult(scan)
+        ensure_sonames!(result)
+        jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+        @test success(result.pass_results)
         libmult = only(p for p in jll_lib_products if p.varname == :libmult)
         # The edge is recorded as a real dependency...
         @test JLLLibraryDep(nothing, :libgcc_s) ∈ libmult.deps

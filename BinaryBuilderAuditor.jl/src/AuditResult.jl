@@ -22,6 +22,8 @@ struct AuditResult
     jll_lib_products::Vector{JLLLibraryProduct}
 end
 
+AuditResult(scan::ScanResult) = AuditResult(scan, Dict{String,Vector{PassResult}}(), JLLLibraryProduct[])
+
 Base.success(ar::AuditResult) = success(ar.pass_results)
 function Base.success(pass_results::Dict{String,Vector{PassResult}})
     for (name, results) in pass_results

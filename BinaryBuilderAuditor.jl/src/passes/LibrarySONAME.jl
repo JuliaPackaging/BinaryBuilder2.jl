@@ -14,7 +14,8 @@ This function also has a side-effect of filling out `scan.soname_locator`, which
 allows mapping from library SONAME to `rel_path`, which is very useful for
 resolving dynamic linkage.
 """
-function ensure_sonames!(scan::ScanResult, pass_results::Dict{String,Vector{PassResult}})
+function ensure_sonames!(result::AuditResult)
+    scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do SONAMEs, it just always uses the basename of the DLL.
     if Sys.iswindows(scan.platform)
         return
