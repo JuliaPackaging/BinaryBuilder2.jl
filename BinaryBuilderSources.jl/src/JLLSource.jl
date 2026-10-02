@@ -141,6 +141,9 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         pkg.name,
         pkg.version != Pkg.Types.VersionSpec() ? string(pkg.version) : "",
         something(pkg.path, ""),
+        # A JLL developed by path (as a `Universe` does with what it builds) changes in
+        # place when it is rebuilt: its path alone would keep stale caches alive.
+        dev_content_hash(pkg),
         something(pkg.tree_hash, ""),
         something(pkg.repo.source, ""),
         something(pkg.repo.rev, ""),
@@ -153,6 +156,16 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         registry_slice_hash(pkg, registries),
     )))
 end
+function dev_content_hash(pkg)
+    pkg.path === nothing && return ""
+    h = ""
+    for f in ("Project.toml", "Artifacts.toml")
+        path = joinpath(pkg.path, f)
+        h *= isfile(path) ? bytes2hex(sha1(read(path))) : "-"
+    end
+    return h
+end
+
 function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry.RegistryInstance})
     return bytes2hex(sha1(string(bytes2hex.(spec_hash.(jlls; registries))...)))
 end
