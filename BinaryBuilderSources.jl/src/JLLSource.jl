@@ -331,6 +331,9 @@ function prepare(jlls::Vector{JLLSource};
                     artifact_metas = collect_artifact_metas(slice_deps; platform, project_dir, pkg_depot=depot, verbose)
                     art_paths = collect_artifact_paths(artifact_metas, slice_deps)
                 end
+                if !all(exempt_from_strict_tags, jlls_slice)
+                    check_strict_tags(artifact_metas, platform)
+                end
                 for jll in jlls_slice
                     pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
                     # Update `jll.package` with things from `pkg`
@@ -379,6 +382,61 @@ function prepare(jlls::Vector{JLLSource};
                         TOML.print(io, cache_entry)
                     end
                 end
+            end
+        end
+    end
+end
+
+"""
+    strict_tags
+
+Platform tags that change how a build's code is generated, so that an artifact may only
+stand in for a platform that has the same value for each of them, including the tag being
+absent on both sides.  Platform matching ignores tags that only one side has, so without
+this a dependency for an `x86_64-linux-gnu-sanitize+memory` build would happily resolve to
+the uninstrumented `x86_64-linux-gnu` artifact when the JLL has no instrumented build, and
+a build for a platform without the tag could end up with an instrumented artifact.
+
+`prepare()` checks every artifact it selects for a `JLLSource` (including transitive
+dependencies) against this list and throws an error on mismatch.  Packages that define
+their own build-affecting tags can extend it with `push!(strict_tags, "mytag")`.
+"""
+const strict_tags = Set{String}(["sanitize"])
+
+"""
+    exempt_from_strict_tags(jll::JLLSource)
+
+JLLs that a toolchain pins to a specific repository and installs into a subdirectory of
+the prefix (e.g. a sysroot's libc, or a compiler's support libraries) are part of that
+toolchain: they are requested for the target platform, but by design they are not built
+once per value of a `strict_tags` tag, so they are not checked.
+"""
+exempt_from_strict_tags(jll::JLLSource) = jll.package.repo.source !== nothing && !isempty(jll.target)
+
+"""
+    check_strict_tags(artifact_metas::Dict, platform::AbstractPlatform)
+
+Throw an error if any of the artifacts selected in `artifact_metas` (as returned by
+`collect_artifact_metas()` for `platform`) disagrees with `platform` on a tag in
+`strict_tags`.
+"""
+function check_strict_tags(artifact_metas::Dict, platform::AbstractPlatform)
+    platform_tags = tags(platform)
+    for (pkg, meta) in artifact_metas
+        # JLLs without an artifact for this platform, and platform-independent
+        # artifacts (they hold no compiled code), have nothing to check.
+        if !haskey(meta, "git-tree-sha1") || !haskey(meta, "arch")
+            continue
+        end
+        for tag in strict_tags
+            wanted = get(platform_tags, tag, nothing)
+            selected = get(meta, tag, nothing)
+            if wanted != selected
+                describe(v) = v === nothing ? "no `$(tag)` tag" : "`$(tag)=$(v)`"
+                error("$(pkg.name) has no artifact for $(triplet(platform)): ",
+                      "the platform has $(describe(wanted)), but the best match ",
+                      "($(meta["git-tree-sha1"])) has $(describe(selected)), ",
+                      "and `$(tag)` must match exactly (see `BinaryBuilderSources.strict_tags`).")
             end
         end
     end
