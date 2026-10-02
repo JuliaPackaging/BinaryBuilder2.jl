@@ -1,4 +1,4 @@
-using Pkg.Registry: RegistrySpec, RegistryInstance, uuids_from_name
+using Pkg.Registry: RegistrySpec, RegistryInstance, PkgEntry, registry_info, uuids_from_name
 using Artifacts
 using JLLGenerator
 using Random, TOML
@@ -309,12 +309,18 @@ function registry_path(u::Universe, registry::RegistrySpec)
     return registry_path(u.depot_path, registry.name)
 end
 
-# It would be nice if `Pkg.Registry` just exported something like this
-function Pkg.Registry.parsefile(reg_inst::RegistryInstance, path::String)
-    return Pkg.Registry.parsefile(reg_inst.in_memory_registry, reg_inst.path, path)
-end
+# Pkg 1.13 takes the registry too (`registry_info(reg, entry)`); older Pkgs take the entry.
+pkg_registry_info(reg::RegistryInstance, entry::PkgEntry) =
+    applicable(registry_info, reg, entry) ? registry_info(reg, entry) : registry_info(entry)
 
-function registry_package_lookup(f::Function, u::Universe, pkg_name::String, pkg_file::String; registries = u.registry_instances)
+# Calls `f` with the `PkgInfo` of `pkg_name` in each registry that has it.  This goes
+# through Pkg's own parsed registry data rather than the registry's files: for a
+# compressed registry, Pkg (1.13+) deletes a package's files from the instance's
+# `in_memory_registry` once it has parsed them into the package's `PkgInfo`, and
+# `RegistryInstance(path)` hands out the instance that Pkg itself uses (from its
+# `REGISTRY_CACHE`), so after any Pkg operation that touched the package in this
+# process (e.g. resolving a build's dependencies), its files are gone from there.
+function registry_package_lookup(f::Function, u::Universe, pkg_name::String; registries = u.registry_instances)
     for reg_inst in registries
         pkg_uuids = uuids_from_name(reg_inst, pkg_name)
         if isempty(pkg_uuids)
@@ -324,21 +330,7 @@ function registry_package_lookup(f::Function, u::Universe, pkg_name::String, pkg
         # I don't think this should ever really have more than one, let's just
         # error if that happens so that we can think about what to actually do.
         pkg_uuid = only(pkg_uuids)
-        pkg_subpath = joinpath(reg_inst.pkgs[pkg_uuid].path, pkg_file)
-
-        # `parsefile()` does not gracefully deal with missing files, so we catch
-        # errors here and just skip over missing files.
-        pkg_data = try
-            Pkg.Registry.parsefile(reg_inst, pkg_subpath)
-        catch e
-            if !isa(e, SystemError)
-                rethrow(e)
-            end
-            nothing
-        end
-        if pkg_data !== nothing
-            f(pkg_data)
-        end
+        f(pkg_registry_info(reg_inst, reg_inst.pkgs[pkg_uuid]))
     end
 end
 
@@ -352,8 +344,8 @@ arbitrarily choose the first as the true URL.
 """
 function get_package_repo(uni::Universe, pkg_name::String; kwargs...)
     repos = String[]
-    registry_package_lookup(uni, pkg_name, "Package.toml"; kwargs...) do d
-        push!(repos, d["repo"])
+    registry_package_lookup(uni, pkg_name; kwargs...) do info
+        info.repo === nothing || push!(repos, info.repo)
     end
     repos = unique(repos)
     if length(repos) > 1
@@ -374,8 +366,8 @@ across all registries in `uni`.
 """
 function get_package_versions(uni::Universe, pkg_name::String; kwargs...)
     versions = VersionNumber[]
-    registry_package_lookup(uni, pkg_name, "Versions.toml"; kwargs...) do d
-        append!(versions, parse.(VersionNumber, collect(keys(d))))
+    registry_package_lookup(uni, pkg_name; kwargs...) do info
+        append!(versions, keys(info.version_info))
     end
     return versions
 end
@@ -462,7 +454,8 @@ function reset_timeline!(u::Universe)
 
     # Clear out our local registry and recreate it
     rm(joinpath(u.depot_path, "registries", "BB2LocalRegistry"); force=true, recursive=true)
-    create_local_registry(u.depot_path)
+    local_reg_spec = create_local_registry(u.depot_path)
+    u.registry_instances[1] = RegistryInstance(local_reg_spec.path)
 
     # Clear environment
     rm(joinpath(u.depot_path, "environments", "binarybuilder"); force=true, recursive=true)
@@ -776,7 +769,17 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     in_universe(u) do env
         # Next, add that JLL to the universe's environment
-        Pkg.develop(;path=jll_path, io=verbose ? stdout : devnull)
+        # Pkg refuses to develop a package that is in the running Julia's sysimage
+        # (e.g. `CompilerSupportLibraries_jll`, `OpenBLAS_jll`) unless this check is
+        # off.  The universe's environment is never loaded into this process, so the
+        # sysimage's copy does not matter here.
+        respect = Pkg.RESPECT_SYSIMAGE_VERSIONS[]
+        Pkg.respect_sysimage_versions(false)
+        try
+            Pkg.develop(;path=jll_path, io=verbose ? stdout : devnull)
+        finally
+            Pkg.respect_sysimage_versions(respect)
+        end
     end
 
     # Finally, register it into the universe's local BB2 registry

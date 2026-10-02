@@ -141,6 +141,9 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         pkg.name,
         pkg.version != Pkg.Types.VersionSpec() ? string(pkg.version) : "",
         something(pkg.path, ""),
+        # A JLL developed by path (as a `Universe` does with what it builds) changes in
+        # place when it is rebuilt: its path alone would keep stale caches alive.
+        dev_content_hash(pkg),
         something(pkg.tree_hash, ""),
         something(pkg.repo.source, ""),
         something(pkg.repo.rev, ""),
@@ -153,6 +156,16 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         registry_slice_hash(pkg, registries),
     )))
 end
+function dev_content_hash(pkg)
+    pkg.path === nothing && return ""
+    h = ""
+    for f in ("Project.toml", "Artifacts.toml")
+        path = joinpath(pkg.path, f)
+        h *= isfile(path) ? bytes2hex(sha1(read(path))) : "-"
+    end
+    return h
+end
+
 function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry.RegistryInstance})
     return bytes2hex(sha1(string(bytes2hex.(spec_hash.(jlls; registries))...)))
 end
@@ -252,18 +265,31 @@ function prepare(jlls::Vector{JLLSource};
             if ispath(cache_path)
                 cache = TOML.parsefile(cache_path)
 
+                # Whether to load this cache. Either way the slice is resolved below if any
+                # JLL in it is still without artifact paths (so never `continue` out of here).
+                use_cache = true
                 if !haskey(cache, "dep_uuids")
                     @debug("JLLSource cache lacks dep_uuids!  Cache corrupt or out of date!")
                     clear_cache!()
-                    continue
+                    use_cache = false
+                else
+                    cached_dep_uuids = Set{Base.UUID}()
+                    for uuid in cache["dep_uuids"]
+                        push!(cached_dep_uuids, Base.UUID(uuid))
+                    end
+
+                    # Don't use the cache (but don't drop it) if any of the dep_uuids are in
+                    # our universe (e.g. they were built by us previously). Decided for the
+                    # whole slice before loading anything: a JLL that got its cached paths
+                    # before we noticed would keep them, and resolution appends to them.
+                    overridden_deps = intersect(built_uuids, cached_dep_uuids)
+                    if !isempty(overridden_deps)
+                        @debug("Universe overrides some deps, rejecting cache!", overridden_deps)
+                        use_cache = false
+                    end
                 end
 
-                cached_dep_uuids = Set{Base.UUID}()
-                for uuid in cache["dep_uuids"]
-                    push!(cached_dep_uuids, Base.UUID(uuid))
-                end
-
-                for jll in jlls_slice
+                for jll in (use_cache ? jlls_slice : JLLSource[])
                     # This should be impossible since we address the cache by spec_hash, but let's be paranoid
                     if !haskey(cache, string(jll.package.uuid))
                         @debug("JLLSource cache does not contain all UUIDs!  This should be impossible!", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
@@ -276,14 +302,6 @@ function prepare(jlls::Vector{JLLSource};
                     if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash")
                         @debug("JLLSource cache lacks artifact paths or tree_hash!  Cache corrupt?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
                         clear_cache!()
-                        break
-                    end
-
-                    # Don't use the cache (but don't drop it) if any of the dep_uuids
-                    # are in our universe (e.g. they were built by us previously)
-                    overridden_deps = intersect(built_uuids, cached_dep_uuids)
-                    if !isempty(overridden_deps)
-                        @debug("Universe overrides some deps, rejecting cache!", name=jll.package.name, overridden_deps)
                         break
                     end
 

@@ -171,14 +171,32 @@ function scan_files(prefix::String, platform::AbstractPlatform,
     )
 end
 
-# Used to denote that we've made a modification to a binary file
+"""
+    hardlinks(scan::ScanResult, rel_path::String)
+
+Return the paths of all binary objects in `scan` that are the same file on disk as
+`rel_path` (including `rel_path` itself), sorted.  Build systems sometimes install
+one file under several names (e.g. binutils' `bin/ld` and `bin/ld.bfd`), and a tool
+that modifies one of them in place (`patchelf`, `install_name_tool`) modifies all.
+"""
+function hardlinks(scan::ScanResult, rel_path::String)
+    st = scan.files[rel_path]
+    return sort!([p for p in keys(scan.binary_objects)
+                  if (scan.files[p].device, scan.files[p].inode) == (st.device, st.inode)])
+end
+
+# Used to denote that we've made a modification to a binary file.  Our `ObjectHandle`s
+# keep the file open and cache its headers, so the handles of every name of the file
+# must be re-read.
 function refresh!(scan::ScanResult, rel_path::String)
     if rel_path ∈ keys(scan.binary_objects)
-        oh = get_object_handle(abspath(scan, rel_path), scan.platform)
-        if oh === nothing
-            delete!(scan.binary_objects, rel_path)
-        else
-            scan.binary_objects[rel_path] = oh
+        for p in hardlinks(scan, rel_path)
+            oh = get_object_handle(abspath(scan, p), scan.platform)
+            if oh === nothing
+                delete!(scan.binary_objects, p)
+            else
+                scan.binary_objects[p] = oh
+            end
         end
     end
 end
