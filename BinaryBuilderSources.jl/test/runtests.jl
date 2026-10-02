@@ -604,5 +604,18 @@ end
         jll.package.uuid = Base.UUID(uuids["Root_jll"])
         @test spec_hash(jll; registries=base) == unresolved_hash
 
+        # A JLL developed by path changes in place when it is rebuilt: its `spec_hash()`
+        # must follow the content of its `Project.toml` and `Artifacts.toml`.
+        dev_dir = mkpath(joinpath(dir, "Root_jll"))
+        write(joinpath(dev_dir, "Project.toml"), "name = \"Root_jll\"\nuuid = \"$(uuids["Root_jll"])\"\nversion = \"1.0.0\"\n")
+        write(joinpath(dev_dir, "Artifacts.toml"), "[Root]\ngit-tree-sha1 = \"$("0"^40)\"\n")
+        dev_jll = JLLSource(PackageSpec(; name="Root_jll", uuid=Base.UUID(uuids["Root_jll"]), path=dev_dir), HostPlatform())
+        dev_hash = spec_hash(dev_jll; registries=base)
+        @test spec_hash(dev_jll; registries=base) == dev_hash
+        write(joinpath(dev_dir, "Artifacts.toml"), "[Root]\ngit-tree-sha1 = \"$("1"^40)\"\n")
+        artifacts_hash = spec_hash(dev_jll; registries=base)
+        @test artifacts_hash != dev_hash
+        write(joinpath(dev_dir, "Project.toml"), "name = \"Root_jll\"\nuuid = \"$(uuids["Root_jll"])\"\nversion = \"1.0.1\"\n")
+        @test spec_hash(dev_jll; registries=base) != artifacts_hash
     end
 end
