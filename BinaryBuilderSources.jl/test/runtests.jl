@@ -1,4 +1,4 @@
-using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival
+using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival, TOML
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash
 using Pkg.Registry: RegistryInstance
@@ -358,6 +358,54 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 @test isfile(joinpath(prefix, binlib, "libbz2$(soext)"))
             end
 
+            @testset "resolution cache" begin
+                old_jll_resolve_cache = BinaryBuilderSources._jll_resolve_cache[]
+                mktempdir() do dir
+                    BinaryBuilderSources._jll_resolve_cache[] = name -> joinpath(dir, "jll_resolve_cache", name)
+                    try
+                        # Resolve once to write the cache for this slice
+                        prepare([JLLSource("Ccache_jll", HostPlatform())])
+                        cache_path = only(filter(p -> isfile(joinpath(p, "cache.toml")),
+                                                 readdir(joinpath(dir, "jll_resolve_cache"); join=true)))
+                        cache_path = joinpath(cache_path, "cache.toml")
+                        cache = TOML.parsefile(cache_path)
+                        ccache_uuid = only(k for (k, v) in cache if v isa Dict && v["name"] == "Ccache_jll")
+                        zstd_uuid = string(zstd_dep.package.uuid)
+                        @test zstd_uuid in cache["dep_uuids"]
+
+                        # Point the cache at a recognizable (existing) directory, to see where paths come from
+                        fake_artifact = mkpath(joinpath(dir, "fake_artifact"))
+                        cache[ccache_uuid]["artifact_paths"] = [fake_artifact]
+                        open(io -> TOML.print(io, cache), cache_path; write=true)
+                        ccache_dep = JLLSource("Ccache_jll", HostPlatform())
+                        prepare([ccache_dep])
+                        @test ccache_dep.artifact_paths == [fake_artifact]
+
+                        # When a dependency of the slice is one we built ourselves, the cache must
+                        # not be used, and the slice gets resolved instead.
+                        project_dir = mkpath(joinpath(dir, "project"))
+                        open(io -> TOML.print(io, Dict("deps" => Dict("Zstd_jll" => zstd_uuid))),
+                             joinpath(project_dir, "Project.toml"); write=true)
+                        ccache_dep = JLLSource("Ccache_jll", HostPlatform())
+                        prepare([ccache_dep]; project_dir)
+                        @test !isempty(ccache_dep.artifact_paths)
+                        @test fake_artifact ∉ ccache_dep.artifact_paths
+
+                        # A corrupt cache (here: lacking `dep_uuids`) is dropped, and the slice resolved
+                        cache = TOML.parsefile(cache_path)
+                        delete!(cache, "dep_uuids")
+                        open(io -> TOML.print(io, cache), cache_path; write=true)
+                        ccache_dep = JLLSource("Ccache_jll", HostPlatform())
+                        prepare([ccache_dep])
+                        @test !isempty(ccache_dep.artifact_paths)
+                        @test all(isdir, ccache_dep.artifact_paths)
+                        @test haskey(TOML.parsefile(cache_path), "dep_uuids")
+                    finally
+                        BinaryBuilderSources._jll_resolve_cache[] = old_jll_resolve_cache
+                    end
+                end
+            end
+
             # Test that installing a specific platform works:
             local foreign_platform
             if Sys.isapple()
@@ -555,5 +603,6 @@ end
         unresolved_hash = spec_hash(jll; registries=base)
         jll.package.uuid = Base.UUID(uuids["Root_jll"])
         @test spec_hash(jll; registries=base) == unresolved_hash
+
     end
 end
