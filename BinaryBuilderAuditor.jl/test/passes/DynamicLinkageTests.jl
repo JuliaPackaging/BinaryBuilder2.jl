@@ -123,6 +123,91 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
         end
     end
 
+    @testset "update_linkage - $(triplet(target_platform))" begin
+        mktempdir() do prefix
+            mkpath(joinpath(prefix, "lib"))
+            libplus_path = joinpath(prefix, "lib", libplus_soname)
+            libmult_path = joinpath(prefix, "lib", libmult_soname)
+
+            # The unversioned name, the way `libplus` is first built and `libmult` links to it
+            libplus_linkname = "libplus$(dlext(platform))"
+            if Sys.isapple(target_platform)
+                libplus_linkname_id = "@rpath/$(libplus_linkname)"
+                libplus_soname_id = "@rpath/$(libplus_soname)"
+            else
+                libplus_linkname_id = libplus_linkname
+                libplus_soname_id = libplus_soname
+            end
+
+            # Build `libplus` with an unversioned SONAME and link `libmult` against it,
+            # then rebuild `libplus` with its real, versioned SONAME.  This leaves
+            # `libmult` depending on `libplus` through the `libplus.so` symlink,
+            # which is the linkage `update_linkage!()` must rewrite.
+            with_toolchains([toolchain]) do _, env
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_linkname_id))`, env))
+                symlink(libplus_soname, joinpath(prefix, "lib", libplus_linkname))
+                run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib -lplus $(soname_flag(target_platform, libmult_soname))`, env))
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_soname_id))`, env))
+            end
+
+            function libmult_deps()
+                return readmeta(libmult_path) do ohs
+                    return [path(dl) for dl in DynamicLinks(only(ohs))]
+                end
+            end
+            @test libplus_linkname_id ∈ libmult_deps()
+
+            # Make `libmult` read-only, to ensure that the rewrite can still happen
+            chmod(libmult_path, 0o555)
+
+            scan = scan_files(
+                prefix,
+                target_platform,
+                [
+                    LibraryProduct("libplus", :libplus),
+                    LibraryProduct("libmult", :libmult),
+                ],
+            )
+            @test scan.soname_forwards[libplus_linkname] == libplus_soname
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+            @test success(result.pass_results)
+
+            # The linkage was rewritten, and reported as such
+            update_results = result.pass_results["update_linkage!"]
+            @test only(update_results).status == :success
+            @test only(update_results).identifier == joinpath("lib", libmult_soname)
+            @test libplus_soname_id ∈ libmult_deps()
+            @test libplus_linkname_id ∉ libmult_deps()
+
+            # The scan's object handle was refreshed to see the rewritten linkage
+            @test libplus_soname_id ∈ [path(dl) for dl in DynamicLinks(scan.binary_objects[joinpath("lib", libmult_soname)])]
+
+            # The file permissions were restored
+            @test !Sys.iswritable(libmult_path)
+
+            # The dependency was resolved to `libplus` all the same
+            libmult = only(p for p in jll_lib_products if p.varname == :libmult)
+            @test libmult.deps == [JLLLibraryDep(nothing, :libplus)]
+
+            # Running it again has nothing left to rewrite
+            scan = scan_files(
+                prefix,
+                target_platform,
+                [
+                    LibraryProduct("libplus", :libplus),
+                    LibraryProduct("libmult", :libmult),
+                ],
+            )
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            resolve_dynamic_links!(result, AuditInfo())
+            @test success(result.pass_results)
+            @test !haskey(result.pass_results, "update_linkage!")
+        end
+    end
+
     @testset "rpaths_consistent - $(triplet(target_platform))" begin
         mktempdir() do prefix
             mkpath(joinpath(prefix, "lib", "plus"))
