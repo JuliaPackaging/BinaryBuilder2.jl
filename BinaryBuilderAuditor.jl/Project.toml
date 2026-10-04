@@ -1,7 +1,7 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderAuditor"
 uuid = "53524979-5234-6e31-4220-6120654b694c"
-version = "0.2.1"
+version = "0.3"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
