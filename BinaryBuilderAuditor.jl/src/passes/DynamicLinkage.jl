@@ -115,15 +115,27 @@ function update_linkage!(result::AuditResult, rel_path::AbstractString,
         return
     end
 
+    abs_path = abspath(scan, rel_path)
     if Sys.isapple(scan.platform)
-        # Nothing has been rewritten, so there is nothing to refresh either
-        @warn("TODO: Do something with `install_name_tool` here")
-        return
+        # `install_name_tool -change` only matches the full install name (e.g.
+        # `@rpath/libfoo.dylib`), and silently does nothing otherwise, so find
+        # the full name and keep its directory when swapping in the new name.
+        oh = scan.binary_objects[rel_path]
+        old_soname = only(path(dl) for dl in DynamicLinks(oh) if basename(path(dl)) == old_soname)
+        if dirname(old_soname) != ""
+            new_soname = string(dirname(old_soname), "/", new_soname)
+        end
     end
 
-    abs_path = abspath(scan, rel_path)
+    # The fact that these two commandlines serendipitously aligned their arguments made my day.
+    if Sys.isapple(scan.platform)
+        cmd = install_name_tool(scan, `-change $(old_soname) $(new_soname) $(abs_path)`)
+    else
+        cmd = patchelf(scan, `--replace-needed $(old_soname) $(new_soname) $(abs_path)`)
+    end
+
     proc, output = with_writable(abs_path) do
-        capture_output(patchelf(scan, `--replace-needed $(old_soname) $(new_soname) $(abs_path)`))
+        capture_output(cmd)
     end
     if !success(proc)
         push_result!(pass_results, "update_linkage!", :fail, rel_path, "Failed to update linkage '$(old_soname)' -> '$(new_soname)': $(output)")
