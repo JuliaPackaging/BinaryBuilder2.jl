@@ -282,11 +282,11 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             hardlink(tool_path, joinpath(prefix, "target", "bin", "tool"))
 
             scan = scan_files(prefix, target_platform, [LibraryProduct("libplus", :libplus)])
-            pass_results = Dict{String,Vector{PassResult}}()
-            ensure_sonames!(scan, pass_results)
-            resolve_dynamic_links!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
-            rpaths_consistent!(scan, pass_results, Dict{Symbol,Vector{JLLLibraryProduct}}())
-            @test success(pass_results)
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            resolve_dynamic_links!(result, AuditInfo())
+            rpaths_consistent!(result, AuditInfo())
+            @test success(result.pass_results)
 
             # Every name gets the RPATHs that every name needs
             origin = Sys.isapple(target_platform) ? "@loader_path" : "\$ORIGIN"
