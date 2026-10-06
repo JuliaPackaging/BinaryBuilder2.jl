@@ -190,6 +190,33 @@ using JLLGenerator: rtld_symbols, rtld_flags
         @test StaticLibraryProduct("libfoo"; system_deps=["m"]).system_deps == ["m"]
     end
 
+    @testset "LibraryProduct(...; static=:auto)" begin
+        using BinaryBuilderProducts: generate_default_static_lib_paths
+        # The archive is looked for wherever the dynamic library is, minus any
+        # versioned extension, and inherits the library's name and dependencies
+        auto = LibraryProduct(["libfoo", "lib/sub/libfoo.so.6"], :libfoo; static=:auto).static
+        @test auto.paths == ["libfoo", "lib/sub/libfoo"]
+        @test auto.varname == :libfoo
+        @test auto.deps === nothing && auto.system_deps === nothing
+        @test LibraryProduct("libfoo", :libfoo).static === nothing
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo; static=:inherit)
+
+        # Every platform's spelling of a dynamic library reduces to the same archive name,
+        # and `\${libdir}` (which is `bin` on Windows) gives way to the archive's own `lib`
+        @test generate_default_static_lib_paths([
+            "libfoo.so.6", "libfoo.6.dylib", "libfoo-6.dll", "libfoo.dll", "\${libdir}/libfoo",
+        ]) == ["libfoo"]
+        @test generate_default_static_lib_paths(["\${prefix}/lib64/libfoo.so"]) == ["\${prefix}/lib64/libfoo"]
+
+        mktempdir() do prefix
+            mkpath(joinpath(prefix, "lib"))
+            touch(joinpath(prefix, "lib", "libfoo.a"))
+            env = Dict("prefix" => prefix, "libdir" => joinpath(prefix, "bin"))
+            lp = LibraryProduct("\${libdir}/libfoo", :libfoo; static=:auto)
+            @test locate(lp.static, prefix; env, platform=Platform("x86_64", "windows")) == joinpath("lib", "libfoo.a")
+        end
+    end
+
     @testset "StaticLibraryProduct archive extensions" begin
         mktempdir() do prefix
             mkpath(joinpath(prefix, "lib"))
