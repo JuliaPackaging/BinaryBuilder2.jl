@@ -58,6 +58,38 @@ struct StaticLibraryProduct <: AbstractProduct
 end
 StaticLibraryProduct(path::AbstractString; kwargs...) = StaticLibraryProduct([path]; kwargs...)
 
+"""
+    generate_default_static_lib_paths(paths::Vector{String})
+
+Derive the paths of a library's static archive from the `paths` of its dynamic
+variant, as used by `LibraryProduct(...; static=:auto)`.  Any versioned dynamic
+library extension (`.so.6`, `.6.dylib`, `-6.dll`, ...) is removed from each
+basename, and a leading `\${libdir}` or `\${bindir}` is dropped, since archives
+live in `lib` on every platform (whereas `\${libdir}` is `bin` on Windows).  Any
+other directory is kept as declared.
+"""
+function generate_default_static_lib_paths(paths::Vector{<:AbstractString})
+    static_paths = String[]
+    for path in paths
+        dir, name = dirname(path), basename(path)
+        if dir in ("\${libdir}", "\${bindir}")
+            dir = ""
+        end
+        # The platform is not known yet, so iterate them all.
+        for os in ("linux", "macos", "windows", "freebsd")
+            try
+                name = first(parse_dl_name_version(name, os))
+                break
+            catch e
+                isa(e, ArgumentError) || rethrow()
+            end
+        end
+        static_path = isempty(dir) ? name : joinpath(dir, name)
+        static_path in static_paths || push!(static_paths, static_path)
+    end
+    return static_paths
+end
+
 static_lib_exts(platform::AbstractPlatform) = Sys.iswindows(platform) ? String["a", "lib"] : String["a"]
 
 # Unlike dynamic libraries, static archives live in `lib` on every platform (even Windows)

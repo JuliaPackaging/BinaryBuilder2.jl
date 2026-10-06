@@ -14,7 +14,9 @@ flags to pass to `dlopen` can be specified as a vector of `Symbols` with the
 
 If this library is also shipped as a static archive, declare that archive by
 passing a [`StaticLibraryProduct`](@ref) as the `static` keyword argument; it is
-the same library, and takes this product's `varname`.
+the same library, and takes this product's `varname`. Passing `static=:auto`
+declares the archive found at the same paths as the dynamic library (with any
+versioned dynamic library extension replaced), inheriting its dependencies.
 
 Each element of `path` takes the form `[dirname/]basename[.versioned-ext]`
 where `dirname` and `versioned-ext` are optional and can be omitted.
@@ -41,12 +43,17 @@ struct LibraryProduct <: AbstractProduct
                             varname::Symbol;
                             dlopen_flags::Union{Vector{Symbol},typeof(default_rtld_flags)} = default_rtld_flags,
                             on_load_callback::Union{Nothing,Symbol} = nothing,
-                            static::Union{Nothing,StaticLibraryProduct} = nothing)
+                            static::Union{Nothing,Symbol,StaticLibraryProduct} = nothing)
         if isa(dlopen_flags, Vector{Symbol})
             dlopen_flags = rtld_flags(dlopen_flags)
         end
         if isdefined(Base, varname)
             error("`$(varname)` is already defined in Base")
+        end
+        if static === :auto
+            static = StaticLibraryProduct(generate_default_static_lib_paths(paths))
+        elseif isa(static, Symbol)
+            throw(ArgumentError("Invalid `static` value $(repr(static)); expected `:auto`, `nothing` or a `StaticLibraryProduct`"))
         end
         if static !== nothing
             if static.varname !== nothing && static.varname != varname
