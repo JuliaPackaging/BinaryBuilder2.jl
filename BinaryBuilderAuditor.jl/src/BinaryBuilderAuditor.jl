@@ -13,11 +13,11 @@ include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
+include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
 
-
 function audit!(prefix::String,
-                library_products::Vector{LibraryProduct},
+                products::Vector{<:AbstractProduct},
                 info::AuditInfo;
                 prefix_alias::String = prefix,
                 platform::AbstractPlatform = HostPlatform(),
@@ -31,7 +31,7 @@ function audit!(prefix::String,
     scan = scan_files(
         prefix,
         platform,
-        library_products,
+        products,
         env,
     )
     result = AuditResult(scan)
@@ -48,6 +48,9 @@ function audit!(prefix::String,
 
     # Solve dynamic linkage, deriving each library product's record
     resolve_dynamic_links!(result, info)
+
+    # Describe the static archive of each library product, if any, plus any standalone static libraries
+    resolve_static_libraries!(result, info)
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly

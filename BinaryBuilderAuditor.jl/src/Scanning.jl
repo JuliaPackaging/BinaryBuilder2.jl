@@ -29,8 +29,15 @@ struct ScanResult
     # and point to the correct `SONAME`.
     soname_forwards::Dict{String,String}
 
+    # List of all static archives contained within the prefix (by `rel_path`)
+    # Note that on Windows this includes import libraries, which are archives too.
+    static_libraries::Set{String}
+
     # This maps `rel_path` to a library product `LibraryProduct`
     library_products::Dict{String,LibraryProduct}
+
+    # This maps the `rel_path` of a static archive to its `StaticLibraryProduct`.
+    static_library_products::Dict{String,StaticLibraryProduct}
 
     # For easy lookup of things by symlink alias
     symlinks::Dict{String,String}
@@ -56,18 +63,41 @@ function get_object_handle(path::String, platform::AbstractPlatform)
     end
 end
 
+"""
+    is_static_archive(path::String)
+
+Returns `true` if the file at `path` is a static archive (an `ar` archive),
+judged by its contents rather than its name.  GNU thin archives are not counted,
+as they only refer to their members by path, and so cannot be shipped.
+"""
+function is_static_archive(path::String)
+    open(path) do io
+        try
+            return !isthin(readmeta(io, ArchiveHandle))
+        catch e
+            # Not an archive at all (`MagicMismatch`, `EOFError`), or a malformed one
+            if isa(e, MagicMismatch) || isa(e, EOFError) || isa(e, ArgumentError)
+                return false
+            end
+            rethrow(e)
+        end
+    end
+end
+
 function scan_files(prefix::String, platform::AbstractPlatform,
-                    library_products::Vector{LibraryProduct} = LibraryProduct[],
+                    products::Vector{<:AbstractProduct} = AbstractProduct[],
                     env::Dict{String,String} = Dict{String,String}(
                         "prefix" => prefix,
                         "bb_full_target" => triplet(platform),
                     );
                     prefix_alias::String = prefix)
     prefix = safe_realpath(prefix)
+    library_products = LibraryProduct[p for p in products if isa(p, LibraryProduct)]
 
     # Do a scan over the prefix, find all symlinks, binary objects, etc....
     all_files = Dict{String,StatStruct}()
     binary_objects = Dict{String,ObjectHandle}()
+    static_libraries = Set{String}()
     symlinks = Dict{String,String}()
     for (root, dirs, files) in walkdir(prefix)
         for f in files
@@ -77,8 +107,9 @@ function scan_files(prefix::String, platform::AbstractPlatform,
             # `lstat()` now, as we're going to make use of it multiple times
             all_files[f_key] = lstat(f_path)
 
-            # `readmeta()` on all binary objects, but ignore symlinks, we'll
-            # always resolve to the actual file when dealing with it later on.
+            # `readmeta()` on all binary objects and identify all static archives,
+            # but ignore symlinks, we'll always resolve to the actual file when
+            # dealing with it later on.
             if !islink(all_files[f_key])
                 oh = get_object_handle(f_path, platform)
                 if oh !== nothing
@@ -86,6 +117,8 @@ function scan_files(prefix::String, platform::AbstractPlatform,
                         throw(ArgumentError("File $(f_key) contains multiple matching object handles"))
                     end
                     binary_objects[f_key] = oh
+                elseif is_static_archive(f_path)
+                    push!(static_libraries, f_key)
                 end
             end
 
@@ -150,6 +183,32 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         library_product_map[relpath_search(symlinks, lib_located_path)] = lib
     end
 
+    # Locate all static library products, each of which must be one of the archives found above
+    static_product_map = Dict{String,StaticLibraryProduct}()
+    function locate_static(slp::StaticLibraryProduct)
+        located_path = locate(slp, prefix; env, platform)
+        if located_path === nothing
+            @error("Unable to locate static library", slp, prefix, platform)
+            error()
+        end
+        rel_path = relpath_search(symlinks, located_path)
+        if rel_path ∉ static_libraries
+            @error("Static library is not an archive", slp, rel_path, prefix, platform)
+            error()
+        end
+        static_product_map[rel_path] = slp
+    end
+    for lib in library_products
+        if lib.static !== nothing
+            locate_static(lib.static)
+        end
+    end
+    for slp in products
+        if isa(slp, StaticLibraryProduct)
+            locate_static(slp)
+        end
+    end
+
     # Get the (memoized) toolchain that holds our third-party tools
     at, at_prefix = deployed_auditor_toolchain(
         CrossPlatform(BBHostPlatform() => host_if_crossplatform(platform)),
@@ -166,7 +225,9 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         soname_locator,
         missing_sonames,
         soname_forwards,
+        static_libraries,
         library_product_map,
+        static_product_map,
         symlinks,
     )
 end

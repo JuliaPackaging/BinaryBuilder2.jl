@@ -64,6 +64,7 @@ JLLGenerator = {path = "JLLGenerator.jl"}
 KeywordArgumentExtraction = {path = "KeywordArgumentExtraction.jl"}
 LazyJLLWrappers = {path = "LazyJLLWrappers.jl"}
 MultiHashParsing = {path = "MultiHashParsing.jl"}
+ObjectFile = {rev = "ct/static-combined", url = "https://github.com/topolarity/ObjectFile.jl.git"}
 ScratchSpaceGarbageCollector = {path = "ScratchSpaceGarbageCollector.jl"}
 TreeArchival = {path = "TreeArchival.jl"}
 
