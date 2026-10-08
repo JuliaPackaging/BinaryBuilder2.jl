@@ -23,6 +23,9 @@ ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 
+[sources]
+ObjectFile = {rev = "ct/static-combined", url = "https://github.com/topolarity/ObjectFile.jl.git"}
+
 [extras]
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 JLLPrefixes = "afc68a34-7891-4c5a-9da1-1c62935e7b0d"
