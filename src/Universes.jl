@@ -159,6 +159,7 @@ struct Universe
             if allow_github_authentication[]
                 ensure_gh_authenticated()
                 if deploy_org != gh_user() && deploy_org ∉ gh_orgs()
+                    @debug("Github Auth Failure", deploy_org, gh_user(), gh_orgs())
                     throw(ArgumentError("deploy target '$(deploy_org)' not a user/organization we have access to!"))
                 end
             end
