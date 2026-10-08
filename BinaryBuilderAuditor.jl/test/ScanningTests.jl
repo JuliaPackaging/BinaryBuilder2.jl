@@ -41,3 +41,24 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms,
     liblzma_soname = scan.soname_forwards[basename(liblzma_relpath)]
     @test haskey(scan.binary_objects, scan.soname_locator[liblzma_soname])
 end
+
+@testset "is_static_archive" begin
+    using BinaryBuilderAuditor: is_static_archive
+    mktempdir() do dir
+        for (name, contents, expected) in (
+                # An archive without any members is still an archive
+                ("empty_archive.a", b"!<arch>\n", true),
+                # Thin archives only refer to their members, so cannot be shipped
+                ("thin.a", b"!<thin>\n", false),
+                ("text.a", b"!<arch> but not really", false),
+                ("short.a", b"!<a", false),
+                ("empty.a", UInt8[], false),
+                # A malformed member header
+                ("malformed.a", vcat(b"!<arch>\n", fill(UInt8(' '), 60)), false),
+            )
+            path = joinpath(dir, name)
+            write(path, contents)
+            @test is_static_archive(path) == expected
+        end
+    end
+end

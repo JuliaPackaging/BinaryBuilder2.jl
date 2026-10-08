@@ -181,6 +181,8 @@ using JLLGenerator: generate_toml_dict
         @testset "archives stay out of the dynamic passes" begin
             scan = scan_files(prefix, target_platform, [LibraryProduct("libplus", :libplus; static = StaticLibraryProduct("libplus"))])
             @test "lib/libplus.a" ∉ keys(scan.binary_objects)
+            # Archives are found by their contents, declared or not
+            @test scan.static_libraries == Set(["lib/libplus.a", "lib/libmult.a"])
             @test collect(keys(scan.static_library_products)) == ["lib/libplus.a"]
             # The archive carries its library's name, which is how the two are paired
             @test only(values(scan.static_library_products)).varname == :libplus
@@ -188,6 +190,12 @@ using JLLGenerator: generate_toml_dict
 
         @testset "a declared archive must exist" begin
             @test_throws ErrorException scan_files(prefix, target_platform, [LibraryProduct("libplus", :libplus; static = StaticLibraryProduct("libnope"))])
+        end
+
+        @testset "a declared archive must be an archive" begin
+            write(joinpath(prefix, "lib", "libfake.a"), "not an archive\n")
+            @test_throws ErrorException scan_files(prefix, target_platform, [StaticLibraryProduct("libfake"; varname = :libfake)])
+            rm(joinpath(prefix, "lib", "libfake.a"))
         end
     end
 end
