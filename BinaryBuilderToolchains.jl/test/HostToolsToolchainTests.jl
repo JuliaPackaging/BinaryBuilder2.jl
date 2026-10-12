@@ -27,6 +27,7 @@ const verbose = false
             "m4",
             "patchelf",
             "perl",
+            "python3",
             "patch",
 
             # Networking tools
