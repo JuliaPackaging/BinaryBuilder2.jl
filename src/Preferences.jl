@@ -97,3 +97,29 @@ can be useful to have around for local testing, but are ultimately ephemeral.  T
 can be set through the `universes_dir` preference.
 """
 @define_storage_location universes_dir
+
+"""
+    access_tokens
+
+Tokens used to authenticate the `git` and `gh` operations we run, (e.g. pushing JLLs and
+registry updates, or cloning private repositories for `GitSource`s) set through the
+`access_tokens` preference.  This is a tree of nested
+tables keyed by host, organization and repository.  A token given in place of a table
+applies to everything beneath that point, and more specific entries win, e.g.:
+
+    [access_tokens."github.com"]
+    JuliaBinaryWrappers = "<token for all of JuliaBinaryWrappers>"
+
+    [access_tokens."github.com".JuliaRegistries]
+    General = "<token for JuliaRegistries/General>"
+
+Anything without a configured token uses the default credentials, (e.g. `gh`'s login).
+This can also be set as a preference of `BinaryBuilderGitUtils`; if both are set, ours
+replaces it entirely.
+"""
+function init_access_tokens()
+    if @has_preference("access_tokens")
+        set_access_tokens!(@load_preference("access_tokens"))
+    end
+end
+push!(init_hooks, init_access_tokens)

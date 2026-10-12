@@ -1,4 +1,4 @@
-using SHA, Downloads, TreeArchival
+using SHA, Downloads, TreeArchival, BinaryBuilderGitUtils
 using MultiHashParsing
 using MultiHashParsing: hash_like
 
@@ -118,18 +118,19 @@ end
 """
     download_headers(url)
 
-A GitHub release asset given by its API URL (`https://api.github.com/repos/<owner>/<repo>/
-releases/assets/<id>`) is the way to download one from a private repository: it needs
-`Accept: application/octet-stream`, and a token from `GITHUB_TOKEN` or `GH_TOKEN`.
+Any URL into a repository we have a token for in `BinaryBuilderGitUtils.access_tokens`
+is sent it, as `git` is.  A GitHub release asset given by its API URL
+(`https://api.github.com/repos/<owner>/<repo>/releases/assets/<id>`) is the way to
+download one from a private repository: it also needs `Accept: application/octet-stream`.
 """
 function download_headers(url::AbstractString)
     headers = Pair{String,String}[]
     if occursin(r"^https://api\.github\.com/repos/[^/]+/[^/]+/releases/assets/\d+$", url)
         push!(headers, "Accept" => "application/octet-stream")
-        token = get(ENV, "GITHUB_TOKEN", get(ENV, "GH_TOKEN", ""))
-        if !isempty(token)
-            push!(headers, "Authorization" => "Bearer $(token)")
-        end
+    end
+    token = url_access_token(url)
+    if token !== nothing
+        push!(headers, "Authorization" => "Bearer $(token)")
     end
     return headers
 end

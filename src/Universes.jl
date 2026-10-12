@@ -157,10 +157,21 @@ struct Universe
             # Authenticate to GitHub, then ensure that we are either deploying to our
             # user, or an organization we are a part of
             if allow_github_authentication[]
-                ensure_gh_authenticated()
-                if deploy_org != gh_user() && deploy_org ∉ gh_orgs()
-                    @debug("Github Auth Failure", deploy_org, gh_user(), gh_orgs())
+                with_gh_token(ensure_gh_authenticated, deploy_org)
+                if !gh_can_deploy_to(deploy_org)
+                    @debug("Github Auth Failure", deploy_org, gh_user())
                     throw(ArgumentError("deploy target '$(deploy_org)' not a user/organization we have access to!"))
+                end
+
+                # The registry may be pushed directly to `registry_url` rather than to a fork
+                # in `deploy_org`, possibly with its own token from the `access_tokens` preference.
+                if registry_url !== nothing
+                    reg_repo = gh_repo_name(registry_url)
+                    with_gh_token(ensure_gh_authenticated, reg_repo)
+                    if !gh_push_access(reg_repo)
+                        @debug("Github Auth Failure", reg_repo, gh_user())
+                        throw(ArgumentError("registry '$(reg_repo)' not a repository we can push to!"))
+                    end
                 end
             end
         end
@@ -174,7 +185,7 @@ struct Universe
             registry_instances,
             persistent,
             deploy_org,
-            string(registry_url),
+            registry_url === nothing ? nothing : string(registry_url),
         )
         prune!(uni)
         try
@@ -614,10 +625,12 @@ function deploy_jll(jll_path::String,
             url="https://github.com/$(deploy_org)/$(jll_name)_jll.jl/releases/$(tag_name)",
         )
     end
-    create_cmd = `$(gh()) release create --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name) --title $(tag_name) --notes "" --verify-tag $(readdir(binaries_dir; join=true))`
-    if !success(create_cmd)
-        run(`$(gh()) release delete --yes --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name)`)
-        run(create_cmd)
+    with_gh_token(deploy_org, "$(jll_name)_jll.jl") do
+        create_cmd = `$(gh()) release create --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name) --title $(tag_name) --notes "" --verify-tag $(readdir(binaries_dir; join=true))`
+        if !success(create_cmd)
+            run(`$(gh()) release delete --yes --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name)`)
+            run(create_cmd)
+        end
     end
 end
 
@@ -822,11 +835,18 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             )
         end
 
-        reg_org_repo = "$(u.deploy_org)/$(target_reg.name)"
-        if !gh_repo_exists(reg_org_repo)
-            gh_fork(reg.url, u.deploy_org)
+        if u.registry_url !== nothing
+            # Push directly to the given registry (e.g. `JuliaRegistries/General`)
+            reg_remote_url = u.registry_url
+        else
+            # Push to our fork of the registry within `deploy_org`
+            reg_org_repo = "$(u.deploy_org)/$(target_reg.name)"
+            if !gh_repo_exists(reg_org_repo)
+                gh_fork(target_reg.url, u.deploy_org)
+            end
+            reg_remote_url = "https://github.com/$(reg_org_repo)"
         end
-        remote_url!(target_reg_path, u.deploy_org, "https://github.com/$(reg_org_repo)")
+        remote_url!(target_reg_path, u.deploy_org, reg_remote_url)
         push!(target_reg_path, u.deploy_org; force=true)
     end
 end
