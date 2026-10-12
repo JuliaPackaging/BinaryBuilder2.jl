@@ -191,6 +191,11 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
             for jll in sanitized.deps
                 @test jll.exempt_from_strict_tags == (jll.package.name == "LinuxKernelHeaders_jll")
             end
+            if !isdefined(Base.BinaryPlatforms, :strict_presence_tags)
+                # This Julia's platform matching would pick uninstrumented artifacts
+                @test_throws r"needs a Julia whose platform matching implements strict tags" prepare(sanitized.deps)
+                continue
+            end
             # No sanitized runtimes have been built, so the toolchain cannot be set up...
             @test_throws r"_jll has no artifact for .*sanitize\+memory" prepare(sanitized.deps)
             # ... but the headers resolve as for the untagged target
