@@ -59,29 +59,43 @@ function retarget(jll::JLLSource, new_target::String)
 end
 
 """
-    strict_tags
+    strict_tags()
 
 Platform tags that change how a build's code is generated (e.g. `sanitize`), so that an
 artifact may only stand in for a platform that has the same value for each of them,
 including the tag being absent on both sides, rather than a tag present on only one side
-being ignored as usual.  This is `Base.BinaryPlatforms.strict_presence_tags` on Julia
-versions whose platform matching implements it (JuliaLang/julia#63647); on older versions
-`prepare()` applies the same rule to the artifacts that matching selected.
+being ignored as usual.  This is `Base.BinaryPlatforms.strict_presence_tags`
+(JuliaLang/julia#63647), read on every use.  Julia versions without it can't build for
+platforms with such tags (see `check_strict_tags_supported`).
 """
-const strict_tags = isdefined(Base.BinaryPlatforms, :strict_presence_tags) ?
-    Tuple(Base.BinaryPlatforms.strict_presence_tags) : ("sanitize",)
+strict_tags() = isdefined(Base.BinaryPlatforms, :strict_presence_tags) ?
+    Base.BinaryPlatforms.strict_presence_tags : ()
+
+"""
+    check_strict_tags_supported(platform::AbstractPlatform)
+
+Error if `platform` has a `sanitize` tag but this Julia's platform matching does not
+implement strict tags: it would select uninstrumented artifacts for it.
+"""
+function check_strict_tags_supported(platform::AbstractPlatform)
+    if !isdefined(Base.BinaryPlatforms, :strict_presence_tags) && haskey(tags(platform), "sanitize")
+        error("Resolving JLLs for $(triplet(platform)) needs a Julia whose platform matching ",
+              "implements strict tags (`Base.BinaryPlatforms.strict_presence_tags`, ",
+              "JuliaLang/julia#63647); Julia $(VERSION) does not.")
+    end
+end
 
 """
     drop_strict_tags(platform::AbstractPlatform)
 
-Return a copy of `platform` without any of the `strict_tags`.
+Return a copy of `platform` without any of the `strict_tags()`.
 """
 function drop_strict_tags(platform::AbstractPlatform)
-    if !any(haskey(tags(platform), tag) for tag in strict_tags)
+    if !any(haskey(tags(platform), tag) for tag in strict_tags())
         return platform
     end
     platform = deepcopy(platform)
-    for tag in strict_tags
+    for tag in strict_tags()
         delete!(tags(platform), tag)
     end
     return platform
@@ -91,7 +105,7 @@ end
     resolution_platform(jll::JLLSource)
 
 The platform that `jll`'s artifacts are selected for: its own platform, without the
-`strict_tags` if `jll.exempt_from_strict_tags` is set.
+`strict_tags()` if `jll.exempt_from_strict_tags` is set.
 """
 resolution_platform(jll::JLLSource) = jll.exempt_from_strict_tags ? drop_strict_tags(jll.platform) : jll.platform
 
@@ -192,6 +206,9 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         something(pkg.repo.source, ""),
         something(pkg.repo.rev, ""),
         triplet(resolution_platform(jll)),
+        # Which tags are strict decides which artifacts may be selected, and the list
+        # can change at runtime (see `strict_tags()`).
+        join(strict_tags(), ","),
         jll.target,
         # And then we add in registry information to be sensitive to that as well.  We
         # only mix in the slice of the registries that this JLL can actually resolve
@@ -277,6 +294,7 @@ function prepare(jlls::Vector{JLLSource};
     # We can't do it all together because it's totally valid for us to try and download
     # two different versions of the same JLL to different prefixes.
     for (platform, platform_jlls_by_prefix) in jlls_by_platform_by_prefix
+        check_strict_tags_supported(platform)
         for (prefix, jlls_slice) in platform_jlls_by_prefix
             # Check to see if this slice of JLLs has been resolved before:
             cache_path = jll_cache_path(jlls_slice)
@@ -359,7 +377,7 @@ function prepare(jlls::Vector{JLLSource};
                 @timeit to "collect_artifact_metas" begin
                     slice_deps = [jll.package for jll in jlls_slice]
                     artifact_metas = collect_artifact_metas(slice_deps; platform, project_dir, pkg_depot=depot, verbose)
-                    check_strict_tags!(artifact_metas, platform; depot)
+                    check_missing_strict_artifacts(artifact_metas, platform; depot)
                     art_paths = collect_artifact_paths(artifact_metas, slice_deps)
                 end
                 for jll in jlls_slice
@@ -416,33 +434,19 @@ function prepare(jlls::Vector{JLLSource};
 end
 
 """
-    check_strict_tags!(artifact_metas::Dict, platform::AbstractPlatform; depot)
+    check_missing_strict_artifacts(artifact_metas::Dict, platform::AbstractPlatform; depot)
 
-Enforce the `strict_tags` on the artifacts selected in `artifact_metas` (as returned by
-`collect_artifact_metas()` for `platform`, including transitive dependencies):
-
-- On Julia versions whose platform matching does not know about strict tags, an artifact
-  that disagrees with `platform` on one of them is dropped, just as newer versions of
-  Julia would not have selected it.
-- A JLL left without an artifact for `platform` although it has one for `platform` without
-  its strict tags (e.g. an uninstrumented build for a `sanitize+memory` platform) is an
-  error rather than a silently empty dependency.  `JLLSource`s that legitimately need the
-  latter set `exempt_from_strict_tags`.
+Platform matching leaves a JLL without an artifact for `platform` if it only has one for
+`platform` without its `strict_tags()` (e.g. an uninstrumented build for a
+`sanitize+memory` platform).  That is an error rather than a silently empty dependency;
+`JLLSource`s that legitimately need the latter set `exempt_from_strict_tags`.
 """
-function check_strict_tags!(artifact_metas::Dict, platform::AbstractPlatform; depot::String)
-    platform_tags = tags(platform)
-    for (pkg, meta) in artifact_metas
-        # Platform-independent artifacts (no `arch`) hold no compiled code.
-        if haskey(meta, "git-tree-sha1") && haskey(meta, "arch") &&
-           any(get(platform_tags, tag, nothing) != get(meta, tag, nothing) for tag in strict_tags)
-            artifact_metas[pkg] = Dict{String,Any}("paths" => String[], "dep_uuids" => meta["dep_uuids"])
-        end
-    end
-
+function check_missing_strict_artifacts(artifact_metas::Dict, platform::AbstractPlatform; depot::String)
     unstrict_platform = drop_strict_tags(platform)
     if unstrict_platform === platform
         return artifact_metas
     end
+    platform_tags = tags(platform)
     for (pkg, meta) in artifact_metas
         if !isempty(meta["paths"])
             continue
@@ -453,7 +457,7 @@ function check_strict_tags!(artifact_metas::Dict, platform::AbstractPlatform; de
         end
         unstrict_meta = Pkg.Artifacts.artifact_meta(pkg.name[1:end-4], artifacts_toml; platform=unstrict_platform)
         if unstrict_meta !== nothing
-            present = join(("`$(tag)=$(platform_tags[tag])`" for tag in strict_tags if haskey(platform_tags, tag)), ", ")
+            present = join(("`$(tag)=$(platform_tags[tag])`" for tag in strict_tags() if haskey(platform_tags, tag)), ", ")
             error("$(pkg.name) has no artifact for $(triplet(platform)), only for $(triplet(unstrict_platform)); ",
                   "$(present) must match exactly (see `BinaryBuilderSources.strict_tags`, ",
                   "and `exempt_from_strict_tags` for JLLs that are not built per value of these tags)")
