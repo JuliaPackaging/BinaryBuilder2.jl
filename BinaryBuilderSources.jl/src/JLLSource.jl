@@ -23,9 +23,16 @@ struct JLLSource <: AbstractSource
     # you know will clobber eachother, such as the bootstrap variants
     # of JLLs, which we don't control the contents of that closely.
     warn_on_overwrite::Bool
+
+    # Defaults to `false`.  Turn this on for JLLs that are requested for a platform
+    # carrying a strict tag (see `strict_tags`) but are by design not built once per
+    # value of that tag, such as the target runtime libraries and sysroots that a
+    # toolchain installs.  These get resolved as if the platform lacked the strict tags.
+    exempt_from_strict_tags::Bool
 end
 
-function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "", warn_on_overwrite::Bool = true)
+function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "",
+                   warn_on_overwrite::Bool = true, exempt_from_strict_tags::Bool = false)
     noabspath!(target)
     return JLLSource(
         package,
@@ -35,18 +42,58 @@ function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "", wa
         string(target),
         String[],
         warn_on_overwrite,
+        exempt_from_strict_tags,
     )
 end
 
-function JLLSource(name::String, platform; target = "", warn_on_overwrite = true, kwargs...)
+function JLLSource(name::String, platform; target = "", warn_on_overwrite = true,
+                   exempt_from_strict_tags = false, kwargs...)
     noabspath!(target)
-    return JLLSource(PkgSpec(;name, kwargs...), platform; target, warn_on_overwrite)
+    return JLLSource(PkgSpec(;name, kwargs...), platform; target, warn_on_overwrite, exempt_from_strict_tags)
 end
 
 function retarget(jll::JLLSource, new_target::String)
     noabspath!(new_target)
-    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths, jll.warn_on_overwrite)
+    return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths,
+                     jll.warn_on_overwrite, jll.exempt_from_strict_tags)
 end
+
+"""
+    strict_tags
+
+Platform tags that change how a build's code is generated (e.g. `sanitize`), so that an
+artifact may only stand in for a platform that has the same value for each of them,
+including the tag being absent on both sides, rather than a tag present on only one side
+being ignored as usual.  This is `Base.BinaryPlatforms.strict_presence_tags` on Julia
+versions whose platform matching implements it (JuliaLang/julia#63647); on older versions
+`prepare()` applies the same rule to the artifacts that matching selected.
+"""
+const strict_tags = isdefined(Base.BinaryPlatforms, :strict_presence_tags) ?
+    Tuple(Base.BinaryPlatforms.strict_presence_tags) : ("sanitize",)
+
+"""
+    drop_strict_tags(platform::AbstractPlatform)
+
+Return a copy of `platform` without any of the `strict_tags`.
+"""
+function drop_strict_tags(platform::AbstractPlatform)
+    if !any(haskey(tags(platform), tag) for tag in strict_tags)
+        return platform
+    end
+    platform = deepcopy(platform)
+    for tag in strict_tags
+        delete!(tags(platform), tag)
+    end
+    return platform
+end
+
+"""
+    resolution_platform(jll::JLLSource)
+
+The platform that `jll`'s artifacts are selected for: its own platform, without the
+`strict_tags` if `jll.exempt_from_strict_tags` is set.
+"""
+resolution_platform(jll::JLLSource) = jll.exempt_from_strict_tags ? drop_strict_tags(jll.platform) : jll.platform
 
 """
     deduplicate_jlls(jlls::Vector{JLLSource})
@@ -83,7 +130,7 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
     # to be stably-sorted.
     seen_jlls = Tuple{Tuple{String,String,AbstractPlatform},JLLSource}[]
     for jll in jlls
-        key = (jll.package.name, jll.target, jll.platform)
+        key = (jll.package.name, jll.target, resolution_platform(jll))
         k_idx = findfirst(((k,j),) -> k == key, seen_jlls)
         if k_idx !== nothing
             seen_jll = seen_jlls[k_idx][2]
@@ -144,7 +191,7 @@ function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInsta
         something(pkg.tree_hash, ""),
         something(pkg.repo.source, ""),
         something(pkg.repo.rev, ""),
-        triplet(jll.platform),
+        triplet(resolution_platform(jll)),
         jll.target,
         # And then we add in registry information to be sensitive to that as well.  We
         # only mix in the slice of the registries that this JLL can actually resolve
@@ -205,10 +252,11 @@ function prepare(jlls::Vector{JLLSource};
         end
 
         # Sort JLLs by platform, then by prefix.  JLLs in the same bucket will be resolved together.
-        if jll.platform ∉ keys(jlls_by_platform_by_prefix)
-            jlls_by_platform_by_prefix[jll.platform] = Dict{String,Vector{JLLSource}}()
+        platform = resolution_platform(jll)
+        if platform ∉ keys(jlls_by_platform_by_prefix)
+            jlls_by_platform_by_prefix[platform] = Dict{String,Vector{JLLSource}}()
         end
-        jlls_by_prefix = jlls_by_platform_by_prefix[jll.platform]
+        jlls_by_prefix = jlls_by_platform_by_prefix[platform]
         if jll.target ∉ keys(jlls_by_prefix)
             jlls_by_prefix[jll.target] = JLLSource[]
         end
@@ -311,10 +359,8 @@ function prepare(jlls::Vector{JLLSource};
                 @timeit to "collect_artifact_metas" begin
                     slice_deps = [jll.package for jll in jlls_slice]
                     artifact_metas = collect_artifact_metas(slice_deps; platform, project_dir, pkg_depot=depot, verbose)
+                    check_strict_tags!(artifact_metas, platform; depot)
                     art_paths = collect_artifact_paths(artifact_metas, slice_deps)
-                end
-                if !all(exempt_from_strict_tags, jlls_slice)
-                    check_strict_tags(artifact_metas, platform)
                 end
                 for jll in jlls_slice
                     pkg = only([pkg for (pkg, _) in art_paths if pkg.uuid == jll.package.uuid])
@@ -370,58 +416,68 @@ function prepare(jlls::Vector{JLLSource};
 end
 
 """
-    strict_tags
+    check_strict_tags!(artifact_metas::Dict, platform::AbstractPlatform; depot)
 
-Platform tags that change how a build's code is generated, so that an artifact may only
-stand in for a platform that has the same value for each of them, including the tag being
-absent on both sides.  Platform matching ignores tags that only one side has, so without
-this a dependency for an `x86_64-linux-gnu-sanitize+memory` build would happily resolve to
-the uninstrumented `x86_64-linux-gnu` artifact when the JLL has no instrumented build, and
-a build for a platform without the tag could end up with an instrumented artifact.
+Enforce the `strict_tags` on the artifacts selected in `artifact_metas` (as returned by
+`collect_artifact_metas()` for `platform`, including transitive dependencies):
 
-`prepare()` checks every artifact it selects for a `JLLSource` (including transitive
-dependencies) against this list and throws an error on mismatch.  Packages that define
-their own build-affecting tags can extend it with `push!(strict_tags, "mytag")`.
+- On Julia versions whose platform matching does not know about strict tags, an artifact
+  that disagrees with `platform` on one of them is dropped, just as newer versions of
+  Julia would not have selected it.
+- A JLL left without an artifact for `platform` although it has one for `platform` without
+  its strict tags (e.g. an uninstrumented build for a `sanitize+memory` platform) is an
+  error rather than a silently empty dependency.  `JLLSource`s that legitimately need the
+  latter set `exempt_from_strict_tags`.
 """
-const strict_tags = Set{String}(["sanitize"])
-
-"""
-    exempt_from_strict_tags(jll::JLLSource)
-
-JLLs that a toolchain pins to a specific repository and installs into a subdirectory of
-the prefix (e.g. a sysroot's libc, or a compiler's support libraries) are part of that
-toolchain: they are requested for the target platform, but by design they are not built
-once per value of a `strict_tags` tag, so they are not checked.
-"""
-exempt_from_strict_tags(jll::JLLSource) = jll.package.repo.source !== nothing && !isempty(jll.target)
-
-"""
-    check_strict_tags(artifact_metas::Dict, platform::AbstractPlatform)
-
-Throw an error if any of the artifacts selected in `artifact_metas` (as returned by
-`collect_artifact_metas()` for `platform`) disagrees with `platform` on a tag in
-`strict_tags`.
-"""
-function check_strict_tags(artifact_metas::Dict, platform::AbstractPlatform)
+function check_strict_tags!(artifact_metas::Dict, platform::AbstractPlatform; depot::String)
     platform_tags = tags(platform)
     for (pkg, meta) in artifact_metas
-        # JLLs without an artifact for this platform, and platform-independent
-        # artifacts (they hold no compiled code), have nothing to check.
-        if !haskey(meta, "git-tree-sha1") || !haskey(meta, "arch")
-            continue
-        end
-        for tag in strict_tags
-            wanted = get(platform_tags, tag, nothing)
-            selected = get(meta, tag, nothing)
-            if wanted != selected
-                describe(v) = v === nothing ? "no `$(tag)` tag" : "`$(tag)=$(v)`"
-                error("$(pkg.name) has no artifact for $(triplet(platform)): ",
-                      "the platform has $(describe(wanted)), but the best match ",
-                      "($(meta["git-tree-sha1"])) has $(describe(selected)), ",
-                      "and `$(tag)` must match exactly (see `BinaryBuilderSources.strict_tags`).")
-            end
+        # Platform-independent artifacts (no `arch`) hold no compiled code.
+        if haskey(meta, "git-tree-sha1") && haskey(meta, "arch") &&
+           any(get(platform_tags, tag, nothing) != get(meta, tag, nothing) for tag in strict_tags)
+            artifact_metas[pkg] = Dict{String,Any}("paths" => String[], "dep_uuids" => meta["dep_uuids"])
         end
     end
+
+    unstrict_platform = drop_strict_tags(platform)
+    if unstrict_platform === platform
+        return artifact_metas
+    end
+    for (pkg, meta) in artifact_metas
+        if !isempty(meta["paths"])
+            continue
+        end
+        artifacts_toml = find_artifacts_toml(pkg, depot)
+        if artifacts_toml === nothing
+            continue
+        end
+        unstrict_meta = Pkg.Artifacts.artifact_meta(pkg.name[1:end-4], artifacts_toml; platform=unstrict_platform)
+        if unstrict_meta !== nothing
+            present = join(("`$(tag)=$(platform_tags[tag])`" for tag in strict_tags if haskey(platform_tags, tag)), ", ")
+            error("$(pkg.name) has no artifact for $(triplet(platform)), only for $(triplet(unstrict_platform)); ",
+                  "$(present) must match exactly (see `BinaryBuilderSources.strict_tags`, ",
+                  "and `exempt_from_strict_tags` for JLLs that are not built per value of these tags)")
+        end
+    end
+    return artifact_metas
+end
+
+# Locate the (Stdlib)Artifacts.toml of a JLL installed by `collect_artifact_metas()`
+function find_artifacts_toml(pkg::PkgSpec, depot::String)
+    if pkg.path !== nothing
+        pkg_dirs = [pkg.path]
+    elseif pkg.tree_hash !== nothing && pkg.uuid !== nothing
+        slug = Base.version_slug(pkg.uuid, pkg.tree_hash)
+        pkg_dirs = [joinpath(d, "packages", pkg.name, slug) for d in unique([depot; Base.DEPOT_PATH])]
+    else
+        return nothing
+    end
+    for pkg_dir in pkg_dirs, name in ("Artifacts.toml", "StdlibArtifacts.toml")
+        if isfile(joinpath(pkg_dir, name))
+            return joinpath(pkg_dir, name)
+        end
+    end
+    return nothing
 end
 
 verify(jll::JLLSource) = !isempty(jll.artifact_paths)

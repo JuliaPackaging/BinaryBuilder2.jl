@@ -1,7 +1,7 @@
 using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash
-using BinaryBuilderSources: strict_tags, check_strict_tags, exempt_from_strict_tags
+using BinaryBuilderSources: strict_tags, check_strict_tags!, drop_strict_tags, resolution_platform
 using Pkg.Registry: RegistryInstance
 
 include("common.jl")
@@ -378,48 +378,63 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @testset "strict tags" begin
                 msan = Platform("x86_64", "linux"; sanitize="memory")
                 plain = Platform("x86_64", "linux")
-                meta(; kwargs...) = Dict{String,Any}("git-tree-sha1" => "0"^40, "arch" => "x86_64", "os" => "linux",
-                                                     (string(k) => v for (k, v) in kwargs)...)
-                metas(m) = Dict(PackageSpec(; name="Foo_jll") => m)
+                depot = BinaryBuilderSources.default_jll_source_depot()
 
                 @test "sanitize" in strict_tags
-                # Same value, or absent on both sides: fine
-                @test check_strict_tags(metas(meta(; sanitize="memory")), msan) === nothing
-                @test check_strict_tags(metas(meta()), plain) === nothing
-                # Any difference is an error, including a tag present on only one side
-                @test_throws r"Foo_jll.*`sanitize=memory`.*no `sanitize` tag" check_strict_tags(metas(meta()), msan)
-                @test_throws r"Foo_jll.*no `sanitize` tag.*`sanitize=memory`" check_strict_tags(metas(meta(; sanitize="memory")), plain)
-                @test_throws ErrorException check_strict_tags(metas(meta(; sanitize="address")), msan)
-                # Platform-independent artifacts, and JLLs without an artifact for this platform, are fine
-                @test check_strict_tags(metas(delete!(meta(), "arch")), msan) === nothing
-                @test check_strict_tags(metas(Dict{String,Any}("paths" => String[], "dep_uuids" => Base.UUID[])), msan) === nothing
-                # Other tags are matched as usual
-                @test check_strict_tags(metas(meta(; cxxstring_abi="cxx11")), plain) === nothing
-                # The list can be extended
-                push!(strict_tags, "mytag")
-                try
-                    @test_throws r"mytag" check_strict_tags(metas(meta(; mytag="1")), plain)
-                    @test check_strict_tags(metas(meta(; mytag="1")), Platform("x86_64", "linux"; mytag="1")) === nothing
-                finally
-                    delete!(strict_tags, "mytag")
+                if isdefined(Base.BinaryPlatforms, :strict_presence_tags)
+                    @test strict_tags == Tuple(Base.BinaryPlatforms.strict_presence_tags)
                 end
+                @test drop_strict_tags(msan) == plain
+                @test drop_strict_tags(plain) === plain
+                @test haskey(tags(msan), "sanitize")
 
-                # Toolchain-internal JLLs (pinned to a repository, installed into a subdirectory) are exempt
-                repo = Pkg.Types.GitRepo(; source="https://github.com/JuliaBinaryWrappers/Bzip2_jll.jl")
-                @test exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; repo, target="sysroot"))
-                @test !exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; repo))
-                @test !exempt_from_strict_tags(JLLSource("Bzip2_jll", msan; target="sysroot"))
+                # Selected artifacts that disagree on a strict tag are dropped, as newer
+                # versions of Julia's platform matching would not have selected them
+                meta(; kwargs...) = Dict{String,Any}("git-tree-sha1" => "0"^40, "arch" => "x86_64", "os" => "linux",
+                                                     "paths" => ["/foo"], "dep_uuids" => Base.UUID[],
+                                                     (string(k) => v for (k, v) in kwargs)...)
+                metas(m) = Dict(PackageSpec(; name="Foo_jll") => m)
+                selected(ms) = only(values(ms))["paths"]
+                @test selected(check_strict_tags!(metas(meta(; sanitize="memory")), msan; depot)) == ["/foo"]
+                @test selected(check_strict_tags!(metas(meta()), plain; depot)) == ["/foo"]
+                @test isempty(selected(check_strict_tags!(metas(meta(; sanitize="memory")), plain; depot)))
+                @test isempty(selected(check_strict_tags!(metas(meta(; sanitize="address")), msan; depot)))
+                # Other tags are matched as usual, platform-independent artifacts always match
+                @test selected(check_strict_tags!(metas(meta(; cxxstring_abi="cxx11")), plain; depot)) == ["/foo"]
+                @test selected(check_strict_tags!(metas(delete!(meta(), "arch")), msan; depot)) == ["/foo"]
 
-                # `prepare()` checks what it selects, including transitive dependencies
-                @test_throws r"Bzip2_jll.*sanitize" prepare([JLLSource("Bzip2_jll", msan)])
-                @test_throws r"Zstd_jll.*sanitize" prepare([JLLSource("LibCURL_jll", msan)])
+                # `prepare()` refuses a JLL (including transitive dependencies) that only
+                # has an artifact for the platform without its strict tags...
+                @test_throws r"Bzip2_jll has no artifact for x86_64-linux-gnu-sanitize\+memory" prepare([JLLSource("Bzip2_jll", msan)])
+                # (which of LibCURL's dependencies gets reported first varies)
+                @test_throws r"_jll has no artifact for x86_64-linux-gnu-sanitize\+memory" prepare([JLLSource("LibCURL_jll", msan)])
+                # ... but picks the matching artifact where there is one
                 zlib_msan = JLLSource("Zlib_jll", msan)
                 zlib_plain = JLLSource("Zlib_jll", plain)
                 prepare([zlib_msan])
                 prepare([zlib_plain])
                 @test !isempty(zlib_msan.artifact_paths)
                 @test !isempty(zlib_plain.artifact_paths)
-                @test zlib_msan.artifact_paths != zlib_plain.artifact_paths
+                @test basename.(zlib_msan.artifact_paths) != basename.(zlib_plain.artifact_paths)
+
+                # JLLs can opt out explicitly, they then resolve as if for the platform without strict tags
+                @test !JLLSource("Bzip2_jll", msan).exempt_from_strict_tags
+                bzip2_exempt = JLLSource("Bzip2_jll", msan; exempt_from_strict_tags=true, target="sysroot")
+                @test bzip2_exempt.exempt_from_strict_tags
+                @test retarget(bzip2_exempt, "other").exempt_from_strict_tags
+                @test resolution_platform(bzip2_exempt) == plain
+                @test resolution_platform(JLLSource("Bzip2_jll", msan)) == msan
+                bzip2_plain = JLLSource("Bzip2_jll", plain)
+                prepare([bzip2_exempt, bzip2_plain])
+                @test !isempty(bzip2_exempt.artifact_paths)
+                @test basename.(bzip2_exempt.artifact_paths) == basename.(bzip2_plain.artifact_paths)
+                # The exemption covers that JLL's own dependencies, but no other JLL
+                curl_exempt = JLLSource("LibCURL_jll", msan; exempt_from_strict_tags=true)
+                prepare([curl_exempt])
+                @test !isempty(curl_exempt.artifact_paths)
+                @test_throws r"Bzip2_jll.*sanitize=memory" prepare([JLLSource("Bzip2_jll", msan; target="other")])
+                # Exempt and non-exempt requests for the same JLL are kept apart
+                @test length(deduplicate_jlls([JLLSource("Zlib_jll", msan), JLLSource("Zlib_jll", msan; exempt_from_strict_tags=true)])) == 2
             end
 
             # retarget works
