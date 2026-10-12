@@ -622,21 +622,30 @@ end
 
 @testset "Download headers" begin
     using BinaryBuilderSources: download_headers
+    using BinaryBuilderGitUtils: access_tokens, set_access_tokens!
     asset_url = "https://api.github.com/repos/JuliaPackaging/Yggdrasil/releases/assets/12345"
-    withenv("GITHUB_TOKEN" => nothing, "GH_TOKEN" => nothing) do
+    old_tokens = access_tokens[]
+    try
+        set_access_tokens!(Dict{String,Any}())
         # Ordinary URLs get no special headers
         @test isempty(download_headers("https://github.com/JuliaPackaging/Yggdrasil/releases/download/v1/foo.tar.gz"))
         @test isempty(download_headers("https://api.github.com/repos/JuliaPackaging/Yggdrasil/releases/12345"))
         @test isempty(download_headers(asset_url * "/foo"))
         # A release asset by its API URL asks for the asset's content, even without a token
         @test download_headers(asset_url) == ["Accept" => "application/octet-stream"]
-    end
-    withenv("GITHUB_TOKEN" => nothing, "GH_TOKEN" => "gh_token") do
-        @test download_headers(asset_url) == ["Accept" => "application/octet-stream", "Authorization" => "Bearer gh_token"]
-    end
-    withenv("GITHUB_TOKEN" => "github_token", "GH_TOKEN" => "gh_token") do
-        @test download_headers(asset_url) == ["Accept" => "application/octet-stream", "Authorization" => "Bearer github_token"]
+        # Tokens from the environment are not used
+        withenv("GITHUB_TOKEN" => "github_token", "GH_TOKEN" => "gh_token") do
+            @test download_headers(asset_url) == ["Accept" => "application/octet-stream"]
+        end
+
+        set_access_tokens!(Dict("github.com" => Dict("JuliaPackaging" => Dict("Yggdrasil" => "ygg_token"))))
+        auth = "Authorization" => "Bearer ygg_token"
+        @test download_headers(asset_url) == ["Accept" => "application/octet-stream", auth]
+        @test download_headers("https://github.com/JuliaPackaging/Yggdrasil/releases/download/v1/foo.tar.gz") == [auth]
         # The token is never sent anywhere else
-        @test isempty(download_headers("https://example.com/repos/a/b/releases/assets/1"))
+        @test download_headers("https://api.github.com/repos/JuliaPackaging/BinaryBuilder.jl/releases/assets/1") == ["Accept" => "application/octet-stream"]
+        @test isempty(download_headers("https://example.com/repos/JuliaPackaging/Yggdrasil/releases/assets/1"))
+    finally
+        access_tokens[] = old_tokens
     end
 end
