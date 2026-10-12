@@ -177,29 +177,27 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
         end
     end
 
-    # A toolchain for a target with a strict tag (here `sanitize`) installs the same
-    # sysroot and runtime libraries as for the untagged target, by opting them out
+    # A toolchain for a target with a strict tag (here `sanitize`) needs that platform's
+    # own sysroot and runtime libraries; only the kernel headers are shared with the
+    # untagged target
     @testset "strict tags" begin
         sanitized_target = deepcopy(HostPlatform())
         sanitized_target["sanitize"] = "memory"
         sanitized_cp = CrossPlatform(BBHostPlatform() => sanitized_target)
         plain_cp = CrossPlatform(BBHostPlatform() => HostPlatform())
-        target_runtimes = Set([
-            "Glibc_jll", "Musl_jll", "LinuxKernelHeaders_jll",
-            "GCC_support_libraries_jll", "GCC_crt_objects_jll", "libstdcxx_jll",
-            "LLVMCompilerRT_jll", "LLVMLibcxx_jll", "LLVMLibunwind_jll",
-        ])
         for config in (Dict(:vendor => :gcc), Dict(:vendor => :clang, :compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx))
             sanitized = CToolchain(sanitized_cp; use_ccache=false, config...)
             plain = CToolchain(plain_cp; use_ccache=false, config...)
             for jll in sanitized.deps
-                @test jll.exempt_from_strict_tags == (jll.package.name ∈ target_runtimes)
+                @test jll.exempt_from_strict_tags == (jll.package.name == "LinuxKernelHeaders_jll")
             end
-            # Everything resolves, and the target runtimes to the same artifacts as without the tag
-            prepare(sanitized.deps)
+            # No sanitized runtimes have been built, so the toolchain cannot be set up...
+            @test_throws r"_jll has no artifact for .*sanitize\+memory" prepare(sanitized.deps)
+            # ... but the headers resolve as for the untagged target
+            headers = filter(jll -> jll.exempt_from_strict_tags, sanitized.deps)
+            prepare(headers)
             prepare(plain.deps)
-            @test all(!isempty(jll.artifact_paths) for jll in sanitized.deps)
-            for jll in filter(jll -> jll.exempt_from_strict_tags, sanitized.deps)
+            for jll in headers
                 plain_jll = only(filter(j -> j.package.name == jll.package.name, plain.deps))
                 @test basename.(jll.artifact_paths) == basename.(plain_jll.artifact_paths)
             end
