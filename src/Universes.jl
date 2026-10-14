@@ -473,12 +473,13 @@ In full generality, this will look something like the following:
 
     Readline-debug-build_log-v1.0.0-x86_64-linux-gnu.tar.gz
 """
-function exported_artifact_filename(build_name::String,
+function exported_artifact_filename(jll_name::String,
+                                    build_name::String,
                                     auxiliary_name::Union{Nothing,String},
                                     version::VersionNumber,
                                     platform::AbstractPlatform;
                                     compressor::String = "gzip")
-    ret = build_name
+    ret = string(jll_name, "-", build_name)
     if auxiliary_name !== nothing
         ret = string(ret, "-", auxiliary_name)
     end
@@ -520,6 +521,9 @@ out the directory and the `jll` object.
 """
 function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
                            output_dir::String; compressor::String="gzip")
+    # Artifacts sharing a key would also share a tarball, so refuse them before exporting
+    JLLGenerator.check_artifact_keys(jll)
+
     function update_binding!(binding, filepath)
         if u.deploy_org !== nothing
             tarball_hash = open(io -> SHA256Hash(sha256(io)), filepath)
@@ -542,6 +546,7 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
                             exported_artifact_filename(
                                 jll.name,
                                 build.name,
+                                nothing,
                                 jll.version,
                                 build.platform;
                                 compressor
@@ -559,6 +564,7 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
                             joinpath(output_dir,
                                 exported_artifact_filename(
                                     jll.name,
+                                    build.name,
                                     aux_name,
                                     jll.version,
                                     build.platform;
