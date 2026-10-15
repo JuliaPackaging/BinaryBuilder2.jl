@@ -128,6 +128,10 @@ case "${target}" in
         echo "CT_LIBC_MINGW_W64=y"
         echo "CT_THREADS_POSIX=y"
         echo "CT_MINGW_W64_V_V12_0=y"
+        # mingw-w64 v12 defaults to the ucrt, but our Windows targets use msvcrt
+        echo "CT_MINGW_DEFAULT_MSVCRT_MSVCRT=y"
+        # Match BB1's libstdc++ ABI, which does not use emutls
+        echo "# CT_CC_GCC_CONFIG_TLS is not set"
         ;;
     *)
         echo "ERROR: Unhandled libc '${target}'" >&2
