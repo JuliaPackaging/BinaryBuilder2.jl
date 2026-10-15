@@ -176,6 +176,12 @@ elif [[ "${target}" == *-mingw* ]]; then
     # On mingw, we need to explicitly enable openmp
     GCC_CONF_ARGS+=( --enable-libgomp )
 
+    # Target msvcrt, like our Mingw build
+    GCC_CONF_ARGS+=( --with-default-msvcrt=msvcrt )
+
+    # Match BB1's libstdc++ ABI, which does not use emutls (GCC <= 15 has no native TLS on Windows)
+    GCC_CONF_ARGS+=( --disable-tls )
+
     # Mingw just always looks in `mingw/` instead of `usr/`, so we symlink it:
     mkdir -p ${host_prefix}/${target}
     ln -s . ${target_prefix}/${target}/mingw
