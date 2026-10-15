@@ -20,6 +20,7 @@ build_tarballs(;
     ${WORKSPACE}/srcdir/mingw-*/mingw-w64-headers/configure \
         --prefix=${prefix}/usr \
         --enable-sdk=no \
+        --with-default-msvcrt=msvcrt \
         --build=${MACHTYPE} \
         --host=${target}
     make install
@@ -38,6 +39,7 @@ build_tarballs(;
 
     ${WORKSPACE}/srcdir/mingw-*/mingw-w64-crt/configure \
         --prefix=${prefix}/usr \
+        --with-default-msvcrt=msvcrt \
         --build=${MACHTYPE} \
         --host=${target} \
         "${MINGW_CONF_ARGS[@]}"
@@ -45,9 +47,11 @@ build_tarballs(;
     make install
 
 
-    # Build winpthreads
+    # Build winpthreads against the CRT we just built, not the compiler's own
     mkdir -p ${WORKSPACE}/srcdir/mingw_winpthreads_build
     cd ${WORKSPACE}/srcdir/mingw_winpthreads_build
+    CPPFLAGS="-isystem ${prefix}/usr/include" \
+    LDFLAGS="-B${prefix}/usr/lib -L${prefix}/usr/lib" \
     ${WORKSPACE}/srcdir/mingw-*/mingw-w64-libraries/winpthreads/configure \
         --prefix=${prefix}/usr \
         --build=${MACHTYPE} \
