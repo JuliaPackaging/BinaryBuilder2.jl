@@ -1,7 +1,7 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderGitUtils"
 uuid = "654d7472-7548-7361-4832-74694762694c"
-version = "0.2.0"
+version = "0.2.1"
 
 [compat]
 Git = "1.3.1"
