@@ -19,6 +19,11 @@
 # is bumped to that version; otherwise the version already recorded in
 # `Project.toml` is used (e.g. you bumped it by hand already).
 #
+# Every other `Project.toml` in the repository whose `[compat]` entry for this
+# package does not admit the new version gets that entry widened (e.g.
+# `"0.2"` -> `"0.2, 0.3"`), and the change is included in the release commit.
+# In `--dry-run` mode the projects that would need widening are only listed.
+#
 # Options:
 #     -n, --dry-run       Print the commit message, don't touch anything
 #     -s, --since <rev>   Collect notes since <rev> instead of the last tag
@@ -29,7 +34,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '3,27p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
+    sed -n '3,32p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
 }
 
 die() {
@@ -91,6 +96,62 @@ if git -C "${repo_root}" rev-parse -q --verify "refs/tags/${tag_name}" >/dev/nul
     die "tag '${tag_name}' already exists; bump the version (e.g. \`contrib/release.sh ${subproject} <new version>\`)"
 fi
 
+# Find every other project in the repo whose `[compat]` entry for this package
+# does not admit the new version, and (unless this is a dry run) widen it by
+# appending the minimal caret specifier that covers the new version.  Prints one
+# `<path>\t<old spec>\t<new spec>` line per project needing a change.
+compat_script='
+using Pkg, TOML
+name, version, fix = ARGS[1], VersionNumber(ARGS[2]), ARGS[3] == "true"
+entry = version.major > 0 ? "$(version.major)" :
+        version.minor > 0 ? "0.$(version.minor)" : "0.0.$(version.patch)"
+for path in ARGS[4:end]
+    compat = get(TOML.parsefile(path), "compat", Dict())
+    haskey(compat, name) || continue
+    old_spec = compat[name]
+    version in Pkg.Types.semver_spec(old_spec) && continue
+    new_spec = "$(old_spec), $(entry)"
+    if !(version in Pkg.Types.semver_spec(new_spec))
+        error("appending \"$(entry)\" to $(name) compat in $(path) still does not admit v$(version)")
+    end
+    println(path, "\t", old_spec, "\t", new_spec)
+    fix || continue
+    # Rewrite just the matching line within the `[compat]` section to preserve formatting
+    section, found = "", false
+    lines = map(readlines(path)) do line
+        m = match(r"^\s*\[(.*)\]\s*$", line)
+        if m !== nothing
+            section = strip(m[1])
+        elseif section == "compat" && occursin(Regex("^\\s*\"?\\Q$(name)\\E\"?\\s*="), line)
+            found = true
+            return "$(name) = \"$(new_spec)\""
+        end
+        return line
+    end
+    found || error("could not locate $(name) compat line in $(path)")
+    write(path, join(lines, "\n") * "\n")
+end
+'
+command -v julia >/dev/null || die "julia is required to check compat bounds of dependent projects"
+dependent_tomls=()
+while IFS= read -r toml; do
+    [[ "${toml}" == "${proj_dir}/Project.toml" ]] && continue
+    dependent_tomls+=("${repo_root}/${toml}")
+done < <(git -C "${repo_root}" ls-files -- 'Project.toml' '*/Project.toml')
+compat_changes="$(julia --startup-file=no --history-file=no -e "${compat_script}" \
+                  "${name}" "${version}" "$(! ${dry_run} && echo true || echo false)" \
+                  ${dependent_tomls+"${dependent_tomls[@]}"})" \
+    || die "failed to check compat bounds of dependent projects"
+compat_paths=()
+compat_notes=""
+while IFS=$'\t' read -r path old_spec new_spec; do
+    [[ -n "${path}" ]] || continue
+    path="${path#"${repo_root}/"}"
+    compat_paths+=("${path}")
+    compat_notes+=" - ${path}: ${name} = \"${old_spec}\" -> \"${new_spec}\""$'\n'
+done <<< "${compat_changes}"
+compat_notes="${compat_notes%$'\n'}"
+
 if [[ ${#positional[@]} -eq 2 ]] && ! ${dry_run}; then
     # Only rewrite the `version` key in the top-level (pre-`[section]`) block
     awk -v v="${version}" '
@@ -132,6 +193,10 @@ else
     echo "WARNING: no commits touching ${proj_dir} since ${since:-the start of history}" >&2
 fi
 
+if [[ -n "${compat_notes}" ]]; then
+    message="${message}"$'\n\n'"Compat bounds widened to admit v${version}:"$'\n'"${compat_notes}"
+fi
+
 if ${dry_run}; then
     echo "--- ${proj_dir} (${since:-start of history} -> HEAD) ---"
     echo "${message}"
@@ -139,6 +204,9 @@ if ${dry_run}; then
 fi
 
 git -C "${repo_root}" add -- "${proj_dir}/Project.toml"
+for path in ${compat_paths+"${compat_paths[@]}"}; do
+    git -C "${repo_root}" add -- "${path}"
+done
 for path in ${extra_paths+"${extra_paths[@]}"}; do
     git -C "${repo_root}" add -- "${path}"
 done
