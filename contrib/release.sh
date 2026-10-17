@@ -24,6 +24,10 @@
 # `"0.2"` -> `"0.2, 0.3"`), and the change is included in the release commit.
 # In `--dry-run` mode the projects that would need widening are only listed.
 #
+# The release commit is tagged `<name>-v<version>` with an annotated tag that
+# carries the commit message.  The tag is only created locally; push it with
+# `git push origin HEAD <tag>` once you are happy with it.
+#
 # Options:
 #     -n, --dry-run       Print the commit message, don't touch anything
 #     -s, --since <rev>   Collect notes since <rev> instead of the last tag
@@ -34,7 +38,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '3,32p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
+    sed -n '3,36p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
 }
 
 die() {
@@ -220,3 +224,7 @@ if ${edit}; then
     commit_args+=(--edit)
 fi
 git -C "${repo_root}" "${commit_args[@]}"
+
+# Tag the release commit, reusing its (possibly edited) message as the tag annotation
+git -C "${repo_root}" log -1 --format=%B HEAD | git -C "${repo_root}" tag -a "${tag_name}" -F - HEAD
+echo "Tagged ${tag_name}; push with: git push origin HEAD ${tag_name}"
