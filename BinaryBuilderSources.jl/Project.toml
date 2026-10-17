@@ -1,7 +1,7 @@
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 name = "BinaryBuilderSources"
 uuid = "316c416d-4527-6863-7465-466137743047"
-version = "0.2.2"
+version = "0.2.3"
 
 [compat]
 BinaryBuilderGitUtils = "0.2"
@@ -11,7 +11,7 @@ MultiHashParsing = "0.2"
 Random = "1.11.0"
 Scratch = "1"
 TOML = "1.0.3"
-TimerOutputs = "0.5.29"
+TimerOutputs = "0.5"
 TreeArchival = "0.2"
 julia = "1.8"
 
