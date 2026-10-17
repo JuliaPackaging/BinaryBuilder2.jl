@@ -15,16 +15,18 @@
 #     contrib/release.sh [options] <subproject> [version]
 #
 # `<subproject>` is the subproject directory (`JLLGenerator.jl`, or just
-# `JLLGenerator`).  If `[version]` is given, the subproject's `Project.toml`
-# is bumped to that version; otherwise the version already recorded in
-# `Project.toml` is used (e.g. you bumped it by hand already).
+# `JLLGenerator`), or `BinaryBuilder2` (or `.`) for the top-level package.
+# If `[version]` is given, the subproject's `Project.toml` is bumped to that
+# version; otherwise the version already recorded in `Project.toml` is used
+# (e.g. you bumped it by hand already).
 #
 # Every other `Project.toml` in the repository whose `[compat]` entry for this
 # package does not admit the new version gets that entry widened (e.g.
 # `"0.2"` -> `"0.2, 0.3"`), and the change is included in the release commit.
 # In `--dry-run` mode the projects that would need widening are only listed.
 #
-# The release commit is tagged `<name>-v<version>` with an annotated tag that
+# The release commit is tagged `<name>-v<version>` (or just `v<version>` for
+# the top-level BinaryBuilder2 package) with an annotated tag that
 # carries the commit message.  The tag is only created locally; push it with
 # `git push origin HEAD <tag>` once you are happy with it.
 #
@@ -38,7 +40,7 @@
 set -euo pipefail
 
 usage() {
-    sed -n '3,36p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
+    sed -n '3,38p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
 }
 
 die() {
@@ -71,19 +73,33 @@ if [[ ${#positional[@]} -lt 1 || ${#positional[@]} -gt 2 ]]; then
     exit 1
 fi
 
-# Normalize the subproject into a directory (`Foo.jl`) relative to the repo root
+# Normalize the subproject into a directory (`Foo.jl`) relative to the repo root;
+# the top-level package lives in the repo root itself (`.`).
+root_name="$(sed -n 's/^name *= *"\(.*\)"/\1/p' "${repo_root}/Project.toml" | head -1)"
 subproject="${positional[0]%/}"
 subproject="$(basename "${subproject}")"
-proj_dir="${subproject}"
-if [[ ! -f "${repo_root}/${proj_dir}/Project.toml" ]]; then
-    proj_dir="${subproject}.jl"
+if [[ "${subproject}" == "." || "${subproject%.jl}" == "${root_name}" ]]; then
+    proj_dir="."
+else
+    proj_dir="${subproject}"
+    if [[ ! -f "${repo_root}/${proj_dir}/Project.toml" ]]; then
+        proj_dir="${subproject}.jl"
+    fi
 fi
-project_toml="${repo_root}/${proj_dir}/Project.toml"
+project_rel="${proj_dir#.}"
+project_rel="${project_rel:+${project_rel}/}Project.toml"
+project_toml="${repo_root}/${project_rel}"
 [[ -f "${project_toml}" ]] || die "no such subproject '${subproject}' (looked for ${subproject}{,.jl}/Project.toml)"
 
-# Pull the package name out of `Project.toml`; tags are named `${name}-v${version}`
+# Pull the package name out of `Project.toml`; subproject tags are named
+# `${name}-v${version}`, while the top-level package uses bare `v${version}` tags.
 name="$(sed -n 's/^name *= *"\(.*\)"/\1/p' "${project_toml}" | head -1)"
 [[ -n "${name}" ]] || die "could not parse 'name' out of ${project_toml}"
+if [[ "${proj_dir}" == "." ]]; then
+    tag_prefix="v"
+else
+    tag_prefix="${name}-v"
+fi
 
 # Either bump the version to what the user asked for, or use what's already there
 if [[ ${#positional[@]} -eq 2 ]]; then
@@ -95,7 +111,7 @@ else
 fi
 
 # Refuse to cut a release whose tag already exists; the version must be bumped first
-tag_name="${name}-v${version}"
+tag_name="${tag_prefix}${version}"
 if git -C "${repo_root}" rev-parse -q --verify "refs/tags/${tag_name}" >/dev/null; then
     die "tag '${tag_name}' already exists; bump the version (e.g. \`contrib/release.sh ${subproject} <new version>\`)"
 fi
@@ -139,7 +155,7 @@ end
 command -v julia >/dev/null || die "julia is required to check compat bounds of dependent projects"
 dependent_tomls=()
 while IFS= read -r toml; do
-    [[ "${toml}" == "${proj_dir}/Project.toml" ]] && continue
+    [[ "${toml}" == "${project_rel}" ]] && continue
     dependent_tomls+=("${repo_root}/${toml}")
 done < <(git -C "${repo_root}" ls-files -- 'Project.toml' '*/Project.toml')
 compat_changes="$(julia --startup-file=no --history-file=no -e "${compat_script}" \
@@ -167,7 +183,7 @@ if [[ ${#positional[@]} -eq 2 ]] && ! ${dry_run}; then
 fi
 
 # Find the point in history to collect release notes from: an explicit `--since`,
-# otherwise the most recent `${name}-v*` tag that is actually an ancestor of HEAD.
+# otherwise the most recent `${tag_prefix}*` tag that is actually an ancestor of HEAD.
 if [[ -z "${since}" ]]; then
     while read -r tag; do
         [[ -n "${tag}" ]] || continue
@@ -175,19 +191,26 @@ if [[ -z "${since}" ]]; then
             since="${tag}"
             break
         fi
-    done < <(git -C "${repo_root}" tag --list "${name}-v*" --sort=-v:refname)
+    done < <(git -C "${repo_root}" tag --list "${tag_prefix}*" --sort=-v:refname)
 fi
 
 if [[ -n "${since}" ]]; then
     range="${since}..HEAD"
 else
-    echo "WARNING: no '${name}-v*' tag found, collecting notes from the start of history" >&2
+    echo "WARNING: no '${tag_prefix}*' tag found, collecting notes from the start of history" >&2
     range="HEAD"
 fi
 
 # Collect every commit touching the subproject since then, skipping merges and
 # skipping previous release commits for this same package.
-notes="$(git -C "${repo_root}" log --no-merges --format=' - [%h] %s' "${range}" -- "${proj_dir}" \
+# The top-level package lives in the repo root, so leave out the subproject directories.
+pathspecs=("${proj_dir}")
+if [[ "${proj_dir}" == "." ]]; then
+    while IFS= read -r toml; do
+        pathspecs+=(":(exclude)${toml%/Project.toml}")
+    done < <(git -C "${repo_root}" ls-files -- '*.jl/Project.toml')
+fi
+notes="$(git -C "${repo_root}" log --no-merges --format=' - [%h] %s' "${range}" -- "${pathspecs[@]}" \
          | grep -v -E "^ - \[[0-9a-f]+\] Release ${name}(\.jl)? v" || true)"
 
 message="Release ${name}.jl v${version}"
@@ -207,7 +230,7 @@ if ${dry_run}; then
     exit 0
 fi
 
-git -C "${repo_root}" add -- "${proj_dir}/Project.toml"
+git -C "${repo_root}" add -- "${project_rel}"
 for path in ${compat_paths+"${compat_paths[@]}"}; do
     git -C "${repo_root}" add -- "${path}"
 done
