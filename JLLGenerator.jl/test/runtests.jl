@@ -772,3 +772,27 @@ end
     @test JLLGenerator.lazy_jll_wrappers_compat(
         make_jll([JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])])) == "1.0.0"
 end
+
+@testset "Artifacts.toml keys" begin
+    license = JLLBuildLicense("LICENSE.md", "placeholder", nothing)
+    binding(hash) = JLLArtifactBinding(; treehash = hash)
+    build(name, platform; aux = Dict()) = JLLBuildInfo(; src_version = "1.0.0", platform, name,
+        artifact = binding(repeat("1", 40)), auxilliary_artifacts = aux, products = [], licenses = [license])
+    linux, macos = Platform("x86_64", "linux"), Platform("aarch64", "macos")
+    logged(platform) = build("Foo", platform; aux = Dict("build_log" => binding(repeat("2", 40))))
+
+    # A build named like another build's auxiliary artifact would silently replace it
+    jll = JLLInfo(; name = "Foo", version = v"1.0.0", builds = [logged(linux), build("Foo-build_log", linux)])
+    mktempdir() do dir
+        @test_throws ArgumentError generate_jll(dir, jll)
+        # ... and is refused before anything is written
+        @test isempty(readdir(dir))
+    end
+
+    # The same names on different platforms are distinct keys
+    jll = JLLInfo(; name = "Foo", version = v"1.0.0", builds = [logged(linux), build("Foo-build_log", macos)])
+    mktempdir() do dir
+        generate_jll(dir, jll)
+        @test length(TOML.parsefile(joinpath(dir, "Artifacts.toml"))["Foo-build_log"]) == 2
+    end
+end
