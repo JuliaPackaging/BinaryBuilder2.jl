@@ -80,18 +80,25 @@ name="$(sed -n 's/^name *= *"\(.*\)"/\1/p' "${project_toml}" | head -1)"
 if [[ ${#positional[@]} -eq 2 ]]; then
     version="${positional[1]#v}"
     [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+].*)?$ ]] || die "'${version}' is not a semver version"
-    if ! ${dry_run}; then
-        # Only rewrite the `version` key in the top-level (pre-`[section]`) block
-        awk -v v="${version}" '
-            /^\[/ { in_sections = 1 }
-            !in_sections && !done && /^version *=/ { print "version = \"" v "\""; done = 1; next }
-            { print }
-        ' "${project_toml}" > "${project_toml}.tmp"
-        mv "${project_toml}.tmp" "${project_toml}"
-    fi
 else
     version="$(sed -n 's/^version *= *"\(.*\)"/\1/p' "${project_toml}" | head -1)"
     [[ -n "${version}" ]] || die "could not parse 'version' out of ${project_toml}"
+fi
+
+# Refuse to cut a release whose tag already exists; the version must be bumped first
+tag_name="${name}-v${version}"
+if git -C "${repo_root}" rev-parse -q --verify "refs/tags/${tag_name}" >/dev/null; then
+    die "tag '${tag_name}' already exists; bump the version (e.g. \`contrib/release.sh ${subproject} <new version>\`)"
+fi
+
+if [[ ${#positional[@]} -eq 2 ]] && ! ${dry_run}; then
+    # Only rewrite the `version` key in the top-level (pre-`[section]`) block
+    awk -v v="${version}" '
+        /^\[/ { in_sections = 1 }
+        !in_sections && !done && /^version *=/ { print "version = \"" v "\""; done = 1; next }
+        { print }
+    ' "${project_toml}" > "${project_toml}.tmp"
+    mv "${project_toml}.tmp" "${project_toml}"
 fi
 
 # Find the point in history to collect release notes from: an explicit `--since`,
