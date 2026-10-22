@@ -212,12 +212,33 @@ end
         @test_throws ArgumentError set_access_tokens!(Dict("github.com" => 1))
         @test_throws ArgumentError set_access_tokens!(Dict("a" => Dict("b" => Dict("c" => Dict()))))
 
-        # Ask `git` what header it would send to a given URL
-        extra_header(url) = readchomp(ignorestatus(git_authed(url, ["config", "--get", "http.extraHeader"])))
-        basic(token) = "Authorization: Basic $(BinaryBuilderGitUtils.base64encode("x-access-token:$(token)"))"
-        @test extra_header("https://github.com/JuliaBinaryWrappers/Zlib_jll.jl.git") == basic("zlib_token")
-        @test extra_header("https://github.com/JuliaRegistries/General.git") == basic("registries_token")
-        @test extra_header("https://github.com/JuliaBinaryWrappers/Bzip2_jll.jl.git") == ""
+        # Ask `git` which password it would use for a given URL
+        all_tokens = ("zlib_token", "registries_token", "gitlab_token")
+        function credential(url)
+            git_authed(url, ["credential", "fill"]) do cmd
+                # The token must not be part of the `Cmd`, as that gets printed when it fails
+                @test !any(token -> occursin(token, repr(cmd)), all_tokens)
+                cmd = addenv(cmd, "GIT_TERMINAL_PROMPT" => "0")
+                out = read(pipeline(ignorestatus(cmd); stdin=IOBuffer("url=$(url)\n\n"), stderr=devnull), String)
+                m = match(r"^password=(.*)$"m, out)
+                return m === nothing ? nothing : m.captures[1]
+            end
+        end
+        @test credential("https://github.com/JuliaBinaryWrappers/Zlib_jll.jl.git") == "zlib_token"
+        @test credential("https://github.com/JuliaRegistries/General.git") == "registries_token"
+        @test credential("https://gitlab.example.com/foo/bar.git") == "gitlab_token"
+        @test credential("https://github.com/JuliaBinaryWrappers/Bzip2_jll.jl.git") ∉ all_tokens
+
+        # The credentials only exist on disk while the command runs
+        credentials_path = git_authed("https://github.com/JuliaRegistries/General.git", ["version"]) do cmd
+            helper = only(filter(arg -> startswith(arg, "credential.helper=store --file="), cmd.exec))
+            path = helper[length("credential.helper=store --file=")+1:end]
+            @test read(path, String) == "https://x-access-token:registries_token@github.com/JuliaRegistries/General.git\n"
+            @test filemode(path) & 0o077 == 0
+            return path
+        end
+        @test !ispath(credentials_path)
+        @test !ispath(dirname(credentials_path))
 
         # `fetch!()` must cope with a repository that has no `origin`
         mktempdir() do dir

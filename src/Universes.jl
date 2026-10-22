@@ -642,10 +642,12 @@ function deploy_jll(jll_path::String,
         )
     end
     with_gh_token(deploy_org, "$(jll_name)_jll.jl") do
-        create_cmd = `$(gh()) release create --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name) --title $(tag_name) --notes "" --verify-tag $(readdir(binaries_dir; join=true))`
-        if !success(create_cmd)
-            run(`$(gh()) release delete --yes --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name)`)
-            run(create_cmd)
+        with_gh() do gh
+            create_cmd = `$(gh) release create --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name) --title $(tag_name) --notes "" --verify-tag $(readdir(binaries_dir; join=true))`
+            if !success(create_cmd)
+                run(`$(gh) release delete --yes --repo $(deploy_org)/$(jll_name)_jll.jl $(tag_name)`)
+                run(create_cmd)
+            end
         end
     end
 end

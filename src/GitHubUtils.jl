@@ -1,11 +1,17 @@
 using gh_cli_jll, BinaryBuilderGitUtils
+using BinaryBuilderGitUtils: env_gh_token, scrub_token_env, with_token_dir
+using Base.ScopedValues
+
+# The token selected by `with_gh_token()`; this is scoped to the task (and the tasks
+# it spawns) rather than set in the global `ENV`, where every other `Cmd` would get it.
+const gh_token_override = ScopedValue{Union{Nothing,String}}(nothing)
+
+# The token `gh` gets run with; `nothing` means it uses its stored login.
+current_gh_token() = something(gh_token_override[], env_gh_token(), Some(nothing))
 
 # Results are cached per-token, since e.g. `gh_user()` depends on which token is active.
 const gh_cache::Dict{Tuple{UInt,String},Any} = Dict{Tuple{UInt,String},Any}()
-gh_cache_get!(f::Function, key::AbstractString) = get!(f, gh_cache, (hash(gh_env_token()), String(key)))
-
-# `gh` prefers `GH_TOKEN` over `GITHUB_TOKEN`; `nothing` means it uses its stored login.
-gh_env_token() = get(ENV, "GH_TOKEN", get(ENV, "GITHUB_TOKEN", nothing))
+gh_cache_get!(f::Function, key::AbstractString) = get!(f, gh_cache, (hash(current_gh_token()), String(key)))
 
 """
     with_gh_token(f::Function, owner, repo)
@@ -19,17 +25,52 @@ function with_gh_token(f::Function, owner::AbstractString, repo::Union{Nothing,A
     if token === nothing
         return f()
     end
-    return withenv(f, "GH_TOKEN" => token)
+    return with(f, gh_token_override => token)
 end
 function with_gh_token(f::Function, path::AbstractString)
     parts = split(path, "/"; limit=2)
     return with_gh_token(f, parts[1], get(parts, 2, nothing))
 end
 
+"""
+    with_gh(f::Function)
+
+Call `f(gh)` with a `gh` command authenticated with the current token (see
+`with_gh_token()`).  The token is written into a `gh` config directory that is
+created for this call and deleted as soon as `f` returns, so that it is never part of
+the `Cmd` itself (which gets printed when it fails), and so that it only sits on the
+filesystem while `gh` is running.  Thus, `f` should do nothing more than run `gh`.
+"""
+function with_gh(f::Function)
+    cmd = scrub_token_env(gh())
+    token = current_gh_token()
+    if token === nothing
+        return f(cmd)
+    end
+
+    # Writing out the multi-account format (and the config version) keeps `gh` from
+    # trying to migrate this config, which needs to query the API for the user name.
+    hosts = """
+    github.com:
+        oauth_token: $(token)
+        user: x-access-token
+        git_protocol: https
+        users:
+            x-access-token:
+                oauth_token: $(token)
+    """
+    with_token_dir("hosts.yml" => hosts, "config.yml" => "version: \"1\"\n") do dir
+        return f(addenv(cmd, "GH_CONFIG_DIR" => dir))
+    end
+end
+
 function ensure_gh_authenticated()
     stderr_io = IOBuffer()
     try
-        if success(pipeline(`$(gh()) auth token`; stdout=devnull, stderr=stderr_io))
+        authenticated = with_gh() do gh
+            success(pipeline(`$(gh) auth token`; stdout=devnull, stderr=stderr_io))
+        end
+        if authenticated
             BinaryBuilderGitUtils.use_gh_auth[] = true
             return
         end
@@ -39,32 +80,41 @@ function ensure_gh_authenticated()
         end
     end
 
-    # A token given through the environment can't be fixed by logging in interactively.
-    if gh_env_token() !== nothing
-        error("GitHub token provided through the environment is not valid!")
+    # A token given through the environment or `access_tokens` can't be fixed by
+    # logging in interactively.
+    if current_gh_token() !== nothing
+        error("GitHub token provided through the environment or `access_tokens` is not valid!")
     end
 
     # If we fall through here, we must authenticate
     @info("Must authenticate to github, please complete authentication flow")
-    run(`$(gh()) auth login`)
+    with_gh() do gh
+        run(`$(gh) auth login`)
+    end
     empty!(gh_cache)
     BinaryBuilderGitUtils.use_gh_auth[] = true
 end
 
 function gh_logout()
-    run(`$(gh()) auth logout`)
+    with_gh() do gh
+        run(`$(gh) auth logout`)
+    end
     empty!(gh_cache)
 end
 
 function gh_user()
     gh_cache_get!("user") do
-        return String(readchomp(`$(gh()) api /user --jq .login`))
+        with_gh() do gh
+            return String(readchomp(`$(gh) api /user --jq .login`))
+        end
     end
 end
 
 function gh_orgs()
     gh_cache_get!("orgs") do
-        return split(readchomp(`$(gh()) org list --limit 1000`), "\n")
+        with_gh() do gh
+            return split(readchomp(`$(gh) org list --limit 1000`), "\n")
+        end
     end
 end
 
@@ -99,7 +149,10 @@ end
 # Query `endpoint`, returning `jq` applied to the result, or `nothing` if the request fails.
 function gh_api_jq(endpoint::AbstractString, jq::AbstractString)
     out = IOBuffer()
-    if !success(pipeline(`$(gh()) api $(endpoint) --jq $(jq)`; stdout=out, stderr=devnull))
+    ok = with_gh() do gh
+        success(pipeline(`$(gh) api $(endpoint) --jq $(jq)`; stdout=out, stderr=devnull))
+    end
+    if !ok
         return nothing
     end
     return chomp(String(take!(out)))
@@ -108,7 +161,9 @@ end
 function gh_repo_exists(repo::AbstractString)
     with_gh_token(repo) do
         gh_cache_get!("repo_exists_$(repo)") do
-            return success(pipeline(`$(gh()) api /repos/$(repo)`; stdout=devnull, stderr=devnull))
+            return with_gh() do gh
+                success(pipeline(`$(gh) api /repos/$(repo)`; stdout=devnull, stderr=devnull))
+            end
         end
     end
 end
@@ -135,13 +190,17 @@ function gh_fork(source::String, target_org::String)
     fork_name = BinaryBuilderGitUtils.strip_dotgit(basename(rstrip(source, '/')))
     with_gh_token(target_org, fork_name) do
         org_args = target_org != gh_user() ? ["--org", target_org] : []
-        run(`$(gh()) repo fork $(source) $(org_args) --clone=false --remote=false`)
+        with_gh() do gh
+            run(`$(gh) repo fork $(source) $(org_args) --clone=false --remote=false`)
+        end
     end
 end
 
 function gh_create(target::String)
     with_gh_token(target) do
-        run(`$(gh()) repo create --public --disable-issues --disable-wiki --license MIT $(target)`)
+        with_gh() do gh
+            run(`$(gh) repo create --public --disable-issues --disable-wiki --license MIT $(target)`)
+        end
     end
 end
 
@@ -165,6 +224,8 @@ function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractS
         if base === nothing
             error("Unable to look up default branch of '$(repo)'")
         end
-        return String(readchomp(`$(gh()) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
+        return with_gh() do gh
+            String(readchomp(`$(gh) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
+        end
     end
 end
