@@ -121,9 +121,9 @@ function gh_push_access(repo::AbstractString)
     end
 end
 
-# Turns `https://github.com/Foo/Bar.git` into `Foo/Bar`
+# Turns `https://github.com/Foo/Bar.git` (or just `Foo/Bar`) into `Foo/Bar`
 function gh_repo_name(url::AbstractString)
-    m = match(r"^(?:https://github\.com/|git@github\.com:)([^/]+/[^/]+?)(?:\.git)?/?$", url)
+    m = match(r"^(?:https://github\.com/|git@github\.com:)?([A-Za-z0-9-]+/[A-Za-z0-9._-]+?)(?:\.git)?/?$", url)
     if m === nothing
         throw(ArgumentError("Not a GitHub repository URL: '$(url)'"))
     end
@@ -142,5 +142,29 @@ end
 function gh_create(target::String)
     with_gh_token(target) do
         run(`$(gh()) repo create --public --disable-issues --disable-wiki --license MIT $(target)`)
+    end
+end
+
+"""
+    gh_open_pr(repo, head, title, body)
+
+Open a pull request against `repo` from `head` (of the form `owner:branch`) and return
+its URL.  If a pull request from `head` is already open, it is reused (pushing to `head`
+already updated it) and its URL is returned instead.
+"""
+function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractString, body::AbstractString)
+    with_gh_token(repo) do
+        pr_url = gh_api_jq("/repos/$(repo)/pulls?state=open&head=$(head)", ".[0].html_url")
+        # `--jq` prints `null` as an empty string
+        if pr_url !== nothing && !isempty(pr_url)
+            return pr_url
+        end
+        # We use the REST API rather than `gh pr create`, as the latter also queries the
+        # parent of a forked `repo`, which may not be accessible with the current token.
+        base = gh_api_jq("/repos/$(repo)", ".default_branch")
+        if base === nothing
+            error("Unable to look up default branch of '$(repo)'")
+        end
+        return String(readchomp(`$(gh()) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
     end
 end

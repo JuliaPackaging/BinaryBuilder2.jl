@@ -11,6 +11,7 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test !parsed_kwargs[:verbose]
         @test parsed_kwargs[:universe_name] === nothing
         @test parsed_kwargs[:deploy_org] === nothing
+        @test parsed_kwargs[:register] === false
         @test !haskey(parsed_kwargs, :debug_modes)
         @test !haskey(parsed_kwargs, :register_depot)
         @test !haskey(parsed_kwargs, :target_list)
@@ -21,8 +22,10 @@ BinaryBuilder2.allow_github_authentication[] = false
             "--verbose",
             "--debug",
             "--deploy",
+            "--register",
         ])
         @test parsed_kwargs[:verbose]
+        @test parsed_kwargs[:register] === true
         @test parsed_kwargs[:debug_modes] == Set(["build-error","extract-error"])
         @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :target_list)
@@ -32,12 +35,14 @@ BinaryBuilder2.allow_github_authentication[] = false
             "--debug=build-start",
             "--deploy=JuliaBinaryWrappers",
             "--universe=the_verse",
+            "--register=JuliaRegistries/General",
             "--disable-caches=all",
             "x86_64-apple-darwin14,aarch64-linux-musl,i686-linux-gnu-libgfortran3-cxx11",
         ])
         @test parsed_kwargs[:debug_modes] == Set(["build-start"])
         @test parsed_kwargs[:deploy_org] == "JuliaBinaryWrappers"
         @test parsed_kwargs[:universe_name] == "the_verse"
+        @test parsed_kwargs[:register] == "JuliaRegistries/General"
         @test parsed_kwargs[:target_list] == [
             Platform("x86_64", "macos"; os_version=v"14"),
             Platform("aarch64", "linux"; libc="musl"),
@@ -89,6 +94,8 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.debug_modes == Set(["build-stop"])
         @test meta.dry_run == Set(["build", "extract", "package"])
         @test meta.register
+        @test meta.universe.register_url == "https://github.com/JuliaBinaryWrappers/General"
+        @test BinaryBuilder2.target_registry(meta.universe).name == "General"
         @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
 
@@ -98,13 +105,17 @@ BinaryBuilder2.allow_github_authentication[] = false
         # Next, test some errors
         @test_throws ArgumentError BuildMeta(;debug_modes=["foo"])
         @test_throws ArgumentError BuildMeta(;register=true)
+        @test_throws ArgumentError BuildMeta(;register="JuliaRegistries/General")
+        @test_throws ArgumentError BuildMeta(;deploy_org="JuliaBinaryWrappers", register="JuliaRegistries/NotARegistry")
+        @test_throws ArgumentError BuildMeta(;deploy_org="JuliaBinaryWrappers", register="https://github.com/JuliaRegistries/NotARegistry")
+        @test_throws ArgumentError BuildMeta(;deploy_org="JuliaBinaryWrappers", register="https://example.com/General")
 
         # Next, test end-to-end parsing of ARGS-style options
         meta = BuildMeta([
             "--verbose",
             "--debug=start",
             "--deploy=JuliaBinaryWrappers",
-            "--register",
+            "--register=https://github.com/JuliaRegistries/General.git/",
             "--archive-dir=$(joinpath(archive_dir_parent, "archive"))",
             "--universe=$(universe_name)",
             "--disable-caches=build,jll",
@@ -123,6 +134,8 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test meta.disabled_caches == Set(["build", "jll"])
         @test meta.build_hash_list == Set([MultiHash("sha1:"*"0"^40)])
         @test meta.register
+        @test meta.universe.register_url == "https://github.com/JuliaRegistries/General"
+        @test BinaryBuilder2.target_registry(meta.universe).name == "General"
         @test meta.universe.name == universe_name
         @test meta.universe.deploy_org == "JuliaBinaryWrappers"
 

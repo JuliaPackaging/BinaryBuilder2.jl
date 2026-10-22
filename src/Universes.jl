@@ -119,16 +119,31 @@ struct Universe
     # but `registry_url = "https://github.com/JuliaRegistries/General"`.
     registry_url::Union{Nothing,String}
 
+    # If this is specified, a pull request is opened against this registry (e.g.
+    # `https://github.com/JuliaRegistries/General`) after the registry changes are pushed.
+    # It must be the URL of one of `registries` (or of a fork of it, such as
+    # `https://github.com/$(deploy_org)/General`), which is then the one we register into.
+    register_url::Union{Nothing,String}
+
     function Universe(name::Union{Nothing,AbstractString} = nothing;
                       depot_path::Union{Nothing,AbstractString} = nothing,
                       deploy_org::Union{Nothing,AbstractString} = nothing,
                       registries::Vector{RegistrySpec} = copy(Pkg.Registry.DEFAULT_REGISTRIES),
                       registry_url::Union{Nothing,AbstractString} = nothing,
+                      register_url::Union{Nothing,AbstractString} = nothing,
                       persistent::Bool = false,
                       kwargs...)
         @ensure_all_kwargs_consumed_header()
         if isempty(registries)
             throw(ArgumentError("Must pass at least one registry to `Universe()`!"))
+        end
+        if register_url !== nothing
+            if deploy_org === nothing
+                throw(ArgumentError("Cannot register with a local deployment!"))
+            end
+            if find_registry(registries, register_url) === nothing
+                throw(ArgumentError("Cannot register into '$(register_url)', as it is not (a fork of) one of the universe's registries: $(join([reg.url for reg in registries], ", "))"))
+            end
         end
 
         # If `depot_path` is not given, default to the `universes_dir()`.
@@ -186,6 +201,7 @@ struct Universe
             persistent,
             deploy_org,
             registry_url === nothing ? nothing : string(registry_url),
+            register_url === nothing ? nothing : string(register_url),
         )
         prune!(uni)
         try
@@ -718,6 +734,48 @@ function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::Union
     return reg_checkout_path
 end
 
+# Find the registry within `registries` that lives at the GitHub repository `url`.
+# If there is none, `url` may be a fork (e.g. `deploy_org/General`), so we fall
+# back to finding the registry with the same name as the repository.
+function find_registry(registries::Vector{RegistrySpec}, url::AbstractString)
+    repo = lowercase(gh_repo_name(url))
+    for reg in registries
+        if reg.url === nothing
+            continue
+        end
+        reg_repo = try
+            gh_repo_name(reg.url)
+        catch
+            continue
+        end
+        if lowercase(reg_repo) == repo
+            return reg
+        end
+    end
+
+    repo_name = last(split(repo, "/"))
+    for reg in registries
+        if lowercase(reg.name) == repo_name
+            return reg
+        end
+    end
+    return nothing
+end
+
+"""
+    target_registry(u::Universe)
+
+Return the upstream registry that deployed JLLs get registered into; this is the
+registry at `u.register_url` if given, otherwise the first upstream registry.
+"""
+function target_registry(u::Universe)
+    upstream_registries = u.registries[2:end]
+    if u.register_url !== nothing
+        return find_registry(upstream_registries, u.register_url)
+    end
+    return first(upstream_registries)
+end
+
 function add_dot_git(url::String)
     if endswith(url, ".git")
         return url
@@ -820,8 +878,15 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     if u.deploy_org !== nothing
         # If we're deploying, we actually need to re-register into our target registry (usually `General`)
         # In order to do that, we also need to make a clone of General, so let's do that here:
-        target_reg = first(u.registries[2:end])
-        target_reg_path = get_registry_clone(u, target_reg, uni_branch_name)
+        target_reg = target_registry(u)
+
+        # A pull request needs a branch of its own, so if we have no universe name
+        # to name the branch after, we name it after the (unique) universe depot instead.
+        reg_branch_name = uni_branch_name
+        if reg_branch_name === nothing && u.register_url !== nothing
+            reg_branch_name = "bb2/$(basename(u.depot_path))"
+        end
+        target_reg_path = get_registry_clone(u, target_reg, reg_branch_name)
 
         with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
             LocalRegistry.register(
@@ -848,6 +913,30 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         end
         remote_url!(target_reg_path, u.deploy_org, reg_remote_url)
         push!(target_reg_path, u.deploy_org; force=true)
+
+        # Open a pull request from the branch we just pushed against the registry
+        if u.register_url !== nothing
+            reg_repo = gh_repo_name(u.register_url)
+            head_owner = first(split(gh_repo_name(reg_remote_url), "/"))
+            pr_head = "$(head_owner):$(head_branch(target_reg_path))"
+            is_new_package = isempty(get_package_versions(u, "$(jll.name)_jll"; registries=u.registry_instances[2:end]))
+            pr_url = gh_open_pr(
+                reg_repo,
+                pr_head,
+                "New $(is_new_package ? "package" : "version"): $(jll.name)_jll v$(jll.version)",
+                """
+                Autogenerated JLL package registration
+
+                * Registering JLL package $(jll.name)_jll.jl
+                * Repository: $(jll_repo_url)
+                * Version: v$(jll.version)
+                * Commit: $(bytes2hex(only(log(jll_path; limit=1))))
+                """,
+            )
+            if verbose
+                @info("Registry pull request", pr_url)
+            end
+        end
     end
 end
 
