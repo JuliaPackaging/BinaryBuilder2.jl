@@ -270,6 +270,15 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                               cxx_runtime)
     # Collect our JLLSource objects for all of our compiler pieces:
     deps = JLLSource[]
+
+    # The sysroots and runtime libraries below are installed for `platform.target`, and
+    # they ship code that ends up in what gets built (libc, crt objects, libgcc, libstdc++,
+    # compiler-rt, ...), so on a platform with a strict tag (see `BinaryBuilderSources.strict_tags`,
+    # e.g. `x86_64-linux-gnu-sanitize+memory`) they must be built for that platform too,
+    # like for any other new platform.  Only the kernel headers are just headers, so they
+    # opt out with `exempt_from_strict_tags`.  (The compilers themselves are installed for
+    # the `CrossPlatform`, where the target's tags are prefixed with `target_` and so
+    # aren't strict.)
     sysroot_path = joinpath(get_simple_vendor(vendor), triplet(gcc_platform(platform.target)))
 
     if libc(platform.target) == "glibc"
@@ -523,6 +532,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         push!(deps, JLLSource(
             "LinuxKernelHeaders_jll",
             platform.target;
+            exempt_from_strict_tags=true,
             repo=Pkg.Types.GitRepo(
                 rev="bb2/GCCBootstrap-x86_64-linux-gnu",
                 source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"

@@ -6,7 +6,7 @@ using Pkg.Types: VersionSpec
     HostToolsToolchain
 
 This toolchain contains a large number of useful host tools, such as
-`ninja`, `file`, `ccache`, `gawk`, `patch`, `vim`, `curl`, etc...
+`ninja`, `file`, `ccache`, `gawk`, `patch`, `python3`, `vim`, `curl`, etc...
 Basically anything that doesn't care about the target triplet gets
 put into here.
 
@@ -62,6 +62,8 @@ struct HostToolsToolchain <: AbstractToolchain
             # choose the correct version number here
             PackageSpec(;name="Patchelf_jll", version=v"0.17.2+0"),
             "Perl_jll",
+            # Many build systems (and configure scripts) run `python3`
+            "Python_jll",
             "patch_jll",
             "patchutils_jll",
 
