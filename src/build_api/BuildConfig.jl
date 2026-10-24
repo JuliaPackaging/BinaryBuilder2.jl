@@ -270,6 +270,8 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
             source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
             source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
             source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
+            source_str(as::ArchiveSource) = "ArchiveSource: $(as.url) $(as.target)"
+            source_str(fs::FileSource) = "FileSource: $(fs.url) $(fs.target)"
             for dep in deps
                 println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep; registries))")
             end
