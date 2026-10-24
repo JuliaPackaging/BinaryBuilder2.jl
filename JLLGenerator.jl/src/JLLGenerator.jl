@@ -783,7 +783,25 @@ function lazy_jll_wrappers_compat(info::JLLInfo)
     return "1.0.0"
 end
 
+# Binding two artifacts to the same key and platform would silently replace one of them
+function check_artifact_keys(info::JLLInfo)
+    seen = Dict{Tuple{String,String},String}()
+    function check_key(key::String, platform::AbstractPlatform, what::String)
+        if haskey(seen, (key, triplet(platform)))
+            throw(ArgumentError("Both $(seen[(key, triplet(platform))]) and $(what) are bound to '$(key)' for platform '$(triplet(platform))'!"))
+        end
+        seen[(key, triplet(platform))] = what
+    end
+    for build in info.builds
+        check_key(build.name, build.platform, "build '$(build.name)'")
+        for name in sort(collect(keys(build.auxilliary_artifacts)))
+            check_key(string(build.name, "-", name), build.platform, "auxiliary artifact '$(name)' of build '$(build.name)'")
+        end
+    end
+end
+
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
+    check_artifact_keys(info)
     if clear && isdir(out_dir)
         for child in readdir(out_dir)
             # Don't clear `.git` directories

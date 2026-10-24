@@ -1,6 +1,16 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
 using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
 using BinaryBuilder2: update_registries!, registries_to_download, registry_path
+using BinaryBuilder2: exported_artifact_filename
+
+@testset "Exported artifact filenames" begin
+    platform = Platform("x86_64", "linux")
+    # The main artifact is named for its JLL and build...
+    @test exported_artifact_filename("Foo", "Foo", nothing, v"1.0.0", platform) == "Foo-Foo-v1.0.0-x86_64-linux-gnu.tar.gz"
+    # ... and an auxiliary artifact for those and itself, so builds never share one
+    @test exported_artifact_filename("Foo", "Foo", "build_log", v"1.0.0", platform) == "Foo-Foo-build_log-v1.0.0-x86_64-linux-gnu.tar.gz"
+    @test exported_artifact_filename("Foo", "debug", "build_log", v"1.0.0", platform; compressor = "zstd") == "Foo-debug-build_log-v1.0.0-x86_64-linux-gnu.tar.zst"
+end
 
 @testset "Universes" begin
     # Create a universe holding just `General`
