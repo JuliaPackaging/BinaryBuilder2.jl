@@ -266,13 +266,13 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
             println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
 
             # For debugging build cache issues
-            # source_str(gs::GitSource) = "GitSource: $(gs.target)"
-            # source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
-            # source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
-            # source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
-            # for dep in deps
-            #     println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep))")
-            # end
+            source_str(gs::GitSource) = "GitSource: $(gs.target)"
+            source_str(ds::DirectorySource) = "DirectorySource: $(ds.target)"
+            source_str(gs::GeneratedSource) = "GeneratedSource: $(gs.ds.target)"
+            source_str(js::JLLSource) = "JLLSource $(js.package.name) $(js.target)"
+            for dep in deps
+                println(hash_buffer, "    - $(source_str(dep)) $(spec_hash(dep; registries))")
+            end
         end
 
         # Next, the subset of the environment that includes all `BinaryBuilder*` packages
