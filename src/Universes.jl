@@ -111,25 +111,22 @@ struct Universe
 
     # `deploy_org` here refers to a Github organization/user to deploy to.
     # If this is specified, `Foo_jll` will be deployed to `https://github.com/$(deploy_org)/Foo_jll.jl`
-    # and the registry changes will be pushed to `https://github.com/$(deploy_org)/General`
+    # and, unless `register_url` is given, the registry changes will be pushed to
+    # `https://github.com/$(deploy_org)/General`
     deploy_org::Union{Nothing,String}
 
-    # This allows overriding which registry gets pushed to; this is most useful
-    # for Yggdrasil, where we usually run with `deploy_org = "JuliaBinaryWrappers"`
-    # but `registry_url = "https://github.com/JuliaRegistries/General"`.
-    registry_url::Union{Nothing,String}
-
-    # If this is specified, a pull request is opened against this registry (e.g.
-    # `https://github.com/JuliaRegistries/General`) after the registry changes are pushed.
-    # It must be the URL of one of `registries` (or of a fork of it, such as
-    # `https://github.com/$(deploy_org)/General`), which is then the one we register into.
+    # If this is specified, the registry changes are pushed as a branch directly to this
+    # registry (e.g. `https://github.com/JuliaRegistries/General`) and a pull request is
+    # opened against it.  It must be the URL of one of `registries` (or of a fork of it,
+    # such as `https://github.com/$(deploy_org)/General`), which is then the one we
+    # register into.  On Yggdrasil, we run with `deploy_org = "JuliaBinaryWrappers"` but
+    # `register_url = "https://github.com/JuliaRegistries/General"`.
     register_url::Union{Nothing,String}
 
     function Universe(name::Union{Nothing,AbstractString} = nothing;
                       depot_path::Union{Nothing,AbstractString} = nothing,
                       deploy_org::Union{Nothing,AbstractString} = nothing,
                       registries::Vector{RegistrySpec} = copy(Pkg.Registry.DEFAULT_REGISTRIES),
-                      registry_url::Union{Nothing,AbstractString} = nothing,
                       register_url::Union{Nothing,AbstractString} = nothing,
                       persistent::Bool = false,
                       kwargs...)
@@ -178,10 +175,11 @@ struct Universe
                     throw(ArgumentError("deploy target '$(deploy_org)' not a user/organization we have access to!"))
                 end
 
-                # The registry may be pushed directly to `registry_url` rather than to a fork
+                # The registry may be pushed directly to `register_url` rather than to a fork
                 # in `deploy_org`, possibly with its own token from the `access_tokens` preference.
-                if registry_url !== nothing
-                    reg_repo = gh_repo_name(registry_url)
+                # A registry within `deploy_org` may not exist yet, as we fork it on first use.
+                reg_repo = register_url === nothing ? nothing : gh_repo_name(register_url)
+                if reg_repo !== nothing && lowercase(first(split(reg_repo, "/"))) != lowercase(deploy_org)
                     with_gh_token(ensure_gh_authenticated, reg_repo)
                     if !gh_push_access(reg_repo)
                         @debug("Github Auth Failure", reg_repo, gh_user())
@@ -200,7 +198,6 @@ struct Universe
             registry_instances,
             persistent,
             deploy_org,
-            registry_url === nothing ? nothing : string(registry_url),
             register_url === nothing ? nothing : string(register_url),
         )
         prune!(uni)
@@ -902,25 +899,18 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             )
         end
 
-        if u.registry_url !== nothing
-            # Push directly to the given registry (e.g. `JuliaRegistries/General`)
-            reg_remote_url = u.registry_url
-        else
-            # Push to our fork of the registry within `deploy_org`
-            reg_org_repo = "$(u.deploy_org)/$(target_reg.name)"
-            if !gh_repo_exists(reg_org_repo)
-                gh_fork(target_reg.url, u.deploy_org)
-            end
-            reg_remote_url = "https://github.com/$(reg_org_repo)"
+        # Push directly to the registry we're registering into (e.g. `JuliaRegistries/General`),
+        # or, if we're not registering, to our fork of the registry within `deploy_org`.
+        reg_repo = gh_repo_name(something(u.register_url, "$(u.deploy_org)/$(target_reg.name)"))
+        if !gh_repo_exists(reg_repo)
+            gh_fork(target_reg.url, String(first(split(reg_repo, "/"))))
         end
-        remote_url!(target_reg_path, u.deploy_org, reg_remote_url)
+        remote_url!(target_reg_path, u.deploy_org, "https://github.com/$(reg_repo)")
         push!(target_reg_path, u.deploy_org; force=true)
 
         # Open a pull request from the branch we just pushed against the registry
         if u.register_url !== nothing
-            reg_repo = gh_repo_name(u.register_url)
-            head_owner = first(split(gh_repo_name(reg_remote_url), "/"))
-            pr_head = "$(head_owner):$(head_branch(target_reg_path))"
+            pr_head = "$(first(split(reg_repo, "/"))):$(head_branch(target_reg_path))"
             is_new_package = isempty(get_package_versions(u, "$(jll.name)_jll"; registries=u.registry_instances[2:end]))
             pr_url = gh_open_pr(
                 reg_repo,
