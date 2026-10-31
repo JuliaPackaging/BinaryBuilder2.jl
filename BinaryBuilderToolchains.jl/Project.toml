@@ -5,7 +5,7 @@ version = "0.3.3"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
-BinaryBuilderSources = "0.2"
+BinaryBuilderSources = "0.2.5"
 HistoricalStdlibVersions = "2.0.1"
 JLLPrefixes = "0.3.8, 0.4"
 LazyJLLWrappers = "1.2"
