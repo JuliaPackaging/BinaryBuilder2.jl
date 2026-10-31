@@ -564,7 +564,7 @@ end
         "Other_jll" => "00000000-0000-0000-0000-000000000004",
     )
     reg_uuid = "00000000-0000-0000-0000-0000000000aa"
-    function write_registry(dir; versions = Dict{String,Vector{String}}(), mid_deps = ["Leaf_jll"])
+    function write_registry(dir; versions = Dict{String,Vector{String}}(), mid_deps = ["Leaf_jll"], mid_weak_deps = String[])
         mkpath(dir)
         open(joinpath(dir, "Registry.toml"); write=true) do io
             println(io, "name = \"TestReg\"")
@@ -585,10 +585,12 @@ end
                 end
             end
             deps = name == "Root_jll" ? ["Mid_jll"] : (name == "Mid_jll" ? mid_deps : String[])
-            if !isempty(deps)
-                open(joinpath(pkg_dir, "Deps.toml"); write=true) do io
+            weak_deps = name == "Mid_jll" ? mid_weak_deps : String[]
+            for (fname, fdeps) in (("Deps.toml", deps), ("WeakDeps.toml", weak_deps))
+                isempty(fdeps) && continue
+                open(joinpath(pkg_dir, fname); write=true) do io
                     println(io, "[\"1\"]")
-                    for dep in deps
+                    for dep in fdeps
                         println(io, "$(dep) = \"$(uuids[dep])\"")
                     end
                 end
@@ -670,6 +672,18 @@ end
         @test artifacts_hash != dev_hash
         write(joinpath(dev_dir, "Project.toml"), "name = \"Root_jll\"\nuuid = \"$(uuids["Root_jll"])\"\nversion = \"1.0.1\"\n")
         @test spec_hash(dev_jll; registries=base) != artifacts_hash
+
+        # Weak dependencies can't pull a package into a resolution, so we don't walk
+        # into them: their new versions must not change the slice.  Their compat bounds
+        # are part of the entry of the package that declares them, however.
+        weak = [make_registry(joinpath(dir, "weak"); mid_weak_deps=["Other_jll"])]
+        weak_hash = registry_slice_hash(root, weak)
+        @test weak_hash != base_hash
+        weak_bumped = [make_registry(joinpath(dir, "weak_bumped");
+                                     mid_weak_deps=["Other_jll"],
+                                     versions=Dict("Other_jll" => ["1.0.0", "2.0.0"]))]
+        @test registry_slice_hash(root, weak_bumped) == weak_hash
+
     end
 end
 

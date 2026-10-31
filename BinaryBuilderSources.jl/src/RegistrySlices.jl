@@ -146,9 +146,13 @@ registry meant throwing away those caches on essentially every build.
 
 We walk dependencies of *every* version of *every* package we reach, not just the
 versions that happen to resolve today, because a new version of any of them is exactly
-the kind of registry change that should invalidate the cache.  In practice these
-closures are small: a leaf JLL reaches a handful of packages, and a heavy one like
-`Qt6Base_jll` reaches a few dozen.
+the kind of registry change that should invalidate the cache.  We do not walk weak
+dependencies, as they can never pull a package into a resolution; their compat bounds
+are still part of each entry's hash (see [`registry_entry_hash`](@ref)).  Walking them
+too would reach most of `General` (e.g. `LazyJLLWrappers` reaches `JET` through a
+chain of package extensions), at which point every `General` commit would invalidate
+everything.  Without them, these closures are small: a leaf JLL reaches a handful of
+packages, and a heavy one like `Qt6Base_jll` reaches a few dozen.
 
 Only tarball registries take part in this (see [`tarball_registries`](@ref)); a
 `Universe`'s local registry contributes nothing.  If `pkg` isn't registered in any
@@ -180,14 +184,12 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
             push!(entry_hashes, (string(reg.uuid, "/", uuid), registry_entry_hash(reg, entry)))
 
             info = entry_info(reg, entry)
-            for table in (info.deps, info.weak_deps)
-                for (_, deps) in table
-                    # Older Pkgs map names to UUIDs; Pkg 1.13 has a set of UUIDs.
-                    for dep_uuid in (deps isa AbstractSet ? deps : values(deps))
-                        if dep_uuid != JULIA_UUID && dep_uuid ∉ seen
-                            push!(seen, dep_uuid)
-                            push!(frontier, dep_uuid)
-                        end
+            for (_, deps) in info.deps
+                # Older Pkgs map names to UUIDs; Pkg 1.13 has a set of UUIDs.
+                for dep_uuid in (deps isa AbstractSet ? deps : values(deps))
+                    if dep_uuid != JULIA_UUID && dep_uuid ∉ seen
+                        push!(seen, dep_uuid)
+                        push!(frontier, dep_uuid)
                     end
                 end
             end
