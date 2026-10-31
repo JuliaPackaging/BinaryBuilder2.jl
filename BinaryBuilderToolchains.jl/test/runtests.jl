@@ -12,6 +12,7 @@ end
 include("common.jl")
 with_temp_storage_locations() do
     include("PkgUtilsTests.jl")
+    include("JLLPinsTests.jl")
     include("WrapperUtilsTests.jl")
     include("CToolchainTests.jl")
     include("HostToolsToolchainTests.jl")
