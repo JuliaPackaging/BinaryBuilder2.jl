@@ -231,6 +231,19 @@ function dev_content_hash(pkg)
 end
 
 """
+    tracks_branch(pkg::PkgSpec)
+
+Return `true` if `pkg` is added from a git repository by branch (or by the repository's
+default branch) rather than by a commit, meaning that what it resolves to can change at
+any moment.  Note that we treat any `rev` that isn't a full commit hash (such as a tag)
+as a branch.
+"""
+function tracks_branch(pkg::PkgSpec)
+    pkg.repo.source === nothing && return false
+    return pkg.repo.rev === nothing || !occursin(r"^[0-9a-f]{40}$", pkg.repo.rev)
+end
+
+"""
     project_dep_uuids(pkg::PkgSpec)
 
 Return the UUIDs of the dependencies listed in the `Project.toml` of a package that
@@ -331,6 +344,12 @@ function prepare(jlls::Vector{JLLSource};
             # Check to see if this slice of JLLs has been resolved before:
             cache_path = jll_cache_path(jlls_slice)
 
+            # A JLL that tracks a branch must be resolved by `Pkg` every time, so a slice
+            # containing one is neither loaded from the cache nor stored into it.  Its `spec_hash()`
+            # only knows the branch name, so the cache would happily hand us whatever the
+            # branch pointed to back when we first resolved it.
+            slice_tracks_branch = any(tracks_branch(jll.package) for jll in jlls_slice)
+
             # If we decide the cache is stale, we do this to clear it
             function clear_cache!()
                 for jll in jlls_slice
@@ -347,7 +366,7 @@ function prepare(jlls::Vector{JLLSource};
             end
 
             # If we have a cache path, try to load artifact paths for any JLL in the cache
-            if ispath(cache_path)
+            if ispath(cache_path) && !slice_tracks_branch
                 cache = TOML.parsefile(cache_path)
 
                 # Whether to load this cache. Either way the slice is resolved below if any
@@ -438,7 +457,7 @@ function prepare(jlls::Vector{JLLSource};
 
                 # Write out the result into a cache so we don't have to go through this resolution again.
                 # Only do that if all jll's had a `tree_hash`:
-                if all(jll.package.tree_hash !== nothing for jll in jlls_slice)
+                if !slice_tracks_branch && all(jll.package.tree_hash !== nothing for jll in jlls_slice)
                     # Record here all recursive dependencies of the slice_deps, so that if we know one of
                     # these is changed (e.g. by being built as part of the current universe), then we
                     # invalidate this entire slice.
