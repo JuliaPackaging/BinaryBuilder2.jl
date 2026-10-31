@@ -44,7 +44,7 @@ struct BinutilsToolchain <: AbstractToolchain
         return new(
             platform,
             vendor,
-            binutils_jll_source_selection(vendor, platform),
+            check_jll_pins(binutils_jll_source_selection(vendor, platform)),
             wrapper_prefixes,
             env_prefixes,
             use_ccache,
@@ -77,7 +77,7 @@ function binutils_jll_source_selection(vendor, platform)
                 platform;
                 uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                 repo=Pkg.Types.GitRepo(
-                    rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                    rev=pinned_rev("CCTools_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
                     source="https://github.com/staticfloat/CCTools_jll.jl",
                 ),
                 # eventually, include a resolved version
@@ -106,7 +106,7 @@ function binutils_jll_source_selection(vendor, platform)
                     platform;
                     uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCCBootstrap-$(triplet(platform.host))",
+                        rev=pinned_rev("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
                         source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
                     ),
                     version=v"17.0.0",
@@ -117,7 +117,7 @@ function binutils_jll_source_selection(vendor, platform)
                     platform;
                     uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
                     repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCCBootstrap-$(triplet(platform.host))",
+                        rev=pinned_rev("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
                         source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
                     ),
                     version=v"17.0.0",
@@ -130,7 +130,7 @@ function binutils_jll_source_selection(vendor, platform)
             "Binutils_jll",
             platform;
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev=pinned_rev("Binutils_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
                 source="https://github.com/staticfloat/Binutils_jll.jl",
             ),
             # eventually, include a resolved version

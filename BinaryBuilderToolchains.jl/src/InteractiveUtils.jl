@@ -63,7 +63,7 @@ function with_cxx_csls(f::Function, env)
             BBHostPlatform();
             uuid=Base.UUID("3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev=pinned_rev("libstdcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
         ),
@@ -72,7 +72,7 @@ function with_cxx_csls(f::Function, env)
             BBHostPlatform();
             uuid=Base.UUID("899a7460-a157-599b-96c7-ccb58ef9beb5"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev=pinned_rev("LLVMLibcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
                 source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
             ),
         ),
@@ -81,11 +81,12 @@ function with_cxx_csls(f::Function, env)
             BBHostPlatform();
             uuid=Base.UUID("871c935c-5660-55ad-bb68-d1283357316b"),
             repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
+                rev=pinned_rev("LLVMLibunwind_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
                 source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
             ),
         ),
     ]
+    check_jll_pins(cxx_csl_libs)
     mktempdir() do prefix
         prepare(cxx_csl_libs)
         deploy(cxx_csl_libs, prefix)

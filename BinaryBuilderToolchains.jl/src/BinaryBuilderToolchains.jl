@@ -52,6 +52,7 @@ function CachedGeneratedSource(f::Function, name::String; target::String)
 end
 
 
+include("JLLPins.jl")
 include("WrapperUtils.jl")
 include("PathUtils.jl")
 include("toolchains/BinutilsToolchain.jl")
