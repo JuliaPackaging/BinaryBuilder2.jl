@@ -978,7 +978,7 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
                 registry=target_reg_path,
                 commit=true,
                 push=false,
-                repo=jll_repo_url,
+                repo=add_dot_git(jll_repo_url),
                 # When iterating, this is pretty useful.
                 ignore_reregistration=true,
             )
