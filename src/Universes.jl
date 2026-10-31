@@ -33,8 +33,56 @@ function registries_to_download(registries::Vector{RegistrySpec}, depot_path::St
     end
 end
 
+"""
+    download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
+
+Download the snapshot of `reg` whose git tree hash is `tree_hash` from the package
+server into `depot_path`, the same way that `Pkg` stores the registries it downloads
+(a tarball next to a `.toml` that records its tree hash).  Does nothing if `depot_path`
+already holds that snapshot.
+"""
+function download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String;
+                                     verbose::Bool = false)
+    regdir = joinpath(depot_path, "registries")
+    toml_path = joinpath(regdir, string(reg.name, ".toml"))
+    if isfile(toml_path) && get(TOML.parsefile(toml_path), "git-tree-sha1", nothing) == tree_hash
+        return
+    end
+
+    server = Pkg.pkg_server()
+    if server === nothing || reg.uuid === nothing
+        throw(ArgumentError("Cannot download snapshot $(tree_hash) of registry '$(reg.name)' without a package server"))
+    end
+    url = "$(server)/registry/$(reg.uuid)/$(tree_hash)"
+    mkpath(regdir)
+    tarball_name = string(reg.name, ".tar.gz")
+    mktempdir(regdir) do tmp
+        tmp_tarball = joinpath(tmp, tarball_name)
+        try
+            Pkg.PlatformEngines.download_verify(url, nothing, tmp_tarball; quiet_download=!verbose)
+        catch e
+            throw(ArgumentError("Unable to download snapshot $(tree_hash) of registry '$(reg.name)' from $(url): $(sprint(showerror, e))"))
+        end
+        if !Pkg.PlatformEngines.verify_archive_tree_hash(tmp_tarball, Base.SHA1(tree_hash))
+            throw(ArgumentError("Snapshot of registry '$(reg.name)' downloaded from $(url) does not match its tree hash"))
+        end
+
+        # Get rid of any unpacked copy of this registry, so that it can't shadow our snapshot.
+        rm(joinpath(regdir, reg.name); force=true, recursive=true)
+        mv(tmp_tarball, joinpath(regdir, tarball_name); force=true)
+        open(toml_path; write=true) do io
+            TOML.print(io, Dict(
+                "uuid" => string(reg.uuid),
+                "git-tree-sha1" => tree_hash,
+                "path" => tarball_name,
+            ))
+        end
+    end
+end
+
 function update_registries!(registries::Vector{RegistrySpec},
                             depot_path::String;
+                            registry_hashes::Dict{String,String} = Dict{String,String}(),
                             verbose::Bool = false)
     # For each registry, update it and then check it out into the given `depot_path`
     # if it does not already exist there.
@@ -53,7 +101,23 @@ function update_registries!(registries::Vector{RegistrySpec},
     # is no longer a threat to our caches either way: `spec_hash(::JLLSource)` hashes only
     # the slice of the registries that the JLL in question resolves against, so unrelated
     # `General` commits don't invalidate anything.
-    to_download = registries_to_download(registries, depot_path)
+    #
+    # Registries named in `registry_hashes` are instead pinned to that exact snapshot, so
+    # that separate sessions (e.g. the jobs of a CI pipeline) all hash and resolve against
+    # the same registries.  The slice of `General` that `spec_hash(::JLLSource)` covers is
+    # small, but not empty: a session that picked up a new version of something within it
+    # would compute different build hashes than one that didn't.
+    unknown_pins = setdiff(keys(registry_hashes), [reg.name for reg in registries])
+    if !isempty(unknown_pins)
+        throw(ArgumentError("Registry hashes given for unknown registries: $(join(unknown_pins, ", "))"))
+    end
+    for reg in registries
+        if haskey(registry_hashes, reg.name)
+            download_registry_snapshot!(reg, registry_hashes[reg.name], depot_path; verbose)
+        end
+    end
+
+    to_download = registries_to_download(filter(reg -> !haskey(registry_hashes, reg.name), registries), depot_path)
     if !isempty(to_download)
         Pkg.Registry.download_registries(verbose ? stdout : devnull, to_download, depot_path)
         for reg in to_download
@@ -107,6 +171,9 @@ struct Universe
     depot_path::String
     registries::Vector{RegistrySpec}
     registry_instances::Vector{RegistryInstance}
+
+    # Registry snapshots (by name) that we are pinned to; see `update_registries!()`.
+    registry_hashes::Dict{String,String}
     persistent::Bool
 
     # `deploy_org` here refers to a Github organization/user to deploy to.
@@ -128,6 +195,7 @@ struct Universe
                       deploy_org::Union{Nothing,AbstractString} = nothing,
                       registries::Vector{RegistrySpec} = copy(Pkg.Registry.DEFAULT_REGISTRIES),
                       register_url::Union{Nothing,AbstractString} = nothing,
+                      registry_hashes::AbstractDict{<:AbstractString,<:AbstractString} = Dict{String,String}(),
                       persistent::Bool = false,
                       kwargs...)
         @ensure_all_kwargs_consumed_header()
@@ -157,8 +225,9 @@ struct Universe
         # We always attempt to share the `artifacts` and `packages` directories of our universe with the `jllsource_depot`.
         BinaryBuilderSources.make_thin_depot!(depot_path)
 
-        # Ensure the upstream registries are up to date
-        registry_instances = update_registries!(registries, depot_path)
+        # Ensure the upstream registries are up to date (or at the snapshots we're pinned to)
+        registry_hashes = Dict{String,String}(string(k) => string(v) for (k, v) in registry_hashes)
+        registry_instances = update_registries!(registries, depot_path; registry_hashes)
 
         # Create our own, empty registry we'll register things into.
         local_reg_spec = create_local_registry(depot_path)
@@ -196,6 +265,7 @@ struct Universe
             depot_path,
             registries,
             registry_instances,
+            registry_hashes,
             persistent,
             deploy_org,
             register_url === nothing ? nothing : string(register_url),
@@ -224,6 +294,21 @@ function cleanup(uni::Universe; silent::Bool = false)
         end
         rm(uni.depot_path; force=true, recursive=true)
     end
+end
+
+"""
+    registry_hashes(u::Universe)
+
+Return the git tree hashes of the snapshots of the (upstream, tarball) registries in
+`u`, keyed by registry name.  Passing these as `registry_hashes` to another `Universe`
+(or as `--registry-hashes` to `build_tarballs.jl`) makes it resolve against the very
+same registries, even if they have been updated in the meantime.
+"""
+function registry_hashes(u::Universe)
+    return Dict{String,String}(
+        reg.name => bytes2hex(reg.tree_info.bytes)
+        for reg in u.registry_instances if reg.tree_info !== nothing
+    )
 end
 
 function Base.show(io::IO, uni::Universe)
@@ -475,7 +560,7 @@ and clears the environment of the dev'ed JLLs.
 function reset_timeline!(u::Universe)
     # Update registries to the latest, but skip the first one since
     # it's our local registry and it errors out if we try to update it.
-    u.registry_instances[2:end] .= update_registries!(u.registries[2:end], u.depot_path)
+    u.registry_instances[2:end] .= update_registries!(u.registries[2:end], u.depot_path; u.registry_hashes)
 
     # Clear out our local registry and recreate it
     rm(joinpath(u.depot_path, "registries", "BB2LocalRegistry"); force=true, recursive=true)

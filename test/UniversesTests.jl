@@ -1,6 +1,6 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
 using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
-using BinaryBuilder2: update_registries!, registries_to_download, registry_path
+using BinaryBuilder2: update_registries!, registries_to_download, registry_path, parse_registry_hashes
 
 @testset "Universes" begin
     # Create a universe holding just `General`
@@ -65,5 +65,24 @@ end
         mktempdir() do other_depot
             @test !isempty(registries_to_download(registries, other_depot))
         end
+
+        # A registry pinned to a snapshot gets exactly that snapshot, regardless of
+        # whether we've already downloaded it during this session.
+        general = only(update_registries!(registries, depot))
+        general_hash = bytes2hex(general.tree_info.bytes)
+        mktempdir() do pinned_depot
+            pinned = only(update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash)))
+            @test pinned.tree_info == general.tree_info
+            @test isfile(joinpath(pinned_depot, "registries", "General.tar.gz"))
+
+            # Asking for it again doesn't need to download anything
+            mtime_before = mtime(joinpath(pinned_depot, "registries", "General.tar.gz"))
+            update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash))
+            @test mtime(joinpath(pinned_depot, "registries", "General.tar.gz")) == mtime_before
+        end
+        @test_throws ArgumentError update_registries!(registries, depot; registry_hashes=Dict("Nonexistent" => general_hash))
     end
+
+    @test parse_registry_hashes("General=$("a"^40),Other=$("b"^40)") == Dict("General" => "a"^40, "Other" => "b"^40)
+    @test_throws ArgumentError parse_registry_hashes("General=main")
 end
