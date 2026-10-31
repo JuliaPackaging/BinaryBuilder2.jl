@@ -101,12 +101,24 @@ end
 """
     slice_roots(pkg::PkgSpec, registries)
 
-Return the UUIDs within `registries` that `pkg` could resolve to, or `nothing` if
-`pkg` is not registered at all.  We look packages up by name (rather than by UUID)
-because `pkg.uuid` is only filled out once `prepare()` has run, and `spec_hash()`
-must not depend on whether that has happened yet.
+Return the UUIDs within `registries` that the resolution of `pkg` starts from, or
+`nothing` if we can't tell.
+
+A package that is developed by path doesn't resolve against its own registry entry
+(if it even has one) but against the dependencies listed in its `Project.toml`, so
+those are our roots (see [`project_dep_uuids`](@ref)).  Otherwise these are the UUIDs
+that `pkg` could resolve to.  We look those up by name (rather than by UUID) because
+`pkg.uuid` is only filled out once `prepare()` has run, and `spec_hash()` must not
+depend on whether that has happened yet.
+
+A package added from a git repository needn't be registered at all, and we can't see
+its `Project.toml` without fetching it, so if it isn't registered we leave the
+registries out of it entirely rather than hash them wholesale.
 """
 function slice_roots(pkg::PkgSpec, registries::Vector{RegistryInstance})
+    if pkg.path !== nothing
+        return project_dep_uuids(pkg)
+    end
     if pkg.name !== nothing
         roots = UUID[]
         for reg in registries
@@ -118,6 +130,9 @@ function slice_roots(pkg::PkgSpec, registries::Vector{RegistryInstance})
     end
     if pkg.uuid !== nothing && any(haskey(reg.pkgs, pkg.uuid) for reg in registries)
         return [pkg.uuid]
+    end
+    if pkg.repo.source !== nothing
+        return UUID[]
     end
     return nothing
 end
@@ -138,11 +153,12 @@ end
     registry_slice_hash(pkg::PkgSpec, registries)
 
 Hash only the pieces of `registries` that can change how `pkg` resolves: the registry
-entries of `pkg` itself and, transitively, of everything it can depend on.  This is
-what lets our JLL resolution caches (and everything keyed off of them, such as
-`spec_hash(::JLLSource)`) survive a registry update that didn't touch any package we
-care about.  `General` picks up new commits every few minutes, so hashing the whole
-registry meant throwing away those caches on essentially every build.
+entries of `pkg` itself (or of the dependencies in its `Project.toml`, for a package
+developed by path; see [`slice_roots`](@ref)) and, transitively, of everything they
+can depend on.  This is what lets our JLL resolution caches (and everything keyed off
+of them, such as `spec_hash(::JLLSource)`) survive a registry update that didn't touch
+any package we care about.  `General` picks up new commits every few minutes, so
+hashing the whole registry meant throwing away those caches on essentially every build.
 
 We walk dependencies of *every* version of *every* package we reach, not just the
 versions that happen to resolve today, because a new version of any of them is exactly
@@ -155,9 +171,10 @@ everything.  Without them, these closures are small: a leaf JLL reaches a handfu
 packages, and a heavy one like `Qt6Base_jll` reaches a few dozen.
 
 Only tarball registries take part in this (see [`tarball_registries`](@ref)); a
-`Universe`'s local registry contributes nothing.  If `pkg` isn't registered in any
-tarball registry we can't compute a closure, so we fall back to hashing those
-registries in their entirety.
+`Universe`'s local registry contributes nothing.  If we can't find any roots for `pkg`
+(it isn't registered in any tarball registry, and doesn't come from a path or a git
+repository) we can't compute a closure, so we fall back to hashing those registries in
+their entirety.
 """
 function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
     registries = tarball_registries(registries)
