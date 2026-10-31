@@ -141,5 +141,10 @@ BinaryBuilder2.allow_github_authentication[] = false
 
         # Don't complain that we didn't actually build this buildhash
         @test pop!(BinaryBuilder2.get_exit_hooks().build_metas) == meta
+
+        # Registry snapshots are given as `<name>=<tree hash>` pairs
+        parsed = BinaryBuilder2.parse_build_tarballs_args(["--registry-hashes=General=$("0"^40)"])
+        @test parsed[:registry_hashes] == Dict("General" => "0"^40)
+        @test_throws ArgumentError BinaryBuilder2.parse_build_tarballs_args(["--registry-hashes=General"])
     end
 end

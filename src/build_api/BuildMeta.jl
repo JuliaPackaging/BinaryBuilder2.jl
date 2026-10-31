@@ -10,7 +10,7 @@ const BUILD_HELP = (
                              [--universe=<name>] [--deploy=<org>] [--register[=<url>]]
                              [--output-dir=<dir>] [--dry-run=<tags>]
                              [--disable-caches=<list> [--build-hashes=<list>]
-                             [--trace-file=<path>]
+                             [--registry-hashes=<list>] [--trace-file=<path>]
 
     Options:
         targets                   By default `build_tarballs.jl` will build a tarball for every
@@ -90,6 +90,15 @@ const BUILD_HELP = (
                                   builds not identified by this list of hashes to be skipped.
                                   To determine what build hashes to use, do a dry-run build and
                                   use `spec_hash(::BuildConfig)`.
+
+        --registry-hashes=<list>  A comma-separated list of `<name>=<tree hash>` pairs, pinning
+                                  each named registry to the snapshot with that git tree hash,
+                                  rather than using the latest one.  Build hashes depend on the
+                                  registries, so use this alongside `--build-hashes` to ensure
+                                  the build hashes are computed against the same registries
+                                  that the dry-run computed them against.  To determine what
+                                  registry hashes to use, call `registry_hashes(meta.universe)`
+                                  within that same dry-run.
 
         --trace-file=<path>       Emit Chrome Trace events as JSON at the given path.
                                   This traces high-level build/extract/package activity,
@@ -216,6 +225,12 @@ function parse_build_tarballs_args(ARGS::Vector{String})
         parsed_kwargs[:build_hash_list] = MultiHash.(split(build_hashes, ","))
     end
 
+    # Registry snapshot selection
+    registry_hashes_set, registry_hashes = extract_flag!(ARGS, "--registry-hashes", nothing)
+    if registry_hashes_set
+        parsed_kwargs[:registry_hashes] = parse_registry_hashes(registry_hashes)
+    end
+
     # Trace output path
     trace_file_set, trace_file_path = extract_flag!(ARGS, "--trace-file", nothing)
     if trace_file_set
@@ -230,6 +245,24 @@ function parse_build_tarballs_args(ARGS::Vector{String})
     end
 
     return parsed_kwargs
+end
+
+"""
+    parse_registry_hashes(str::AbstractString)
+
+Parse a comma-separated list of `<name>=<tree hash>` pairs, as given to
+`--registry-hashes`, into a dictionary.
+"""
+function parse_registry_hashes(str::AbstractString)
+    registry_hashes = Dict{String,String}()
+    for pair in split(str, ","; keepempty=false)
+        pieces = split(pair, "="; limit=2)
+        if length(pieces) != 2 || !occursin(r"^[0-9a-f]{40}$", strip(pieces[2]))
+            throw(ArgumentError("Invalid registry hash '$(pair)', must be of the form `<name>=<tree hash>`"))
+        end
+        registry_hashes[strip(pieces[1])] = strip(pieces[2])
+    end
+    return registry_hashes
 end
 
 """
@@ -312,6 +345,7 @@ struct BuildMeta <: AbstractBuildMeta
                         build_hash_list = Set{MultiHash}(),
                         trace_file::Union{AbstractString,Nothing} = nothing,
                         register::Union{Bool,AbstractString} = false,
+                        registry_hashes::AbstractDict{<:AbstractString,<:AbstractString} = Dict{String,String}(),
                        )
         if !isa(debug_modes, Set)
             debug_modes = Set(debug_modes)
@@ -394,6 +428,7 @@ struct BuildMeta <: AbstractBuildMeta
             something([universe_name], [])...;
             deploy_org,
             register_url,
+            registry_hashes,
             persistent=universe_name !== nothing,
         )
 
