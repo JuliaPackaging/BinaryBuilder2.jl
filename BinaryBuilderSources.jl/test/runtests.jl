@@ -1,6 +1,6 @@
 using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival, TOML
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
-using BinaryBuilderSources: registry_slice_hash, full_registries_hash
+using BinaryBuilderSources: registry_slice_hash, full_registries_hash, tracks_branch
 using BinaryBuilderSources: strict_tags, drop_strict_tags, resolution_platform
 using Pkg.Registry: RegistryInstance
 
@@ -401,6 +401,18 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         @test !isempty(ccache_dep.artifact_paths)
                         @test all(isdir, ccache_dep.artifact_paths)
                         @test haskey(TOML.parsefile(cache_path), "dep_uuids")
+
+                        # A JLL that tracks a branch is resolved from scratch every time, and
+                        # never written into the cache; it keeps tracking that branch afterwards.
+                        rm(joinpath(dir, "jll_resolve_cache"); recursive=true)
+                        branch_dep = JLLSource("Ccache_jll", HostPlatform();
+                            repo=Pkg.Types.GitRepo(; source="https://github.com/JuliaBinaryWrappers/Ccache_jll.jl", rev="main"))
+                        prepare([branch_dep])
+                        @test !isempty(branch_dep.artifact_paths)
+                        @test all(isdir, branch_dep.artifact_paths)
+                        @test branch_dep.package.repo.rev == "main"
+                        @test !isdir(joinpath(dir, "jll_resolve_cache")) ||
+                              isempty(filter(p -> isfile(joinpath(p, "cache.toml")), readdir(joinpath(dir, "jll_resolve_cache"); join=true)))
                     finally
                         BinaryBuilderSources._jll_resolve_cache[] = old_jll_resolve_cache
                     end
@@ -705,6 +717,13 @@ end
         @test registry_slice_hash(repo_spec("Root_jll"), base) == base_hash
         @test registry_slice_hash(repo_spec("Unregistered_jll"), base) != full_registries_hash(base)
         @test registry_slice_hash(repo_spec("Unregistered_jll"), unrelated) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
+
+        # Anything other than a full commit hash counts as tracking a branch.
+        @test tracks_branch(repo_spec("Root_jll"))
+        @test tracks_branch(repo_spec("Root_jll"; rev=nothing))
+        @test tracks_branch(repo_spec("Root_jll"; rev="v1.0.0"))
+        @test !tracks_branch(repo_spec("Root_jll"; rev="0"^40))
+        @test !tracks_branch(root)
     end
 end
 
