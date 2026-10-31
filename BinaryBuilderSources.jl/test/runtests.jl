@@ -684,6 +684,27 @@ end
                                      versions=Dict("Other_jll" => ["1.0.0", "2.0.0"]))]
         @test registry_slice_hash(root, weak_bumped) == weak_hash
 
+        # A package developed by path resolves against the dependencies in its
+        # `Project.toml` rather than its own registry entry, so that is what we slice;
+        # even when it isn't registered at all.
+        project_toml(name, deps) = string(
+            "name = \"$(name)\"\nuuid = \"$("0"^8)-0000-0000-0000-$("0"^11)5\"\n[deps]\n",
+            join(("$(dep) = \"$(uuids[dep])\"\n" for dep in deps)),
+        )
+        unreg_dir = mkpath(joinpath(dir, "Unregistered_jll"))
+        write(joinpath(unreg_dir, "Project.toml"), project_toml("Unregistered_jll", ["Mid_jll"]))
+        unreg = PackageSpec(; name="Unregistered_jll", path=unreg_dir)
+        mid = PackageSpec(; name="Mid_jll")
+        @test registry_slice_hash(unreg, base) == registry_slice_hash(mid, base)
+        @test registry_slice_hash(unreg, unrelated) == registry_slice_hash(unreg, base)
+        @test registry_slice_hash(unreg, relevant) != registry_slice_hash(unreg, base)
+
+        # A package added from a git repository slices by name if it is registered, and
+        # otherwise leaves the registries out of its hash, rather than hash them wholesale.
+        repo_spec(name; rev="main") = PackageSpec(; name, repo=Pkg.Types.GitRepo(; source="https://example.com/$(name).jl", rev))
+        @test registry_slice_hash(repo_spec("Root_jll"), base) == base_hash
+        @test registry_slice_hash(repo_spec("Unregistered_jll"), base) != full_registries_hash(base)
+        @test registry_slice_hash(repo_spec("Unregistered_jll"), unrelated) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
     end
 end
 

@@ -230,6 +230,25 @@ function dev_content_hash(pkg)
     return h
 end
 
+"""
+    project_dep_uuids(pkg::PkgSpec)
+
+Return the UUIDs of the dependencies listed in the `Project.toml` of a package that
+is developed by path.  Returns `nothing` for any other package, or if it has no
+`Project.toml`.
+"""
+function project_dep_uuids(pkg::PkgSpec)
+    pkg.path === nothing && return nothing
+    for name in Base.project_names
+        path = joinpath(pkg.path, name)
+        if isfile(path)
+            deps = get(TOML.parsefile(path), "deps", Dict{String,Any}())
+            return [Base.UUID(uuid) for uuid in values(deps)]
+        end
+    end
+    return nothing
+end
+
 function jll_cache_name(jlls::Vector{JLLSource}, registries::Vector{Pkg.Registry.RegistryInstance})
     return bytes2hex(sha1(string(bytes2hex.(spec_hash.(jlls; registries))...)))
 end
