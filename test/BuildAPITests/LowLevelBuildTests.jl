@@ -159,6 +159,18 @@ end
         FileProduct("include/zlib.h", :zlib_h),
     ]
 
+    # Test that a failed extraction with `archive_dir` set returns a failed
+    # result (rather than throwing while trying to export an uncached
+    # extraction) and does not export anything.
+    failing_extract_config = ExtractConfig(
+        build_result,
+        raw"extract ${prefix}/lib/**.so*; rm -rf ${prefix}/lib",
+        products,
+    )
+    failing_extract_result = extract!(failing_extract_config; disable_cache=true)
+    @test failing_extract_result.status == :failed
+    @test isempty(readdir(archive_dir))
+
     extract_config = ExtractConfig(
         build_result,
         extract_script,
