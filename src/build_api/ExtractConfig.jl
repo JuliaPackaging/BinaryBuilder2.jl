@@ -386,8 +386,8 @@ end
     )
     if run_status == :success
         put!(meta.build_cache, result)
+        export_archive(result)
     end
-    export_archive(result)
     meta.extractions[config] = result
     if "extract-stop" ∈ debug_modes || ("extract-error" ∈ debug_modes && run_status != :success)
         @warn("""
