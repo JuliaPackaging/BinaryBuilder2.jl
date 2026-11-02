@@ -84,7 +84,7 @@ struct BuildConfig
                 bytes2hex(bb_package_treehashes()["BinaryBuilder2"].hash),
                 script,
             ))
-            return string("BB2-", bytes2hex(hash)[1:4], "-metadir")
+            return string("BB2-", bytes2hex(hash), "-metadir")
         end
 
         # Dependencies for each target's prefix
