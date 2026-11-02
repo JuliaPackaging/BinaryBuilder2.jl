@@ -137,12 +137,27 @@ end
 
 function prepare(fas::FileArchiveSource; verbose::Bool = false)
     # Only download if verification fails
-    if !verify(fas)
-        download_target = download_cache_path(fas)
+    if verify(fas)
+        return
+    end
 
-        # Ensure the directory that should hold this source exists, otherwise `download()` fails
-        mkpath(dirname(download_target))
-        Downloads.download(fas.url, download_target; headers=download_headers(fas.url))
+    download_target = download_cache_path(fas)
+    with_download_lock(download_target) do
+        # Another process may have downloaded it while we waited for the lock
+        if verify(fas)
+            return
+        end
+
+        # Download next to the target and move it into place, so that nobody ever sees
+        # (and fails to verify) a partially-downloaded file, even if we are interrupted.
+        temp_target, temp_io = mktemp(dirname(download_target); cleanup=false)
+        close(temp_io)
+        try
+            Downloads.download(fas.url, temp_target; headers=download_headers(fas.url))
+            mv(temp_target, download_target; force=true)
+        finally
+            rm(temp_target; force=true)
+        end
 
         # If we still don't verify properly, throw an error
         if !verify(fas)

@@ -72,7 +72,9 @@ end
 
 function prepare(gs::GitSource; verbose::Bool = false)
     repo_path = download_cache_path(gs)
-    clone!(gs.url, repo_path; commit=gs.hash, verbose)
+    with_download_lock(repo_path) do
+        clone!(gs.url, repo_path; commit=gs.hash, verbose)
+    end
 
     # If we can't verify after cloning/fetching, we have the wrong hash
     if !iscommit(repo_path, gs.hash)
