@@ -734,6 +734,11 @@ function deploy_jll(jll_path::String,
     end
 end
 
+# The shared bare clone of a JLL's repository that `init_jll_repo()` (re)creates.
+# Anyone using it must hold `with_download_lock()` on this path, as it is deleted
+# and re-cloned by every `register_jll!()`.
+jll_bare_repo_path(jll_name::String) = source_download_cache("$(jll_name)_jll")
+
 function init_jll_repo(u::Universe, jll_name::String)
     # There are four possible control flows here:
     #  - The remote JLL repository already exists and we are deploying
@@ -747,7 +752,7 @@ function init_jll_repo(u::Universe, jll_name::String)
 
     # Note that we search for the "upstream" repo URL here only in our non-BB2Local registry
     jll_repo_url = get_package_repo(u, "$(jll_name)_jll"; registries=u.registry_instances[2:end])
-    jll_bare_repo = source_download_cache("$(jll_name)_jll")
+    jll_bare_repo = jll_bare_repo_path(jll_name)
 
     # This is the case if this was previously registered within this
     # universe when it did not exist previously.  In this case, nuke it.
@@ -801,7 +806,9 @@ function get_registry_clone(uni::Universe, reg::RegistrySpec, branch_name::Union
     reg_clone_path = joinpath(cache_dir, reg.name)
     # Only hit the network if we haven't fetched this registry this session
     if force || reg.uuid ∉ fetched_registries
-        clone!(reg.url, reg_clone_path)
+        BinaryBuilderSources.with_download_lock(reg_clone_path) do
+            clone!(reg.url, reg_clone_path)
+        end
         push!(fetched_registries, reg.uuid)
     end
 
@@ -879,27 +886,26 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
     if verbose
         @info("Initializing JLL repository", name=jll.name)
     end
-    jll_repo_url, jll_bare_repo = init_jll_repo(u, jll.name)
-
     jll_path = joinpath(u.depot_path, "dev", "$(jll.name)_jll")
     export_dir = joinpath(u.depot_path, "tarballs", string(jll.name, "-v", jll.version))
     rm(jll_path; force=true, recursive=true)
     rm(export_dir; force=true, recursive=true)
     mkpath(export_dir)
 
-    if u.name !== nothing
-        uni_branch_name = "bb2/$(u.name)"
-        if isbranch(jll_bare_repo, uni_branch_name)
+    uni_branch_name = u.name !== nothing ? "bb2/$(u.name)" : nothing
+
+    # The bare repo is shared by every process registering this JLL (e.g. one per platform),
+    # so hold its lock until we have our own checkout of it.
+    jll_repo_url = BinaryBuilderSources.with_download_lock(jll_bare_repo_path(jll.name)) do
+        repo_url, jll_bare_repo = init_jll_repo(u, jll.name)
+        if uni_branch_name !== nothing && isbranch(jll_bare_repo, uni_branch_name)
             src_branch = uni_branch_name
         else
             src_branch = head_branch(jll_bare_repo)
         end
-    else
-        uni_branch_name = nothing
-        src_branch = head_branch(jll_bare_repo)
+        checkout!(jll_bare_repo, jll_path, src_branch; verbose)
+        return repo_url
     end
-
-    checkout!(jll_bare_repo, jll_path, src_branch; verbose)
     if uni_branch_name !== nothing
         branch!(jll_path, uni_branch_name)
     end

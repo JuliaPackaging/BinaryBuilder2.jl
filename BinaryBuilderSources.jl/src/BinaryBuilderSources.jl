@@ -1,5 +1,6 @@
 module BinaryBuilderSources
 using Scratch, Pkg, TimerOutputs
+import FileWatching
 
 export AbstractSource
 
@@ -148,5 +149,24 @@ _jll_resolve_cache = Ref{Function}(name -> joinpath(@get_scratch!("jll_resolve_c
 source_download_cache(name::String) = _source_download_cache[](name)
 generated_source_cache(name::String) = _generated_source_cache[](name)
 jll_resolve_cache(name::String) = _jll_resolve_cache[](name)
+
+"""
+    with_download_lock(f, path)
+
+Run `f()` while holding an inter-process lock on the cache entry at `path` (a pidfile
+named `\$(path).lock`), so that several BinaryBuilder2 processes sharing one source
+download cache never download into the same location at once.  Whoever gets the lock
+first does the download, and the rest block until it is done, after which they find the
+source already present.  `prepare()` of every source that downloads into the shared
+cache should wrap its download in this.
+
+The lock is refreshed while it is held, and a lock left behind by a process that died
+is taken over once it goes stale.  It is not reentrant: do not nest two calls on the
+same `path`.
+"""
+function with_download_lock(f::Function, path::String)
+    mkpath(dirname(path))
+    return FileWatching.Pidfile.mkpidlock(f, string(path, ".lock"); stale_age=60)
+end
 
 end # module
