@@ -8,7 +8,7 @@ const BUILD_HELP = (
     """
     Usage: build_tarballs.jl [target1,target2,...] [--help] [--verbose] [--debug=<mode>]
                              [--universe=<name>] [--deploy=<org>] [--register[=<url>]]
-                             [--output-dir=<dir>] [--dry-run=<tags>]
+                             [--archive-dir=<dir>] [--dry-run=<tags>]
                              [--disable-caches=<list> [--build-hashes=<list>]
                              [--registry-hashes=<list>] [--trace-file=<path>]
 
