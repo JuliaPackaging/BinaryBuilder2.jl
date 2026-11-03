@@ -3,13 +3,24 @@
 # Create a release commit for one of the subprojects in this monorepo.
 #
 # The commit message collects every commit that touched the subproject's
-# directory since the last release tag for that subproject:
+# directory since the last release tag for that subproject, after a
+# JuliaRegistrator trigger for the release:
 #
 #     Release Foo.jl v1.2.3
+#
+#     @JuliaRegistrator register subdir=Foo.jl
 #
 #     Release notes:
 #      - [abc1234] some commit message
 #      - [def5678] some other commit message
+#
+# The top-level package's trigger is a bare `@JuliaRegistrator register`.
+# Registrator takes everything after `Release notes:` to the end of the comment
+# as the release notes, so the trigger and the notes come last.  Once the
+# release commit is pushed, register it by posting everything from the trigger
+# line onwards as a comment on the commit; the script prints that comment body
+# when it finishes, and `--registrator-comment <rev>` reprints it for any
+# release commit.
 #
 # Usage:
 #     contrib/release.sh [options] <subproject> [version]
@@ -24,6 +35,9 @@
 # package does not admit the new version gets that entry widened (e.g.
 # `"0.2"` -> `"0.2, 0.3"`), and the change is included in the release commit.
 # In `--dry-run` mode the projects that would need widening are only listed.
+# These changes are listed in a "Compat bounds widened" section placed before
+# the trigger, so they are recorded in the commit but stay out of the
+# package's release notes.
 #
 # The release commit is tagged `<name>-v<version>` (or just `v<version>` for
 # the top-level BinaryBuilder2 package) with an annotated tag that
@@ -35,17 +49,30 @@
 #     -s, --since <rev>   Collect notes since <rev> instead of the last tag
 #     -a, --add <path>    Also stage <path> in the release commit (repeatable)
 #     -e, --edit          Open the commit message in your editor
+#     -r, --registrator-comment <rev>
+#                         Print the JuliaRegistrator comment body of release
+#                         commit <rev> (e.g. `HEAD`) and exit; post it with
+#                         `gh api 'repos/{owner}/{repo}/commits/<sha>/comments' -F body=@-`
 #     -h, --help          Show this message
 
 set -euo pipefail
 
 usage() {
-    sed -n '3,38p' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
+    sed -n '3,/^[^#]/{/^#/p}' "${BASH_SOURCE[0]}" | sed 's/^#\{1,2\} \{0,1\}//'
 }
 
 die() {
     echo "ERROR: $*" >&2
     exit 1
+}
+
+# Print the JuliaRegistrator comment body (the trigger line and everything after
+# it) out of commit <rev>'s message
+registrator_comment() {
+    local comment
+    comment="$(git -C "${repo_root}" log -1 --format=%B "$1" | sed -n '/^@JuliaRegistrator register/,$p')"
+    [[ -n "${comment}" ]] || die "commit $1 has no '@JuliaRegistrator register' line"
+    echo "${comment}"
 }
 
 repo_root="$(git rev-parse --show-toplevel)"
@@ -62,6 +89,8 @@ while [[ $# -gt 0 ]]; do
         -e|--edit)    edit=true; shift ;;
         -s|--since)   since="${2:?--since requires a revision}"; shift 2 ;;
         -a|--add)     extra_paths+=("${2:?--add requires a path}"); shift 2 ;;
+        -r|--registrator-comment)
+                      registrator_comment "${2:?--registrator-comment requires a revision}"; exit 0 ;;
         -h|--help)    usage; exit 0 ;;
         -*)           die "unknown option '$1'" ;;
         *)            positional+=("$1"); shift ;;
@@ -213,15 +242,21 @@ fi
 notes="$(git -C "${repo_root}" log --no-merges --format=' - [%h] %s' "${range}" -- "${pathspecs[@]}" \
          | grep -v -E "^ - \[[0-9a-f]+\] Release ${name}(\.jl)? v" || true)"
 
+if [[ "${proj_dir}" == "." ]]; then
+    trigger="@JuliaRegistrator register"
+else
+    trigger="@JuliaRegistrator register subdir=${proj_dir}"
+fi
+
 message="Release ${name}.jl v${version}"
+if [[ -n "${compat_notes}" ]]; then
+    message="${message}"$'\n\n'"Compat bounds widened to admit v${version}:"$'\n'"${compat_notes}"
+fi
+message="${message}"$'\n\n'"${trigger}"
 if [[ -n "${notes}" ]]; then
     message="${message}"$'\n\n'"Release notes:"$'\n'"${notes}"
 else
     echo "WARNING: no commits touching ${proj_dir} since ${since:-the start of history}" >&2
-fi
-
-if [[ -n "${compat_notes}" ]]; then
-    message="${message}"$'\n\n'"Compat bounds widened to admit v${version}:"$'\n'"${compat_notes}"
 fi
 
 if ${dry_run}; then
@@ -251,3 +286,7 @@ git -C "${repo_root}" "${commit_args[@]}"
 # Tag the release commit, reusing its (possibly edited) message as the tag annotation
 git -C "${repo_root}" log -1 --format=%B HEAD | git -C "${repo_root}" tag -a "${tag_name}" -F - HEAD
 echo "Tagged ${tag_name}; push with: git push origin HEAD ${tag_name}"
+echo "Then register it by posting this comment on the pushed commit:"
+echo "    contrib/release.sh -r ${tag_name} | gh api 'repos/{owner}/{repo}/commits/$(git -C "${repo_root}" rev-parse HEAD)/comments' -F body=@-"
+echo "-----"
+registrator_comment HEAD
