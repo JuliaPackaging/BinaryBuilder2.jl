@@ -34,6 +34,10 @@ mutable struct BuildResult
     # ccache per-build statistics log artifact (nothing if ccache was not invoked or build was cached)
     ccache_log_artifact::Union{Nothing,SHA1Hash}
 
+    # URL and content hash of each source in `/workspace/srcdir`, recorded in the JLL.
+    # `nothing` for a cached build whose cache entry doesn't carry them.
+    source_records::Union{Nothing,Vector{JLLSourceRecord}}
+
     function BuildResult(config::BuildConfig,
                          status::Symbol,
                          exception::Union{Nothing,Exception},
@@ -41,7 +45,8 @@ mutable struct BuildResult
                          mounts::Dict{String,MountInfo},
                          log_artifact::Union{Nothing,SHA1Hash},
                          env::Dict{String,String},
-                         ccache_log_artifact::Union{Nothing,SHA1Hash} = nothing)
+                         ccache_log_artifact::Union{Nothing,SHA1Hash} = nothing,
+                         source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
         obj = new(
             config,
             status,
@@ -51,6 +56,7 @@ mutable struct BuildResult
             log_artifact,
             env,
             ccache_log_artifact,
+            source_records,
         )
         # Make sure that this is cleaned up _before_ we're in a finalizer.
         push!(get_exit_hooks(), obj)
@@ -65,7 +71,8 @@ function Sandbox.cleanup(result::BuildResult)
     end
 end
 
-function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,SHA1Hash}, env::Dict{String,String})
+function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,SHA1Hash}, env::Dict{String,String},
+                            source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
     return BuildResult(
         config,
         :cached,
@@ -74,6 +81,8 @@ function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,S
         Dict{String,MountInfo}(),
         SHA1Hash(log_artifact),
         env,
+        nothing,
+        source_records,
     )
 end
 

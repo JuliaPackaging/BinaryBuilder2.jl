@@ -1,7 +1,7 @@
 using Test, Pkg, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
 using BinaryBuilder2: load_build_entries!, load_extract_entries!
-using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe
+using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe, export_source_records
 using JLLGenerator
 
 @testset "BuildCache" begin
@@ -40,7 +40,12 @@ using JLLGenerator
             JLLStaticLibraryProduct(:libfoo_a, "lib/libfoo.a"; system_deps = ["m"]),
         ]
 
-        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp )
+        # build1 records its sources, build2 is an entry stored without them
+        build1_sources = [
+            JLLSourceRecord("https://example.com/foo-1.0.tar.gz", SHA1Hash(sha1("foo_tree"))),
+            JLLSourceRecord("https://example.com/foo.git", SHA1Hash(sha1("foo_commit"))),
+        ]
+        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp; source_records=build1_sources)
         put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp)
 
         function probe_buildcache(bc)
@@ -48,6 +53,7 @@ using JLLGenerator
             b1, e1 = get(bc, build1_hash, extract1_hash)
             @test b1.log_artifact == build_log1_hash
             @test b1.env == build_env1
+            @test b1.source_records == build1_sources
             @test e1.artifact == artifact1_hash
             @test e1.log_artifact == extract_log1_hash
             @test e1.jll_lib_products == extract1_jlp
@@ -56,6 +62,7 @@ using JLLGenerator
             b2, e2 = get(bc, build2_hash, extract2_hash)
             @test b2.log_artifact == build_log2_hash
             @test b2.env == build_env2
+            @test b2.source_records === nothing
             @test e2.artifact == artifact2_hash
             @test e2.log_artifact == extract_log2_hash
             @test e2.jll_lib_products == extract2_jlp
@@ -85,6 +92,8 @@ using JLLGenerator
         # Also export buildcache entries:
         export_archive(bc, build1_hash, extract1_hash, archive_dir)
         export_archive(bc, build2_hash, extract2_hash, archive_dir)
+        @test isfile(joinpath(archive_dir, "$(build1_hash).sources.toml"))
+        @test !isfile(joinpath(archive_dir, "$(build2_hash).sources.toml"))
 
         bc2 = load_cache(cache_dir)
         probe_buildcache(bc2)
@@ -142,6 +151,16 @@ end
         @test length(entries) == 2
         @test entries[h1] == BuildCacheBuildEntry(log1, env1)
         @test entries[h2] == BuildCacheBuildEntry(log2, env2)
+
+        # Source records are picked up when present
+        records = [JLLSourceRecord("https://example.com/foo.tar.gz", SHA1Hash(sha1("tree")))]
+        mkpath(joinpath(cache_dir, "sources"))
+        export_source_records(records, joinpath(cache_dir, "sources", "$(bytes2hex(h1)).toml"))
+        entries_with_sources = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries_with_sources, cache_dir)
+        @test entries_with_sources[h1] == BuildCacheBuildEntry(log1, env1, records)
+        @test entries_with_sources[h2].source_records === nothing
+        rm(joinpath(cache_dir, "sources"); recursive=true)
 
         # Missing .env file → entry skipped
         rm(joinpath(cache_dir, "envs", "$(bytes2hex(h2)).env"))

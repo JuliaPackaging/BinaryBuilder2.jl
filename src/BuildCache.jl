@@ -5,13 +5,41 @@ export BuildCache
     BuildCacheBuildEntry
 
 The `BuildCache` records a few pieces of information that exist per-build,
-such as the build environment and the build log.  This structure is what holds
-those values.  See `BuildCacheExtractEntry` for the pieces that are per-
+such as the build environment, the build log and the sources' `JLLSourceRecord`s
+(so that packaging a cached build doesn't need the sources on disk).  This
+structure is what holds those values.  `source_records` is `nothing` for entries
+stored without them.  See `BuildCacheExtractEntry` for the pieces that are per-
 extraction instead.
 """
 @struct_hash_equal struct BuildCacheBuildEntry
     log_artifact::SHA1Hash
     env::Dict{String,String}
+    source_records::Union{Nothing,Vector{JLLSourceRecord}}
+end
+BuildCacheBuildEntry(log_artifact::SHA1Hash, env::Dict{String,String}) = BuildCacheBuildEntry(log_artifact, env, nothing)
+
+"""
+    export_source_records(records::Vector{JLLSourceRecord}, path::String)
+
+Write `records` out as a TOML file, read back by `import_source_records()`.
+"""
+function export_source_records(records::Vector{JLLSourceRecord}, path::String)
+    open(path; write=true) do io
+        TOML.print(io, Dict("sources" => generate_toml_dict.(records)))
+    end
+end
+
+"""
+    import_source_records(path::String)
+
+Read the `JLLSourceRecord`s written by `export_source_records()`, or return
+`nothing` if `path` does not exist.
+"""
+function import_source_records(path::String)
+    if !isfile(path)
+        return nothing
+    end
+    return JLLSourceRecord[parse_toml_dict(JLLSourceRecord, d) for d in TOML.parsefile(path)["sources"]]
 end
 
 
@@ -103,13 +131,15 @@ end
 function Base.put!(bc::BuildCache,
                    build_hash::SHA1Hash, extract_hash::SHA1Hash,
                    build_log_artifact_hash::SHA1Hash, env::Dict{String,String},
-                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct})
+                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct};
+                   source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
     put!(
         bc,
         build_hash, extract_hash,
         BuildCacheBuildEntry(
             build_log_artifact_hash,
             env,
+            source_records,
         ),
         BuildCacheExtractEntry(
             artifact_hash,
@@ -128,7 +158,8 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
         build_result.env,
         SHA1Hash(extract_result.artifact),
         extract_result.log_artifact,
-        extract_result.jll_lib_products,
+        extract_result.jll_lib_products;
+        build_result.source_records,
     )
 end
 
@@ -181,6 +212,11 @@ function export_archive(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1
             write(io, serialize_env_block(build_entry.env))
         end
     end
+    if build_entry.source_records !== nothing
+        if_missing("$(bh).sources.toml") do path
+            export_source_records(build_entry.source_records, path)
+        end
+    end
 
     # Export BuildCacheExtractEntry
     extract_entry = bc.extract_entries[extract_hash]
@@ -215,7 +251,8 @@ function import_archives(bc::BuildCache, dir::String)
         try
             build_log_artifact = import_artifact("$(bh)-log_artifact.tar.zst")
             build_env = parse_env_block(String(read(joinpath(dir, "$(bh).env"))))
-            build_entry = BuildCacheBuildEntry(build_log_artifact, build_env)
+            source_records = import_source_records(joinpath(dir, "$(bh).sources.toml"))
+            build_entry = BuildCacheBuildEntry(build_log_artifact, build_env, source_records)
         catch ex
             @debug("Unable to import BuildCacheBuildEntry", exception=ex, build_hash=bh)
             continue
@@ -258,7 +295,8 @@ function load_build_entries!(build_entries::Dict{SHA1Hash,BuildCacheBuildEntry},
                 build_hash = SHA1Hash(build_hash_str)
                 log_artifact_hash = SHA1Hash(log_artifact_hash_str)
                 env = parse_env_block(String(read(env_path)))
-                build_entries[build_hash] = BuildCacheBuildEntry(log_artifact_hash, env)
+                source_records = import_source_records(joinpath(cache_dir, "sources", "$(build_hash_str).toml"))
+                build_entries[build_hash] = BuildCacheBuildEntry(log_artifact_hash, env, source_records)
             catch
                 @debug("skip: build entry malformed", build_hash=build_hash_str)
                 continue
@@ -326,6 +364,7 @@ function save_cache(bc::BuildCache)
 
     # Serialize out build entries
     mkpath(joinpath(bc.cache_dir, "envs"))
+    mkpath(joinpath(bc.cache_dir, "sources"))
     open(joinpath(bc.cache_dir, "build_entries.db"); write=true) do io
         for (build_hash, b) in merged_build_entries
             println(io, "$(bytes2hex(build_hash)) $(bytes2hex(b.log_artifact))")
@@ -337,6 +376,10 @@ function save_cache(bc::BuildCache)
                 open(env_path; write=true) do io
                     write(io, env_string)
                 end
+            end
+
+            if b.source_records !== nothing
+                export_source_records(b.source_records, joinpath(bc.cache_dir, "sources", "$(bytes2hex(build_hash)).toml"))
             end
         end
     end
@@ -435,12 +478,13 @@ function prune!(bc::BuildCache)
     # Next, prune the environments and jll_lib_products to match the hashes that are preserved
     prune_aux_dir(keys(bc.build_entries), ".env", "envs")
     prune_aux_dir(keys(bc.extract_entries), ".jlp", "jll_lib_products")
+    prune_aux_dir(keys(bc.build_entries), ".toml", joinpath(bc.cache_dir, "sources"))
 end
 
 
 # Helper functions for using these cache entries
 function BuildResult_cached(config::BuildConfig, entry::BuildCacheBuildEntry)
-    return BuildResult_cached(config, entry.log_artifact, entry.env)
+    return BuildResult_cached(config, entry.log_artifact, entry.env, entry.source_records)
 end
 
 function ExtractResult_cached(config::ExtractConfig, entry::BuildCacheExtractEntry)
