@@ -756,3 +756,26 @@ end
         access_tokens[] = old_tokens
     end
 end
+
+@testset "make_thin_depot!" begin
+    using BinaryBuilderSources: make_thin_depot!
+    mktempdir() do dir
+        # A parent depot that has none of the shared stores yet
+        parent = joinpath(dir, "parent")
+        thin = joinpath(dir, "thin")
+        make_thin_depot!(thin, parent)
+        for store_name in ("artifacts", "packages", "compiled", "logs")
+            store_path = joinpath(thin, store_name)
+            @test islink(store_path)
+            @test readlink(store_path) == joinpath(parent, store_name)
+            # The link must not dangle, so things can be created through it
+            @test isdir(store_path)
+            mkpath(joinpath(store_path, "Foo", "abcd"))
+            @test isdir(joinpath(parent, store_name, "Foo", "abcd"))
+        end
+
+        # Calling it again (with the links already in place) is a no-op
+        make_thin_depot!(thin, parent)
+        @test isdir(joinpath(thin, "packages", "Foo", "abcd"))
+    end
+end

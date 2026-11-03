@@ -173,10 +173,12 @@ compilation caches and logs.
 function make_thin_depot!(thin_depot::String, parent_depot::String = first(Base.DEPOT_PATH))
     mkpath(thin_depot)
     for store_name in ("artifacts", "packages", "compiled", "logs")
+        target_path = joinpath(parent_depot, store_name)
+        mkpath(target_path)
         store_path = joinpath(thin_depot, store_name)
         if !ispath(store_path) || !islink(store_path)
             rm(store_path; recursive=true, force=true)
-            symlink(joinpath(parent_depot, store_name), store_path; dir_target=true)
+            symlink(target_path, store_path; dir_target=true)
         end
     end
 end
