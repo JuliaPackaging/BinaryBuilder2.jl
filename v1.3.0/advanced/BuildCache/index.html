@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Build Cache · BinaryBuilder2.jl</title><meta name="title" content="Build Cache · BinaryBuilder2.jl"/><meta property="og:title" content="Build Cache · BinaryBuilder2.jl"/><meta property="twitter:title" content="Build Cache · BinaryBuilder2.jl"/><meta name="description" content="Documentation for BinaryBuilder2.jl."/><meta property="og:description" content="Documentation for BinaryBuilder2.jl."/><meta property="twitter:description" content="Documentation for BinaryBuilder2.jl."/><script data-outdated-warner src="../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../assets/documenter.js"></script><script src="../../search_index.js"></script><script src="../../siteinfo.js"></script><script src="../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../">BinaryBuilder2.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../">Overview</a></li><li><span class="tocitem">Usage</span><ul><li><a class="tocitem" href="../../basic_usage/">Basic Usage</a></li></ul></li><li><span class="tocitem">Full API reference</span><ul><li><a class="tocitem" href="../../reference/BinaryBuilder2/">BinaryBuilder2</a></li></ul></li><li><span class="tocitem">Advanced</span><ul><li><a class="tocitem" href="../Nomenclature/">Nomenclature</a></li><li><a class="tocitem" href="../launch_code_server/">VSCode debugging</a></li><li class="is-active"><a class="tocitem" href>Build Cache</a><ul class="internal"><li><a class="tocitem" href="#Type-Usage"><span>Type Usage</span></a></li><li><a class="tocitem" href="#Future-work"><span>Future work</span></a></li></ul></li><li><a class="tocitem" href="../BuildTargetSpec/">BuildTargetSpec</a></li><li><a class="tocitem" href="../PlatformlessWrapper/">PlatformlessWrapper</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Advanced</a></li><li class="is-active"><a href>Build Cache</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Build Cache</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaPackaging/BinaryBuilder2.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaPackaging/BinaryBuilder2.jl/blob/main/docs/src/advanced/BuildCache.md" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="BuildCache"><a class="docs-heading-anchor" href="#BuildCache">BuildCache</a><a id="BuildCache-1"></a><a class="docs-heading-anchor-permalink" href="#BuildCache" title="Permalink"></a></h1><article><details class="docstring" open="true"><summary id="BinaryBuilder2.BuildCache-advanced-BuildCache"><a class="docstring-binding" href="#BinaryBuilder2.BuildCache-advanced-BuildCache"><code>BinaryBuilder2.BuildCache</code></a> — <span class="docstring-category">Type</span></summary><section><div><pre><code class="language-julia hljs">BuildCache</code></pre><p>This cache stores all necessary information to skip previously successful builds. If a previous build and extraction generated an artifact, stored its logs, analyzed the library dependency structure, etc... all of that is stored within the <code>BuildCache</code> so that future builds of <em>the exact same source</em> can be skipped. The cache keys are purposefully quite sensitive (if anything in the sources, or even just the sources of BinaryBuilder2 changes, the build will be re-run).</p><p>The <code>BuildCache</code> is serialized to disk and loaded on future BinaryBuilder2 sessions. Future work includes creating a networked backend to allow sharing of build cache objects across machines (or even the internet).</p><p>To disable the BuildCache, see the <code>--disable-caches</code> argument to <code>build_tarballs.jl</code>, or the <code>disabled_caches</code> keyword argument to <code>BuildMeta</code>.</p></div><a class="docs-sourcelink" target="_blank" href="https://github.com/JuliaPackaging/BinaryBuilder2.jl/blob/b9c2120d82c8580b671a8fed68dcfa7bb42c9431/src/BuildCache.jl#L63-L79">source</a></section></details></article><h2 id="Type-Usage"><a class="docs-heading-anchor" href="#Type-Usage">Type Usage</a><a id="Type-Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Type-Usage" title="Permalink"></a></h2><p>The identifying hash of a <a href="../../reference/BinaryBuilder2/#BinaryBuilder2.BuildConfig"><code>BuildConfig</code></a> is defined by <code>spec_hash(::BuildConfig)</code>, which is sensitive to:</p><ul><li><a href="../BuildTargetSpec/#BuildTargetSpec"><code>BuildTargetSpec</code></a> objects, representing all compilers.</li><li><a href="../../build_api/BuildConfig/#BuildConfig"><code>BuildConfig</code></a> source trees, containing all dependencies.</li><li><a href="../../build_api/BuildConfig/#BuildConfig"><code>BuildConfig</code></a> script.</li><li>BinaryBuilder2 and dependent module source hashes.</li></ul><p>To see this in action, you can run <code>spec_hash(build_config)</code> with a logger set to debug, and it will print out both the hash and all the inputs that went into the hash. Note that you must call <code>prepare(build_config)</code> first, to instantiate all dependencies.</p><pre><code class="language-julia-repl hljs">julia&gt; debug_logger = ConsoleLogger(stderr, Logging.Debug)
+       with_logger(debug_logger) do
+           spec_hash(build_config; force_recompute=true)
+       end
+┌ Debug: BuildConfig hash buffer:
+│ [build_metadata]
+│   script_hash = sha1:5ffe533b830f08a0326348a9160afafc8ada44db
+│ [target_specs]
+│   host: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│   target: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│ [source_trees]
+│   /opt/host-aarch64-linux-gnu = sha1:c93a7338fd433ea0cf05412797c3a2f2f56ed4fc
+│     - GeneratedSource: wrappers sha1:50d3349f37e70c5afea24df916b5ccda46d4686a
+│     - GeneratedSource: wrappers sha1:29ac0578502558d5588c5852490360daa930ab1d
+│     - JLLSource Binutils_jll gcc sha1:73b1ecaf836cc6ddbd739d57a5cd80d4d450760e
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:dcd821e0679fc7c79bf3a7bc5a4198a6a7a70be3
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:fd018f9f6a0f73d37aa3563eb01db457b9dbc87e
+│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
+│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
+│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
+│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
+│     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
+│     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
+│     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
+│     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
+│     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
+│     - JLLSource Ccache_jll  sha1:429af3de201dbce885b8a9977151ac262d1d9d08
+│     - JLLSource file_jll  sha1:767774b8baf3ce5b7914b848902988d9d8699e74
+│     - JLLSource flex_jll  sha1:9313ac5d8d5bfffa5e4d746d0c20bed007a3de0a
+│     - JLLSource gawk_jll  sha1:7fb969cb4acdaff07c2428835ac72edc8d5db0ff
+│     - JLLSource GNUMake_jll  sha1:2e2c3137676fc4eba8f19a6d29e460958d17cfbd
+│     - JLLSource Libtool_jll  sha1:ad97640a7b5f4ac2b43640739c4b1d3aba6ef401
+│     - JLLSource M4_jll  sha1:071130900095248610f9d42f7b9047d78d073264
+│     - JLLSource Ninja_jll  sha1:1f9322f3e16f9ffaf03e32fc68f0c0e760b0bf57
+│     - JLLSource Patchelf_jll  sha1:e87753be5c1a24405679f1fc974ed5b21ad235f6
+│     - JLLSource Perl_jll  sha1:07c4e02273090f8cbe6b272c7b59cb62c732619e
+│     - JLLSource Python_jll  sha1:9587861c4becb10739a51ed598743e3df578f330
+│     - JLLSource patch_jll  sha1:f11306dcb47232e182bad68054de9d58d6ae4312
+│     - JLLSource patchutils_jll  sha1:3a5f15175566d7f5b5fe8eb28209b5ff1ebe8a47
+│     - JLLSource CURL_jll  sha1:5853d1de75bf9862f6c21c887c724e966925107c
+│     - JLLSource Git_jll  sha1:c89a70239a8350aa9b9cd211723ee55e765a9da5
+│     - JLLSource rsync_jll  sha1:a2cd62df467b3dc631144f6ad3aeb1e53bcbf916
+│     - JLLSource MozillaCACerts_jll  sha1:669a7ce2060d13d27b9eb8628293143223401415
+│     - JLLSource Tar_jll  sha1:c3a2a8b1326850f05e8c3df6a7305902d8319b13
+│     - JLLSource Gzip_jll  sha1:8529081ed272fe664e6f443aad17e9f556429879
+│     - JLLSource Bzip2_jll  sha1:85d6b3c7d19cb820d9426d7c9ed0a581998da2b2
+│     - JLLSource unzip_jll  sha1:a07d565f19435ec706153d73656f7f6e571996d8
+│     - JLLSource Zstd_jll  sha1:9ecc08626722c3a0c44f5d686deb815100ad90a7
+│     - JLLSource XZ_jll  sha1:2e4a13dabe6042122a014e3377e78e48ee0c3284
+│     - JLLSource Zlib_jll  sha1:3e5d79fad08b74b404fbcd65f4a08e7be4fddf38
+│     - JLLSource Vim_jll  sha1:49237b707e236f2744121a9e5cf4f5d8c4c50ee3
+│     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
+│     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
+│     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
+│     - JLLSource CompilerSupportLibraries_jll  sha1:ae79294c12d14270c41e713ef01d8eb81b3bf11c
+│   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
+│     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
+│     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
+│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
+│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
+│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
+│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
+│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
+│     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
+│   /workspace/destdir/target-aarch64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│   /workspace/metadir = sha1:091bf082e48cbb7ce5a24f701eeacc6a117df8c9
+│     - GeneratedSource:  sha1:693ad3f9fb2974038857fa03f1fb6338f068db9e
+│   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
+│     - DirectorySource:  sha1:dbeb610a5ce1290d66c3340ff123041d079df083
+│   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│ [environment]
+│   BinaryBuilder2 v1.2.2 = sha1:fc730fd71fcc6996072126b5056b28a235b3cb28
+│   BinaryBuilderAuditor v0.3.0 = sha1:6e06ec871d08017cf16402e743f91a4e2807c24b
+│   BinaryBuilderGitUtils v0.3.0 = sha1:9fe8fe2a6fec7bcbf47cdca0e3a6189989ff5f4a
+│   BinaryBuilderPlatformExtensions v0.2.1 = sha1:0932b3529a238dc2db243b16c170b93d197345cf
+│   BinaryBuilderProducts v0.3.0 = sha1:909099b068360e9edca71294f212a44080455ba3
+│   BinaryBuilderSources v0.2.5 = sha1:51e7fd808de0cb6ec9e256d9b468d4728d23eb99
+│   BinaryBuilderToolchains v0.3.4 = sha1:864a849652194a89fc00ad173392b66386d716ec
+│   JLLGenerator v0.5.2 = sha1:a6c22056b4f70a3024f47adf625f790622cf5bf1
+│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
+│   LazyJLLWrappers v1.2.1 = sha1:e6ee0a34be8d06343ad0c72cfeddd4c1b5d8f0cf
+│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
+│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
+│   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
+└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/BuildConfig.jl:289
+sha1:22094feb0ff157d2b9da3673094104aa9538b7b1</code></pre><p>The same can be done for an <code>ExtractConfig</code> object (note that it prints out the <code>BuildConfig</code> object as well during debugging, because it hashes that as an input as well!)</p><pre><code class="language-julia-repl hljs">julia&gt; debug_logger = ConsoleLogger(stderr, Logging.Debug)
+       with_logger(debug_logger) do
+           spec_hash(extract_config; force_recompute=true)
+       end
+┌ Debug: BuildConfig hash buffer:
+│ [build_metadata]
+│   script_hash = sha1:5ffe533b830f08a0326348a9160afafc8ada44db
+│ [target_specs]
+│   host: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│   target: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│ [source_trees]
+│   /opt/host-aarch64-linux-gnu = sha1:345439351f0b414937facb57a089cafa86265434
+│     - GeneratedSource: wrappers sha1:50d3349f37e70c5afea24df916b5ccda46d4686a
+│     - GeneratedSource: wrappers sha1:29ac0578502558d5588c5852490360daa930ab1d
+│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
+│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
+│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
+│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
+│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
+│     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
+│     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
+│     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
+│     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
+│     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
+│     - JLLSource Ccache_jll  sha1:429af3de201dbce885b8a9977151ac262d1d9d08
+│     - JLLSource file_jll  sha1:767774b8baf3ce5b7914b848902988d9d8699e74
+│     - JLLSource flex_jll  sha1:9313ac5d8d5bfffa5e4d746d0c20bed007a3de0a
+│     - JLLSource gawk_jll  sha1:7fb969cb4acdaff07c2428835ac72edc8d5db0ff
+│     - JLLSource GNUMake_jll  sha1:2e2c3137676fc4eba8f19a6d29e460958d17cfbd
+│     - JLLSource Libtool_jll  sha1:ad97640a7b5f4ac2b43640739c4b1d3aba6ef401
+│     - JLLSource M4_jll  sha1:071130900095248610f9d42f7b9047d78d073264
+│     - JLLSource Ninja_jll  sha1:1f9322f3e16f9ffaf03e32fc68f0c0e760b0bf57
+│     - JLLSource Patchelf_jll  sha1:e87753be5c1a24405679f1fc974ed5b21ad235f6
+│     - JLLSource Perl_jll  sha1:07c4e02273090f8cbe6b272c7b59cb62c732619e
+│     - JLLSource Python_jll  sha1:9587861c4becb10739a51ed598743e3df578f330
+│     - JLLSource patch_jll  sha1:f11306dcb47232e182bad68054de9d58d6ae4312
+│     - JLLSource patchutils_jll  sha1:3a5f15175566d7f5b5fe8eb28209b5ff1ebe8a47
+│     - JLLSource CURL_jll  sha1:5853d1de75bf9862f6c21c887c724e966925107c
+│     - JLLSource Git_jll  sha1:c89a70239a8350aa9b9cd211723ee55e765a9da5
+│     - JLLSource rsync_jll  sha1:a2cd62df467b3dc631144f6ad3aeb1e53bcbf916
+│     - JLLSource MozillaCACerts_jll  sha1:669a7ce2060d13d27b9eb8628293143223401415
+│     - JLLSource Tar_jll  sha1:c3a2a8b1326850f05e8c3df6a7305902d8319b13
+│     - JLLSource Gzip_jll  sha1:8529081ed272fe664e6f443aad17e9f556429879
+│     - JLLSource Bzip2_jll  sha1:85d6b3c7d19cb820d9426d7c9ed0a581998da2b2
+│     - JLLSource unzip_jll  sha1:a07d565f19435ec706153d73656f7f6e571996d8
+│     - JLLSource Zstd_jll  sha1:9ecc08626722c3a0c44f5d686deb815100ad90a7
+│     - JLLSource XZ_jll  sha1:2e4a13dabe6042122a014e3377e78e48ee0c3284
+│     - JLLSource Zlib_jll  sha1:3e5d79fad08b74b404fbcd65f4a08e7be4fddf38
+│     - JLLSource Vim_jll  sha1:49237b707e236f2744121a9e5cf4f5d8c4c50ee3
+│     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
+│     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
+│     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
+│     - JLLSource CompilerSupportLibraries_jll  sha1:ae79294c12d14270c41e713ef01d8eb81b3bf11c
+│   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
+│     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
+│     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
+│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
+│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
+│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
+│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
+│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
+│     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
+│   /workspace/destdir/target-aarch64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│   /workspace/metadir = sha1:091bf082e48cbb7ce5a24f701eeacc6a117df8c9
+│     - GeneratedSource:  sha1:693ad3f9fb2974038857fa03f1fb6338f068db9e
+│   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
+│     - DirectorySource:  sha1:dbeb610a5ce1290d66c3340ff123041d079df083
+│   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│ [environment]
+│   BinaryBuilder2 v1.2.2 = sha1:fc730fd71fcc6996072126b5056b28a235b3cb28
+│   BinaryBuilderAuditor v0.3.0 = sha1:6e06ec871d08017cf16402e743f91a4e2807c24b
+│   BinaryBuilderGitUtils v0.3.0 = sha1:9fe8fe2a6fec7bcbf47cdca0e3a6189989ff5f4a
+│   BinaryBuilderPlatformExtensions v0.2.1 = sha1:0932b3529a238dc2db243b16c170b93d197345cf
+│   BinaryBuilderProducts v0.3.0 = sha1:909099b068360e9edca71294f212a44080455ba3
+│   BinaryBuilderSources v0.2.5 = sha1:51e7fd808de0cb6ec9e256d9b468d4728d23eb99
+│   BinaryBuilderToolchains v0.3.4 = sha1:864a849652194a89fc00ad173392b66386d716ec
+│   JLLGenerator v0.5.2 = sha1:a6c22056b4f70a3024f47adf625f790622cf5bf1
+│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
+│   LazyJLLWrappers v1.2.1 = sha1:e6ee0a34be8d06343ad0c72cfeddd4c1b5d8f0cf
+│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
+│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
+│   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
+└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/BuildConfig.jl:289
+┌ Debug: ExtractConfig hash buffer:
+│ [extraction_metadata]
+│   build_hash = sha1:fd633e730dc47f012582f48b44393503f45257aa
+│   script_hash = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
+│ [products]
+│   libfoo = [&quot;libfoo&quot;]
+└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/ExtractConfig.jl:112
+sha1:e53042b52d7a3e7371da37a12e14aba39ce9258d</code></pre><h2 id="Future-work"><a class="docs-heading-anchor" href="#Future-work">Future work</a><a id="Future-work-1"></a><a class="docs-heading-anchor-permalink" href="#Future-work" title="Permalink"></a></h2><ul><li>It would be nice to not load <em>everything</em> into memory at boot, and instead only look things up when necessary.  Otherwise, I could imagine this getting slightly unwieldy in the future, for large <code>BuildCache</code>s.</li><li>We should come up with a good default heuristic for when to call <code>prune!(bc)</code>.</li><li>When hacking on BB2 itself, the <code>BuildCache</code> is all but useless, because of the <code>[environment]</code> section of the <code>spec_hash(::BuildConfig)</code> changing every time.  It would be nice if the <code>BuildCache</code> was either more granular (e.g. only depended on certain functions within BB2?  Is such a thing possible?)</li></ul></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../launch_code_server/">« VSCode debugging</a><a class="docs-footer-nextpage" href="../BuildTargetSpec/">BuildTargetSpec »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Tuesday 3 November 2026 10:58">Tuesday 3 November 2026</span>. Using Julia version 1.12.7.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
