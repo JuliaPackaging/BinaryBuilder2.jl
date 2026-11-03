@@ -106,12 +106,59 @@ using JLLGenerator
         mkpath(joinpath(cache_dir, bytes2hex(patchelf_extract_entry.artifact)))
         rm(joinpath(cache_dir, bytes2hex(artifact1_hash)); recursive=true)
         rm(joinpath(cache_dir, bytes2hex(artifact2_hash)); recursive=true)
+        # Also drop build1's log so that its build entry is pruned, while build2's survives.
+        rm(joinpath(cache_dir, bytes2hex(build_log1_hash)); recursive=true)
 
-        prune!(bc2)
+        # prune!() also removes the aux files of pruned entries (and anything that
+        # isn't named after a cache hash) from `cache_dir`, but nothing else.
+        env_path(h) = joinpath(cache_dir, "envs", "$(bytes2hex(h)).env")
+        jlp_path(h) = joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h)).jlp")
+        @test all(isfile, env_path.([build1_hash, build2_hash, patchelf_build_hash]))
+        @test all(isfile, jlp_path.([extract1_hash, extract2_hash, patchelf_extract_hash]))
+        src_path(h) = joinpath(cache_dir, "sources", "$(bytes2hex(h)).toml")
+        @test isfile(src_path(build1_hash))
+        # build2 was stored without source records; give it a sources file so we can
+        # check that the sources of a surviving entry are kept.
+        export_source_records(build1_sources, src_path(build2_hash))
+        touch(joinpath(cache_dir, "envs", "not_a_hash.env"))
+        touch(joinpath(cache_dir, "sources", "not_a_hash.toml"))
+        touch(joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(patchelf_extract_hash)).txt"))
+
+        # Populate the working directory with lookalike files that must survive.
+        cwd_dir = mktempdir()
+        cwd_files = [
+            joinpath(cwd_dir, "envs", "$(bytes2hex(build1_hash)).env"),
+            joinpath(cwd_dir, "envs", "not_a_hash.env"),
+            joinpath(cwd_dir, "jll_lib_products", "$(bytes2hex(extract1_hash)).jlp"),
+            joinpath(cwd_dir, "sources", "$(bytes2hex(build1_hash)).toml"),
+        ]
+        for f in cwd_files
+            mkpath(dirname(f))
+            touch(f)
+        end
+
+        cd(cwd_dir) do
+            prune!(bc2)
+        end
+        @test all(isfile, cwd_files)
+        rm(cwd_dir; recursive=true)
+
+        @test !isfile(env_path(build1_hash))
+        @test isfile(env_path(build2_hash))
+        @test isfile(env_path(patchelf_build_hash))
+        @test !isfile(jlp_path(extract1_hash))
+        @test !isfile(jlp_path(extract2_hash))
+        @test isfile(jlp_path(patchelf_extract_hash))
+        @test sort(readdir(joinpath(cache_dir, "envs"))) == sort(["$(bytes2hex(h)).env" for h in (build2_hash, patchelf_build_hash)])
+        @test readdir(joinpath(cache_dir, "jll_lib_products")) == ["$(bytes2hex(patchelf_extract_hash)).jlp"]
+        @test readdir(joinpath(cache_dir, "sources")) == ["$(bytes2hex(build2_hash)).toml"]
+
         @test !haskey(bc2, build1_hash, extract1_hash)
         @test !haskey(bc2, build2_hash, extract2_hash)
         @test !haskey(bc2, build1_hash, extract2_hash)
         @test !haskey(bc2, build2_hash, extract1_hash)
+        @test !haskey(bc2.build_entries, build1_hash)
+        @test haskey(bc2.build_entries, build2_hash)
         @test get(bc2, patchelf_build_hash, patchelf_extract_hash) == (patchelf_build_entry, patchelf_extract_entry)
 
         # Wipe out our cache_dir, create an empty bc3, then import from the archive directory
