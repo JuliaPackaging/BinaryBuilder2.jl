@@ -210,8 +210,19 @@ function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{Packag
 end
 
 function JLLSourceRecords(result::ExtractResult)
-    build_config = result.config.build.config
-    return [JLLSourceRecord(s) for s in build_config.source_trees[source_prefix()]]
+    build_result = result.config.build
+    # Builds record these while their sources are on disk, and the build cache carries
+    # them along, so a cached build needs no sources to be packaged.
+    if build_result.source_records !== nothing
+        return build_result.source_records
+    end
+
+    # A cached build whose cache entry has no source records: fetch the sources, as
+    # `content_hash()` needs them on disk.
+    build_config = build_result.config
+    sources = build_config.source_trees[source_prefix()]
+    prepare_source_tree(build_config, source_prefix(), sources)
+    return source_records(build_config)
 end
 
 function JLLProducts(result::ExtractResult)
