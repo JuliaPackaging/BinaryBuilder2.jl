@@ -21,7 +21,11 @@ DocTestSetup = quote
     using BinaryBuilder2: spec_hash
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
     meta = BuildMeta(;dry_run=["all"])
-    bts = apply_spec_plan(spec_plan, native_linux, native_linux)
+    # Pin the platform rather than using `native_linux`, so that the expected
+    # output below (which contains platform-specific prefixes, ordering and
+    # hashes) is the same no matter which machine runs the doctests.
+    doc_platform = Platform("aarch64", "linux")
+    bts = apply_spec_plan(spec_plan, doc_platform, doc_platform)
     build_config = BuildConfig(meta, "foo", v"1.0.0", [], bts, "true")
     prepare(build_config)
 
