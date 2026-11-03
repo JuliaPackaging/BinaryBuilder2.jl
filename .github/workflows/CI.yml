@@ -16,6 +16,17 @@ permissions:
   actions: write
 
 jobs:
+  # Decides which subprojects to test. On pull requests, only subprojects
+  # affected by the PR's changes are tested; every other trigger tests all of
+  # them. See .github/scripts/affected_projects.py for how changed paths map
+  # to subprojects. In short:
+  #   - CI.yml or .github/scripts/ changed: test everything.
+  #   - A file inside a subproject changed: test it and, transitively, every
+  #     subproject that names it in [deps], [weakdeps] or [extras].
+  #   - The root Project.toml changed: test `.` and its [workspace] members.
+  #   - docs/, *.md, LICENSE, JuliaCon2024/, other .github/ files: no tests.
+  #   - Anything else (src/, test/, share/, bootstrap/, ...) belongs to
+  #     BinaryBuilder2.jl itself (`.`).
   discover:
     name: Discover subprojects
     runs-on: ubuntu-latest
@@ -23,14 +34,26 @@ jobs:
       projects: ${{ steps.set-matrix.outputs.projects }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # For pull requests this checks out the merge commit; its first
+          # parent is the base branch, so the PR's changes are HEAD^1...HEAD.
+          fetch-depth: 2
       - id: set-matrix
+        env:
+          EVENT_NAME: ${{ github.event_name }}
         run: |
-          projects=$( { echo '.'; for f in */Project.toml; do d=$(dirname "$f"); [ "$d" = docs ] && continue; echo "$d"; done; } | jq -R . | jq -cs .)
+          if [ "$EVENT_NAME" = pull_request ]; then
+            projects=$(python3 .github/scripts/affected_projects.py HEAD^1 HEAD)
+          else
+            projects=$(python3 .github/scripts/affected_projects.py --all)
+          fi
+          echo "Selected subprojects: $projects"
           echo "projects=$projects" >> "$GITHUB_OUTPUT"
 
   test:
     name: ${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }} - Julia ${{ matrix.julia-version }} - ${{ matrix.runner.arch }}
     needs: discover
+    if: needs.discover.outputs.projects != '[]'
     runs-on: ${{ matrix.runner.os }}
     timeout-minutes: 120
     strategy:
@@ -68,3 +91,19 @@ jobs:
           name: test-files-${{ matrix.runner.arch }}-${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }}
           path: BinaryBuilderToolchains.jl/test/*-files.tar.gz
           if-no-files-found: ignore
+
+  # Single status that reflects the whole workflow, suitable for a required
+  # status check: it succeeds when every selected test passed, including when
+  # no subproject was selected and `test` was skipped.
+  ci-passed:
+    name: CI passed
+    if: always()
+    needs: [discover, test]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          DISCOVER: ${{ needs.discover.result }}
+          TEST: ${{ needs.test.result }}
+        run: |
+          echo "discover: $DISCOVER, test: $TEST"
+          [ "$DISCOVER" = success ] && { [ "$TEST" = success ] || [ "$TEST" = skipped ]; }
