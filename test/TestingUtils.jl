@@ -1,42 +1,25 @@
 module TestingUtils
 using BinaryBuilderPlatformExtensions, BinaryBuilderToolchains
-using BinaryBuilder2: storage_locations, make_target_spec_plan
+using Base.ScopedValues: with
+using BinaryBuilder2: Arena, arena, storage_locations, make_target_spec_plan
 
 # Ensure that `git commit` calls have a git user available
 ENV["GIT_AUTHOR_NAME"] = ENV["GIT_COMMITTER_NAME"] = "BinaryBuilder2 Tester"
 ENV["GIT_AUTHOR_EMAIL"] = ENV["GIT_COMMITTER_EMAIL"] = "bb2@julialang.org"
 
-# A helper function to set storage locations, mostly for testing
+# A helper function to set storage locations, mostly for testing.  The new locations
+# apply within `f()` (and any tasks it starts), and the old ones apply again afterwards.
 function with_storage_locations(f::Function, mappings::Dict{Symbol,String})
-    old_mappings = Dict{Symbol,Arena}()
-
-    # First, ensure that all the mappings are kosher
-    for var in keys(mappings)
+    overrides = Pair[]
+    for (var, depot_path) in mappings
         if !haskey(storage_locations, var)
             error("Invalid storage location variable '$(var)'")
         end
-        old_mappings[var] = storage_locations[var]
+        loc = storage_locations[var]
+        old = arena(loc)
+        push!(overrides, loc.override => Arena(old.pkg_uuid, old.name, old.policies; depot_path))
     end
-
-    # Next, save the old values and set the new values:
-    for (var, new_value) in mappings
-        storage_locations[var][] = Arena(
-            old_mappings[var].uuid,
-            old_mappings[var].name,
-            old_mappings[var].policies;
-            depot_path=new_value,
-        )
-    end
-
-    # Invoke `f()`
-    try
-        f()
-    finally
-        # Restore the old values
-        for (var, old_value) in old_mappings
-            storage_locations[var][] = old_value
-        end
-    end
+    return with(f, overrides...)
 end
 export with_storage_locations
 

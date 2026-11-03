@@ -1,5 +1,6 @@
 using Test, Random
 
+include("StorageLocationsTests.jl")
 include("MonorepoCompatTests.jl")
 include("ContentReflectionTests.jl")
 include("BuildCacheTests.jl")
