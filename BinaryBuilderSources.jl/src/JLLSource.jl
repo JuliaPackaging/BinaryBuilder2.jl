@@ -29,6 +29,35 @@ struct JLLSource <: AbstractSource
     # value of that tag, such as the target runtime libraries and sysroots that a
     # toolchain installs.  These get resolved as if the platform lacked the strict tags.
     exempt_from_strict_tags::Bool
+
+    # A copy of `package` as it was requested, taken before `prepare()` fills the
+    # results of resolution (version, path, tree hash, repo) into `package`.  Never
+    # mutated; registry slicing and `dev_content_hash()` read it in `spec_hash()`.
+    spec::PkgSpec
+
+    # Everything about this request that is fixed at construction, serialized for
+    # `spec_hash()`, which appends the parts that must be read at call time.
+    input_block::String
+
+    function JLLSource(package::PkgSpec, platform::AbstractPlatform, target::String,
+                       artifact_paths::Vector{String}, warn_on_overwrite::Bool,
+                       exempt_from_strict_tags::Bool, spec::PkgSpec = deepcopy(package))
+        input_block = string(
+            "name = ", spec.name, "\n",
+            "version = ", spec.version != Pkg.Types.VersionSpec() ? string(spec.version) : "", "\n",
+            "path = ", something(spec.path, ""), "\n",
+            "tree_hash = ", something(spec.tree_hash, ""), "\n",
+            "repo_source = ", something(spec.repo.source, ""), "\n",
+            "repo_rev = ", something(spec.repo.rev, ""), "\n",
+            "platform = ", triplet(platform), "\n",
+            "exempt_from_strict_tags = ", exempt_from_strict_tags, "\n",
+            # Which tags are strict decides which artifacts may be selected.
+            "strict_tags = ", join(strict_tags(), ","), "\n",
+            "target = ", target, "\n",
+        )
+        return new(package, platform, target, artifact_paths, warn_on_overwrite,
+                   exempt_from_strict_tags, spec, input_block)
+    end
 end
 
 function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "",
@@ -55,7 +84,7 @@ end
 function retarget(jll::JLLSource, new_target::String)
     noabspath!(new_target)
     return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths,
-                     jll.warn_on_overwrite, jll.exempt_from_strict_tags)
+                     jll.warn_on_overwrite, jll.exempt_from_strict_tags, jll.spec)
 end
 
 """
@@ -115,7 +144,9 @@ resolution_platform(jll::JLLSource) = jll.exempt_from_strict_tags ? drop_strict_
 When we stack multiple independent resolutions of packages together into a
 single prefix, we sometimes try to install dependencies more than once.  This
 method deduplicates JLLs by attempting to constrain down to a single version
-bound that satisfies all duplicate JLLs.  Usage:
+bound that satisfies all duplicate JLLs.  A JLL whose version gets narrowed this way
+is replaced by a new `JLLSource` requesting the narrowed version; the given JLLs are
+not modified.  Usage:
 
 ```
 jlls = deduplicate_jlls(jlls)
@@ -148,12 +179,18 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
         k_idx = findfirst(((k,j),) -> k == key, seen_jlls)
         if k_idx !== nothing
             seen_jll = seen_jlls[k_idx][2]
-            # Compute new version that is the intersection of the versions
-            new_version = insersect_versions(seen_jll.package.version, jll.package.version)
+            # Compute new version that is the intersection of the requested versions
+            new_version = insersect_versions(seen_jll.spec.version, jll.spec.version)
             if !isa(new_version, VersionNumber) && isempty(new_version)
-                throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jll.package.version) ∩ $(jll.package.version)"))
+                throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jll.spec.version) ∩ $(jll.spec.version)"))
             end
-            seen_jll.package.version = new_version
+            package = deepcopy(seen_jll.package)
+            package.version = new_version
+            spec = deepcopy(seen_jll.spec)
+            spec.version = new_version
+            seen_jlls[k_idx] = (key, JLLSource(package, seen_jll.platform, seen_jll.target,
+                                               copy(seen_jll.artifact_paths), seen_jll.warn_on_overwrite,
+                                               seen_jll.exempt_from_strict_tags, spec))
         else
             push!(seen_jlls, (key, jll))
         end
@@ -194,32 +231,19 @@ end
 
 # This is different from `content_hash()` in that it represents all the _inputs_
 # for this `JLLSource`, but not the _output_ of resolution.  This is used to
-# build a mapping from inputs to outputs for caching.
+# build a mapping from inputs to outputs for caching.  The parts of the request
+# that can't change are in `jll.input_block`; the rest are read here, on every call.
 function spec_hash(jll::JLLSource; registries::Vector{Pkg.Registry.RegistryInstance})
-    pkg = jll.package
     return SHA1Hash(sha1(string(
-        # These pieces of information are meant to be sensitive to anything that
-        # could cause us to resolve to a different `artifact_path`, regardless of
-        # changes to the registry.
-        pkg.name,
-        pkg.version != Pkg.Types.VersionSpec() ? string(pkg.version) : "",
-        something(pkg.path, ""),
+        jll.input_block,
         # A JLL developed by path (as a `Universe` does with what it builds) changes in
         # place when it is rebuilt: its path alone would keep stale caches alive.
-        dev_content_hash(pkg),
-        something(pkg.tree_hash, ""),
-        something(pkg.repo.source, ""),
-        something(pkg.repo.rev, ""),
-        triplet(resolution_platform(jll)),
-        # Which tags are strict decides which artifacts may be selected, and the list
-        # can change at runtime (see `strict_tags()`).
-        join(strict_tags(), ","),
-        jll.target,
+        "dev_content = ", dev_content_hash(jll.spec), "\n",
         # And then we add in registry information to be sensitive to that as well.  We
         # only mix in the slice of the registries that this JLL can actually resolve
         # against, so that the constant churn of unrelated packages in `General` doesn't
         # invalidate our caches.
-        registry_slice_hash(pkg, registries),
+        "registry_slice = ", registry_slice_hash(jll.spec, registries), "\n",
     )))
 end
 function dev_content_hash(pkg)
