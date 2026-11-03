@@ -7,28 +7,48 @@
 #      in scratchspaces in your main Julia depot (usually `~/.julia`)
 
 using ScratchSpaceGarbageCollector, Scratch, Preferences, Dates
+using Base.ScopedValues: ScopedValue
 
-# Used by `with_storage_locations()` in the test suite
-const storage_locations = Dict{Symbol,Ref{Arena}}()
+"""
+    StorageLocation
+
+A named directory tree managed by a scratch-space `Arena`.  Unless overridden, the
+`Arena` is created once per process from the `<name>_depot` and `<name>_max_age_hours`
+preferences, the first time it is requested via `arena()`.  It can be replaced
+within a dynamic scope through the `override` `ScopedValue`, e.g.
+`with(f, loc.override => other_arena)`.
+"""
+struct StorageLocation
+    name::String
+    default::OncePerProcess{Arena}
+    override::ScopedValue{Union{Nothing,Arena}}
+end
+
+function StorageLocation(name::String)
+    default = OncePerProcess{Arena}() do
+        max_age = @load_preference(string(name, "_max_age_hours"), "240")
+        depot_path = @load_preference(string(name, "_depot"), first(Base.DEPOT_PATH))
+        return Arena(
+            @pkg_uuid(),
+            name,
+            [MaxAgePolicy(Hour(parse(Int, max_age)))];
+            depot_path,
+        )
+    end
+    return StorageLocation(name, default, ScopedValue{Union{Nothing,Arena}}(nothing))
+end
+
+arena(loc::StorageLocation) = something(loc.override[], loc.default())
+
+# All storage locations, keyed by name.  Used by `with_storage_locations()` in the test suite.
+const storage_locations = Dict{Symbol,StorageLocation}()
 
 macro define_storage_location(name, sub_module = nothing)
-    arena_name = Symbol(string(name, "_arena"))
+    location_name = Symbol(string(name, "_location"))
     initializer = Symbol(string("init_", name))
     return quote
-        const $(esc(arena_name)) = Ref{Arena}()
+        const $(esc(location_name)) = StorageLocation($(string(name)))
         function $(esc(initializer))()
-            # Load values from preferences
-            max_age = @load_preference($(string(esc(name), "_max_age_hours")), "240")
-            depot_path = @load_preference($(string(esc(name),"_depot")), first(Base.DEPOT_PATH))
-
-            # Initialize our arena
-            $(esc(arena_name))[] = Arena(
-                @pkg_uuid(),
-                $(string(name)),
-                [MaxAgePolicy(Hour(parse(Int, max_age)))];
-                depot_path,
-            )
-
             # Set submodule functions to point to our function, if necessary.
             if $(esc(sub_module)) !== nothing
                 getproperty($(esc(sub_module)), $(QuoteNode(Symbol(string("_", name)))))[] = $(esc(name))
@@ -37,15 +57,10 @@ macro define_storage_location(name, sub_module = nothing)
         push!(init_hooks, $(esc(initializer)))
 
         Base.@__doc__ function $(esc(name))(subpath::AbstractString)
-            # This can happen e.g. in precompile workloads
-            if !isassigned($(esc(arena_name)))
-                $(esc(initializer))()
-            end
-            return @get_scratch!($(esc(arena_name))[], subpath)
+            return @get_scratch!(arena($(esc(location_name))), subpath)
         end
 
-        # Add this storage location to our mapping of storage locations
-        storage_locations[Symbol($(string(name)))] = $(esc(arena_name))
+        storage_locations[Symbol($(string(name)))] = $(esc(location_name))
     end
 end
 
