@@ -452,8 +452,8 @@ function prune!(bc::BuildCache)
         end
 
         # Delete anything that isn't a hash name:
-        try
-            hash = SHA1Hash(filename[1:end-length(ext)])
+        hash = try
+            SHA1Hash(filename[1:end-length(ext)])
         catch
             return true
         end
@@ -476,8 +476,8 @@ function prune!(bc::BuildCache)
     end
 
     # Next, prune the environments and jll_lib_products to match the hashes that are preserved
-    prune_aux_dir(keys(bc.build_entries), ".env", "envs")
-    prune_aux_dir(keys(bc.extract_entries), ".jlp", "jll_lib_products")
+    prune_aux_dir(keys(bc.build_entries), ".env", joinpath(bc.cache_dir, "envs"))
+    prune_aux_dir(keys(bc.extract_entries), ".jlp", joinpath(bc.cache_dir, "jll_lib_products"))
     prune_aux_dir(keys(bc.build_entries), ".toml", joinpath(bc.cache_dir, "sources"))
 end
 
