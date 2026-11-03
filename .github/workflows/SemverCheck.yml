@@ -33,10 +33,16 @@ jobs:
       # here than in a normal job: ~15s warm versus ~3.5min cold.
       - uses: julia-actions/cache@v3
 
+      # Missing bumps are reported through SemverChecker's error annotations on
+      # each Project.toml and its job summary; the job itself always passes so
+      # PRs that are not yet ready to bump versions stay green.
+      #
       # --skip=contrib prunes JLLGenerator.jl/contrib/stdlib/, which holds 21
       # pinned stdlib JLL stubs used as test fixtures. They are not packages
       # this repository releases, and checking them buries the real report.
       - name: Check that versions are bumped
+        id: semver
+        continue-on-error: true
         run: |
           julia --color=yes -e '
             using Pkg
@@ -46,7 +52,7 @@ jobs:
             exit(SemverChecker.main())' -- --skip=contrib --summary --logdir=semver-logs
 
       - uses: actions/upload-artifact@v7
-        if: failure()
+        if: steps.semver.outcome == 'failure'
         with:
           name: semver-logs
           path: semver-logs/
