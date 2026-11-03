@@ -330,8 +330,21 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @test isempty(bzip2_dep.artifact_paths)
             @test isempty(zstd_dep.artifact_paths)
 
+            # `spec_hash()` hashes the inputs of resolution, so `prepare()` writing the
+            # resolved version, tree hash, etc... into `package` must not change it.
+            jll_registries = Pkg.Registry.reachable_registries(; depots=[BinaryBuilderSources.default_jll_source_depot()])
+            pre_prepare_hashes = spec_hash.([bzip2_dep, zstd_dep]; registries=jll_registries)
+            pre_prepare_cache_name = BinaryBuilderSources.jll_cache_name([bzip2_dep, zstd_dep], jll_registries)
+
             # Download the files, check that they have artifact paths now:
             prepare([bzip2_dep, zstd_dep])
+            @test bzip2_dep.package.tree_hash !== nothing
+            @test spec_hash.([bzip2_dep, zstd_dep]; registries=jll_registries) == pre_prepare_hashes
+            @test BinaryBuilderSources.jll_cache_name([bzip2_dep, zstd_dep], jll_registries) == pre_prepare_cache_name
+            # Retargeting carries the requested spec along with the resolved package, and
+            # the target is part of what is requested.
+            @test spec_hash(retarget(bzip2_dep, ""); registries=jll_registries) == pre_prepare_hashes[1]
+            @test spec_hash(retarget(bzip2_dep, "ext"); registries=jll_registries) != pre_prepare_hashes[1]
             @test !isempty(bzip2_dep.artifact_paths)
             @test !isempty(zstd_dep.artifact_paths)
             depot_artifacts_dir = joinpath(source_download_cache("jllsource_depot"), "artifacts")
@@ -507,7 +520,15 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 PackageSpec(;name="Zstd_jll", version=zstd_dep.package.version),
                 HostPlatform(),
             )
-            @test length(deduplicate_jlls([zstd_any_dep, zstd_specific_dep])) == 1
+            any_hash = spec_hash(zstd_any_dep; registries=jll_registries)
+            deduped = deduplicate_jlls([zstd_any_dep, zstd_specific_dep])
+            @test length(deduped) == 1
+            @test startswith(source(only(deduped)), "Zstd_jll@v")
+            # Intersecting the version constraints changes what is requested, and so the
+            # hash, of the JLL that replaces `zstd_any_dep`; `zstd_any_dep` itself is untouched.
+            @test spec_hash(only(deduped); registries=jll_registries) != any_hash
+            @test spec_hash(zstd_any_dep; registries=jll_registries) == any_hash
+            @test source(zstd_any_dep) == "Zstd_jll"
             @test startswith(source(zstd_specific_dep), "Zstd_jll@v")
 
             # Test that disjoint versions throw an error:
@@ -517,7 +538,6 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             )
             @test_throws ArgumentError deduplicate_jlls([zstd_impossible_dep, zstd_specific_dep])
             @test startswith(source(zstd_specific_dep), "Zstd_jll@v")
-            @test startswith(source(zstd_any_dep), "Zstd_jll@v")
 
             # Test that disjoint versions in separate prefixes is okay:
             @test length(deduplicate_jlls([

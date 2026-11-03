@@ -300,6 +300,46 @@ end
     clear_download_cache()
 end
 
+@testset "archives import into a cache that a fresh session hits" begin
+    # An uncached build exports its archives keyed by `spec_hash(config)`, which it first
+    # computes after `prepare()` has resolved the toolchain JLLs.  A later session
+    # computes it before resolving anything, and must still find those archives.
+    source_dir = mktempdir()
+    write(joinpath(source_dir, "hello.txt"), "hello $(randstring(16))\n")
+    build_script = raw"""
+    mkdir -p ${prefix}/share
+    cp hello.txt ${prefix}/share/
+    mkdir -p ${prefix}/share/licenses/hello
+    echo "public domain" > ${prefix}/share/licenses/hello/LICENSE.md
+    """
+    extract_script = raw"extract ${prefix}/share/**"
+    products = [FileProduct("share/hello.txt", :hello_txt)]
+    make_config(meta) = BuildConfig(
+        meta,
+        "hello",
+        v"1.0.0",
+        [DirectorySource(source_dir)],
+        apply_spec_plan(spec_plan, native_linux, native_linux),
+        build_script,
+    )
+
+    archive_dir = mktempdir()
+    meta = BuildMeta(; verbose=false, archive_dir)
+    build_result = build!(make_config(meta); disable_cache=true)
+    @test build_result.status == :success
+    extract_result = extract!(ExtractConfig(build_result, extract_script, products); disable_cache=true)
+    @test extract_result.status == :success
+    @test !isempty(readdir(archive_dir))
+
+    fresh_meta = BuildMeta(; verbose=false)
+    empty!(fresh_meta.build_cache.build_entries)
+    empty!(fresh_meta.build_cache.extract_entries)
+    import_archives(fresh_meta.build_cache, archive_dir)
+    @test length(fresh_meta.build_cache.build_entries) == 1
+    cached_build_result = build!(make_config(fresh_meta); extract_arg_hints=[(extract_script, products)])
+    @test cached_build_result.status == :cached
+end
+
 @testset "atomic_patch" begin
     meta = BuildMeta(; verbose=false)
     # First, apply the patch and all is good
