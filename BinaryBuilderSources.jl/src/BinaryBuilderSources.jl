@@ -131,6 +131,7 @@ specification of the source.
 function content_hash end
 
 
+include("Retry.jl")
 include("FileArchiveSource.jl")
 include("DirectorySource.jl")
 include("GeneratedSource.jl")
