@@ -161,7 +161,6 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
 
     # These tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = String[]
-    @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
     # Apple has some extra simple tools
     if Sys.isapple(p)
         append!(simple_tools, [
@@ -428,6 +427,12 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
 
     # `ld` is a simple tool, except that it can be wrapped with `ccache`:
     make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix)
+
+    # `clang -fuse-ld=<name>` looks for a linker called `ld64.<name>` when targeting
+    # macOS, and `ld.<name>` everywhere else.  Our clang wrappers pass `-fuse-ld=<triplet>`
+    # so that clang links through this wrapper rather than the bare `ld` executable.
+    ld_fuse_name = string(Sys.isapple(p) ? "ld64." : "ld.", triplet(gcc_platform(p)))
+    compiler_wrapper(_ld_wrapper, joinpath(dir, ld_fuse_name), "$(toolchain_prefix)/bin/$(gcc_triplet)-ld")
 
     # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
     make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)

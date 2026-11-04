@@ -983,8 +983,13 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
                 "--rtlib=$(get_compiler_runtime_str(toolchain))",
             ])
 
-            # clang doesn't invoke the `ld` wrapper, it invokes the binary directly,
-            # so we have to include this here as well.
+            # Link through the `ld.<triplet>` (`ld64.<triplet>` on macOS) wrapper from our
+            # `BinutilsToolchain`, unless the user has chosen a linker themselves.
+            flagmatch(io, [!flag"-fuse-ld=.*"r, !flag"--ld-path=.*"r]) do io
+                append_flags(io, :PRE, ["-fuse-ld=$(gcc_triplet)"])
+            end
+
+            # A user-chosen linker bypasses our `ld` wrapper, so disable timestamps here too.
             if Sys.iswindows(p)
                 append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
             end
