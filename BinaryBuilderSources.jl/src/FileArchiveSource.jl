@@ -148,15 +148,18 @@ function prepare(fas::FileArchiveSource; verbose::Bool = false)
             return
         end
 
-        # Download next to the target and move it into place, so that nobody ever sees
-        # (and fails to verify) a partially-downloaded file, even if we are interrupted.
-        temp_target, temp_io = mktemp(dirname(download_target); cleanup=false)
-        close(temp_io)
-        try
-            Downloads.download(fas.url, temp_target; headers=download_headers(fas.url))
-            mv(temp_target, download_target; force=true)
-        finally
-            rm(temp_target; force=true)
+        # Each attempt downloads next to the target and moves it into place only once it
+        # has completed, so that nobody ever sees (and fails to verify) a partially-downloaded
+        # file, even if the download fails or we are interrupted.
+        with_network_retries("Downloading $(fas.url)") do
+            temp_target, temp_io = mktemp(dirname(download_target); cleanup=false)
+            close(temp_io)
+            try
+                Downloads.download(fas.url, temp_target; headers=download_headers(fas.url))
+                mv(temp_target, download_target; force=true)
+            finally
+                rm(temp_target; force=true)
+            end
         end
 
         # If we still don't verify properly, throw an error

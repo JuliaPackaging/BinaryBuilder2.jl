@@ -1,4 +1,4 @@
-using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival, TOML
+using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival, TOML, Sockets, Downloads
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash, tracks_branch
 using BinaryBuilderSources: strict_tags, drop_strict_tags, resolution_platform
@@ -777,5 +777,165 @@ end
         # Calling it again (with the links already in place) is a no-op
         make_thin_depot!(thin, parent)
         @test isdir(joinpath(thin, "packages", "Foo", "abcd"))
+    end
+end
+
+@testset "Network retries" begin
+    using BinaryBuilderSources: network_retry_delays, with_network_retries, is_transient_network_error
+
+    # Serve `body` over HTTP on localhost, misbehaving on the first requests as dictated
+    # by `failures` (one entry per request; `:drop` closes the connection without an answer,
+    # `:truncate` sends only half of the promised body, and an integer answers with that
+    # HTTP status).  Once `failures` runs out, every request is served properly, unless
+    # `fallback` gives a failure to repeat forever.  `f(url, num_requests)` is called with
+    # the URL to fetch and a `Ref` counting the requests made so far.
+    function with_flaky_server(f, body::Vector{UInt8}, failures::Vector; fallback = nothing)
+        port, server = listenany(ip"127.0.0.1", 0)
+        num_requests = Ref(0)
+        server_task = @async while true
+            sock = try
+                accept(server)
+            catch
+                break
+            end
+            try
+                while !isempty(strip(readline(sock)))
+                end
+                num_requests[] += 1
+                behavior = num_requests[] <= length(failures) ? failures[num_requests[]] : fallback
+                if behavior === :drop
+                elseif behavior === :truncate
+                    write(sock, "HTTP/1.1 200 OK\r\nContent-Length: $(length(body))\r\nConnection: close\r\n\r\n")
+                    write(sock, body[1:div(length(body), 2)])
+                elseif behavior isa Integer
+                    write(sock, "HTTP/1.1 $(behavior) Nope\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")
+                else
+                    write(sock, "HTTP/1.1 200 OK\r\nContent-Length: $(length(body))\r\nConnection: close\r\n\r\n")
+                    write(sock, body)
+                end
+            catch e
+                e isa Base.IOError || rethrow()
+            finally
+                close(sock)
+            end
+        end
+        try
+            f("http://127.0.0.1:$(port)/payload.bin", num_requests)
+        finally
+            close(server)
+            wait(server_task)
+        end
+    end
+
+    # Files in the download cache directory other than the final download, its
+    # hash cache file and its lock, i.e. leftovers from failed attempts.
+    function stray_files(download_path)
+        dir = dirname(download_path)
+        isdir(dir) || return String[]
+        return filter(readdir(dir)) do name
+            !startswith(name, basename(download_path))
+        end
+    end
+
+    body = rand(UInt8, 64*1024)
+    body_hash = bytes2hex(sha256(body))
+    old_delays = network_retry_delays[]
+    try
+        network_retry_delays[] = [0.0, 0.0, 0.0]
+        with_temp_storage_locations() do
+            @testset "transient failures are retried" begin
+                with_flaky_server(body, [:drop, 503, :truncate]) do url, num_requests
+                    fs = FileSource(url, body_hash)
+                    download_path = download_cache_path(fs)
+                    @test_logs (:warn, r"attempt 1/4") (:warn, r"attempt 2/4") (:warn, r"attempt 3/4") prepare(fs)
+                    @test num_requests[] == 4
+                    @test verify(fs)
+                    @test read(download_path) == body
+                    @test isempty(stray_files(download_path))
+                end
+            end
+
+            @testset "exhausted retries" begin
+                with_flaky_server(body, []; fallback=503) do url, num_requests
+                    fs = FileSource(url, body_hash)
+                    download_path = download_cache_path(fs)
+                    @test_throws Downloads.RequestError prepare(fs)
+                    @test num_requests[] == 4
+                    @test !ispath(download_path)
+                    @test isempty(stray_files(download_path))
+                end
+                with_flaky_server(body, []; fallback=:truncate) do url, num_requests
+                    fs = FileSource(url, body_hash)
+                    download_path = download_cache_path(fs)
+                    @test_throws Downloads.RequestError prepare(fs)
+                    @test num_requests[] == 4
+                    @test !ispath(download_path)
+                    @test isempty(stray_files(download_path))
+                end
+            end
+
+            @testset "permanent failures are not retried" begin
+                with_flaky_server(body, []; fallback=404) do url, num_requests
+                    fs = FileSource(url, body_hash)
+                    download_path = download_cache_path(fs)
+                    @test_throws Downloads.RequestError prepare(fs)
+                    @test num_requests[] == 1
+                    @test !ispath(download_path)
+                end
+
+                # A hash mismatch is not a network problem, so it is not retried either
+                with_flaky_server(body, []) do url, num_requests
+                    fs = FileSource(url, bytes2hex(sha256(UInt8[])))
+                    @test_throws ArgumentError prepare(fs)
+                    @test num_requests[] == 1
+                end
+            end
+
+            @testset "GitSource" begin
+                mktempdir() do dir
+                    url = joinpath(dir, "nonexistent.git")
+                    gs = GitSource(url, "0"^40)
+                    @test_logs (:warn, r"attempt 1/4") (:warn, r"attempt 2/4") (:warn, r"attempt 3/4") match_mode=:any begin
+                        @test_throws ProcessFailedException prepare(gs)
+                    end
+                    @test !ispath(download_cache_path(gs))
+                end
+            end
+        end
+
+        @testset "with_network_retries" begin
+            # Explicit delays override the default
+            attempts = Ref(0)
+            @test_throws Base.IOError with_network_retries("thing"; delays=[0.0]) do
+                attempts[] += 1
+                throw(Base.IOError("nope", -1))
+            end
+            @test attempts[] == 2
+
+            attempts[] = 0
+            @test with_network_retries("thing") do
+                attempts[] += 1
+                attempts[] < 3 && throw(Base.IOError("nope", -1))
+                return :done
+            end == :done
+            @test attempts[] == 3
+
+            attempts[] = 0
+            @test_throws ErrorException with_network_retries("thing") do
+                attempts[] += 1
+                error("not a network problem")
+            end
+            @test attempts[] == 1
+
+            response(status) = Downloads.Response("http", "http://x", status, "", Pair{String,String}[])
+            @test is_transient_network_error(Downloads.RequestError("http://x", 28, "Operation too slow", response(0)))
+            @test is_transient_network_error(Downloads.RequestError("http://x", 0, "", response(503)))
+            @test is_transient_network_error(Downloads.RequestError("http://x", 0, "", response(429)))
+            @test !is_transient_network_error(Downloads.RequestError("http://x", 0, "", response(404)))
+            @test !is_transient_network_error(Downloads.RequestError("http://x", 3, "URL using bad/illegal format", response(0)))
+            @test !is_transient_network_error(ArgumentError("Hash Mismatch"))
+        end
+    finally
+        network_retry_delays[] = old_delays
     end
 end

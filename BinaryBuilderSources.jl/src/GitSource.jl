@@ -73,7 +73,21 @@ end
 function prepare(gs::GitSource; verbose::Bool = false)
     repo_path = download_cache_path(gs)
     with_download_lock(repo_path) do
-        clone!(gs.url, repo_path; commit=gs.hash, verbose)
+        # `git` exits with the same status for network failures as for e.g. a nonexistent
+        # repository, so every failed `git` invocation is retried.
+        is_transient(e) = e isa ProcessFailedException
+        with_network_retries("Cloning $(gs.url)"; is_transient) do
+            had_repo = ispath(repo_path)
+            try
+                clone!(gs.url, repo_path; commit=gs.hash, verbose)
+            catch
+                # Don't leave a half-cloned repository behind for the next attempt to fetch into.
+                if !had_repo
+                    rm(repo_path; recursive=true, force=true)
+                end
+                rethrow()
+            end
+        end
     end
 
     # If we can't verify after cloning/fetching, we have the wrong hash
