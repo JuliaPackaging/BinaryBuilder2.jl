@@ -161,7 +161,6 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
 
     # These tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = String[]
-    @warn("TODO: Verify that `as` does not need adjusted MACOSX_DEPLOYMENT_TARGET", maxlog=1)
     @warn("TODO: Add in `ld.64` and `ld.target-triplet` again", maxlog=1)
     # Apple has some extra simple tools
     if Sys.isapple(p)
@@ -394,6 +393,12 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
                 # macOS likes to use `arm64`, not `aarch64`:
                 arch_str = arch(p) == "aarch64" ? "arm64" : arch(p)
                 append_flags(io, :PRE, ["-arch", arch_str])
+            end
+
+            # Pin the minimum macOS version to the one in our triplet
+            macos_ver = macos_version(p)
+            if macos_ver !== nothing
+                append_flags(io, :PRE, "-mmacosx-version-min=$(macos_ver)")
             end
 
             # Tell the `as` executable how to find our clang.  We use a special name here
