@@ -4,7 +4,7 @@ uuid = "21737265-7a69-6e4f-4974-6375646f7270"
 version = "0.3.0"
 
 [compat]
-BinaryBuilderSources = "0.2"
+BinaryBuilderSources = "0.2, 0.3"
 JLLGenerator = "0.5"
 KeywordArgumentExtraction = "1.2"
 julia = "1.9"
