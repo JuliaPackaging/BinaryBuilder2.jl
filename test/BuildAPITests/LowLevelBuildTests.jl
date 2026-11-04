@@ -264,7 +264,7 @@ end
     build_meta = BuildMeta(; verbose=false, archive_dir)
     build_result = build!(make_build_config(build_meta); extract_arg_hints=[(extract_script, products)])
     @test build_result.status == :success
-    expected_records = [JLLSourceRecord(source.url, SHA1Hash(treehash(tarball)))]
+    expected_records = [JLLSourceRecord(first(source.urls), SHA1Hash(treehash(tarball)))]
     @test build_result.source_records == expected_records
     extract_result = extract!(ExtractConfig(build_result, extract_script, products))
     @test extract_result.status == :success
