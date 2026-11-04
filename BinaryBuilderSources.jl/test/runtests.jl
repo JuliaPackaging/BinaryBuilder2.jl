@@ -3,6 +3,9 @@ using BinaryBuilderSources: verify, download_cache_path, source_download_cache, 
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash, tracks_branch
 using BinaryBuilderSources: strict_tags, drop_strict_tags, resolution_platform
 using Pkg.Registry: RegistryInstance
+using BinaryBuilderGitUtils: init!, commit!, remote_url
+using BinaryBuilderSources: remote_name
+using Git: git
 
 include("common.jl")
 
@@ -21,7 +24,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             as = ArchiveSource(url, hash)
 
             # Proper construction
-            @test as.url == url
+            @test as.urls == [url]
             @test as.hash == hex2bytes(hash)
             @test as.target == ""
 
@@ -90,7 +93,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             fs = FileSource(url, hash)
 
             # Proper construction
-            @test fs.url == url
+            @test fs.urls == [url]
             @test fs.hash == hex2bytes(hash)
             @test fs.target == basename(url)
 
@@ -141,7 +144,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
         @testset "GitSource" begin
             # Construction works
             gs = GitSource(url, hash)
-            @test gs.url == url
+            @test gs.urls == [url]
             @test gs.hash == hex2bytes(hash)
             @test gs.target == basename(url)[1:end-4]
 
@@ -908,6 +911,166 @@ end
                     fs = FileSource(url, bytes2hex(sha256(UInt8[])))
                     @test_throws ArgumentError prepare(fs)
                     @test num_requests[] == 1
+                end
+            end
+
+            @testset "mirrors" begin
+                # A mirror that doesn't have the file is skipped for the next one
+                with_flaky_server(body, []; fallback=404) do bad_url, bad_requests
+                    with_flaky_server(body, []) do good_url, good_requests
+                        fs = FileSource([bad_url, good_url], body_hash)
+                        @test_logs (:warn, r"trying the next URL") prepare(fs)
+                        @test bad_requests[] == 1
+                        @test good_requests[] == 1
+                        @test read(download_cache_path(fs)) == body
+                    end
+                end
+
+                # So is a mirror serving the wrong file, which never reaches the cache
+                with_flaky_server(reverse(body), []) do bad_url, bad_requests
+                    with_flaky_server(body, []) do good_url, good_requests
+                        fs = FileSource([bad_url, good_url], body_hash)
+                        @test_logs (:warn, r"trying the next URL") prepare(fs)
+                        @test bad_requests[] == 1
+                        @test good_requests[] == 1
+                        @test read(download_cache_path(fs)) == body
+                        @test isempty(stray_files(download_cache_path(fs)))
+                    end
+                end
+
+                # Each URL gets its own retries before the next one is tried
+                with_flaky_server(body, [503, 503]) do flaky_url, flaky_requests
+                    with_flaky_server(body, []) do other_url, other_requests
+                        fs = FileSource([flaky_url, other_url], body_hash)
+                        prepare(fs)
+                        @test flaky_requests[] == 3
+                        @test other_requests[] == 0
+                        @test read(download_cache_path(fs)) == body
+                    end
+                end
+
+                # A URL that runs out of retries falls through to the next one, which gets
+                # a full set of retries of its own
+                with_flaky_server(body, []; fallback=503) do down_url, down_requests
+                    with_flaky_server(body, [:drop, :drop, :drop]) do flaky_url, flaky_requests
+                        fs = FileSource([down_url, flaky_url], body_hash)
+                        @test_logs (:warn, r"trying the next URL") match_mode=:any prepare(fs)
+                        @test down_requests[] == 4
+                        @test flaky_requests[] == 4
+                        @test read(download_cache_path(fs)) == body
+                    end
+                end
+
+                # Once every URL has failed, the error lists each URL's failure
+                with_flaky_server(body, []; fallback=503) do flaky_url, flaky_requests
+                    with_flaky_server(body, []; fallback=404) do missing_url, missing_requests
+                        fs = FileSource([flaky_url, missing_url], body_hash)
+                        err = try
+                            prepare(fs)
+                            nothing
+                        catch e
+                            e
+                        end
+                        @test err isa BinaryBuilderSources.MirrorsFailedError
+                        @test first.(err.errors) == [flaky_url, missing_url]
+                        @test flaky_requests[] == 4
+                        @test missing_requests[] == 1
+                        @test !ispath(download_cache_path(fs))
+                        @test occursin("all 2 URLs failed", sprint(showerror, err))
+                    end
+                end
+
+                # Mirrors don't change where a source is cached, what it is called, or its hash
+                as = ArchiveSource("https://example.com/a.tar.gz", body_hash)
+                as_mirrored = ArchiveSource(["https://example.com/a.tar.gz", "https://mirror.example.com/a.tar.gz"], body_hash)
+                @test as_mirrored.urls == ["https://example.com/a.tar.gz", "https://mirror.example.com/a.tar.gz"]
+                @test download_cache_path(as_mirrored) == download_cache_path(as)
+                @test source(as_mirrored) == source(as)
+                @test spec_hash(as_mirrored) == spec_hash(as)
+                @test retarget(as_mirrored, "foo").urls == as_mirrored.urls
+                @test FileSource(["https://example.com/a.tar.gz", "https://mirror.example.com/b.tar.gz"], body_hash).target == "a.tar.gz"
+                @test_throws ArgumentError FileSource(String[], body_hash)
+            end
+
+            @testset "GitSource mirrors" begin
+                # A bare repository holding the commits of `base_repo` (if any) plus one
+                # more, which writes `content` to a file.  Returns the repository and the
+                # new commit.
+                function make_repo(path, content; base_repo = nothing)
+                    if base_repo === nothing
+                        init!(path)
+                    else
+                        run(git(["clone", "--quiet", "--bare", base_repo, path]))
+                    end
+                    mktempdir() do checkout
+                        run(git(["clone", "--quiet", path, checkout]))
+                        write(joinpath(checkout, "file"), content)
+                        commit!(checkout, content)
+                        push!(checkout)
+                    end
+                    return path, readchomp(git(["-C", path, "rev-parse", "HEAD"]))
+                end
+
+                mktempdir() do dir
+                    upstream, old_commit = make_repo(joinpath(dir, "upstream.git"), "old")
+                    mirror, new_commit = make_repo(joinpath(dir, "mirror.git"), "new"; base_repo=upstream)
+                    missing_repo = joinpath(dir, "missing.git")
+
+                    # The primary URL doesn't have the commit yet, but the mirror does
+                    gs = GitSource([upstream, mirror], new_commit)
+                    @test gs.urls == [upstream, mirror]
+                    @test gs.target == "upstream"
+                    @test source(gs) == upstream
+                    @test download_cache_path(gs) == download_cache_path(GitSource(upstream, new_commit))
+                    @test_logs (:warn, r"trying the next URL") match_mode=:any prepare(gs)
+                    @test verify(gs)
+                    repo_path = download_cache_path(gs)
+                    @test remote_url(repo_path, remote_name(upstream)) == upstream
+                    @test remote_url(repo_path, remote_name(mirror)) == mirror
+                    @test readchomp(git(["-C", repo_path, "symbolic-ref", "HEAD"])) == "refs/heads/main"
+                    mktempdir() do prefix
+                        deploy(gs, prefix)
+                        @test read(joinpath(prefix, "upstream", "file"), String) == "new"
+                    end
+
+                    # Fetching the other URL again does not lose what came from the mirror
+                    gs_old = GitSource([upstream, mirror], old_commit)
+                    @test verify(gs_old)
+                    run(git(["-C", repo_path, "fetch", "--quiet", remote_name(upstream)]))
+                    @test verify(gs)
+
+                    # A first URL that doesn't exist at all: the clone is created from the mirror
+                    gs = GitSource([missing_repo, mirror], new_commit)
+                    @test_logs (:warn, r"trying the next URL") match_mode=:any prepare(gs)
+                    @test verify(gs)
+                    @test remote_url(download_cache_path(gs), remote_name(mirror)) == mirror
+                    # Its `HEAD` is the mirror's default branch, so clones of it check that out
+                    @test readchomp(git(["-C", download_cache_path(gs), "symbolic-ref", "HEAD"])) == "refs/heads/main"
+                    @test readchomp(git(["-C", download_cache_path(gs), "rev-parse", "HEAD"])) == new_commit
+                    mktempdir() do prefix
+                        deploy(gs, prefix)
+                        @test read(joinpath(prefix, "missing", "file"), String) == "new"
+                    end
+
+                    # No URL has the commit: the error lists each URL's failure
+                    gs = GitSource([upstream, mirror], "0"^40)
+                    err = try
+                        prepare(gs)
+                        nothing
+                    catch e
+                        e
+                    end
+                    @test err isa BinaryBuilderSources.MirrorsFailedError
+                    @test first.(err.errors) == [upstream, mirror]
+                    @test all(e isa ArgumentError for (_, e) in err.errors)
+
+                    # A single URL without the commit throws as before
+                    other = joinpath(dir, "other.git")
+                    run(git(["clone", "--quiet", "--bare", upstream, other]))
+                    @test_throws ArgumentError prepare(GitSource(other, new_commit))
+
+                    @test retarget(GitSource([upstream, mirror], new_commit), "foo").urls == [upstream, mirror]
+                    @test_throws ArgumentError GitSource(String[], new_commit)
                 end
             end
 

@@ -62,3 +62,35 @@ function with_network_retries(f::Function, what::AbstractString;
         end
     end
 end
+
+"""
+    to_urls(url)
+
+Normalize the `url` argument of a source constructor, either a single URL or
+a vector of URLs to try in order, to a non-empty `Vector{String}`.
+"""
+to_urls(url::AbstractString) = [string(url)]
+function to_urls(urls::AbstractVector)
+    if isempty(urls)
+        throw(ArgumentError("At least one URL must be given"))
+    end
+    return String[string(u) for u in urls]
+end
+
+"""
+    MirrorsFailedError(errors)
+
+Thrown when downloading a source from every one of its URLs failed; `errors` pairs
+each URL with the error its last attempt failed with.
+"""
+struct MirrorsFailedError <: Exception
+    errors::Vector{Pair{String,Any}}
+end
+
+function Base.showerror(io::IO, e::MirrorsFailedError)
+    print(io, "MirrorsFailedError: all $(length(e.errors)) URLs failed:")
+    for (url, err) in e.errors
+        print(io, "\n  ", url, ": ")
+        showerror(io, err)
+    end
+end
