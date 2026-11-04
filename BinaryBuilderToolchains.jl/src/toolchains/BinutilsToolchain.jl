@@ -186,15 +186,15 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
 
     function _ld_wrapper(io)
         if Sys.iswindows(p)
-            _warn_nondeterministic_definition(io, "uses the '--insert-timestamps' flag which embeds timestamps")
+            _warn_nondeterministic_definition(io, "uses the '--insert-timestamp' flag which embeds timestamps")
 
             # Warn if someone has asked for timestamps
-            flagmatch(io, [flag"--insert-timestamps"]) do io
+            flagmatch(io, [flag"--insert-timestamp"]) do io
                 println(io, "warn_nondeterministic")
             end
 
             # Default to not using timestamps
-            flagmatch(io, [!flag"--insert-timestamps", !flag"--no-insert-timestamps"]) do io
+            flagmatch(io, [!flag"--insert-timestamp", !flag"--no-insert-timestamp"]) do io
                 append_flags(io, :PRE, "--no-insert-timestamp")
             end
         end
