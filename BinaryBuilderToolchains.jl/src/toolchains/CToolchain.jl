@@ -773,6 +773,24 @@ function add_cxxabi_flags(io, toolchain)
 end
 
 """
+    add_unwind_table_flags(io, toolchain, gcc_version)
+
+GCC on aarch64 Linux emits `.eh_frame` unwind tables by default only since
+GCC 8.  Without them, unwinders fall back to slower heuristics and may lose
+frames when profiling, so for older GCC versions we add
+`-fasynchronous-unwind-tables` when compiling.  It is placed in the `PRE` flags
+so that a `-fno-asynchronous-unwind-tables` passed by the user still wins.
+"""
+function add_unwind_table_flags(io, toolchain, gcc_version::VersionNumber)
+    p = toolchain.platform.target
+    if arch(p) == "aarch64" && Sys.islinux(p) && gcc_version < v"8"
+        compile_flagmatch(io) do io
+            append_flags(io, :PRE, "-fasynchronous-unwind-tables")
+        end
+    end
+end
+
+"""
     add_user_flags(io, toolchain)
 
 The user can insert "extra" CFLAGS and LDFLAGS that they want our CToolchain
@@ -844,6 +862,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     function _gcc_wrapper(io)
         add_microarchitectural_flags(io, toolchain)
         add_cxxabi_flags(io, toolchain)
+        add_unwind_table_flags(io, toolchain, gcc_version)
         add_user_flags(io, toolchain)
         add_macos_flags(io, toolchain)
 
