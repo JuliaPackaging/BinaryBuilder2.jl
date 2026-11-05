@@ -209,14 +209,21 @@ end
 
 Open a pull request against `repo` from `head` (of the form `owner:branch`) and return
 its URL.  If a pull request from `head` is already open, it is reused (pushing to `head`
-already updated it) and its URL is returned instead.
+already updated its commits): its title and body are replaced with `title` and `body`,
+and its URL is returned instead.
 """
 function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractString, body::AbstractString)
     with_gh_token(repo) do
-        pr_url = gh_api_jq("/repos/$(repo)/pulls?state=open&head=$(head)", ".[0].html_url")
-        # `--jq` prints `null` as an empty string
-        if pr_url !== nothing && !isempty(pr_url)
-            return pr_url
+        pr = gh_api_jq("/repos/$(repo)/pulls?state=open&head=$(head)", ".[0] // empty | [.number, .html_url] | @tsv")
+        # No open pull request prints nothing
+        if pr !== nothing && !isempty(pr)
+            pr_number, pr_url = split(pr, "\t")
+            # `gh pr edit` fails on repositories it cannot query GitHub Projects (classic) for,
+            # so we use the REST API to update the pull request instead.
+            with_gh() do gh
+                run(pipeline(`$(gh) api -X PATCH /repos/$(repo)/pulls/$(pr_number) -f title=$(title) -f body=$(body)`; stdout=devnull))
+            end
+            return String(pr_url)
         end
         # We use the REST API rather than `gh pr create`, as the latter also queries the
         # parent of a forked `repo`, which may not be accessible with the current token.

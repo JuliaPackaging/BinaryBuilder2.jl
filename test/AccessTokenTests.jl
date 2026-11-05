@@ -117,6 +117,12 @@ end
         build = @set build.name = "Zlib"
         return build
     end
+    # A second version, registered on top of the first one within the same universe
+    jll2_version = v"99.1.0"
+    tag2_name = "Zlib-v$(jll2_version)-$(uni_name)"
+    jll2 = @set jll.version = jll2_version
+    jll2 = @set jll2.builds = map(build -> (@set build.src_version = jll2_version), jll2.builds)
+
     # Exporting the artifacts for the release needs them on disk
     for build in jll.builds
         source = first(build.artifact.download_sources)
@@ -145,7 +151,9 @@ end
             quiet(args) = with_gh() do gh
                 run(pipeline(ignorestatus(`$(gh) $(args)`); stdout=devnull, stderr=devnull))
             end
-            quiet(`release delete $(tag_name) --yes --cleanup-tag --repo $(test_zone)/Zlib_jll.jl`)
+            for tag in (tag_name, tag2_name)
+                quiet(`release delete $(tag) --yes --cleanup-tag --repo $(test_zone)/Zlib_jll.jl`)
+            end
             # Deleting the branch would close the pull request too, but let's be explicit
             for (pr_url, _) in open_prs()
                 quiet(`pr close $(pr_url)`)
@@ -185,10 +193,27 @@ end
                     @test occursin("* Version: v$(jll_version)", pr_body)
                     @test occursin("* Commit: $(local_head(joinpath(depot, "dev", "Zlib_jll")))", pr_body)
 
+                    jll_commit = local_head(joinpath(depot, "dev", "Zlib_jll"))
+
                     # Registering again updates that pull request rather than opening another
                     register_jll!(uni, jll)
                     @test remote_head("General") == local_head(joinpath(depot, "deploy_registries", "General"))
                     @test open_prs() == prs
+
+                    # Registering another version stacks onto that pull request, which
+                    # then describes both versions, each with the JLL commit `General` records
+                    register_jll!(uni, jll2)
+                    @test remote_head("General") == local_head(joinpath(depot, "deploy_registries", "General"))
+                    prs2 = open_prs()
+                    @test length(prs2) == 1
+                    @test only(prs2)[1] == only(prs)[1]
+                    @test only(prs2)[2] == "New versions: Zlib_jll v$(jll_version), v$(jll2_version)"
+                    pr_body = withenv("GH_TOKEN" => test_zone_org_token) do
+                        with_gh(gh -> readchomp(`$(gh) pr view $(only(prs2)[1]) --json body --jq .body`))
+                    end
+                    @test occursin("* Versions:", pr_body)
+                    @test occursin("  * v$(jll_version) (commit: $(jll_commit))", pr_body)
+                    @test occursin("  * v$(jll2_version) (commit: $(local_head(joinpath(depot, "dev", "Zlib_jll"))))", pr_body)
                 end
             end
 
