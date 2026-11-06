@@ -205,13 +205,15 @@ function gh_create(target::String)
 end
 
 """
-    gh_open_pr(repo, head, title, body)
+    gh_open_pr(repo, head, title, body; base = nothing)
 
-Open a pull request against `repo` from `head` (of the form `owner:branch`) and return
-its URL.  If a pull request from `head` is already open, it is reused (pushing to `head`
-already updated it) and its URL is returned instead.
+Open a pull request against the `base` branch (by default, the default branch) of `repo`
+from `head` (of the form `owner:branch`) and return its URL.  If a pull request from `head`
+is already open, it is reused (pushing to `head` already updated it) and its URL is
+returned instead.
 """
-function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractString, body::AbstractString)
+function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractString, body::AbstractString;
+                    base::Union{Nothing,AbstractString} = nothing)
     with_gh_token(repo) do
         pr_url = gh_api_jq("/repos/$(repo)/pulls?state=open&head=$(head)", ".[0].html_url")
         # `--jq` prints `null` as an empty string
@@ -220,9 +222,11 @@ function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractS
         end
         # We use the REST API rather than `gh pr create`, as the latter also queries the
         # parent of a forked `repo`, which may not be accessible with the current token.
-        base = gh_api_jq("/repos/$(repo)", ".default_branch")
         if base === nothing
-            error("Unable to look up default branch of '$(repo)'")
+            base = gh_api_jq("/repos/$(repo)", ".default_branch")
+            if base === nothing
+                error("Unable to look up default branch of '$(repo)'")
+            end
         end
         return with_gh() do gh
             String(readchomp(`$(gh) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
