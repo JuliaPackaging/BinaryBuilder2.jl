@@ -117,27 +117,38 @@ end
         build = @set build.name = "Zlib"
         return build
     end
+    # A second version, registered on top of the first one within the same universe
+    jll2_version = v"99.1.0"
+    tag2_name = "Zlib-v$(jll2_version)-$(uni_name)"
+    jll2 = @set jll.version = jll2_version
+    jll2 = @set jll2.builds = map(build -> (@set build.src_version = jll2_version), jll2.builds)
+    # When opening pull requests, each version gets a `General` branch of its own
+    pr_branch_name(version) = "$(branch_name)-Zlib_jll-v$(version)"
+
     # Exporting the artifacts for the release needs them on disk
     for build in jll.builds
         source = first(build.artifact.download_sources)
         Pkg.Artifacts.download_artifact(Base.SHA1(bytes2hex(build.artifact.treehash)), source.url, bytes2hex(source.tarball_hash))
     end
 
-    function remote_head(repo_name)
-        refs = readchomp(git(["ls-remote", test_zone_url(repo_name), "refs/heads/$(branch_name)"]))
+    function remote_head(repo_name, branch = branch_name)
+        refs = readchomp(git(["ls-remote", test_zone_url(repo_name), "refs/heads/$(branch)"]))
         return isempty(refs) ? nothing : first(split(refs))
     end
     local_head(path) = readchomp(git(["-C", path, "rev-parse", "HEAD"]))
 
-    # The open registration pull requests from our branch against `BinaryBuilderTestZone/General`
-    function open_prs()
+    # The open registration pull requests (URL, title and base branch) from `branch` against
+    # `BinaryBuilderTestZone/General`
+    function open_prs(branch)
         withenv("GH_TOKEN" => test_zone_org_token) do
             prs = with_gh() do gh
-                readchomp(`$(gh) api "/repos/$(test_zone)/General/pulls?state=open&head=$(test_zone):$(branch_name)" --jq '.[] | [.html_url, .title] | @tsv'`)
+                readchomp(`$(gh) api "/repos/$(test_zone)/General/pulls?state=open&head=$(test_zone):$(branch)" --jq '.[] | [.html_url, .title, .base.ref] | @tsv'`)
             end
             return [split(line, "\t") for line in split(prs, "\n"; keepempty=false)]
         end
     end
+    general_branches = [branch_name, pr_branch_name(jll_version), pr_branch_name(jll2_version)]
+    open_prs() = reduce(vcat, open_prs.(general_branches))
 
     # Remove anything a previous deployment left behind, so that each one starts from scratch.
     function reset_test_zone()
@@ -145,17 +156,20 @@ end
             quiet(args) = with_gh() do gh
                 run(pipeline(ignorestatus(`$(gh) $(args)`); stdout=devnull, stderr=devnull))
             end
-            quiet(`release delete $(tag_name) --yes --cleanup-tag --repo $(test_zone)/Zlib_jll.jl`)
+            for tag in (tag_name, tag2_name)
+                quiet(`release delete $(tag) --yes --cleanup-tag --repo $(test_zone)/Zlib_jll.jl`)
+            end
             # Deleting the branch would close the pull request too, but let's be explicit
             for (pr_url, _) in open_prs()
                 quiet(`pr close $(pr_url)`)
             end
-            for repo_name in ("Zlib_jll.jl", "General")
-                quiet(`api -X DELETE /repos/$(test_zone)/$(repo_name)/git/refs/heads/$(branch_name)`)
+            quiet(`api -X DELETE /repos/$(test_zone)/Zlib_jll.jl/git/refs/heads/$(branch_name)`)
+            for branch in general_branches
+                quiet(`api -X DELETE /repos/$(test_zone)/General/git/refs/heads/$(branch)`)
             end
         end
         @test remote_head("Zlib_jll.jl") === nothing
-        @test remote_head("General") === nothing
+        @test all(branch -> remote_head("General", branch) === nothing, general_branches)
         @test isempty(open_prs())
     end
 
@@ -167,16 +181,23 @@ end
                 register_jll!(uni, jll)
 
                 # Both repositories got exactly what we just committed locally
+                general_head() = local_head(joinpath(depot, "deploy_registries", "General"))
                 @test remote_head("Zlib_jll.jl") == local_head(joinpath(depot, "dev", "Zlib_jll"))
-                @test remote_head("General") == local_head(joinpath(depot, "deploy_registries", "General"))
-
                 if register_url === nothing
+                    @test remote_head("General") == general_head()
                     @test isempty(open_prs())
                 else
-                    # A pull request was opened from our branch
-                    prs = open_prs()
+                    # A pull request against the default branch was opened from the version's branch
+                    pr_branch = pr_branch_name(jll_version)
+                    @test remote_head("General", pr_branch) == general_head()
+                    @test remote_head("General") === nothing
+                    prs = open_prs(pr_branch)
                     @test length(prs) == 1
                     @test only(prs)[2] == "New version: Zlib_jll v$(jll_version)"
+                    default_branch = withenv("GH_TOKEN" => test_zone_org_token) do
+                        with_gh(gh -> readchomp(`$(gh) api /repos/$(test_zone)/General --jq .default_branch`))
+                    end
+                    @test only(prs)[3] == default_branch
                     pr_body = withenv("GH_TOKEN" => test_zone_org_token) do
                         with_gh(gh -> readchomp(`$(gh) pr view $(only(prs)[1]) --json body --jq .body`))
                     end
@@ -187,8 +208,20 @@ end
 
                     # Registering again updates that pull request rather than opening another
                     register_jll!(uni, jll)
-                    @test remote_head("General") == local_head(joinpath(depot, "deploy_registries", "General"))
+                    @test remote_head("General", pr_branch) == general_head()
                     @test open_prs() == prs
+
+                    # Registering another version opens a pull request of its own, stacked
+                    # upon the first one
+                    register_jll!(uni, jll2)
+                    pr2_branch = pr_branch_name(jll2_version)
+                    @test remote_head("General", pr2_branch) == general_head()
+                    @test remote_head("General", pr_branch) == readchomp(git(["-C", joinpath(depot, "deploy_registries", "General"), "rev-parse", "HEAD^"]))
+                    prs2 = open_prs(pr2_branch)
+                    @test length(prs2) == 1
+                    @test only(prs2)[2] == "New version: Zlib_jll v$(jll2_version)"
+                    @test only(prs2)[3] == pr_branch
+                    @test open_prs(pr_branch) == prs
                 end
             end
 
