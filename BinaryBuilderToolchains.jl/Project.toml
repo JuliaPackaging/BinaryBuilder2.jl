@@ -9,6 +9,7 @@ BinaryBuilderSources = "0.3"
 HistoricalStdlibVersions = "2.0.1"
 JLLPrefixes = "0.3.8, 0.4"
 LazyJLLWrappers = "1.2"
+ObjectFile = "0.6.1"
 PrecompileTools = "1.2.1"
 Reexport = "1.2.2"
 Scratch = "1.2"
@@ -32,7 +33,8 @@ TreeArchival = "216c6a2e-6c61-7669-6863-726165657274"
 
 [extras]
 Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Logging", "Test"]
+test = ["Logging", "ObjectFile", "Test"]

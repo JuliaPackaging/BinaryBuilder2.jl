@@ -14,6 +14,7 @@ with_temp_storage_locations() do
     include("PkgUtilsTests.jl")
     include("JLLPinsTests.jl")
     include("WrapperUtilsTests.jl")
+    include("MacOSVersionTests.jl")
     include("CToolchainTests.jl")
     include("HostToolsToolchainTests.jl")
     include("CMakeToolchainTests.jl")
