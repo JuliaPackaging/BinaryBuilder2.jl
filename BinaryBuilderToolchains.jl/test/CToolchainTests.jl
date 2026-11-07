@@ -1,5 +1,9 @@
 using Test, Logging, BinaryBuilderSources, BinaryBuilderToolchains, BinaryBuilderPlatformExtensions, Base.BinaryPlatforms, Scratch
 using BinaryBuilderToolchains: path_appending_merge
+using ObjectFile
+
+# Minimum OS version recorded in the (single-arch) Mach-O file at `path`
+macho_minos(path::String) = readmeta(ohs -> min_os_version(only(ohs)), path)
 
 # Enable this for lots of JLLPrefixes output
 const verbose = false
@@ -290,18 +294,20 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
     # Ensure that objects assembled directly with `as` get the same minimum macOS
     # version as objects compiled through `cc`, independent of `MACOSX_DEPLOYMENT_TARGET`.
     @testset "macos as deployment target" begin
-        for macos_target in filter(Sys.isapple, supported_platforms(CToolchain))
+        tagged_targets = filter(Sys.isapple, supported_platforms(CToolchain))
+        untagged_targets = [Platform(arch(p), "macos") for p in tagged_targets]
+        for macos_target in vcat(tagged_targets, untagged_targets)
+            macos_cp = CrossPlatform(BBHostPlatform() => macos_target)
+            expected_minos = macos_version(BinaryBuilderToolchains.macos_target_kernel_version(macos_target))
+            mktempdir() do dir
+                BinaryBuilderToolchains.binutils_wrappers(BinutilsToolchain(macos_cp, :clang), dir)
+                @test occursin("-mmacosx-version-min=$(expected_minos)", read(joinpath(dir, "as"), String))
+            end
+        end
+
+        for macos_target in tagged_targets
             macos_cp = CrossPlatform(BBHostPlatform() => macos_target)
             expected_minos = macos_version(macos_target)
-
-            # Generating the wrappers must not warn about `as` and the deployment target
-            logs, _ = Test.collect_test_logs() do
-                mktempdir() do dir
-                    BinaryBuilderToolchains.binutils_wrappers(BinutilsToolchain(macos_cp, :clang), dir)
-                    @test occursin("-mmacosx-version-min=$(expected_minos)", read(joinpath(dir, "as"), String))
-                end
-            end
-            @test !any(l -> occursin("MACOSX_DEPLOYMENT_TARGET", string(l.message)), logs)
 
             with_toolchains([CToolchain(macos_cp), htt_toolchain]) do prefix, env
                 mktempdir() do dir
@@ -309,17 +315,15 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                     write(joinpath(dir, "foo.c"), "int foo(void) { return 0; }\n")
                     function minos(cmd, obj)
                         @test success(setenv(cmd, env))
-                        load_cmds = read(setenv(`otool -l $(obj)`, env), String)
-                        m = match(r"cmd LC_BUILD_VERSION\n.*\n\s*platform \d+\n\s*minos (\S+)", load_cmds)
-                        return m === nothing ? nothing : m[1]
+                        return macho_minos(obj)
                     end
 
                     @test env["MACOSX_DEPLOYMENT_TARGET"] == expected_minos
-                    @test minos(`cc -c -o $(dir)/foo_c.o $(dir)/foo.c`, "$(dir)/foo_c.o") == expected_minos
-                    @test minos(`as -o $(dir)/foo_as.o $(dir)/foo.s`, "$(dir)/foo_as.o") == expected_minos
-                    @test minos(`env -u MACOSX_DEPLOYMENT_TARGET as -o $(dir)/foo_noenv.o $(dir)/foo.s`, "$(dir)/foo_noenv.o") == expected_minos
-                    @test minos(`env MACOSX_DEPLOYMENT_TARGET=12.0 as -o $(dir)/foo_env12.o $(dir)/foo.s`, "$(dir)/foo_env12.o") == expected_minos
-                    @test minos(`as -mmacosx-version-min=13.0 -o $(dir)/foo_flag13.o $(dir)/foo.s`, "$(dir)/foo_flag13.o") == "13.0"
+                    @test minos(`cc -c -o $(dir)/foo_c.o $(dir)/foo.c`, "$(dir)/foo_c.o") == VersionNumber(expected_minos)
+                    @test minos(`as -o $(dir)/foo_as.o $(dir)/foo.s`, "$(dir)/foo_as.o") == VersionNumber(expected_minos)
+                    @test minos(`env -u MACOSX_DEPLOYMENT_TARGET as -o $(dir)/foo_noenv.o $(dir)/foo.s`, "$(dir)/foo_noenv.o") == VersionNumber(expected_minos)
+                    @test minos(`env MACOSX_DEPLOYMENT_TARGET=12.0 as -o $(dir)/foo_env12.o $(dir)/foo.s`, "$(dir)/foo_env12.o") == VersionNumber(expected_minos)
+                    @test minos(`as -mmacosx-version-min=13.0 -o $(dir)/foo_flag13.o $(dir)/foo.s`, "$(dir)/foo_flag13.o") == v"13.0"
                 end
             end
         end

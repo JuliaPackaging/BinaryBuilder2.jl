@@ -75,7 +75,7 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
 
         # macOS has special version variables that we must set
         if Sys.isapple(toolchain.platform.target)
-            darwin_ver = something(os_version(toolchain.platform.target), v"14.5.0")
+            darwin_ver = macos_target_kernel_version(toolchain.platform.target)
             maj_ver = darwin_ver.major
             min_ver = darwin_ver.minor
             println(io, """

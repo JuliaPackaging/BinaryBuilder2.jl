@@ -792,32 +792,28 @@ end
 """
     add_macos_flags(io, toolchain)
 
-This adds flags like `-mmacosx-version-min`, depending on our `os_version`
-embedded within a triplet.  If there is no such tag embedded within the
-triplet, it is not added.  This method also adds some compiler-flag-based
+This adds `-mmacosx-version-min` and `-Wl,-sdk_version` flags for the macOS
+version given by `macos_target_kernel_version()`, i.e. the target's
+`os_version` tag or the per-architecture default deployment target if the
+triplet has no such tag.  This method also adds some compiler-flag-based
 workarounds for GCC brokenness.
 """
 function add_macos_flags(io, toolchain)
     if Sys.isapple(toolchain.platform.target)
-        macos_ver = macos_version(toolchain.platform.target)
-        if macos_ver === nothing
-            @warn("TODO: macOS builds should always denote their `os_version`!",
-                  platform=triplet(toolchain.platform.target), maxlog=1)
-        end
-    
+        kernel_ver = macos_target_kernel_version(toolchain.platform.target)
+        macos_ver = macos_version(kernel_ver)
+
         compile_flagmatch(io) do io
             # Simulate some of the `__OSX_AVAILABLE()` macro usage that is broken in GCC
             if get_simple_vendor(toolchain) == "gcc"
-                if something(os_version(toolchain.platform.target), v"14") < v"16"
+                if kernel_ver < v"16"
                     # Disable usage of `clock_gettime()`
                     append_flags(io, :PRE, "-D_DARWIN_FEATURE_CLOCK_GETTIME=0")
                 end
             end
 
             # Always compile for a particular minimum macOS version
-            if macos_ver !== nothing
-                append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(toolchain.platform.target))")
-            end
+            append_flags(io, :PRE, "-mmacosx-version-min=$(macos_ver)")
         end
 
         link_flagmatch(io) do io
@@ -825,10 +821,8 @@ function add_macos_flags(io, toolchain)
             # to have extra space in the MachO headers so we can expand names, if necessary.
             append_flags(io, :POST, "-Wl,-headerpad_max_install_names")
 
-            # Always compile for a particular minimum macOS version
-            if macos_ver !== nothing
-                append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_version(toolchain.platform.target))")
-            end
+            # Always link for a particular minimum macOS version
+            append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_ver)")
         end
     end
 end

@@ -394,11 +394,8 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
                 append_flags(io, :PRE, ["-arch", arch_str])
             end
 
-            # Pin the minimum macOS version to the one in our triplet
-            macos_ver = macos_version(p)
-            if macos_ver !== nothing
-                append_flags(io, :PRE, "-mmacosx-version-min=$(macos_ver)")
-            end
+            # Pin the minimum macOS version to the target's deployment target
+            append_flags(io, :PRE, "-mmacosx-version-min=$(macos_version(macos_target_kernel_version(p)))")
 
             # Tell the `as` executable how to find our clang.  We use a special name here
             # so that our wrapper for this doesn't conflict with an actual clang.
@@ -541,22 +538,7 @@ function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
 
     # OS version variables
     if Sys.isapple(toolchain.platform.target)
-        # If toolchain platform already has an `os_version`, we need to obey that, otherwise we
-        # use the default deployment targets for the architecture being built:
-        function default_macos_kernel_version(arch)
-            if arch == "x86_64"
-                return 14
-            elseif arch == "aarch64"
-                return 20
-            else
-                throw(ArgumentError("Unknown macOS architecture '$(arch)'!"))
-            end
-        end
-
-        kernel_version = something(
-            os_version(toolchain.platform.target),
-            default_macos_kernel_version(arch(toolchain.platform.target))
-        )
+        kernel_version = macos_target_kernel_version(toolchain.platform.target)
         set_envvars!(env, toolchain, "MACOSX_DEPLOYMENT_TARGET", macos_version(kernel_version))
     end
 
