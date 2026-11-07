@@ -147,6 +147,12 @@ end
             return [split(line, "\t") for line in split(prs, "\n"; keepempty=false)]
         end
     end
+    # The bodies of the comments on the pull request at `pr_url`
+    function pr_comments(pr_url)
+        withenv("GH_TOKEN" => test_zone_org_token) do
+            with_gh(gh -> split(readchomp(`$(gh) api /repos/$(test_zone)/General/issues/$(basename(pr_url))/comments --jq '.[].body'`), "\n"; keepempty=false))
+        end
+    end
     general_branches = [branch_name, pr_branch_name(jll_version), pr_branch_name(jll2_version)]
     open_prs() = reduce(vcat, open_prs.(general_branches))
 
@@ -210,6 +216,8 @@ end
                     register_jll!(uni, jll)
                     @test remote_head("General", pr_branch) == general_head()
                     @test open_prs() == prs
+                    # A pull request against the default branch is left to AutoMerge
+                    @test isempty(pr_comments(only(prs)[1]))
 
                     # Registering another version opens a pull request of its own, stacked
                     # upon the first one
@@ -222,6 +230,11 @@ end
                     @test only(prs2)[2] == "New version: Zlib_jll v$(jll2_version)"
                     @test only(prs2)[3] == pr_branch
                     @test open_prs(pr_branch) == prs
+                    # The stacked pull request carries a comment blocking AutoMerge, once
+                    stacked_comment = ["This is a stacked PR, so we're not engaging AutoMerge."]
+                    @test pr_comments(only(prs2)[1]) == stacked_comment
+                    register_jll!(uni, jll2)
+                    @test pr_comments(only(prs2)[1]) == stacked_comment
                 end
             end
 

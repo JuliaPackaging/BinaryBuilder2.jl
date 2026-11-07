@@ -205,15 +205,16 @@ function gh_create(target::String)
 end
 
 """
-    gh_open_pr(repo, head, title, body; base = nothing)
+    gh_open_pr(repo, head, title, body; base = nothing, comment = nothing)
 
 Open a pull request against the `base` branch (by default, the default branch) of `repo`
 from `head` (of the form `owner:branch`) and return its URL.  If a pull request from `head`
 is already open, it is reused (pushing to `head` already updated it) and its URL is
-returned instead.
+returned instead.  A `comment`, if given, is posted on the pull request when it is opened.
 """
 function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractString, body::AbstractString;
-                    base::Union{Nothing,AbstractString} = nothing)
+                    base::Union{Nothing,AbstractString} = nothing,
+                    comment::Union{Nothing,AbstractString} = nothing)
     with_gh_token(repo) do
         pr_url = gh_api_jq("/repos/$(repo)/pulls?state=open&head=$(head)", ".[0].html_url")
         # `--jq` prints `null` as an empty string
@@ -229,7 +230,11 @@ function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractS
             end
         end
         return with_gh() do gh
-            String(readchomp(`$(gh) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
+            pr_url = String(readchomp(`$(gh) api -X POST /repos/$(repo)/pulls -f head=$(head) -f base=$(base) -f title=$(title) -f body=$(body) --jq .html_url`))
+            if comment !== nothing
+                run(pipeline(`$(gh) api -X POST /repos/$(repo)/issues/$(basename(pr_url))/comments -f body=$(comment)`; stdout=devnull))
+            end
+            return pr_url
         end
     end
 end
