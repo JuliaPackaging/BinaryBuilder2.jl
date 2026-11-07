@@ -39,6 +39,12 @@
 # the trigger, so they are recorded in the commit but stay out of the
 # package's release notes.
 #
+# Before anything is changed, the package's `[deps]` and `[compat]` are
+# resolved against the registered versions in the General registry, the same
+# way AutoMerge's `Pkg.add` check does.  If that fails (typically because a
+# sibling subproject's compat bump has not been released yet), the script
+# stops; release the missing dependencies first.
+#
 # The release commit is tagged `<name>-v<version>` (or just `v<version>` for
 # the top-level BinaryBuilder2 package) with an annotated tag that
 # carries the commit message.  The tag is only created locally; push it with
@@ -49,6 +55,9 @@
 #     -s, --since <rev>   Collect notes since <rev> instead of the last tag
 #     -a, --add <path>    Also stage <path> in the release commit (repeatable)
 #     -e, --edit          Open the commit message in your editor
+#         --no-registry-check
+#                         Skip checking that the package's [deps]/[compat]
+#                         resolve against already-registered versions
 #     -r, --registrator-comment <rev>
 #                         Print the JuliaRegistrator comment body of release
 #                         commit <rev> (e.g. `HEAD`) and exit; post it with
@@ -79,6 +88,7 @@ repo_root="$(git rev-parse --show-toplevel)"
 
 dry_run=false
 edit=false
+registry_check=true
 since=""
 extra_paths=()
 positional=()
@@ -87,6 +97,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         -n|--dry-run) dry_run=true; shift ;;
         -e|--edit)    edit=true; shift ;;
+        --no-registry-check) registry_check=false; shift ;;
         -s|--since)   since="${2:?--since requires a revision}"; shift 2 ;;
         -a|--add)     extra_paths+=("${2:?--add requires a path}"); shift 2 ;;
         -r|--registrator-comment)
@@ -145,6 +156,38 @@ if git -C "${repo_root}" rev-parse -q --verify "refs/tags/${tag_name}" >/dev/nul
     die "tag '${tag_name}' already exists; bump the version (e.g. \`contrib/release.sh ${subproject} <new version>\`)"
 fi
 
+# Check that the package's `[deps]` and `[compat]` can be satisfied by versions
+# that are already registered, which is what AutoMerge checks with
+# `Pkg.add(...)`.  This catches releases whose compat requires a version of a
+# dependency (or a dependency's dependency) that has not been registered yet,
+# e.g. a sibling subproject whose compat bump has not been released.
+registry_check_script='
+using Pkg, TOML
+project = TOML.parsefile(ARGS[1])
+deps = get(project, "deps", Dict{String,Any}())
+compat = filter(p -> p.first == "julia" || haskey(deps, p.first), get(project, "compat", Dict{String,Any}()))
+mktempdir() do dir
+    open(joinpath(dir, "Project.toml"), "w") do io
+        TOML.print(io, Dict("deps" => deps, "compat" => compat))
+    end
+    Pkg.activate(dir; io=devnull)
+    Pkg.Registry.update(; io=devnull)
+    try
+        Pkg.resolve(; io=devnull)
+    catch err
+        err isa Pkg.Resolve.ResolverError || rethrow()
+        println(stderr, sprint(showerror, err))
+        exit(1)
+    end
+end
+'
+command -v julia >/dev/null || die "julia is required to check compat bounds against the registry"
+if ${registry_check}; then
+    echo "Checking that ${name}'s dependencies resolve against registered versions..." >&2
+    JULIA_PKG_GC_AUTO=0 julia --startup-file=no --history-file=no -e "${registry_check_script}" "${project_toml}" >&2 \
+        || die "${name}'s [deps]/[compat] cannot be satisfied by registered versions, so AutoMerge's \`Pkg.add(\"${name}\")\` would fail. Release the dependencies it needs first (see the resolver log above), or pass --no-registry-check to skip this check."
+fi
+
 # Find every other project in the repo whose `[compat]` entry for this package
 # does not admit the new version, and (unless this is a dry run) widen it by
 # appending the minimal caret specifier that covers the new version.  Prints one
@@ -181,7 +224,6 @@ for path in ARGS[4:end]
     write(path, join(lines, "\n") * "\n")
 end
 '
-command -v julia >/dev/null || die "julia is required to check compat bounds of dependent projects"
 dependent_tomls=()
 while IFS= read -r toml; do
     [[ "${toml}" == "${project_rel}" ]] && continue
