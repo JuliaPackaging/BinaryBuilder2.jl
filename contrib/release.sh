@@ -315,11 +315,18 @@ for path in ${extra_paths+"${extra_paths[@]}"}; do
     git -C "${repo_root}" add -- "${path}"
 done
 
-if git -C "${repo_root}" diff --cached --quiet; then
-    die "nothing staged; bump a version or pass --add <path>"
-fi
-
 commit_args=(commit -m "${message}")
+if git -C "${repo_root}" diff --cached --quiet; then
+    # A version bumped by hand in an earlier commit still gets its own release commit
+    released_version=""
+    if [[ -n "${since}" ]]; then
+        released_version="$(git -C "${repo_root}" show "${since}:${project_rel}" 2>/dev/null | sed -n 's/^version *= *"\(.*\)"/\1/p' | head -1)"
+    fi
+    if [[ -z "${since}" || "${released_version}" == "${version}" ]]; then
+        die "nothing staged; bump a version or pass --add <path>"
+    fi
+    commit_args+=(--allow-empty)
+fi
 if ${edit}; then
     commit_args+=(--edit)
 fi
