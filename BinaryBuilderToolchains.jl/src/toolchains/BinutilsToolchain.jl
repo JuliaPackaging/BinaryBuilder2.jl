@@ -74,7 +74,7 @@ function binutils_jll_source_selection(vendor, platform)
         append!(deps, [
             JLLSource(
                 "CCTools_jll",
-                platform;
+                macos_sdk_platform(platform);
                 uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                 repo=Pkg.Types.GitRepo(
                     rev=pinned_rev("CCTools_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
@@ -157,7 +157,7 @@ end
 function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     p = toolchain.platform.target
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/$(get_simple_vendor(toolchain.vendor))"
-    gcc_triplet = toolchain.vendor == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    gcc_triplet = toolchain.vendor == :gcc_bootstrap ? gcc_target_triplet(p) : toolchain_jll_triplet(p)
 
     # These tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = String[]
@@ -399,7 +399,7 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
 
             # Tell the `as` executable how to find our clang.  We use a special name here
             # so that our wrapper for this doesn't conflict with an actual clang.
-            println(io, "export CCTOOLS_CLANG_AS_EXECUTABLE='$(gcc_triplet)-clang-as'")
+            println(io, "export CCTOOLS_CLANG_AS_EXECUTABLE='$(triplet(gcc_platform(p)))-clang-as'")
         end
 
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
@@ -410,7 +410,7 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     function _clang_as_wrapper(io)
         append_flags(io, :PRE, [
             # Set the `target` for `clang` so it generates the right kind of code
-            "--target=$(gcc_triplet)",
+            "--target=$(triplet(gcc_platform(p)))",
         ])
 
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
@@ -434,7 +434,7 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
     make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)
 
-    # Our `as` on macOS subs out to `$(gcc_triplet)-clang-as`, so we generate that here,
+    # Our `as` on macOS subs out to `${triplet}-clang-as`, so we generate that here,
     # which in turn subs out to `clang`.
     if Sys.isapple(p)
         make_tool_wrappers(toolchain, dir, "clang-as", "clang"; wrapper=_clang_as_wrapper, toolchain_prefix)
