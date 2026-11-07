@@ -1045,6 +1045,19 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
                 # request, which it would otherwise merge into another registration branch.
                 comment=pr_base === nothing ? nothing : "This is a stacked PR, so we're not engaging AutoMerge.",
             )
+            # Link the chain into a GitHub stack, so that GitHub can rebase the pull
+            # requests above one that has been merged.
+            if pr_base !== nothing
+                reg_owner = first(split(reg_repo, "/"))
+                base_pr = with_gh_token(reg_repo) do
+                    gh_api_jq("/repos/$(reg_repo)/pulls?state=open&head=$(reg_owner):$(pr_base)", ".[0].number")
+                end
+                if base_pr === nothing || isempty(base_pr)
+                    @warn("Not stacking registry pull request: no open pull request for its base branch", pr_url, pr_base)
+                else
+                    gh_stack_prs(reg_repo, parse(Int, base_pr), parse(Int, basename(pr_url)))
+                end
+            end
             if verbose
                 @info("Registry pull request", pr_url)
             end
