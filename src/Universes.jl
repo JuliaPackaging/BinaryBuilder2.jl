@@ -1041,6 +1041,9 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
                 * Commit: $(bytes2hex(only(log(jll_path; limit=1))))
                 """;
                 base=pr_base,
+                # Any comment without `[noblock]` keeps AutoMerge from merging the pull
+                # request, which it would otherwise merge into another registration branch.
+                comment=pr_base === nothing ? nothing : "This is a stacked PR, so we're not engaging AutoMerge.",
             )
             if verbose
                 @info("Registry pull request", pr_url)
