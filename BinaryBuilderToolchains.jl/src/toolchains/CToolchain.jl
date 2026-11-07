@@ -96,9 +96,6 @@ struct CToolchain <: AbstractToolchain
             # If the user asks for the oldest version of glibc, figure out what platform we're
             # building for, and use an appropriate version.
             if glibc_version == :oldest
-                # TODO: Should glibc_version be embedded within the triplet somehow?
-                #       Non-default glibc version is kind of a compatibility issue....
-                @warn("TODO: Should glibc_version be embedded within the triplet?", maxlog=1)
                 if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le",)
                     glibc_version = v"2.17"
                 elseif arch(platform.target) ∈ ("armv6l", "armv7l", "aarch64")
