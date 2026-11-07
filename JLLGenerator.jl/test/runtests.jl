@@ -48,6 +48,21 @@ mit_license = JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT")
     @test parse_toml_dict(JLLLibraryProduct, d) == bare
 end
 
+@testset "library dont_dlopen round-trip" begin
+    lp = JLLLibraryProduct(:libc, "lib/libc.so.6", JLLLibraryDep[], []; dont_dlopen = true)
+    d = generate_toml_dict(lp)
+    @test d["dont_dlopen"] === true
+    @test parse_toml_dict(JLLLibraryProduct, d) == lp
+
+    # The flag is only written when set, and a record without it reads back unset
+    bare = JLLLibraryProduct(:libc, "lib/libc.so.6", JLLLibraryDep[], [])
+    @test !bare.dont_dlopen
+    d = generate_toml_dict(bare)
+    @test !haskey(d, "dont_dlopen")
+    @test parse_toml_dict(JLLLibraryProduct, d) == bare
+    @test bare != lp
+end
+
 @testset "Hand-crafted XZ_jll" begin
     # Hand-crafted XZ_jll impersonation
     xz_sources = [
@@ -500,11 +515,11 @@ end
     nonsense = copy(d); nonsense["format_version"] = "not-a-version"
     @test_throws ArgumentError parse_toml_dict(nonsense)
 
-    # A JLL with no static library asks for nothing newer than any released wrapper
+    # Every JLL requires a wrapper that understands every feature a record may use
     mktempdir() do dir
         generate_jll(dir, jll)
         @test TOML.parsefile(joinpath(dir, "JLL.toml"))["format_version"] == "1.0"
-        @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == "1.0.0"
+        @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == "1.2.2"
     end
 end
 
@@ -766,9 +781,4 @@ end
         JLLStaticLibraryProduct(:libfoo, "lib/libfoo.a"),
         JLLStaticLibraryProduct(:libbar, "lib/libbar.a"; deps = [JLLLibraryDep(nothing, :libfoo)]),
     ]) !== nothing
-
-    # A record with a static entry needs a wrapper that knows to ignore it
-    @test JLLGenerator.lazy_jll_wrappers_compat(jll) == "1.1.2"
-    @test JLLGenerator.lazy_jll_wrappers_compat(
-        make_jll([JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])])) == "1.0.0"
 end

@@ -4,6 +4,7 @@ using JLLGenerator: default_rtld_flags, rtld_flags
 """
     LibraryProduct(paths::Vector{String}, varname::Symbol;
                    dlopen_flags=Symbol[],
+                   dont_dlopen=false,
                    static=nothing)
 
 Declares a `LibraryProduct` that points to a library located within the prefix.
@@ -11,6 +12,13 @@ Declares a `LibraryProduct` that points to a library located within the prefix.
 variable in the JLL package that can be used to call into the library.  The
 flags to pass to `dlopen` can be specified as a vector of `Symbols` with the
 `dlopen_flags` keyword argument.
+
+Set `dont_dlopen=true` for a library that must never be loaded into the Julia
+process that imports the JLL, such as a C library or dynamic loader that would
+clash with the one Julia itself runs on.  On Julia versions without
+`Libdl.LazyLibrary` the JLL then does not `dlopen()` the library in its
+`__init__()`, while still exporting its absolute path.  (A `LazyLibrary` is only
+loaded when used, so newer Julia versions need no special handling.)
 
 If this library is also shipped as a static archive, declare that archive by
 passing a [`StaticLibraryProduct`](@ref) as the `static` keyword argument; it is
@@ -37,12 +45,14 @@ struct LibraryProduct <: AbstractProduct
     varname::Symbol
     dlopen_flags::typeof(default_rtld_flags)
     on_load_callback::Union{Nothing,Symbol}
+    dont_dlopen::Bool
     static::Union{Nothing,StaticLibraryProduct}
 
     function LibraryProduct(paths::Vector{<:AbstractString},
                             varname::Symbol;
                             dlopen_flags::Union{Vector{Symbol},typeof(default_rtld_flags)} = default_rtld_flags,
                             on_load_callback::Union{Nothing,Symbol} = nothing,
+                            dont_dlopen::Bool = false,
                             static::Union{Nothing,Symbol,StaticLibraryProduct} = nothing)
         if isa(dlopen_flags, Vector{Symbol})
             dlopen_flags = rtld_flags(dlopen_flags)
@@ -61,7 +71,7 @@ struct LibraryProduct <: AbstractProduct
             end
             static = StaticLibraryProduct(static, varname)
         end
-        return new(string.(paths), varname, dlopen_flags, on_load_callback, static)
+        return new(string.(paths), varname, dlopen_flags, on_load_callback, dont_dlopen, static)
     end
 end
 LibraryProduct(path::AbstractString, args...; kwargs...) = LibraryProduct([path], args...; kwargs...)
