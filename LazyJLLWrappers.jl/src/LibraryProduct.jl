@@ -44,8 +44,11 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
             var_name, String, soname(product); isconst = VERSION < v"1.6.0",
         ))
 
-        # Eagerly dlopen the library (now that the path has been resolved at `__init__()` time)
-        push!(jb.init_blocks, :(dlopen($(path_var_name))))
+        # Eagerly dlopen the library (now that the path has been resolved at `__init__()` time),
+        # unless the JLL asks for it never to be loaded into this process.
+        if !get(product, "dont_dlopen", false)
+            push!(jb.init_blocks, :(dlopen($(path_var_name))))
+        end
 
         # Also, invoke the callback function in `__init__()` here.
         if haskey(product, "on_load_callback")

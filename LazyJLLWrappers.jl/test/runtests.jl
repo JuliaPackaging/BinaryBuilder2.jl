@@ -242,3 +242,42 @@ end
         """,
     )
 end
+
+@testset "dont_dlopen libraries are not eagerly loaded" begin
+    jllinfo = include(joinpath(example_jllinfos_path, "libxls_jll.jl"))
+    jllinfo = @set jllinfo.builds = map(jllinfo.builds) do build
+        return @set build.products = map(build.products) do p
+            return JLLLibraryProduct(p.varname, p.path, p.deps, p.system_deps;
+                                     soname = p.soname, flags = p.flags,
+                                     on_load_callback = p.on_load_callback,
+                                     dont_dlopen = true)
+        end
+    end
+    generate_and_load_jll(
+        jllinfo,
+        """
+        import Libdl, LazyJLLWrappers
+        @test libxls_jll.is_available()
+        @test isabspath(libxls_jll.libxlsreader_path)
+        @test isfile(libxls_jll.libxlsreader_path)
+        @test isempty(filter(l -> occursin("libxlsreader", l), Libdl.dllist()))
+        if !LazyJLLWrappers.use_lazy_libraries()
+            # The exported variable still names the library's absolute path
+            @test libxlsreader == libxls_jll.libxlsreader_path
+        end
+        @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+        @test !isempty(filter(l -> occursin("libxlsreader", l), Libdl.dllist()))
+        """,
+    )
+
+    # Without the flag, the eager regime loads the library in `__init__()`
+    if !LazyJLLWrappers.use_lazy_libraries()
+        generate_and_load_jll(
+            include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
+            """
+            import Libdl
+            @test !isempty(filter(l -> occursin("libxlsreader", l), Libdl.dllist()))
+            """,
+        )
+    end
+end

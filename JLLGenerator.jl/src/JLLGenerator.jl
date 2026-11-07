@@ -110,15 +110,18 @@ end
     soname::String
     flags::Vector{Symbol}
     on_load_callback::Union{Nothing,Symbol}
+    # Never `dlopen()` this library eagerly in the JLL's `__init__()`
+    dont_dlopen::Bool
 
     function JLLLibraryProduct(varname, path, deps, system_deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
-                               on_load_callback = nothing)
+                               on_load_callback = nothing,
+                               dont_dlopen::Bool = false)
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, system_deps, soname, flags, on_load_callback)
+        return new(varname, path, deps, system_deps, soname, flags, on_load_callback, dont_dlopen)
     end
 end
 
@@ -134,6 +137,9 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     )
     if lp.on_load_callback !== nothing
         d["on_load_callback"] = string(lp.on_load_callback)
+    end
+    if lp.dont_dlopen
+        d["dont_dlopen"] = true
     end
     if !isempty(lp.system_deps)
         d["system_deps"] = copy(lp.system_deps)
@@ -157,6 +163,7 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
         soname = d["soname"],
         flags = Symbol.(d["flags"]),
         on_load_callback,
+        dont_dlopen = get(d, "dont_dlopen", false)::Bool,
     )
 end
 
@@ -773,15 +780,9 @@ function coalesce_licenses(info::JLLInfo)
     return ret
 end
 
-# The lowest `LazyJLLWrappers` able to read this JLL.
-function lazy_jll_wrappers_compat(info::JLLInfo)
-    for build in info.builds
-        if any(isa(p, JLLStaticLibraryProduct) for p in build.products)
-            return "1.1.2"
-        end
-    end
-    return "1.0.0"
-end
+# The `LazyJLLWrappers` every generated JLL requires: the first release that can
+# read every feature a `JLL.toml` may use (static library entries, `dont_dlopen`).
+const lazy_jll_wrappers_compat = "1.2.2"
 
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
@@ -930,7 +931,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             ),
 
             "compat" => Dict{String,Any}(
-                "LazyJLLWrappers" => lazy_jll_wrappers_compat(info),
+                "LazyJLLWrappers" => lazy_jll_wrappers_compat,
                 "julia" => info.julia_compat,
             )
         )

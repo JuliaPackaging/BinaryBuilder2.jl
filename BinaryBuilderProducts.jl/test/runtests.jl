@@ -151,6 +151,20 @@ using JLLGenerator: rtld_symbols, rtld_flags
         @test LibraryDependency(:Zlib_jll, :libz).pkg == :Zlib_jll
     end
 
+    @testset "LibraryProduct dont_dlopen" begin
+        @test !LibraryProduct("libfoo", :libfoo).dont_dlopen
+        lp = LibraryProduct("libfoo", :libfoo; dont_dlopen=true)
+        @test lp.dont_dlopen
+        mktempdir() do dir
+            mkpath(joinpath(dir, "lib"))
+            touch(joinpath(dir, "lib", "libfoo.so"))
+            platform = Platform("x86_64", "linux")
+            env = Dict("prefix" => dir, "libdir" => joinpath(dir, "lib"), "bb_full_target" => triplet(platform))
+            @test JLLGenerator.JLLLibraryProduct(lp, dir; env, platform).dont_dlopen
+            @test !JLLGenerator.JLLLibraryProduct(LibraryProduct("libfoo", :libfoo), dir; env, platform).dont_dlopen
+        end
+    end
+
     @testset "StaticLibraryProduct construction" begin
         # An archive declared for a `LibraryProduct` has no name of its own until it is
         # attached, inherits by default, and takes the library's name when attached
