@@ -15,7 +15,7 @@ CToolchain(...) (platformless wrapper)
 julia> platform = CrossPlatform(Platform("x86_64", "linux") => Platform("aarch64", "macos"));
        apply_platform(pw_ct, platform)
 CToolchain (CrossPlatform(Platform("x86_64", "linux"; libc = "glibc") -> Platform("aarch64", "macos"; )))
- - macOSSDK v11.1.0
+ - macOSSDK v11.1.1
  - Clang v17.0.7
  - libLLVM v17.0.7
  - LLVMCompilerRT v17.0.7

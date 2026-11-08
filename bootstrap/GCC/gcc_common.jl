@@ -426,10 +426,8 @@ function gcc_build_spec_generator(host, platform)
         push!(target_sources, JLLSource(
             "LinuxKernelHeaders_jll",
             platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
-            ),
+            uuid=Base.UUID("d754bdc3-4c87-55c0-a004-f56830624a1e"),
+            version=v"6.9.0",
             target=joinpath(target_str, "usr"),
         ))
     end
@@ -464,10 +462,7 @@ function gcc_build_spec_generator(host, platform)
             "macOSSDK_jll",
             platform.target;
             uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/macOSSDK_jll.jl"
-            ),
+            version=v"11.1.1",
             target=target_str,
         ))
     elseif os(platform.target) == "freebsd"
@@ -475,10 +470,7 @@ function gcc_build_spec_generator(host, platform)
             "FreeBSDSysroot_jll",
             platform.target;
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
-            repo=Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-            ),
+            version=v"14.1.0",
             target=target_str,
         ))
     else
