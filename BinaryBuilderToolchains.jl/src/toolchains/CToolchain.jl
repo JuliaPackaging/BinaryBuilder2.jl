@@ -101,6 +101,9 @@ struct CToolchain <: AbstractToolchain
         valid_compiler_runtimes = (:auto, :libgcc, :compiler_rt)
         _check_valid(compiler_runtime, valid_compiler_runtimes, "compiler_runtime")
 
+        if sanitize(target_if_crossplatform(platform)) == "memory" && get_vendor(vendor, platform) ∈ (:gcc, :gcc_bootstrap)
+            throw(ArgumentError("GCC does not support MemorySanitizer; use a clang vendor for $(triplet(target_if_crossplatform(platform)))"))
+        end
         if get_vendor(vendor, platform) ∈ (:gcc, :gcc_bootstrap)
             if cxx_runtime == :libcxx
                 throw(ArgumentError("GCC cannot use libcxx, must use libstdc++!"))
@@ -200,7 +203,8 @@ end
 
 cache_key(toolchain::CToolchain) = toolchain.cache_key
 function get_vendor(vendor::Symbol, platform::AbstractPlatform)
-    clang_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+    clang_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd") ||
+                       sanitize(target_if_crossplatform(p)) == "memory"
     if vendor == :auto
         if clang_default(platform)
             return :clang
@@ -288,14 +292,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # Collect our JLLSource objects for all of our compiler pieces:
     deps = JLLSource[]
 
-    # The sysroots and runtime libraries below are installed for `platform.target`, and
-    # they ship code that ends up in what gets built (libc, crt objects, libgcc, libstdc++,
-    # compiler-rt, ...), so on a platform with a strict tag (see `BinaryBuilderSources.strict_tags`,
-    # e.g. `x86_64-linux-gnu-sanitize+memory`) they must be built for that platform too,
-    # like for any other new platform.  Only the kernel headers are just headers, so they
-    # opt out with `exempt_from_strict_tags`.  (The compilers themselves are installed for
-    # the `CrossPlatform`, where the target's tags are prefixed with `target_` and so
-    # aren't strict.)
+    # The sysroots and runtime libraries below are installed for `platform.target`, but
+    # are all `exempt_from_strict_tags`: a sanitized build links against the same
+    # uninstrumented libc, crt objects and support libraries as an untagged build, since
+    # the sanitizer runtime intercepts libc rather than relying on an instrumented one.
+    # (The compilers themselves are installed for the `CrossPlatform`, where the target's
+    # tags are prefixed with `target_` and so aren't strict.)
     sysroot_path = joinpath(get_simple_vendor(vendor), toolchain_jll_triplet(platform.target))
 
     if libc(platform.target) == "glibc"
@@ -306,6 +308,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
             # TODO: Should we encode this in the platform object somehow?
             version=glibc_jll_versionspec(glibc_version),
+            exempt_from_strict_tags=true,
             # This glibc is the one that gets embedded within GCC and it's for the target
             target=sysroot_path,
         )]
@@ -365,6 +368,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/GCC_support_libraries_jll.jl",
             ),
             version=v"14.2.0",
+            exempt_from_strict_tags=true,
             target=get_simple_vendor(vendor),
         ),
         JLLSource(
@@ -376,10 +380,13 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/GCC_crt_objects_jll.jl",
             ),
             version=v"14.2.0",
+            exempt_from_strict_tags=true,
             target=get_simple_vendor(vendor),
         ),
     ]
 
+    # The x86_64-linux-gnu build also carries the MemorySanitizer runtime, which
+    # sanitize+memory targets link against.
     compiler_rt_libs = [
         JLLSource(
             "LLVMCompilerRT_jll",
@@ -390,6 +397,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMCompilerRT_jll.jl",
             ),
             version=v"17.0.7",
+            # The sanitizer runtimes are bundled with the plain triplet's build
+            exempt_from_strict_tags=true,
             # TODO: This should be more automatic!
             target="clang/lib/clang/17",
         )
@@ -404,6 +413,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
             version=v"14.2.0",
+            exempt_from_strict_tags=true,
             target=get_simple_vendor(vendor),
         ),
     ]
@@ -417,6 +427,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
             ),
             version=v"17.0.1",
+            exempt_from_strict_tags=true,
             target=joinpath(sysroot_path, "usr"),
         ),
         JLLSource(
@@ -428,6 +439,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
             ),
             version=v"17.0.1",
+            exempt_from_strict_tags=true,
             target=joinpath(sysroot_path, "usr"),
         ),
     ]
@@ -576,7 +588,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             append!(deps, gcc_support_libs)
         end
 
-        if comp_runtime == :compiler_rt
+        if comp_runtime == :compiler_rt || sanitize(platform.target) !== nothing
             append!(deps, compiler_rt_libs)
         end
         if cxx_runtime == :libstdcxx
@@ -870,10 +882,6 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * ((nbits(p) == 32 || arch(p) == "riscv64") ? "" : "64")
                 append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
             end
-
-            # Add on `-fsanitize-memory` if our platform has a santization tag applied
-            @warn("TODO: add sanitize compile flags!", maxlog=1)
-            #sanitize_compile_flags!(p, flags)
         end
 
         if Sys.isapple(p)
@@ -905,8 +913,6 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             if Sys.iswindows(p)
                 append_flags(io, :POST, "-Wl,--no-insert-timestamp")
             end
-
-            @warn("TODO: sanitize_link_flags()", maxlog=1)
         end
 
         add_ccache_preamble(io, toolchain)
@@ -999,6 +1005,20 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             # A user-chosen linker bypasses our `ld` wrapper, so disable timestamps here too.
             if Sys.iswindows(p)
                 append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
+            end
+        end
+
+        if sanitize(p) == "memory"
+            flagmatch(io, [!flag"-x assembler"]) do io
+                # Parameter and return shadows are part of the ABI between instrumented
+                # libraries, so stay compatible with non-eager code (Julia's JIT output
+                # and JLLs built by older clangs).
+                append_flags(io, :PRE, ["-fsanitize=memory", "-fno-sanitize-memory-param-retval"])
+            end
+            # Sanitized shared libraries leave the `__msan_*` symbols for the loading
+            # executable to provide
+            flagmatch(io, [flag"-Wl,--no-undefined"]) do io
+                append_flags(io, :PRE, ["-Wl,--warn-unresolved-symbols"])
             end
         end
 

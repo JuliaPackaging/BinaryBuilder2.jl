@@ -181,35 +181,29 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
         end
     end
 
-    # A toolchain for a target with a strict tag (here `sanitize`) needs that platform's
-    # own sysroot and runtime libraries; only the kernel headers are shared with the
-    # untagged target
+    # A sanitized target builds with clang against the uninstrumented sysroot and runtime
+    # libraries of the untagged target, plus compiler-rt's sanitizer runtime
     @testset "strict tags" begin
         sanitized_target = deepcopy(HostPlatform())
         sanitized_target["sanitize"] = "memory"
         sanitized_cp = CrossPlatform(BBHostPlatform() => sanitized_target)
-        plain_cp = CrossPlatform(BBHostPlatform() => HostPlatform())
-        for config in (Dict(:vendor => :gcc), Dict(:vendor => :clang, :compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx))
+        @test_throws ArgumentError CToolchain(sanitized_cp; use_ccache=false, vendor=:gcc)
+        @test_throws ArgumentError CToolchain(sanitized_cp; use_ccache=false, vendor=:gcc_bootstrap)
+
+        for config in (Dict(), Dict(:compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx))
             sanitized = CToolchain(sanitized_cp; use_ccache=false, config...)
-            plain = CToolchain(plain_cp; use_ccache=false, config...)
+            @test BinaryBuilderToolchains.get_vendor(sanitized) == :clang
             for jll in sanitized.deps
-                @test jll.exempt_from_strict_tags == (jll.package.name == "LinuxKernelHeaders_jll")
+                @test jll.exempt_from_strict_tags == (jll.package.name ∉ ("Clang_jll", "libLLVM_jll"))
             end
             if !isdefined(Base.BinaryPlatforms, :strict_presence_tags)
                 # This Julia's platform matching would pick uninstrumented artifacts
                 @test_throws r"needs a Julia whose platform matching implements strict tags" prepare(sanitized.deps)
                 continue
             end
-            # No sanitized runtimes have been built, so the toolchain cannot be set up...
-            @test_throws r"_jll has no artifact for .*sanitize\+memory" prepare(sanitized.deps)
-            # ... but the headers resolve as for the untagged target
-            headers = filter(jll -> jll.exempt_from_strict_tags, sanitized.deps)
-            prepare(headers)
-            prepare(plain.deps)
-            for jll in headers
-                plain_jll = only(filter(j -> j.package.name == jll.package.name, plain.deps))
-                @test basename.(jll.artifact_paths) == basename.(plain_jll.artifact_paths)
-            end
+            prepare(sanitized.deps)
+            compiler_rt = only(filter(j -> j.package.name == "LLVMCompilerRT_jll", sanitized.deps))
+            @test any(isfile(joinpath(path, "lib", "linux", "libclang_rt.msan-x86_64.a")) for path in compiler_rt.artifact_paths)
         end
     end
 
