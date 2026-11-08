@@ -280,18 +280,12 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     sysroot_path = joinpath(get_simple_vendor(vendor), triplet(gcc_platform(platform.target)))
 
     if libc(platform.target) == "glibc"
-        # Manual version selection, drop this once these are registered!
-        if v"2.17" == glibc_version
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="aaa18d2db4bc6bb4e3d8ec5e094d4b71807ef951",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        elseif v"2.19" == glibc_version
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="dae6e7aebaa51599c0a6a7c2f8ca95ff45d88f87",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        else
+        # The `Glibc_jll` release that provides each glibc version we can target
+        glibc_jll_versions = Dict(
+            v"2.17" => v"2.17.1",
+            v"2.19" => v"2.19.1",
+        )
+        if !haskey(glibc_jll_versions, glibc_version)
             error("Don't know how to install Glibc $(glibc_version)")
         end
 
@@ -300,8 +294,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             platform.target;
             uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
             # TODO: Should we encode this in the platform object somehow?
-            version=glibc_version,
-            repo=glibc_repo,
+            version=glibc_jll_versions[glibc_version],
             # This glibc is the one that gets embedded within GCC and it's for the target
             target=sysroot_path,
         )]
@@ -309,10 +302,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         libc_jlls = [JLLSource(
             "Musl_jll",
             platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("Musl_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-                source="https://github.com/staticfloat/Musl_jll.jl"
-            ),
+            uuid=Base.UUID("3490aa6f-05e0-5d3a-9648-5b0c647c155f"),
+            version=v"1.2.7",
             target=sysroot_path,
         )]
     elseif os(platform.target) == "macos"
@@ -336,10 +327,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         libc_jlls = [JLLSource(
             "Mingw_jll",
             platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("Mingw_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-                source="https://github.com/staticfloat/Mingw_jll.jl",
-            ),
+            uuid=Base.UUID("2d94bacf-4d71-535d-a47c-45e808015115"),
+            version=v"11.0.1",
             target=sysroot_path,
         )]
     elseif os(platform.target) == "freebsd"
