@@ -13,10 +13,7 @@ function notarget_build_spec_generator(host, platform)
             "macOSSDK_jll",
             platform.target;
             uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/macOSSDK_jll.jl"
-            ),
+            version=v"11.1.1",
             target=target_str,
         ))
     elseif os(platform.target) == "freebsd"
@@ -24,10 +21,7 @@ function notarget_build_spec_generator(host, platform)
             "FreeBSDSysroot_jll",
             platform.target;
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
-            repo=Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-            ),
+            version=v"14.1.0",
             target=target_str,
         ))
     else
