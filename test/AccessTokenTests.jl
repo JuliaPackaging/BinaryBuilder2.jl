@@ -233,8 +233,17 @@ end
                     # The stacked pull request carries a comment blocking AutoMerge, once
                     stacked_comment = ["This is a stacked PR, so we're not engaging AutoMerge."]
                     @test pr_comments(only(prs2)[1]) == stacked_comment
+                    # The two pull requests are linked into a GitHub stack, bottom to top
+                    pr_stack(pr) = withenv("GH_TOKEN" => test_zone_org_token) do
+                        with_gh(gh -> readchomp(`$(gh) api "/repos/$(test_zone)/General/stacks?pull_request=$(pr)" --jq '.[] | [.number, (.pull_requests[].number)] | map(tostring) | join(" ")'`))
+                    end
+                    pr_number(pr_url) = basename(pr_url)
+                    stack = pr_stack(pr_number(only(prs2)[1]))
+                    @test !isempty(stack)
+                    @test split(stack)[2:end] == pr_number.([only(prs)[1], only(prs2)[1]])
                     register_jll!(uni, jll2)
                     @test pr_comments(only(prs2)[1]) == stacked_comment
+                    @test pr_stack(pr_number(only(prs2)[1])) == stack
                 end
             end
 

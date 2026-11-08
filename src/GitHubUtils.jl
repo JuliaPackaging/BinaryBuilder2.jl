@@ -238,3 +238,65 @@ function gh_open_pr(repo::AbstractString, head::AbstractString, title::AbstractS
         end
     end
 end
+
+# Run `gh api` with `args`, returning `jq` applied to the result, or `nothing` (with a
+# warning holding `gh`'s error output) if the request fails.
+function gh_api_jq_or_warn(args::Vector{String}, jq::AbstractString)
+    out, err = IOBuffer(), IOBuffer()
+    ok = with_gh() do gh
+        success(pipeline(`$(gh) api $(args) --jq $(jq)`; stdout=out, stderr=err))
+    end
+    if !ok
+        @warn("GitHub API request failed", args, error=strip(String(take!(err))))
+        return nothing
+    end
+    return chomp(String(take!(out)))
+end
+
+"""
+    gh_stack_prs(repo, below::Integer, above::Integer)
+
+Link pull request `above` (whose base is the head branch of pull request `below`) into
+a GitHub stack (https://gh.io/stacks) on top of `below`, through the Stacks REST API:
+`above` is appended to the stack that `below` tops, or, if `below` is in no stack yet,
+a new stack of the two is created.  GitHub then shows the stack, offers a "Rebase stack"
+button, and, when pull requests are merged through the stack, retargets and rebases the
+ones above them.
+
+Returns the stack's number, or `nothing` if the pull requests could not be stacked
+(e.g. `below` is in a stack with other pull requests above it, or stacks are not
+available for `repo`).  A failure only warns, as the pull requests work without a stack.
+"""
+function gh_stack_prs(repo::AbstractString, below::Integer, above::Integer)
+    with_gh_token(repo) do
+        # Each line is `<stack number> <top pull request number>`, or empty if not stacked.
+        stack_of(pr) = gh_api_jq_or_warn(
+            ["/repos/$(repo)/stacks?pull_request=$(pr)"],
+            ".[] | \"\\(.number) \\(.pull_requests[-1].number)\"",
+        )
+
+        existing = stack_of(above)
+        existing === nothing && return nothing
+        if !isempty(existing)
+            return parse(Int, first(split(existing)))
+        end
+
+        below_stack = stack_of(below)
+        below_stack === nothing && return nothing
+        if isempty(below_stack)
+            args = ["-X", "POST", "/repos/$(repo)/stacks",
+                    "-F", "pull_requests[]=$(below)", "-F", "pull_requests[]=$(above)"]
+        else
+            stack_number, top = parse.(Int, split(below_stack))
+            if top != below
+                @warn("Not stacking pull request: the pull request below it already has another one stacked above it",
+                      repo, below, above, stack_number, top)
+                return nothing
+            end
+            args = ["-X", "POST", "/repos/$(repo)/stacks/$(stack_number)/add",
+                    "-F", "pull_requests[]=$(above)"]
+        end
+        number = gh_api_jq_or_warn(args, ".number")
+        return number === nothing ? nothing : parse(Int, number)
+    end
+end
