@@ -111,7 +111,37 @@ end
 function Base.:(==)(a::CrossPlatform, b::CrossPlatform)
     return a.host == b.host && a.target == b.target
 end
-Base.parse(::Type{CrossPlatform}, triplet::AbstractString) = CrossPlatform(parse(Platform, triplet))
+
+"""
+    parse(CrossPlatform, triplet::AbstractString; strict::Bool = false)
+
+Parse `triplet` as a `CrossPlatform`.  A plain triplet becomes a `CrossPlatform` that
+targets itself, unless `strict` is set, in which case an `ArgumentError` is thrown for any
+triplet that does not carry the tags that identify an encoded `CrossPlatform`.
+"""
+function Base.parse(::Type{CrossPlatform}, triplet::AbstractString; strict::Bool = false)
+    platform = parse(Platform, triplet)
+    if strict && !any(haskey.((tags(platform),), ("target_os", "target", "host")))
+        throw(ArgumentError("Triplet \"$(triplet)\" does not encode a `CrossPlatform`"))
+    end
+    return CrossPlatform(platform)
+end
+
+"""
+    tryparse(CrossPlatform, triplet::AbstractString)
+
+Strictly parse `triplet` as a `CrossPlatform`, returning `nothing` if it is invalid or
+does not encode a `CrossPlatform`.
+"""
+function Base.tryparse(::Type{CrossPlatform}, triplet::AbstractString)
+    try
+        return parse(CrossPlatform, triplet; strict=true)
+    catch e
+        isa(e, ArgumentError) || rethrow()
+        return nothing
+    end
+end
+
 Base.BinaryPlatforms.tags(cp::CrossPlatform) = Base.BinaryPlatforms.tags(cp.encoded)
 Base.BinaryPlatforms.triplet(cp::CrossPlatform) = Base.BinaryPlatforms.triplet(cp.encoded)
 Base.show(io::IO, cp::CrossPlatform) = print(io, "CrossPlatform(", cp.host, " -> ", cp.target, ")")

@@ -148,6 +148,13 @@ Return `true` if `flag `is in `args`. Also, remove that flag from `args`
 """
 check_flag!(args, flag) = extract_flag!(args, flag, nothing)[1]
 
+# A target given on the command line is a `CrossPlatform` when its triplet carries the
+# tags that `CrossPlatform` serializes to, and any other kind of platform otherwise.
+function parse_target_platform(str::AbstractString)
+    cross_platform = tryparse(CrossPlatform, str)
+    return cross_platform === nothing ? parse(AbstractPlatform, str) : cross_platform
+end
+
 """
     parse_build_tarballs_args(ARGS::Vector{String})
 
@@ -239,7 +246,7 @@ function parse_build_tarballs_args(ARGS::Vector{String})
 
     # Slurp up the last argument as platforms
     if length(ARGS) == 1
-        parsed_kwargs[:target_list] = parse.(AbstractPlatform, split(ARGS[1], ","))
+        parsed_kwargs[:target_list] = parse_target_platform.(split(ARGS[1], ","))
     elseif length(ARGS) > 1
         throw(ArgumentError("Extraneous arguments to `build_tarballs.jl`: $(join([string("\"", x, "\"") for x in ARGS[2:end]], " "))"))
     end

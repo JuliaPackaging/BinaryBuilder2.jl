@@ -43,6 +43,7 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
 
                 # Test serialization round-trip
                 @test parse(CrossPlatform, triplet(cp)) == cp
+                @test tryparse(CrossPlatform, triplet(cp)) == cp
 
                 # Test `repr()` round-trip
                 @test eval(Meta.parse(repr(cp))) == cp
@@ -63,6 +64,17 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
                 @test CrossPlatform(p) == cp
             end
         end
+    end
+
+    @testset "strict parsing" begin
+        @test parse(CrossPlatform, "x86_64-linux-gnu") == CrossPlatform(Platform("x86_64", "linux") => Platform("x86_64", "linux"))
+        @test_throws ArgumentError parse(CrossPlatform, "x86_64-linux-gnu"; strict=true)
+    end
+
+    @testset "tryparse" begin
+        @test tryparse(CrossPlatform, "x86_64-linux-gnu") === nothing
+        @test tryparse(CrossPlatform, "any") === nothing
+        @test tryparse(CrossPlatform, "not-a-triplet") === nothing
     end
 
     @testset "platforms_match" begin

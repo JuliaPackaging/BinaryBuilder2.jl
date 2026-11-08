@@ -30,6 +30,15 @@ BinaryBuilder2.allow_github_authentication[] = false
         @test parsed_kwargs[:deploy_org] === nothing
         @test !haskey(parsed_kwargs, :target_list)
 
+        # Triplets carrying `target_*` tags become `CrossPlatform`s
+        parsed_kwargs = parse_build_tarballs_args(String[
+            "x86_64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64,x86_64-linux-gnu",
+        ])
+        @test parsed_kwargs[:target_list] == [
+            CrossPlatform(Platform("x86_64", "linux") => Platform("aarch64", "linux")),
+            Platform("x86_64", "linux"),
+        ]
+
         # Next, supply arguments to everything all
         parsed_kwargs = parse_build_tarballs_args(String[
             "--debug=build-start",
