@@ -11,6 +11,7 @@ include("AuditResult.jl")
 include("AuditInfo.jl")
 include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
+include("passes/DanglingSymlinks.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
@@ -40,6 +41,9 @@ function audit!(prefix::String,
     if !readonly
         absolute_to_relative_symlinks!(result, prefix_alias)
     end
+
+    # Ensure that every symlink points at something that exists
+    dangling_symlinks(result, prefix_alias)
 
     # Ensure that all libraries have SONAMEs
     if !readonly
@@ -72,6 +76,7 @@ end
 #
 # prefix-wide passes:
 #  - [!] symlink absolute -> relative translation
+#  - dangling symlink check
 # object passes:
 #  - ISA check
 #  - OS ABI check
