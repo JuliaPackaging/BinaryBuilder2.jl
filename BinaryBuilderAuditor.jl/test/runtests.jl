@@ -3,6 +3,7 @@ using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBui
 include("ScanningTests.jl")
 include("SystemLibrariesTests.jl")
 include("passes/RelativeSymlinkTests.jl")
+include("passes/DanglingSymlinkTests.jl")
 include("passes/LicenseTests.jl")
 include("passes/LibrarySONAMETests.jl")
 include("passes/DynamicLinkageTests.jl")
