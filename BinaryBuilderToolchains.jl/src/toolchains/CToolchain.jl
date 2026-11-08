@@ -277,7 +277,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # opt out with `exempt_from_strict_tags`.  (The compilers themselves are installed for
     # the `CrossPlatform`, where the target's tags are prefixed with `target_` and so
     # aren't strict.)
-    sysroot_path = joinpath(get_simple_vendor(vendor), triplet(gcc_platform(platform.target)))
+    sysroot_path = joinpath(get_simple_vendor(vendor), toolchain_jll_triplet(platform.target))
 
     if libc(platform.target) == "glibc"
         # The `Glibc_jll` release that provides each glibc version we can target
@@ -307,9 +307,11 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             target=sysroot_path,
         )]
     elseif os(platform.target) == "macos"
+        # The SDK serves every deployment target up to its own version, so it is
+        # installed for `macos_sdk_platform()` rather than for the target's `os_version`.
         macos_sdk_jll = JLLSource(
             "macOSSDK_jll",
-            platform.target;
+            macos_sdk_platform(platform.target);
             repo=Pkg.Types.GitRepo(
                 source="https://github.com/staticfloat/macOSSDK_jll.jl",
                 rev=pinned_rev("macOSSDK_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
@@ -540,7 +542,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         append!(deps, [
             JLLSource(
                 "GCC_jll",
-                platform;
+                Sys.isapple(platform.target) ? macos_sdk_platform(platform) : platform;
                 uuid=Base.UUID("ec15993a-68c6-5861-8652-ef539d7ffb0b"),
                 repo=Pkg.Types.GitRepo(
                     rev=pinned_rev("GCC_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
@@ -909,7 +911,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
     end
 
     # gcc, g++
-    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : triplet(gcc_platform(p))
+    gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : toolchain_jll_triplet(p)
     make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
     make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
 
@@ -933,12 +935,13 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
     p = toolchain.platform.target
     # Purposefully not using `gcc_target_triplet()` because we want the distinction between the two arms
     gcc_triplet = triplet(gcc_platform(p))
+    jll_triplet = toolchain_jll_triplet(p)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/clang"
 
     function _clang_wrapper(io; is_clangxx::Bool = false)
         # Calculate the sysroot.  Annoyingly, clang doesn't find mingw with a triplet-specific sysroot,
         # and it doesn't find glibc _without_ a triplet-specific sysroot.
-        clang_sysroot = Sys.iswindows(p) ? "$(toolchain_prefix)" : "$(toolchain_prefix)/$(gcc_triplet)"
+        clang_sysroot = Sys.iswindows(p) ? "$(toolchain_prefix)" : "$(toolchain_prefix)/$(jll_triplet)"
 
         # Teach `clang` how to respond to `-print-sysroot`.  This is needed for our CMake scripts.
         flagmatch(io, [flag"-print-sysroot"]) do io
@@ -968,7 +971,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             append_flags(io, :PRE, [
                 # Set the GCC install dir; this is required on some platforms because
                 # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
-                "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(gcc_triplet)/*\")",
+                "--gcc-install-dir=\$(compgen -G \"$(toolchain_prefix)/lib/gcc/$(jll_triplet)/*\")",
             ])
         end
 
