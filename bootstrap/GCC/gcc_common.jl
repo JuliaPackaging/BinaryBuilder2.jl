@@ -435,44 +435,28 @@ function gcc_build_spec_generator(host, platform)
     end
 
     if os(platform.target) == "linux" && libc(platform.target) == "glibc"
-        if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le")
-            # v2.17
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="aaa18d2db4bc6bb4e3d8ec5e094d4b71807ef951",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        else
-            # v2.19
-            glibc_repo = Pkg.Types.GitRepo(
-                rev="dae6e7aebaa51599c0a6a7c2f8ca95ff45d88f87",
-                source="https://github.com/staticfloat/Glibc_jll.jl"
-            )
-        end
-
+        glibc_version = arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le") ? v"2.17.1" : v"2.19.1"
         push!(target_sources, JLLSource(
             "Glibc_jll",
             platform.target;
-            repo=glibc_repo,
+            uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
+            version=glibc_version,
             target=target_str,
         ))
     elseif os(platform.target) == "linux" &&  libc(platform.target) == "musl"
         push!(target_sources, JLLSource(
             "Musl_jll",
             platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Musl_jll.jl"
-            ),
+            uuid=Base.UUID("3490aa6f-05e0-5d3a-9648-5b0c647c155f"),
+            version=v"1.2.7",
             target=target_str,
         ))
     elseif os(platform.target) == "windows"
         push!(target_sources, JLLSource(
             "Mingw_jll",
             platform.target;
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
-                source="https://github.com/staticfloat/Mingw_jll.jl"
-            ),
+            uuid=Base.UUID("2d94bacf-4d71-535d-a47c-45e808015115"),
+            version=v"11.0.1",
             target=target_str,
         ))
     elseif os(platform.target) == "macos"
