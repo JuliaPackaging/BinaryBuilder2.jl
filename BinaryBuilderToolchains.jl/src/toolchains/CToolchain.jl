@@ -312,11 +312,8 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         macos_sdk_jll = JLLSource(
             "macOSSDK_jll",
             macos_sdk_platform(platform.target);
-            repo=Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/macOSSDK_jll.jl",
-                rev=pinned_rev("macOSSDK_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-            ),
-            version=v"11.1",
+            uuid=Base.UUID("52f8e75f-aed1-5264-b4c9-b8da5a6d5365"),
+            version=v"11.1.1",
             target=sysroot_path,
         )
         if macos_version(platform.target) !== nothing
@@ -338,11 +335,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "FreeBSDSysroot_jll",
             platform.target;
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
-            repo=Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/FreeBSDSysroot_jll.jl",
-                rev=pinned_rev("FreeBSDSysroot_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-            ),
-            version=v"14.1",
+            version=v"14.1.0",
             target=sysroot_path,
         )
         libc_jlls = [freebsd_sdk_jll]
@@ -521,11 +514,9 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
         push!(deps, JLLSource(
             "LinuxKernelHeaders_jll",
             platform.target;
+            uuid=Base.UUID("d754bdc3-4c87-55c0-a004-f56830624a1e"),
+            version=v"6.9.0",
             exempt_from_strict_tags=true,
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("LinuxKernelHeaders_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-                source="https://github.com/staticfloat/LinuxKernelHeaders_jll.jl"
-            ),
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
             target=joinpath(sysroot_path, "usr")
         ))
