@@ -95,7 +95,7 @@ struct CToolchain <: AbstractToolchain
         valid_vendors = (:auto, :gcc, :clang, :bootstrap, :gcc_bootstrap, :clang_bootstrap)
         _check_valid(vendor, valid_vendors, "vendor")
 
-        valid_cxx_runtimes = (:auto, :libcxx, :libstdcxx)
+        valid_cxx_runtimes = (:auto, :libcxx, :libstdcxx, :unsanitized_libstdcxx)
         _check_valid(cxx_runtime, valid_cxx_runtimes, "cxx_runtime")
 
         valid_compiler_runtimes = (:auto, :libgcc, :compiler_rt)
@@ -265,6 +265,9 @@ end
 
 
 function get_cxx_runtime(runtime::Symbol, platform::AbstractPlatform)
+    # Lets a sanitized build of a C++ runtime link its configure checks before any
+    # sanitized C++ runtime exists; the libraries it builds don't link against it.
+    runtime == :unsanitized_libstdcxx && return :libstdcxx
     libcxx_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
     return auto_chooser(libcxx_default, runtime, platform, (:libcxx, :libstdcxx))
 end
@@ -292,12 +295,14 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     # Collect our JLLSource objects for all of our compiler pieces:
     deps = JLLSource[]
 
-    # The sysroots and runtime libraries below are installed for `platform.target`, but
-    # are all `exempt_from_strict_tags`: a sanitized build links against the same
-    # uninstrumented libc, crt objects and support libraries as an untagged build, since
-    # the sanitizer runtime intercepts libc rather than relying on an instrumented one.
-    # (The compilers themselves are installed for the `CrossPlatform`, where the target's
-    # tags are prefixed with `target_` and so aren't strict.)
+    # The sysroots and runtime libraries below are installed for `platform.target`.  The
+    # C++ runtimes handle user data, so a target with a strict tag (see
+    # `BinaryBuilderSources.strict_tags`, e.g. `x86_64-linux-gnu-sanitize+memory`) needs
+    # them built for that platform.  The libc, crt objects, support libraries and
+    # compiler-rt are `exempt_from_strict_tags`: the sanitizer runtime intercepts libc,
+    # crt objects run before it initializes, and it cannot instrument itself.  (The
+    # compilers themselves are installed for the `CrossPlatform`, where the target's tags
+    # are prefixed with `target_` and so aren't strict.)
     sysroot_path = joinpath(get_simple_vendor(vendor), toolchain_jll_triplet(platform.target))
 
     if libc(platform.target) == "glibc"
@@ -413,7 +418,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/libstdcxx_jll.jl",
             ),
             version=v"14.2.0",
-            exempt_from_strict_tags=true,
+            exempt_from_strict_tags=cxx_runtime == :unsanitized_libstdcxx,
             target=get_simple_vendor(vendor),
         ),
     ]
@@ -427,7 +432,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMLibcxx_jll.jl",
             ),
             version=v"17.0.1",
-            exempt_from_strict_tags=true,
             target=joinpath(sysroot_path, "usr"),
         ),
         JLLSource(
@@ -439,7 +443,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                 source="https://github.com/staticfloat/LLVMLibunwind_jll.jl",
             ),
             version=v"17.0.1",
-            exempt_from_strict_tags=true,
             target=joinpath(sysroot_path, "usr"),
         ),
     ]
@@ -1018,6 +1021,11 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             # Sanitized shared libraries leave the `__msan_*` symbols for the loading
             # executable to provide
             flagmatch(io, [flag"-Wl,--no-undefined"]) do io
+                append_flags(io, :PRE, ["-Wl,--warn-unresolved-symbols"])
+            end
+            # `-z defs` is the same check as `--no-undefined`, in the spelling LLVM's
+            # CMake build passes for shared libraries
+            flagmatch(io, [flag"-Wl,-z,defs"]) do io
                 append_flags(io, :PRE, ["-Wl,--warn-unresolved-symbols"])
             end
         end

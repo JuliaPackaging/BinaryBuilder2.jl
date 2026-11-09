@@ -1,6 +1,10 @@
 include("llvm_common.jl")
 using BinaryBuilderPlatformExtensions: macos_kernel_version
 
+# An instrumented libc++ is built by requesting `x86_64-linux-gnu-sanitize+memory` on the
+# command line, using a sanitized toolchain before any sanitized C++ runtime exists.
+const sanitized_build = any(arg -> occursin("sanitize+memory", arg), ARGS)
+
 platforms = supported_platforms()
 
 build_tarballs(;
@@ -53,11 +57,28 @@ build_tarballs(;
     CMAKE_FLAGS+=( "-DLIBUNWIND_ENABLE_SHARED=ON" )
     CMAKE_FLAGS+=( "-DLIBUNWIND_ENABLE_STATIC=ON" )
 
+    # MemorySanitizer ignores libunwind's sources, so it neither reports nor tracks
+    # uninitialized values there: the unwinder reads saved registers and return
+    # addresses off the stack, whose shadow MemorySanitizer doesn't track.  The flag
+    # propagates to everything linking libunwind, but only matches its sources.
+    if [[ "${bb_full_target}" == *-sanitize+memory* ]]; then
+        echo 'src:*/libunwind/src/*' > ${WORKSPACE}/srcdir/msan_ignorelist.txt
+        CMAKE_FLAGS+=( "-DLIBUNWIND_ADDITIONAL_COMPILE_FLAGS=-fsanitize-ignorelist=${WORKSPACE}/srcdir/msan_ignorelist.txt" )
+    fi
+
     # configure, build, install!
     mkcd "${WORKSPACE}/srcdir/build"
     ${CMAKE} ${WORKSPACE}/srcdir/llvm-project/runtimes "${CMAKE_FLAGS[@]}"
     ninja
     ninja install
+
+    # An instrumented libc++ calls into the MemorySanitizer runtime
+    if [[ "${bb_full_target}" == *-sanitize+memory* ]]; then
+        if ! nm -D --undefined-only ${libdir}/libc++.so.1 | grep -q __msan_; then
+            echo "libc++.so.1 is not instrumented with MemorySanitizer" >&2
+            exit 1
+        fi
+    fi
     """,
     platforms,
     # We need python, and we need to build with clang
@@ -65,7 +86,7 @@ build_tarballs(;
 
     ## I think zlib_jll needs to get overwritten to have `path=...` if it's in-universe
     ## Instead of just pulling things out from the environment
-    target_dependencies = [
+    target_dependencies = sanitized_build ? AbstractSource[] : [
         JLLSource(
             "Zlib_jll";
             repo=Pkg.Types.GitRepo(
@@ -104,5 +125,5 @@ build_tarballs(;
         ]
     end,
     host_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain(), HostToolsToolchain()],
-    target_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain()],
+    target_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=sanitized_build ? :libgcc : :compiler_rt, cxx_runtime=sanitized_build ? :unsanitized_libstdcxx : :auto), CMakeToolchain()],
 )

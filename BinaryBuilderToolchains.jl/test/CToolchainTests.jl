@@ -181,8 +181,9 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
         end
     end
 
-    # A sanitized target builds with clang against the uninstrumented sysroot and runtime
-    # libraries of the untagged target, plus compiler-rt's sanitizer runtime
+    # A sanitized target builds with clang against the uninstrumented libc, crt objects and
+    # support libraries of the untagged target and compiler-rt's sanitizer runtime, but
+    # needs C++ runtimes built for that platform
     @testset "strict tags" begin
         sanitized_target = deepcopy(HostPlatform())
         sanitized_target["sanitize"] = "memory"
@@ -190,15 +191,21 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
         @test_throws ArgumentError CToolchain(sanitized_cp; use_ccache=false, vendor=:gcc)
         @test_throws ArgumentError CToolchain(sanitized_cp; use_ccache=false, vendor=:gcc_bootstrap)
 
-        for config in (Dict(), Dict(:compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx))
+        needs_sanitized_build = ("Clang_jll", "libLLVM_jll", "libstdcxx_jll", "LLVMLibcxx_jll", "LLVMLibunwind_jll")
+        for config in (Dict(), Dict(:compiler_runtime => :compiler_rt, :cxx_runtime => :libcxx), Dict(:cxx_runtime => :unsanitized_libstdcxx))
             sanitized = CToolchain(sanitized_cp; use_ccache=false, config...)
             @test BinaryBuilderToolchains.get_vendor(sanitized) == :clang
             for jll in sanitized.deps
-                @test jll.exempt_from_strict_tags == (jll.package.name ∉ ("Clang_jll", "libLLVM_jll"))
+                unsanitized = jll.package.name == "libstdcxx_jll" && get(config, :cxx_runtime, :auto) == :unsanitized_libstdcxx
+                @test jll.exempt_from_strict_tags == (unsanitized || jll.package.name ∉ needs_sanitized_build)
             end
             if !isdefined(Base.BinaryPlatforms, :strict_presence_tags)
                 # This Julia's platform matching would pick uninstrumented artifacts
                 @test_throws r"needs a Julia whose platform matching implements strict tags" prepare(sanitized.deps)
+                continue
+            end
+            if get(config, :cxx_runtime, :auto) != :unsanitized_libstdcxx
+                @test_throws r"_jll has no artifact for .*sanitize\+memory" prepare(sanitized.deps)
                 continue
             end
             prepare(sanitized.deps)
