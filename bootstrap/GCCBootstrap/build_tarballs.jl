@@ -10,6 +10,7 @@ platforms = [
     CrossPlatform(host => Platform("armv6l", "linux")),
     CrossPlatform(host => Platform("armv7l", "linux")),
     CrossPlatform(host => Platform("ppc64le", "linux")),
+    CrossPlatform(host => Platform("riscv64", "linux")),
 
     # musl linuces
     CrossPlatform(host => Platform("x86_64", "linux"; libc="musl")),
@@ -59,8 +60,10 @@ build_tarballs(;
             "a0b5cb06d24f9fa9e77b55fabbe9a3c94a336190345c2555f9915bb38e976504"),
         FileSource("https://mirrors.kernel.org/gnu/gmp/gmp-6.3.0.tar.xz",
             "a3c2b80201b89e68616f4ad30bc66aee4927c3ce50e33929ca819d5c43538898"),
-        FileSource("http://mirrors.kernel.org/pub/linux/kernel/v4.x/linux-4.1.49.tar.xz",
-            "ff2e0ea5c536650aef64447c3aaa49c1a25e8f1db4ec4f7da700d3176f512ba8"),
+        FileSource("http://mirrors.kernel.org/pub/linux/kernel/v5.x/linux-5.4.289.tar.xz",
+            "1e3e5fc052c8e15f8eaa37d30bf4f0b3eef7430dd234d9fed0d0005852a06d10"),
+        FileSource("https://mirrors.kernel.org/gnu/glibc/glibc-2.35.tar.xz",
+            "5123732f6b67ccd319305efd399971d58592122bcc2a6518a1bd2510dd0cf52e"),
         FileSource("https://mirrors.kernel.org/gnu/glibc/glibc-2.17.tar.xz",
             "6914e337401e0e0ade23694e1b2c52a5f09e4eda3270c67e7c3ba93a89b5b23e"),
         FileSource("https://mirrors.kernel.org/gnu/glibc/glibc-2.19.tar.xz",
@@ -86,16 +89,7 @@ build_tarballs(;
         DirectorySource(joinpath(@__DIR__, "./bundled"))
     ],
     host_dependencies = [
-        # This is not registered yet, so we just use one that I pushed up
-        JLLSource(
-            "CrosstoolNG_jll",
-            host;
-            uuid = Base.UUID("86569e53-7a4c-551c-9ab0-bc1131c15cd4"),
-            repo = Pkg.Types.GitRepo(
-                source="https://github.com/staticfloat/CrosstoolNG_jll.jl",
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-            ),
-        ),
+        JLLSource("CrosstoolNG_jll", host; version=v"1.27.0"),
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/
@@ -103,6 +97,9 @@ build_tarballs(;
     # We purposefully do not use our toolchain here (although we could)
     # to make the point that this recipe does not require a functioning CToolchain.
     apt update && apt install -y build-essential || true
+
+    # crosstool-ng looks up `python` on the `PATH`, but our host tools only provide `python3`.
+    ln -sf "$(which python3)" /usr/bin/python
 
     # We don't need the `LD_LIBRARY_PATH` that is set for the CSL libs
     unset LD_LIBRARY_PATH

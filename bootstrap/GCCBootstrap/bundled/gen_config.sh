@@ -43,9 +43,10 @@ case "${target}" in
     *linux*)
         cat <<-EOF
 # We're building against linux, and always use an older kernel
-# version so that we are maximally compatible.
+# version so that we are maximally compatible.  Linux 5.4 is the oldest
+# one whose headers glibc 2.35 compiles against on riscv64.
 CT_KERNEL_LINUX=y
-CT_LINUX_V_4_1=y
+CT_LINUX_V_5_4=y
 
 # We don't like the 'unknown' for Linux
 CT_OMIT_TARGET_VENDOR=y
@@ -102,9 +103,8 @@ case "${target}" in
         echo "CT_ARCH_RISCV=y"
         echo "CT_ARCH_64=y"
         echo "CT_ARCH_USE_MMU=y"
-        echo "CT_ARCH_ARCH=\"rv64imafdc\""
+        echo "CT_ARCH_ARCH=\"rv64gc\""
         echo "CT_ARCH_ABI=\"lp64d\""
-        echo "CT_ARCH_TUNE=\"sifive-7-series\""
         ;;
     *)
         echo "ERROR: Unhandled arch '${target}'" >&2
@@ -114,7 +114,9 @@ esac
 # Handle libc stuff
 case "${target}" in
     *gnu*)
-        if [[ "${target}" == x86_64* ]] || [[ "${target}" == i686* ]] || [[ "${target}" == powerpc64le* ]]; then
+        if [[ "${target}" == riscv64* ]]; then
+            echo "CT_GLIBC_V_2_35=y"
+        elif [[ "${target}" == x86_64* ]] || [[ "${target}" == i686* ]] || [[ "${target}" == powerpc64le* ]]; then
             echo "CT_GLIBC_V_2_17=y"
         else
             echo "CT_GLIBC_V_2_19=y"

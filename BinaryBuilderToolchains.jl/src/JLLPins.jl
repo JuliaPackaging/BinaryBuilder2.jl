@@ -7,18 +7,20 @@ using BinaryBuilderSources: tracks_branch
 # tracks a branch is resolved on every build, and may still be stale.  To move a toolchain
 # JLL forward, update its commit here.
 const jll_pins = Dict{Tuple{String,String},String}(
-    ("Binutils_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")               => "8bb68e39140b59e57deefe8af13e1a3fcb1acd58",
+    ("Binutils_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")               => "5ff70fe92e5c15f944276514f658482419e4e6b6",
     ("CCTools_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                => "2d9ab6813a60c4e055c0583ae94a620b65bec15d",
     ("Clang_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                  => "fc542ea0b8e6ab9614083e5b21b0f341e561aa92",
-    ("GCC_crt_objects_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")        => "a2b305b8fbc95bbf34a20f6a2b275a4693a115d4",
-    ("GCC_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                    => "4190f2fa3a328424a3eca583083e972192882e30",
-    ("GCC_support_libraries_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")  => "d18de018aad8242527c4d00aa4e902d71371dbf1",
+    ("Glibc_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                  => "f7e8ed3eb3f06eaccf5572b2c633bed13c4bc415",
+    ("LinuxKernelHeaders_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")     => "7dea96e3c595fa83c8cc0f0fd054fc97d1ffb31e",
+    ("GCC_crt_objects_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")        => "e130d5e80a0562252edeca553ae929d0f2bb2431",
+    ("GCC_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                    => "d42f8f7f2bbb1c0a0f497b3839bad43a6dd56ee0",
+    ("GCC_support_libraries_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")  => "5386a0f5103f0b01be4944fcdff36d39bed8b439",
     ("GCCBootstrap_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")          => "8d20e6cbb2fed8d8f4a27ea4d484f07b4d6449ae",
-    ("GCCBootstrap_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")           => "ba6b8f743a81b012801d031a31dd3e1031f21cda",
+    ("GCCBootstrap_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")           => "dd01ef390f652b38876fd181832ed024d7cb2262",
     ("GCCBootstrapManual_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")    => "af907c5086943c7af3181cb1d05496cf72f16d31",
     ("GCCBootstrapManual_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")     => "e5e7fbffdbac657c907cb2dd2ce5297e9001fa0c",
     ("libLLVM_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                => "f36dd1b43f296b5239151ceade31bfdbbe7f0e85",
-    ("libstdcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")              => "5328ccc8adc67ef9e36c9f8537ac5a0febca7a09",
+    ("libstdcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")              => "a4cab9f647311d6aa8aa227ec8cd650a67a4f1c2",
     ("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")   => "b19e567cc04c54f10890368a419c1f73fef305e6",
     ("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")    => "05d6642da497ddbeea187988ab1fca1e38364f5f",
     ("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-aarch64-linux-gnu") => "62fd2c28b11f48366ea8de7dcc9f711a735b8462",
@@ -35,6 +37,29 @@ Return the commit that `jll_name` is pinned to from `branch` (see `jll_pins`), o
 `branch` itself if there is no such pin, which `check_jll_pins()` will then warn about.
 """
 pinned_rev(jll_name::String, branch::String) = get(jll_pins, (jll_name, branch), branch)
+
+"""
+    staticfloat_jll_repo(name::String)
+
+Return the `JLLSource` keyword arguments that take JLL `name` from its pinned commit in
+`staticfloat/\$(name).jl` instead of from `General`.
+"""
+function staticfloat_jll_repo(name::String)
+    return (; repo = Pkg.Types.GitRepo(
+        rev = pinned_rev(name, "bb2/GCCBootstrap-x86_64-linux-gnu"),
+        source = "https://github.com/staticfloat/$(name).jl",
+    ))
+end
+
+"""
+    glibc_jll_repo(glibc_version::VersionNumber)
+
+Return the `JLLSource` keyword arguments that select the repository of the `Glibc_jll`
+that provides `glibc_version`: none for versions registered in `General`, and
+`staticfloat_jll_repo("Glibc_jll")` for 2.35, which is not registered yet.
+"""
+glibc_jll_repo(glibc_version::VersionNumber) =
+    (glibc_version.major, glibc_version.minor) == (2, 35) ? staticfloat_jll_repo("Glibc_jll") : (;)
 
 """
     check_jll_pins(jlls::Vector{JLLSource})
