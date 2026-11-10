@@ -365,6 +365,42 @@ function prepare_source_tree(config::BuildConfig, prefix::String,
     end
 end
 
+"""
+    deploy_atomically(f, host_path::String)
+
+Populate the content-addressed directory `host_path` by calling `f(staging_path)`
+on a fresh, private staging directory next to it, then renaming the staging
+directory into place.  Concurrent callers (in this or other processes) never
+write into the same directory: if `host_path` is already populated, nothing is
+done, and if another caller wins the race to rename, our staging copy is
+discarded.  A deployment that fails partway never becomes visible at `host_path`.
+"""
+function deploy_atomically(f::Function, host_path::String)
+    if isdir(host_path) && !isempty(readdir(host_path))
+        return host_path
+    end
+    parent = dirname(host_path)
+    mkpath(parent)
+    staging_path = mktempdir(parent; prefix=string(basename(host_path), ".staging-"), cleanup=false)
+    try
+        f(staging_path)
+        try
+            # `rename(2)` replaces an empty directory but fails on a non-empty
+            # one, so only the first finished deployment is published.
+            Base.Filesystem.rename(staging_path, host_path)
+        catch e
+            if !isdir(host_path) || isempty(readdir(host_path))
+                rethrow(e)
+            end
+        end
+    finally
+        if ispath(staging_path)
+            rm(staging_path; recursive=true, force=true)
+        end
+    end
+    return host_path
+end
+
 @trace_function args=(src_name=config.src_name,) function deploy(config::BuildConfig; verbose::Bool = false)
     # Ensure the `config` has been prepared
     prepare(config; verbose)
@@ -384,11 +420,9 @@ end
         @debug("BuildConfig source", prefix, srcs_hashes, combined_hash)
         mounts[prefix] = MountInfo(host_path, MountType.Overlayed)
 
-        # Avoid deploying a second time if we're coming at this a second time
-        if !isdir(host_path) || isempty(readdir(host_path))
-            mkpath(host_path)
-            with_trace(config, "bb2.deploy_source_tree"; timer_name=prefix, args=(prefix=prefix,)) do
-                deploy(srcs, host_path)
+        with_trace(config, "bb2.deploy_source_tree"; timer_name=prefix, args=(prefix=prefix,)) do
+            deploy_atomically(host_path) do staging_path
+                deploy(srcs, staging_path)
             end
         end
     end
