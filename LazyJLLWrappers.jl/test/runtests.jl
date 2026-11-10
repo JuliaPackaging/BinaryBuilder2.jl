@@ -281,3 +281,15 @@ end
         )
     end
 end
+
+@testset "builds for unparseable platforms are skipped" begin
+    # Older Julias cannot parse some triplets (e.g. `riscv64` before v1.10); such
+    # builds must not prevent selecting among the ones that do parse.
+    host = HostPlatform()
+    builds = [
+        Dict{String,Any}("name" => "Foo", "platform" => triplet(host)),
+        Dict{String,Any}("name" => "Foo", "platform" => "notanarch-linux-gnu"),
+    ]
+    @test LazyJLLWrappers.select_artifact(builds, "Foo", host) === builds[1]
+    @test LazyJLLWrappers.select_artifact(builds[2:2], "Foo", host) === nothing
+end

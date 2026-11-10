@@ -74,9 +74,17 @@ function select_artifact(artifacts, name::String, host::AbstractPlatform)
         throw(ArgumentError("AnyPlatform artifact $(name) must be a singleton, this JLL is malformed."))
     end
 
-    # Otherwise, do platform selection:
-    artifacts = Dict(parse(Platform, a["platform"]) => a for a in artifacts)
-    return select_platform(artifacts, host)
+    # Otherwise, do platform selection.  Builds whose platform triplet this Julia
+    # cannot parse (e.g. `riscv64` before Julia v1.10) can never match the host,
+    # so they are dropped rather than causing an error.
+    parsed = Dict{Platform,Any}()
+    for a in artifacts
+        p = tryparse(Platform, a["platform"])
+        if p !== nothing
+            parsed[p] = a
+        end
+    end
+    return select_platform(parsed, host)
 end
 
 function dead_jll_definition(jb::JLLBlocks)
