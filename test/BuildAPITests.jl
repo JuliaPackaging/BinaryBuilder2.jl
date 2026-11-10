@@ -218,6 +218,25 @@ end
         mkdir(empty_path)
         BinaryBuilder2.deploy_atomically(p -> touch(joinpath(p, "x")), empty_path)
         @test readdir(empty_path) == ["x"]
+
+        # Deployed trees get the mode `mkdir` gives under the umask, not the
+        # 0700 of a private temporary directory.
+        mkdir_mode = filemode(mkdir(joinpath(dir, "mode-reference"))) & 0o777
+        rm(joinpath(dir, "mode-reference"))
+        @test filemode(host_path) & 0o777 == mkdir_mode
+        @test filemode(empty_path) & 0o777 == mkdir_mode
+
+        # An empty deployment creates an empty tree with the usual mode, and
+        # an existing empty tree (another build may have it mounted) is left
+        # in place rather than replaced.
+        none_path = joinpath(dir, "4-jkl")
+        BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
+        @test isdir(none_path) && isempty(readdir(none_path))
+        @test filemode(none_path) & 0o777 == mkdir_mode
+        inode = stat(none_path).inode
+        BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
+        @test stat(none_path).inode == inode
+        @test sort(readdir(dir)) == ["1-abc", "3-ghi", "4-jkl"]
     end
 end
 
