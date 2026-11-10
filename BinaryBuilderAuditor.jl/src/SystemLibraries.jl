@@ -6,6 +6,7 @@ const linux_system_libs = Dict{String,Union{Nothing,String}}(
     "ld-linux.so.2" => nothing,
     "ld-linux-armhf.so.3" => nothing,
     "ld-linux-aarch64.so.1" => nothing,
+    "ld-linux-riscv64-lp64d.so.1" => nothing,
     "ld-musl-x86_64.so.1" => nothing,
     "ld-musl-i386.so.1" => nothing,
     "ld-musl-aarch64.so.1" => nothing,

@@ -43,6 +43,8 @@ function is_for_platform(h::ObjectHandle, platform::AbstractPlatform)
             return m == ELF.EM_PPC64
         elseif arch(platform) ∈ ("armv7l", "armv6l")
             return m == ELF.EM_ARM
+        elseif arch(platform) == "riscv64"
+            return m == ELF.EM_RISCV
         else
             throw(ArgumentError("Unknown $(os(platform)) architecture $(arch(platform))"))
         end
