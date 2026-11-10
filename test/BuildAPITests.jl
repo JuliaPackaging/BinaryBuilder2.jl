@@ -177,6 +177,50 @@ using BinaryBuilder2: next_jll_version, store_ccache_log_artifact, read_metadir_
     end
 end
 
+@testset "deploy_atomically" begin
+    mktempdir() do dir
+        # Concurrent deployers of the same path each get their own staging
+        # directory; exactly one result is published and none of them fail.
+        host_path = joinpath(dir, "1-abc")
+        staging_paths = String[]
+        staging_lock = ReentrantLock()
+        tasks = map(1:8) do i
+            Threads.@spawn BinaryBuilder2.deploy_atomically(host_path) do staging_path
+                @lock staging_lock push!(staging_paths, staging_path)
+                mkpath(joinpath(staging_path, "src"))
+                yield()
+                write(joinpath(staging_path, "src", "owner"), string(i))
+                sleep(0.01)
+            end
+        end
+        @test all(fetch.(tasks) .== host_path)
+        @test allunique(staging_paths)
+        @test readdir(dir) == ["1-abc"]
+        @test readdir(joinpath(host_path, "src")) == ["owner"]
+
+        # An already-populated directory is not redeployed.
+        called = Ref(false)
+        BinaryBuilder2.deploy_atomically(_ -> (called[] = true), host_path)
+        @test !called[]
+
+        # A failed deployment leaves nothing behind.
+        failed_path = joinpath(dir, "2-def")
+        @test_throws ErrorException BinaryBuilder2.deploy_atomically(failed_path) do staging_path
+            touch(joinpath(staging_path, "partial"))
+            error("boom")
+        end
+        @test !ispath(failed_path)
+        @test readdir(dir) == ["1-abc"]
+
+        # An empty directory left behind by an older interrupted deployment
+        # is replaced.
+        empty_path = joinpath(dir, "3-ghi")
+        mkdir(empty_path)
+        BinaryBuilder2.deploy_atomically(p -> touch(joinpath(p, "x")), empty_path)
+        @test readdir(empty_path) == ["x"]
+    end
+end
+
 @testset "next_jll_version" begin
     versions = [
         v"1.0.0",
