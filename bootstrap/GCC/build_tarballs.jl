@@ -9,8 +9,9 @@ for version in (v"14.2.0",) #keys(gcc_version_sources)
         sources = [
             gcc_version_sources[version]...,
             DirectorySource("./patches-v$(version)"; follow_symlinks=true, target="patches"),
+            DirectorySource("./bundled"; target="bundled"),
         ],
-        script, 
+        script,
         platforms = gcc_platforms(version),
         products = [
             FileProduct("bin", :bindir),

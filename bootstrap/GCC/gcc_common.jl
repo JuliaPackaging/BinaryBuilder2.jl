@@ -1,5 +1,5 @@
 using BinaryBuilder2, Pkg
-using BinaryBuilder2: BuildTargetSpec, gcc_platform, get_target_spec_by_name
+using BinaryBuilder2: BuildTargetSpec, gcc_platform, get_target_spec_by_name, get_default_target_spec, default_build_spec_generator
 include("../bootstrap_common.jl")
 
 meta = BinaryBuilder2.get_default_meta()
@@ -129,6 +129,12 @@ const gcc_version_sources = Dict{VersionNumber,Vector}(
 
 
 script = raw"""
+# GCC cannot build with MemorySanitizer; this target builds only libstdc++, with clang
+if [[ "${bb_full_target}" == *-sanitize+memory* ]]; then
+    source ${WORKSPACE}/srcdir/bundled/libstdcxx_sanitized.sh
+    exit 0
+fi
+
 cd ${WORKSPACE}/srcdir
 
 # Figure out the GCC version from the directory name
@@ -308,6 +314,9 @@ install_license ${WORKSPACE}/srcdir/gcc-*/COPYING*
 """
 
 function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatform)
+    if sanitize(platform.target) == "memory"
+        return libstdcxx_sanitized_extract_specs(build, platform)
+    end
     gcc_crt_object_names = ["libgcc.a"]
     if Sys.isapple(platform.target)
         append!(gcc_crt_object_names, ["crttms.o", "crt3.o"])
@@ -417,10 +426,20 @@ function gcc_platforms(version::VersionNumber)
     if version < v"12"
         filter!(p -> !(os(p) == "macos" && arch(p) == "aarch64"), platforms)
     end
+    # A MemorySanitizer libstdc++, built with clang (see `bundled/libstdcxx_sanitized.sh`)
+    push!(platforms, CrossPlatform(Platform("x86_64", "linux") => Platform("x86_64", "linux"; sanitize="memory")))
     return platforms
 end
 
 function gcc_build_spec_generator(host, platform)
+    if sanitize(platform.target) == "memory"
+        # The sanitized libstdc++ is built before any sanitized C++ runtime exists, so its
+        # configure checks link against the plain libstdc++.
+        return default_build_spec_generator(;
+            target_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:libgcc, cxx_runtime=:unsanitized_libstdcxx)],
+            host_toolchains = [CToolchain(), CMakeToolchain(), HostToolsToolchain()],
+        )(host, platform.target)
+    end
     target_str = triplet(gcc_platform(platform.target))
     lock_microarchitecture = false
 
@@ -505,6 +524,27 @@ function gcc_build_spec_generator(host, platform)
             target_sources,
             [],
             Set([]),
+        ),
+    ]
+end
+
+function libstdcxx_sanitized_extract_specs(build::BuildConfig, platform::AbstractPlatform)
+    gcc_target = triplet(gcc_platform(platform.target))
+    gcc_version = build.src_version
+    return ExtractSpec[
+        ExtractSpec(
+            """
+            extract \${prefix}/$(gcc_target)/include
+            extract \${prefix}/$(gcc_target)/lib64/libstdc++*
+            """,
+            [
+                FileProduct(["$(gcc_target)/include/c++/$(gcc_version)/iostream"], :iostream),
+                FileProduct(["$(gcc_target)/lib64/libstdc++.a"], :libstdcxx_a),
+                LibraryProduct(["$(gcc_target)/lib64/libstdc++"], :libstdcxx),
+            ],
+            get_default_target_spec(build);
+            jll_name = "libstdcxx",
+            platform = platform.target,
         ),
     ]
 end
