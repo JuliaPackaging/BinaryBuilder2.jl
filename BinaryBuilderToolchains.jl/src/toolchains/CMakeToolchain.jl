@@ -134,9 +134,21 @@ end
 function toolchain_sources(toolchain::CMakeToolchain)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
     function cmake_wrapper(io)
-        # If the user has not already passed in a `CMAKE_TOOLCHAIN_FILE`, insert ours
-        flagmatch(io, [!flag"-D[[:space:]]*CMAKE_TOOLCHAIN_FILE[=:].*"r]) do io
-            append_flags(io, :PRE, "-DCMAKE_TOOLCHAIN_FILE=$(toolchain_prefix)/wrappers/toolchain.cmake")
+        # Insert our `CMAKE_TOOLCHAIN_FILE` only when `cmake` is being invoked to
+        # configure a project and the user has not already passed one in.  Modes
+        # such as `--build`, `--install`, `--open`, `-E` and `--workflow` must be
+        # the first argument, and cmake either rejects a leading `-D` for them or
+        # falls back to configure mode.  An invocation with no arguments at all
+        # just prints usage, but would configure the current directory if we
+        # added a `-D` flag to it.
+        no_cmake_mode = string(
+            "! \"\${ARGS[0]}\" =~ ",
+            "^(--build|--install|--open|-E|--workflow)\$",
+        )
+        bash_if_statement(io, ["\${#ARGS[@]} -gt 0", no_cmake_mode]) do io
+            flagmatch(io, [!flag"-D[[:space:]]*CMAKE_TOOLCHAIN_FILE[=:].*"r]) do io
+                append_flags(io, :PRE, "-DCMAKE_TOOLCHAIN_FILE=$(toolchain_prefix)/wrappers/toolchain.cmake")
+            end
         end
     end
 

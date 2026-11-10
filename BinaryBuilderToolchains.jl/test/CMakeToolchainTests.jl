@@ -16,6 +16,43 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir()
         toolchain_tests(prefix, env, platform, "CMakeToolchain")
     end
 
+    # Ensure that the `cmake` wrapper passes our toolchain file only when configuring,
+    # and that the non-configure modes (`--build`, `--install`, `-E`) still work.
+    @testset "cmake modes" begin
+        hello_world_path = joinpath(@__DIR__, "testsuite", "CMakeToolchain", "00_hello_world")
+        with_toolchains(toolchains) do prefix, env
+            env = copy(env)
+            env["BB_WRAPPERS_VERBOSE"] = "true"
+            mktempdir() do dir
+                build_dir = joinpath(dir, "build")
+                install_dir = joinpath(dir, "install")
+                function run_cmake(args)
+                    p, output = capture_output(setenv(`bash -c "\$CMAKE $(args)"`, env))
+                    if !success(p)
+                        println(output)
+                    end
+                    @test success(p)
+                    return output
+                end
+
+                output = run_cmake("-S$(hello_world_path) -B$(build_dir)")
+                @test occursin("-DCMAKE_TOOLCHAIN_FILE=", output)
+
+                output = run_cmake("--build $(build_dir)")
+                @test !occursin("-DCMAKE_TOOLCHAIN_FILE=", output)
+                @test isfile(joinpath(build_dir, "hello"))
+
+                output = run_cmake("--install $(build_dir) --prefix $(install_dir)")
+                @test !occursin("-DCMAKE_TOOLCHAIN_FILE=", output)
+                @test isfile(joinpath(install_dir, "bin", "hello"))
+
+                output = run_cmake("-E echo cmake-echo-works")
+                @test !occursin("-DCMAKE_TOOLCHAIN_FILE=", output)
+                @test occursin("cmake-echo-works", output)
+            end
+        end
+    end
+
     # Next, test that we can hook up multiple `CMakeToolchain`s
     # with their respective `CToolchain`'s, we'll switch the c++ string ABI
     # version between our "host" and "target" toolchains:
