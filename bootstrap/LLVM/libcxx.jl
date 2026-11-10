@@ -1,11 +1,21 @@
 include("llvm_common.jl")
 using BinaryBuilderPlatformExtensions: macos_kernel_version
-
-# An instrumented libc++ is built by requesting `x86_64-linux-gnu-sanitize+memory` on the
-# command line, using a sanitized toolchain before any sanitized C++ runtime exists.
-const sanitized_build = any(arg -> occursin("sanitize+memory", arg), ARGS)
+using BinaryBuilder2: default_build_spec_generator
 
 platforms = supported_platforms()
+push!(platforms, Platform("x86_64", "linux"; sanitize="memory"))
+
+host_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain(), HostToolsToolchain()]
+host_dependencies = [JLLSource("Python_jll")]
+
+# The sanitized libc++ is built before any sanitized C++ runtime exists, so it links
+# against the plain libstdc++ and libgcc.
+function target_toolchains(platform)
+    if sanitize(platform) == "memory"
+        return [CToolchain(;vendor=:clang, compiler_runtime=:libgcc, cxx_runtime=:unsanitized_libstdcxx), CMakeToolchain()]
+    end
+    return [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain()]
+end
 
 build_tarballs(;
     src_name = "LLVMLibcxx",
@@ -82,7 +92,11 @@ build_tarballs(;
     """,
     platforms,
     # We need python, and we need to build with clang
-    host_dependencies = [JLLSource("Python_jll")],
+    build_spec_generator = (host, platform) -> default_build_spec_generator(;
+        target_toolchains = target_toolchains(platform),
+        host_toolchains,
+        host_dependencies,
+    )(host, platform),
 
     extract_spec_generator = (build_config, platform) -> begin
         return ExtractSpec[
@@ -113,6 +127,4 @@ build_tarballs(;
             ),
         ]
     end,
-    host_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=:compiler_rt), CMakeToolchain(), HostToolsToolchain()],
-    target_toolchains = [CToolchain(;vendor=:clang, compiler_runtime=sanitized_build ? :libgcc : :compiler_rt, cxx_runtime=sanitized_build ? :unsanitized_libstdcxx : :auto), CMakeToolchain()],
 )
