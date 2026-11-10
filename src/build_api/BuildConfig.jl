@@ -369,11 +369,16 @@ end
     deploy_atomically(f, host_path::String)
 
 Populate the content-addressed directory `host_path` by calling `f(staging_path)`
-on a fresh, private staging directory next to it, then renaming the staging
-directory into place.  Concurrent callers (in this or other processes) never
-write into the same directory: if `host_path` is already populated, nothing is
-done, and if another caller wins the race to rename, our staging copy is
-discarded.  A deployment that fails partway never becomes visible at `host_path`.
+on a fresh staging directory next to it, then renaming the staging directory
+into place.  Concurrent callers (in this or other processes) never write into
+the same directory: if `host_path` is already populated, nothing is done, and if
+another caller wins the race to rename, our staging copy is discarded.  A
+deployment that fails partway never becomes visible at `host_path`.
+
+An existing empty `host_path` is only replaced if the deployment produces
+content, since an empty tree is a complete deployment of an empty source set and
+other builds may have it mounted.  The deployed directory gets the permissions
+`mkdir` gives under the current umask, so it can serve as an overlay lower dir.
 """
 function deploy_atomically(f::Function, host_path::String)
     if isdir(host_path) && !isempty(readdir(host_path))
@@ -381,9 +386,20 @@ function deploy_atomically(f::Function, host_path::String)
     end
     parent = dirname(host_path)
     mkpath(parent)
-    staging_path = mktempdir(parent; prefix=string(basename(host_path), ".staging-"), cleanup=false)
+    # `mktempdir()` creates a mode-0700 directory, so it only holds the staging
+    # tree; the tree itself is created with `mkdir()` to get the usual mode.
+    staging_parent = mktempdir(parent; prefix=string(basename(host_path), ".staging-"), cleanup=false)
     try
+        staging_path = mkdir(joinpath(staging_parent, "tree"))
         f(staging_path)
+        if isempty(readdir(staging_path))
+            try
+                mkdir(host_path)
+            catch e
+                isdir(host_path) || rethrow(e)
+            end
+            return host_path
+        end
         try
             # `rename(2)` replaces an empty directory but fails on a non-empty
             # one, so only the first finished deployment is published.
@@ -394,9 +410,7 @@ function deploy_atomically(f::Function, host_path::String)
             end
         end
     finally
-        if ispath(staging_path)
-            rm(staging_path; recursive=true, force=true)
-        end
+        rm(staging_parent; recursive=true, force=true)
     end
     return host_path
 end
