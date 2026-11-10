@@ -2,6 +2,31 @@ export CToolchain
 using Pkg, SHA
 using Pkg.Types: PackageSpec, VersionSpec
 
+"""
+    oldest_glibc_version(target::AbstractPlatform)
+
+Return the oldest glibc version that `CToolchain` supports for Linux `target`.
+"""
+function oldest_glibc_version(target::AbstractPlatform)
+    if arch(target) ∈ ("x86_64", "i686", "powerpc64le")
+        return v"2.17"
+    elseif arch(target) ∈ ("armv6l", "armv7l", "aarch64")
+        return v"2.19"
+    elseif arch(target) == "riscv64"
+        return v"2.35"
+    end
+    throw(ArgumentError("Unknown oldest glibc version for architecture '$(arch(target))'!"))
+end
+
+"""
+    glibc_jll_versionspec(glibc_version::VersionNumber)
+
+Return a `VersionSpec` matching the `Glibc_jll` releases that provide `glibc_version`: any
+release with the same major and minor version, the newest of which gets installed.
+"""
+glibc_jll_versionspec(glibc_version::VersionNumber) =
+    VersionSpec("$(glibc_version.major).$(glibc_version.minor)")
+
 struct CToolchain <: AbstractToolchain
     platform::CrossPlatform
 
@@ -96,13 +121,7 @@ struct CToolchain <: AbstractToolchain
             # If the user asks for the oldest version of glibc, figure out what platform we're
             # building for, and use an appropriate version.
             if glibc_version == :oldest
-                if arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le",)
-                    glibc_version = v"2.17"
-                elseif arch(platform.target) ∈ ("armv6l", "armv7l", "aarch64")
-                    glibc_version = v"2.19"
-                else
-                    throw(ArgumentError("Unknown oldest glibc version for architecture '$(platform.target)'!"))
-                end
+                glibc_version = oldest_glibc_version(platform.target)
             else
                 throw(ArgumentError("Invalid magic glibc_version argument :$(glibc_version)"))
             end
@@ -280,23 +299,16 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
     sysroot_path = joinpath(get_simple_vendor(vendor), toolchain_jll_triplet(platform.target))
 
     if libc(platform.target) == "glibc"
-        # The `Glibc_jll` release that provides each glibc version we can target
-        glibc_jll_versions = Dict(
-            v"2.17" => v"2.17.1",
-            v"2.19" => v"2.19.1",
-        )
-        if !haskey(glibc_jll_versions, glibc_version)
-            error("Don't know how to install Glibc $(glibc_version)")
-        end
 
         libc_jlls = [JLLSource(
             "Glibc_jll",
             platform.target;
             uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
             # TODO: Should we encode this in the platform object somehow?
-            version=glibc_jll_versions[glibc_version],
+            version=glibc_jll_versionspec(glibc_version),
             # This glibc is the one that gets embedded within GCC and it's for the target
             target=sysroot_path,
+            glibc_jll_repo(glibc_version)...,
         )]
     elseif libc(platform.target) == "musl"
         libc_jlls = [JLLSource(
@@ -515,10 +527,11 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LinuxKernelHeaders_jll",
             platform.target;
             uuid=Base.UUID("d754bdc3-4c87-55c0-a004-f56830624a1e"),
-            version=v"6.9.0",
+            version=v"6.9.1",
             exempt_from_strict_tags=true,
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
-            target=joinpath(sysroot_path, "usr")
+            target=joinpath(sysroot_path, "usr"),
+            staticfloat_jll_repo("LinuxKernelHeaders_jll")...,
         ))
     end
 
@@ -856,7 +869,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
                 # precedence over anything else.  In this way for example we avoid libraries
                 # from `CompilerSupportLibraries_jll` in `${libdir}` are picked up by mistake.
                 @warn("TODO: determine if this flag prepending is actually needed", maxlog=1)
-                libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * (nbits(p) == 32 ? "" : "64")
+                libdir = "$(toolchain_prefix)/$(gcc_target_triplet(p))/lib" * ((nbits(p) == 32 || arch(p) == "riscv64") ? "" : "64")
                 append_flags(io, :POST, ["-L$(libdir)", "-Wl,-rpath-link,$(libdir)"])
             end
 

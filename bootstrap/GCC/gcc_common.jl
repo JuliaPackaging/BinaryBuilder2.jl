@@ -133,7 +133,8 @@ cd ${WORKSPACE}/srcdir
 
 # Figure out the GCC version from the directory name
 gcc_version="$(echo gcc-* | cut -d- -f2)"
-if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]] && [[ "${target}" != *freebsd* ]]; then
+# Without multilib, GCC installs riscv64 target libraries into `lib`
+if [[ "${target}" != *mingw* ]] && [[ "${target}" != *darwin* ]] && [[ "${target}" != *freebsd* ]] && [[ "${target}" != riscv64-* ]]; then
     lib64="lib${target_nbits%32}"
 else
     lib64="lib"
@@ -158,6 +159,8 @@ elif [[ "${target}" == x86_64* ]]; then
     GCC_CONF_ARGS+=( --with-arch=x86-64 )
 elif [[ "${target}" == i686* ]]; then
     GCC_CONF_ARGS+=( --with-arch=pentium4 )
+elif [[ "${target}" == riscv64* ]]; then
+    GCC_CONF_ARGS+=( --with-arch=rv64gc --with-abi=lp64d )
 fi
 
 # We need a `c++filt` for libstdc++ generation.  Make sure it's named appropriately:
@@ -427,19 +430,22 @@ function gcc_build_spec_generator(host, platform)
             "LinuxKernelHeaders_jll",
             platform.target;
             uuid=Base.UUID("d754bdc3-4c87-55c0-a004-f56830624a1e"),
-            version=v"6.9.0",
+            version=v"6.9.1",
             target=joinpath(target_str, "usr"),
+            BinaryBuilder2.BinaryBuilderToolchains.staticfloat_jll_repo("LinuxKernelHeaders_jll")...,
         ))
     end
 
     if os(platform.target) == "linux" && libc(platform.target) == "glibc"
-        glibc_version = arch(platform.target) ∈ ("x86_64", "i686", "powerpc64le") ? v"2.17.1" : v"2.19.1"
+        BBT = BinaryBuilder2.BinaryBuilderToolchains
+        glibc_version = BBT.oldest_glibc_version(platform.target)
         push!(target_sources, JLLSource(
             "Glibc_jll",
             platform.target;
             uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
-            version=glibc_version,
+            version=BBT.glibc_jll_versionspec(glibc_version),
             target=target_str,
+            BBT.glibc_jll_repo(glibc_version)...,
         ))
     elseif os(platform.target) == "linux" &&  libc(platform.target) == "musl"
         push!(target_sources, JLLSource(

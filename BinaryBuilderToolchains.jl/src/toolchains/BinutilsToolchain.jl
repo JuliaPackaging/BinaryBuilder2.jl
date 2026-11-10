@@ -567,6 +567,7 @@ function supported_platforms(::Type{BinutilsToolchain}; experimental::Bool = fal
         Platform("armv6l", "linux"),
         Platform("armv7l", "linux"),
         Platform("ppc64le", "linux"),
+        Platform("riscv64", "linux"),
 
         Platform("x86_64", "linux"; libc="musl"),
         Platform("i686", "linux"; libc="musl"),
