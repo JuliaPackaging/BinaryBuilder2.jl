@@ -316,5 +316,6 @@ include("BuildAPITests/ConvenienceTests.jl")
 include("BuildAPITests/MultiJLLOutputTests.jl")
 include("BuildAPITests/CustomSpecTests.jl")
 include("BuildAPITests/BuildSelection.jl")
+include("BuildAPITests/JobserverTests.jl")
 
 end # testset "BuildAPI"

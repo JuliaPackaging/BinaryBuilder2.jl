@@ -701,13 +701,15 @@ end
 function make_tool_wrappers(toolchain, output_dir, tool, tool_target;
                             wrapper::Function = identity,
                             post_func::Function = identity,
-                            toolchain_prefix::String = "\$(dirname \"\${WRAPPER_DIR}\")")
+                            toolchain_prefix::String = "\$(dirname \"\${WRAPPER_DIR}\")",
+                            jobserver::Bool = false)
     for wrapper_prefix in toolchain.wrapper_prefixes
         tool_prefixed = string(replace(wrapper_prefix, "\${triplet}" => triplet(gcc_platform(toolchain.platform.target))), tool)
         compiler_wrapper(wrapper,
             post_func,
             joinpath(output_dir, "$(tool_prefixed)"),
-            "$(toolchain_prefix)/bin/$(tool_target)"
+            "$(toolchain_prefix)/bin/$(tool_target)";
+            jobserver,
         )
     end
 end
@@ -914,13 +916,13 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
 
     # gcc, g++
     gcc_triplet = get_vendor(toolchain) == :gcc_bootstrap ? gcc_target_triplet(p) : toolchain_jll_triplet(p)
-    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
-    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "gcc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix, jobserver=true)
+    make_tool_wrappers(toolchain, dir, "g++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix, jobserver=true)
 
     if get_vendor(toolchain) ∈ (:gcc, :gcc_bootstrap)
-        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix)
-        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix)
-        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_triplet)-cpp"; wrapper=_gcc_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "cc", "$(gcc_triplet)-gcc"; wrapper=_gcc_wrapper, toolchain_prefix, jobserver=true)
+        make_tool_wrappers(toolchain, dir, "c++", "$(gcc_triplet)-g++"; wrapper=_gcc_wrapper, toolchain_prefix, jobserver=true)
+        make_tool_wrappers(toolchain, dir, "cpp", "$(gcc_triplet)-cpp"; wrapper=_gcc_wrapper, toolchain_prefix, jobserver=true)
     end
 end
 
@@ -1029,13 +1031,13 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         make_tool_wrappers(toolchain, dir, "xcrun", "exec"; wrapper=_xcrun_wrapper, toolchain_prefix)
     end
 
-    make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
-    make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
-    make_tool_wrappers(toolchain, dir, "clang-scan-deps", "clang-scan-deps"; toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "clang", "clang"; wrapper=_clang_wrapper, toolchain_prefix, jobserver=true)
+    make_tool_wrappers(toolchain, dir, "clang++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix, jobserver=true)
+    make_tool_wrappers(toolchain, dir, "clang-scan-deps", "clang-scan-deps"; toolchain_prefix, jobserver=true)
     if get_vendor(toolchain) ∈ (:clang, :clang_bootstrap)
-        make_tool_wrappers(toolchain, dir, "cc", "clang"; wrapper=_clang_wrapper, toolchain_prefix)
-        make_tool_wrappers(toolchain, dir, "c++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix)
-        make_tool_wrappers(toolchain, dir, "cpp", "clang-cpp"; wrapper=_clang_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "cc", "clang"; wrapper=_clang_wrapper, toolchain_prefix, jobserver=true)
+        make_tool_wrappers(toolchain, dir, "c++", "clang++"; wrapper=io -> _clang_wrapper(io; is_clangxx = true), toolchain_prefix, jobserver=true)
+        make_tool_wrappers(toolchain, dir, "cpp", "clang-cpp"; wrapper=_clang_wrapper, toolchain_prefix, jobserver=true)
     end
 end
 

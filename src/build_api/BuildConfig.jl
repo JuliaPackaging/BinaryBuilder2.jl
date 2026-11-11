@@ -157,6 +157,13 @@ struct BuildConfig
             source_trees[prefix] = [non_jlls..., jlls...]
         end
 
+        # `bb_jobserver`, which the compiler wrappers run their tools through (and BB2
+        # runs on the host to start the jobserver).  It doesn't affect what a build
+        # produces, so `spec_hash()` leaves it out.
+        if jobserver_slots() > 0
+            source_trees[jobserver_tools_prefix()] = [BinaryBuilderToolchains.jobserver_jll(host)]
+        end
+
         env = path_appending_merge(env, Dict(
             # Things to work well with a shell
             "PATH" => "/usr/local/bin:/usr/local/sbin:/usr/bin:/usr/sbin:/bin:/sbin",
@@ -262,6 +269,7 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
         # First, a section on source trees (e.g. all dependencies, toolchains, etc...)
         println(hash_buffer, "[source_trees]")
         for prefix in sort(collect(keys(config.source_trees)))
+            prefix == jobserver_tools_prefix() && continue
             deps = config.source_trees[prefix]
             println(hash_buffer, "  $(prefix) = $(spec_hash(deps; registries))")
 
@@ -304,6 +312,8 @@ function BinaryBuilderSources.spec_hash(config::BuildConfig; force_recompute::Bo
 end
 
 # Helpers so I don't have to hard-code paths everywhere
+jobserver_prefix() = "/var/cache/bb_jobserver"
+jobserver_tools_prefix() = "/opt/bb_jobserver"
 host_prefix() = "/usr/local"
 source_prefix() = "/workspace/srcdir"
 scripts_prefix() = "/workspace/scripts"
@@ -494,8 +504,81 @@ function sandbox_and_collector(log_io::IO,
         stdout=pipes["stdout"],
         stderr=pipes["stderr"],
         verbose,
+        kwargs...,
     )
     return sandbox_config, collector
+end
+
+"""
+    JobserverSession
+
+A running `bb_jobserver session`: it keeps the jobserver daemon for `jobserver_dir()`
+alive (starting it if needed) until `close()`d.  See `start_jobserver_session()`.
+"""
+struct JobserverSession
+    proc::Base.Process
+    group::String
+end
+
+const jobserver_group_counter = Threads.Atomic{Int}(0)
+
+"""
+    start_jobserver_session(config, mounts)
+
+Starts a `JobserverSession` for a build of `config`, using the `bb_jobserver` that
+`deploy(config)` put at `jobserver_tools_prefix()` (given in `mounts`).  Returns
+`nothing` if the jobserver is disabled (`jobserver_slots()` is zero) or can't be
+started; the build then runs without one.
+"""
+function start_jobserver_session(config::BuildConfig, mounts::Dict{String,MountInfo})
+    num_slots = jobserver_slots()
+    tools = get(mounts, jobserver_tools_prefix(), nothing)
+    if num_slots == 0 || tools === nothing
+        return nothing
+    end
+    bin = joinpath(tools.host_path, "bin", "bb_jobserver")
+    try
+        proc = open(pipeline(`$(bin) session $(jobserver_dir("daemon")) $(num_slots)`; stderr), "r+")
+        if readline(proc) == "ready"
+            group = "$(config.src_name)-$(getpid())-$(Threads.atomic_add!(jobserver_group_counter, 1))"
+            return JobserverSession(proc, group)
+        end
+        close(proc.in)
+        wait(proc)
+        @warn("Could not start the jobserver; building without one", exitcode=proc.exitcode)
+    catch e
+        @warn("Could not start the jobserver; building without one", exception=e)
+    end
+    return nothing
+end
+
+function Base.close(session::JobserverSession)
+    close(session.proc.in)
+    wait(session.proc)
+end
+Base.close(::Nothing) = nothing
+
+"""
+    with_jobserver(session, mounts, env)
+
+Copies of `mounts` and `env` for running a build script whose compiler wrappers take
+their job slots from `session`'s jobserver daemon: the directory holding the daemon's
+socket is mounted at `jobserver_prefix()`, and `BB_JOBSERVER_SOCKET`,
+`BB_JOBSERVER_BIN` and `BB_JOBSERVER_GROUP` tell `bb_jobserver run` where to find it
+and which build it belongs to.  Returns `mounts` and `env` unchanged if `session` is
+`nothing`.
+"""
+function with_jobserver(session::Union{JobserverSession,Nothing}, mounts::Dict{String,MountInfo}, env::Dict{String,String})
+    if session === nothing
+        return mounts, env
+    end
+    mounts = copy(mounts)
+    mounts[jobserver_prefix()] = MountInfo(jobserver_dir("daemon"), MountType.ReadOnly)
+    env = copy(env)
+    env["BB_JOBSERVER_SOCKET"] = "$(jobserver_prefix())/socket"
+    env["BB_JOBSERVER_BIN"] = "$(jobserver_tools_prefix())/bin/bb_jobserver"
+    env["BB_JOBSERVER_GROUP"] = session.group
+    return mounts, env
 end
 
 function runshell(config::BuildConfig; verbose::Bool = AbstractBuildMeta(config).verbose, shell::Cmd = `/bin/bash`)
@@ -584,8 +667,11 @@ end
     mounts = deploy(config; verbose)
     # The sources are on disk now, so record them for the JLL (and the build cache)
     srcs_records = source_records(config)
+    jobserver = start_jobserver_session(config, mounts)
+    build_mounts, build_env = with_jobserver(jobserver, mounts, config.env)
     sandbox_config, collector = sandbox_and_collector(
-        build_log_io, config, mounts;
+        build_log_io, config, build_mounts;
+        env = build_env,
         verbose,
     )
     exe = Sandbox.preferred_executor()()
@@ -610,6 +696,8 @@ end
         if verbose
             @error("Build failed (internal error)", run_status, exception=(run_exception, run_backtrace))
         end
+    finally
+        close(jobserver)
     end
     
     build_log = String(take!(build_log_io))
