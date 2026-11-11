@@ -99,6 +99,50 @@ function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
 end
 
 """
+    registered_uuids(pkg::PkgSpec, registries)
+
+Return the UUIDs within `registries` that `pkg` could resolve to.  We look those up by
+name (rather than by UUID) because `pkg.uuid` is only filled out once `prepare()` has
+run, and `spec_hash()` must not depend on whether that has happened yet.
+"""
+function registered_uuids(pkg::PkgSpec, registries::Vector{RegistryInstance})
+    if pkg.name !== nothing
+        uuids = UUID[]
+        for reg in registries
+            append!(uuids, uuids_from_name(reg, pkg.name))
+        end
+        if !isempty(uuids)
+            return unique!(uuids)
+        end
+    end
+    if pkg.uuid !== nothing && any(haskey(reg.pkgs, pkg.uuid) for reg in registries)
+        return [pkg.uuid]
+    end
+    return UUID[]
+end
+
+"""
+    registered_dep_uuids(uuids, registries)
+
+Return the UUIDs of every dependency that any registered version of any of `uuids`
+has in `registries`.
+"""
+function registered_dep_uuids(uuids::Vector{UUID}, registries::Vector{RegistryInstance})
+    dep_uuids = Set{UUID}()
+    for uuid in uuids, reg in registries
+        entry = get(reg.pkgs, uuid, nothing)
+        entry === nothing && continue
+        for (_, deps) in entry_info(reg, entry).deps
+            # Older Pkgs map names to UUIDs; Pkg 1.13 has a set of UUIDs.
+            for dep_uuid in (deps isa AbstractSet ? deps : values(deps))
+                dep_uuid != JULIA_UUID && push!(dep_uuids, dep_uuid)
+            end
+        end
+    end
+    return sort!(collect(dep_uuids))
+end
+
+"""
     slice_roots(pkg::PkgSpec, registries)
 
 Return the UUIDs within `registries` that the resolution of `pkg` starts from, or
@@ -107,29 +151,30 @@ Return the UUIDs within `registries` that the resolution of `pkg` starts from, o
 A package that is developed by path doesn't resolve against its own registry entry
 (if it even has one) but against the dependencies listed in its `Project.toml`, so
 those are our roots (see [`project_dep_uuids`](@ref)).  Otherwise these are the UUIDs
-that `pkg` could resolve to.  We look those up by name (rather than by UUID) because
-`pkg.uuid` is only filled out once `prepare()` has run, and `spec_hash()` must not
-depend on whether that has happened yet.
+that `pkg` could resolve to (see [`registered_uuids`](@ref)).
 
-A package added from a git repository needn't be registered at all, and we can't see
-its `Project.toml` without fetching it, so if it isn't registered we leave the
-registries out of it entirely rather than hash them wholesale.
+A package added from a git repository at a commit doesn't resolve against its own
+registry entry either: the commit alone determines its content and its `Project.toml`.
+We can't see that `Project.toml` without fetching the repository, so we take the
+dependencies of every registered version of the package as a stand-in for it (see
+[`registered_dep_uuids`](@ref)).  That way a new registered version of the package
+leaves our slice alone, while a change to anything it can depend on still shows up.
+
+A package added from a git repository needn't be registered at all, and in that case
+we can't find its dependencies, so we leave the registries out of it entirely rather
+than hash them wholesale.  A package that tracks a branch (see [`tracks_branch`](@ref))
+keeps its own registry entry as a root, if it has one.
 """
 function slice_roots(pkg::PkgSpec, registries::Vector{RegistryInstance})
     if pkg.path !== nothing
         return project_dep_uuids(pkg)
     end
-    if pkg.name !== nothing
-        roots = UUID[]
-        for reg in registries
-            append!(roots, uuids_from_name(reg, pkg.name))
-        end
-        if !isempty(roots)
-            return unique!(roots)
-        end
+    uuids = registered_uuids(pkg, registries)
+    if pkg.repo.source !== nothing && !tracks_branch(pkg)
+        return registered_dep_uuids(uuids, registries)
     end
-    if pkg.uuid !== nothing && any(haskey(reg.pkgs, pkg.uuid) for reg in registries)
-        return [pkg.uuid]
+    if !isempty(uuids)
+        return uuids
     end
     if pkg.repo.source !== nothing
         return UUID[]
@@ -153,9 +198,9 @@ end
     registry_slice_hash(pkg::PkgSpec, registries)
 
 Hash only the pieces of `registries` that can change how `pkg` resolves: the registry
-entries of `pkg` itself (or of the dependencies in its `Project.toml`, for a package
-developed by path; see [`slice_roots`](@ref)) and, transitively, of everything they
-can depend on.  This is what lets our JLL resolution caches (and everything keyed off
+entries of `pkg` itself (or of its dependencies, for a package developed by path or
+added from a git repository at a commit; see [`slice_roots`](@ref)) and, transitively,
+of everything they can depend on.  This is what lets our JLL resolution caches (and everything keyed off
 of them, such as `spec_hash(::JLLSource)`) survive a registry update that didn't touch
 any package we care about.  `General` picks up new commits every few minutes, so
 hashing the whole registry meant throwing away those caches on essentially every build.

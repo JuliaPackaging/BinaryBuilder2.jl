@@ -741,6 +741,28 @@ end
         @test registry_slice_hash(repo_spec("Unregistered_jll"), base) != full_registries_hash(base)
         @test registry_slice_hash(repo_spec("Unregistered_jll"), unrelated) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
 
+        # A package added from a git repository at a commit resolves against the
+        # dependencies of its registered versions rather than its own registry entry: a
+        # new registered version of it must not change the slice, but a new version of
+        # anything it can depend on must.  One that tracks a branch must still see both.
+        pinned = repo_spec("Root_jll"; rev="0"^40)
+        @test registry_slice_hash(pinned, base) == registry_slice_hash(mid, base)
+        root_bumped = [make_registry(joinpath(dir, "root_bumped"); versions=Dict("Root_jll" => ["1.0.0", "1.1.0"]))]
+        @test registry_slice_hash(pinned, root_bumped) == registry_slice_hash(pinned, base)
+        @test registry_slice_hash(pinned, unrelated) == registry_slice_hash(pinned, base)
+        @test registry_slice_hash(pinned, relevant) != registry_slice_hash(pinned, base)
+        @test registry_slice_hash(repo_spec("Root_jll"), root_bumped) != base_hash
+        @test registry_slice_hash(root, root_bumped) != base_hash
+        pinned_jll = JLLSource(pinned, HostPlatform())
+        @test spec_hash(pinned_jll; registries=root_bumped) == spec_hash(pinned_jll; registries=base)
+        @test spec_hash(pinned_jll; registries=relevant) != spec_hash(pinned_jll; registries=base)
+        branch_jll = JLLSource(repo_spec("Root_jll"), HostPlatform())
+        @test spec_hash(branch_jll; registries=root_bumped) != spec_hash(branch_jll; registries=base)
+        # An unregistered package pinned to a commit leaves the registries out entirely.
+        unreg_pinned = repo_spec("Unregistered_jll"; rev="0"^40)
+        @test registry_slice_hash(unreg_pinned, base) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
+        @test registry_slice_hash(unreg_pinned, relevant) == registry_slice_hash(unreg_pinned, base)
+
         # Anything other than a full commit hash counts as tracking a branch.
         @test tracks_branch(repo_spec("Root_jll"))
         @test tracks_branch(repo_spec("Root_jll"; rev=nothing))
