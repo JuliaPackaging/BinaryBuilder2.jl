@@ -597,9 +597,13 @@ end
         "Mid_jll"   => "00000000-0000-0000-0000-000000000002",
         "Leaf_jll"  => "00000000-0000-0000-0000-000000000003",
         "Other_jll" => "00000000-0000-0000-0000-000000000004",
+        "JLLWrappers" => "692b3bcd-3c85-4b1f-b108-f13ce0eb3210",
     )
     reg_uuid = "00000000-0000-0000-0000-0000000000aa"
-    function write_registry(dir; versions = Dict{String,Vector{String}}(), mid_deps = ["Leaf_jll"], mid_weak_deps = String[])
+    # `range_deps` adds dependencies that apply only to a range of versions of a package,
+    # e.g. `Dict("Root_jll" => Dict("2" => ["Other_jll"]))`.
+    function write_registry(dir; versions = Dict{String,Vector{String}}(), mid_deps = ["Leaf_jll"], mid_weak_deps = String[],
+                            range_deps = Dict{String,Dict{String,Vector{String}}}())
         mkpath(dir)
         open(joinpath(dir, "Registry.toml"); write=true) do io
             println(io, "name = \"TestReg\"")
@@ -619,14 +623,18 @@ end
                     println(io, "[\"$(v)\"]\ngit-tree-sha1 = \"$(string(idx; pad=40, base=16))\"\n")
                 end
             end
-            deps = name == "Root_jll" ? ["Mid_jll"] : (name == "Mid_jll" ? mid_deps : String[])
-            weak_deps = name == "Mid_jll" ? mid_weak_deps : String[]
+            deps = Dict("1" => name == "Root_jll" ? ["Mid_jll"] : (name == "Mid_jll" ? mid_deps : String[]))
+            merge!(deps, get(range_deps, name, Dict{String,Vector{String}}()))
+            weak_deps = Dict("1" => name == "Mid_jll" ? mid_weak_deps : String[])
             for (fname, fdeps) in (("Deps.toml", deps), ("WeakDeps.toml", weak_deps))
-                isempty(fdeps) && continue
+                all(isempty, values(fdeps)) && continue
                 open(joinpath(pkg_dir, fname); write=true) do io
-                    println(io, "[\"1\"]")
-                    for dep in fdeps
-                        println(io, "$(dep) = \"$(uuids[dep])\"")
+                    for (range, range_fdeps) in fdeps
+                        isempty(range_fdeps) && continue
+                        println(io, "[\"$(range)\"]")
+                        for dep in range_fdeps
+                            println(io, "$(dep) = \"$(uuids[dep])\"")
+                        end
                     end
                 end
             end
@@ -740,6 +748,68 @@ end
         @test registry_slice_hash(repo_spec("Root_jll"), base) == base_hash
         @test registry_slice_hash(repo_spec("Unregistered_jll"), base) != full_registries_hash(base)
         @test registry_slice_hash(repo_spec("Unregistered_jll"), unrelated) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
+
+        # A package added from a git repository at a commit resolves against the
+        # dependencies of its registered versions rather than its own registry entry: a
+        # new registered version of it must not change the slice, but a new version of
+        # anything it can depend on must.  One that tracks a branch must still see both.
+        pinned = repo_spec("Root_jll"; rev="0"^40)
+        @test registry_slice_hash(pinned, base) == registry_slice_hash(mid, base)
+        root_bumped = [make_registry(joinpath(dir, "root_bumped"); versions=Dict("Root_jll" => ["1.0.0", "1.1.0"]))]
+        @test registry_slice_hash(pinned, root_bumped) == registry_slice_hash(pinned, base)
+        @test registry_slice_hash(pinned, unrelated) == registry_slice_hash(pinned, base)
+        @test registry_slice_hash(pinned, relevant) != registry_slice_hash(pinned, base)
+        @test registry_slice_hash(repo_spec("Root_jll"), root_bumped) != base_hash
+        @test registry_slice_hash(root, root_bumped) != base_hash
+        pinned_jll = JLLSource(pinned, HostPlatform())
+        @test spec_hash(pinned_jll; registries=root_bumped) == spec_hash(pinned_jll; registries=base)
+        @test spec_hash(pinned_jll; registries=relevant) != spec_hash(pinned_jll; registries=base)
+        branch_jll = JLLSource(repo_spec("Root_jll"), HostPlatform())
+        @test spec_hash(branch_jll; registries=root_bumped) != spec_hash(branch_jll; registries=base)
+        # An unregistered package pinned to a commit leaves the registries out entirely.
+        unreg_pinned = repo_spec("Unregistered_jll"; rev="0"^40)
+        @test registry_slice_hash(unreg_pinned, base) == registry_slice_hash(repo_spec("Unregistered_jll"), base)
+        @test registry_slice_hash(unreg_pinned, relevant) == registry_slice_hash(unreg_pinned, base)
+
+        # A package that requests particular versions can only resolve to one of them:
+        # new versions of it outside of that request must not change the slice, nor must
+        # anything that only those other versions depend on.  New versions within the
+        # request, and anything the requested versions depend on, still must.
+        for version in (v"1.0.0", "1.0", Pkg.Types.VersionSpec("1.0"))
+            requested = PackageSpec(; name="Root_jll", version)
+            @test registry_slice_hash(requested, root_bumped) == registry_slice_hash(requested, base)
+            @test registry_slice_hash(requested, relevant) != registry_slice_hash(requested, base)
+        end
+        @test registry_slice_hash(PackageSpec(; name="Root_jll", version="1"), root_bumped) !=
+              registry_slice_hash(PackageSpec(; name="Root_jll", version="1"), base)
+        root_v2 = [make_registry(joinpath(dir, "root_v2"); versions=Dict("Root_jll" => ["1.0.0", "2.0.0"]),
+                                 range_deps=Dict("Root_jll" => Dict("2" => ["Other_jll"])))]
+        root_v2_bumped = [make_registry(joinpath(dir, "root_v2_bumped");
+                                        versions=Dict("Root_jll" => ["1.0.0", "2.0.0"], "Other_jll" => ["1.0.0", "2.0.0"]),
+                                        range_deps=Dict("Root_jll" => Dict("2" => ["Other_jll"])))]
+        root_v1 = PackageSpec(; name="Root_jll", version="1")
+        @test registry_slice_hash(root_v1, root_v2) == registry_slice_hash(root_v1, base)
+        @test registry_slice_hash(root_v1, root_v2_bumped) == registry_slice_hash(root_v1, root_v2)
+        @test registry_slice_hash(root, root_v2_bumped) != registry_slice_hash(root, root_v2)
+        requested_jll = JLLSource(PackageSpec(; name="Root_jll", version=v"1.0.0"), HostPlatform())
+        @test spec_hash(requested_jll; registries=root_v2) == spec_hash(requested_jll; registries=base)
+
+        # We never install a JLL's wrapper code, so new releases of `JLLWrappers` (and of
+        # anything only it reaches) must not change the slice of a JLL that uses it,
+        # whether we reach it as a dependency or start from it as a pinned JLL's root.
+        # The JLL's own dependency on it is still part of the JLL's entry.
+        wrapped_deps = Dict("Leaf_jll" => Dict("1" => ["JLLWrappers"]), "JLLWrappers" => Dict("1" => ["Other_jll"]))
+        wrapped = [make_registry(joinpath(dir, "wrapped"); range_deps=wrapped_deps)]
+        @test registry_slice_hash(root, wrapped) != base_hash
+        wrapped_bumped = [make_registry(joinpath(dir, "wrapped_bumped"); range_deps=wrapped_deps,
+                                        versions=Dict("JLLWrappers" => ["1.0.0", "1.1.0"], "Other_jll" => ["1.0.0", "2.0.0"]))]
+        pinned_mid = repo_spec("Mid_jll"; rev="0"^40)
+        for pkg in (root, pinned_mid, repo_spec("Leaf_jll"; rev="0"^40))
+            @test registry_slice_hash(pkg, wrapped_bumped) == registry_slice_hash(pkg, wrapped)
+        end
+        wrapped_leaf_bumped = [make_registry(joinpath(dir, "wrapped_leaf_bumped"); range_deps=wrapped_deps,
+                                             versions=Dict("Leaf_jll" => ["1.0.0", "1.1.0"]))]
+        @test registry_slice_hash(pinned_mid, wrapped_leaf_bumped) != registry_slice_hash(pinned_mid, wrapped)
 
         # Anything other than a full commit hash counts as tracking a branch.
         @test tracks_branch(repo_spec("Root_jll"))
