@@ -308,7 +308,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             version=glibc_jll_versionspec(glibc_version),
             # This glibc is the one that gets embedded within GCC and it's for the target
             target=sysroot_path,
-            glibc_jll_repo(glibc_version)...,
         )]
     elseif libc(platform.target) == "musl"
         libc_jlls = [JLLSource(
@@ -531,7 +530,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             exempt_from_strict_tags=true,
             # LinuxKernelHeaders gets installed into `<prefix>/<triplet>/usr`
             target=joinpath(sysroot_path, "usr"),
-            staticfloat_jll_repo("LinuxKernelHeaders_jll")...,
         ))
     end
 

@@ -432,7 +432,6 @@ function gcc_build_spec_generator(host, platform)
             uuid=Base.UUID("d754bdc3-4c87-55c0-a004-f56830624a1e"),
             version=v"6.9.1",
             target=joinpath(target_str, "usr"),
-            BinaryBuilder2.BinaryBuilderToolchains.staticfloat_jll_repo("LinuxKernelHeaders_jll")...,
         ))
     end
 
@@ -445,7 +444,6 @@ function gcc_build_spec_generator(host, platform)
             uuid=Base.UUID("452aa2e7-e185-58db-8ff9-d3c1fa4bc997"),
             version=BBT.glibc_jll_versionspec(glibc_version),
             target=target_str,
-            BBT.glibc_jll_repo(glibc_version)...,
         ))
     elseif os(platform.target) == "linux" &&  libc(platform.target) == "musl"
         push!(target_sources, JLLSource(
