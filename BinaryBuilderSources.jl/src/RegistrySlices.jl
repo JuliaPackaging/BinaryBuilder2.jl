@@ -1,5 +1,6 @@
 using SHA, Pkg
 using Pkg.Registry: RegistryInstance, PkgEntry, registry_info, uuids_from_name
+using Pkg.Types: VersionSpec
 using JLLPrefixes: PkgSpec
 using Base: UUID
 
@@ -12,11 +13,11 @@ const JULIA_UUID = UUID("1222c4b2-2114-5bfd-aeef-88e4692bbb3e")
 # which `trim!()` deals with.
 const registry_slice_lock = ReentrantLock()
 
-# (registry fingerprint, package UUID) -> hash of that package's registry entry
-const registry_entry_hashes = Dict{Tuple{String,UUID},String}()
+# (registry fingerprint, package UUID, requested versions) -> hash of that package's registry entry
+const registry_entry_hashes = Dict{Tuple{String,UUID,String},String}()
 
-# (fingerprints of all registries, root package UUIDs) -> slice hash
-const registry_slice_hashes = Dict{Tuple{String,String},String}()
+# (fingerprints of all registries, root package UUIDs, requested versions) -> slice hash
+const registry_slice_hashes = Dict{Tuple{String,String,String},String}()
 
 # Keep our memoization tables from growing without bound as registries get updated
 # over the lifetime of a long-lived process; everything in them is cheap to recompute.
@@ -53,30 +54,73 @@ entry_info(reg::RegistryInstance, entry::PkgEntry) =
     applicable(registry_info, reg, entry) ? registry_info(reg, entry) : registry_info(entry)
 
 """
-    registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
+    requested_versions(pkg::PkgSpec)
+
+Return the `VersionSpec` that restricts which registered versions of `pkg` can be
+resolved, or `nothing` if any of them can.  Only a package resolved from its registry
+entry has one: a package developed by path or added from a git repository resolves to
+whatever that path or repository holds.
+"""
+function requested_versions(pkg::PkgSpec)
+    if pkg.path !== nothing || pkg.repo.source !== nothing || pkg.repo.rev !== nothing
+        return nothing
+    end
+    versions = pkg.version isa VersionSpec ? pkg.version : VersionSpec(pkg.version)
+    return versions == VersionSpec() ? nothing : versions
+end
+
+"""
+    matching_versions(info, versions)
+
+Return the versions in the registry info `info` that lie within `versions`, or all of
+them if `versions` is `nothing`.
+"""
+function matching_versions(info, versions::Union{Nothing,VersionSpec})
+    all_versions = collect(keys(info.version_info))
+    versions === nothing && return all_versions
+    return filter(v -> v in versions, all_versions)
+end
+
+"""
+    matching_ranges(table, versions)
+
+Return the keys of `table` (a `deps`/`compat` table of registry info, keyed by
+`VersionRange`) that apply to at least one of `versions`, in a stable order.
+"""
+function matching_ranges(table::AbstractDict, versions::Vector{VersionNumber})
+    ranges = filter(vr -> any(v -> v in vr, versions), collect(keys(table)))
+    return sort!(ranges; by=string)
+end
+
+"""
+    registry_entry_hash(reg::RegistryInstance, entry::PkgEntry, versions = nothing)
 
 Hash everything the resolver can learn about a single package from a single registry:
 its available versions and their tree hashes, and the dependencies and compat bounds
 of each of those versions.  This is deliberately insensitive to the formatting of the
-underlying `.toml` files, and to every other package in the registry.
+underlying `.toml` files, and to every other package in the registry.  If `versions`
+is given, only the registered versions within it (and the dependencies and compat
+bounds that apply to them) take part, as no other version can be resolved.
 """
-function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry)
-    key = (registry_fingerprint(reg), entry.uuid)
+function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry,
+                             versions::Union{Nothing,VersionSpec} = nothing)
+    key = (registry_fingerprint(reg), entry.uuid, string(something(versions, "")))
     cached = lock(() -> get(registry_entry_hashes, key, nothing), registry_slice_lock)
     cached !== nothing && return cached
 
     info = entry_info(reg, entry)
+    available = matching_versions(info, versions)
     io = IOBuffer()
     println(io, entry.uuid, " ", entry.name)
     println(io, "repo = ", something(info.repo, ""), ", subdir = ", something(info.subdir, ""))
-    for v in sort!(collect(keys(info.version_info)))
+    for v in sort!(available)
         vinfo = info.version_info[v]
         println(io, "  ", v, " = ", vinfo.git_tree_sha1, vinfo.yanked ? " (yanked)" : "")
     end
     # `deps`/`compat` are `Dict`s keyed by `VersionRange`, so sort them into a stable order.
     for (name, table) in (("deps", info.deps), ("compat", info.compat),
                           ("weak_deps", info.weak_deps), ("weak_compat", info.weak_compat))
-        for vr in sort!(collect(keys(table)); by=string)
+        for vr in matching_ranges(table, available)
             entries = table[vr]
             if entries isa AbstractSet
                 # Pkg 1.13: the deps of a version range are a set of UUIDs.
@@ -207,7 +251,10 @@ hashing the whole registry meant throwing away those caches on essentially every
 
 We walk dependencies of *every* version of *every* package we reach, not just the
 versions that happen to resolve today, because a new version of any of them is exactly
-the kind of registry change that should invalidate the cache.  We do not walk weak
+the kind of registry change that should invalidate the cache.  The one exception is
+`pkg` itself, when it is resolved from its registry entry and requests particular
+versions (see [`requested_versions`](@ref)): only those versions of it can resolve, so
+we hash only them and walk only their dependencies.  We do not walk weak
 dependencies, as they can never pull a package into a resolution; their compat bounds
 are still part of each entry's hash (see [`registry_entry_hash`](@ref)).  Walking them
 too would reach most of `General` (e.g. `LazyJLLWrappers` reaches `JET` through a
@@ -228,8 +275,11 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
         return full_registries_hash(registries)
     end
 
+    # The requested versions of `pkg` only restrict its own entry, so they only apply
+    # when that entry is what we start from.
+    versions = requested_versions(pkg)
     fingerprints = join(registry_fingerprint(reg) for reg in registries)
-    cache_key = (fingerprints, join(sort(string.(roots)), ","))
+    cache_key = (fingerprints, join(sort(string.(roots)), ","), string(something(versions, "")))
     cached = lock(() -> get(registry_slice_hashes, cache_key, nothing), registry_slice_lock)
     cached !== nothing && return cached
 
@@ -243,10 +293,13 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
         for reg in registries
             entry = get(reg.pkgs, uuid, nothing)
             entry === nothing && continue
-            push!(entry_hashes, (string(reg.uuid, "/", uuid), registry_entry_hash(reg, entry)))
+            entry_versions = (versions !== nothing && uuid in roots) ? versions : nothing
+            push!(entry_hashes, (string(reg.uuid, "/", uuid), registry_entry_hash(reg, entry, entry_versions)))
 
             info = entry_info(reg, entry)
-            for (_, deps) in info.deps
+            available = matching_versions(info, entry_versions)
+            for vr in matching_ranges(info.deps, available)
+                deps = info.deps[vr]
                 # Older Pkgs map names to UUIDs; Pkg 1.13 has a set of UUIDs.
                 for dep_uuid in (deps isa AbstractSet ? deps : values(deps))
                     if dep_uuid != JULIA_UUID && dep_uuid ∉ seen
