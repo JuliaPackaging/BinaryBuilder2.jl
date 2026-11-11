@@ -204,13 +204,25 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                 @test_throws r"needs a Julia whose platform matching implements strict tags" prepare(sanitized.deps)
                 continue
             end
-            if get(config, :cxx_runtime, :auto) != :unsanitized_libstdcxx
-                @test_throws r"_jll has no artifact for .*sanitize\+memory" prepare(sanitized.deps)
-                continue
-            end
             prepare(sanitized.deps)
             compiler_rt = only(filter(j -> j.package.name == "LLVMCompilerRT_jll", sanitized.deps))
             @test any(isfile(joinpath(path, "lib", "linux", "libclang_rt.msan-x86_64.a")) for path in compiler_rt.artifact_paths)
+
+            # The C++ runtime is instrumented (it calls into the msan runtime) unless
+            # `:unsanitized_libstdcxx` was asked for.
+            cxx_jll, cxx_lib = if get(config, :cxx_runtime, :auto) == :libcxx
+                "LLVMLibcxx_jll", "libc++.so.1"
+            else
+                "libstdcxx_jll", "libstdc++.so.6"
+            end
+            cxx_paths = only(filter(j -> j.package.name == cxx_jll, sanitized.deps)).artifact_paths
+            cxx_libs = String[]
+            for path in cxx_paths, (root, _, files) in walkdir(path)
+                append!(cxx_libs, joinpath.(root, filter(==(cxx_lib), files)))
+            end
+            @test !isempty(cxx_libs)
+            instrumented = get(config, :cxx_runtime, :auto) != :unsanitized_libstdcxx
+            @test all(occursin("__msan_", read(lib, String)) == instrumented for lib in cxx_libs)
         end
     end
 
