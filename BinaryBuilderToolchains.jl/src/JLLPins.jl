@@ -7,6 +7,7 @@ using BinaryBuilderSources: tracks_branch
 # tracks a branch is resolved on every build, and may still be stale.  To move a toolchain
 # JLL forward, update its commit here.
 const jll_pins = Dict{Tuple{String,String},String}(
+    ("BBJobserver_jll", "bb2/BBJobserver")                              => "dcf9d154784cef2d057f428def7644fdf9d00418",
     ("Binutils_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")               => "7f82db93e8a01af50123509b04676a913c606326",
     ("CCTools_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                => "2d9ab6813a60c4e055c0583ae94a620b65bec15d",
     ("Clang_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                  => "fc542ea0b8e6ab9614083e5b21b0f341e561aa92",

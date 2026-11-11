@@ -104,6 +104,33 @@ be set through the `builds_dir` preference.
 @define_storage_location builds_dir
 
 """
+    jobserver_dir()
+
+Returns the path of the directory where the jobserver daemon, which hands out the job
+slots that compiler wrappers wait for (see `jobserver_slots()`), keeps its socket.  Every
+BinaryBuilder2 process that uses the same directory shares the same daemon, and so the
+same pool of slots.  This can be set through the `jobserver_dir` preference.
+"""
+@define_storage_location jobserver_dir
+
+"""
+    jobserver_slots()
+
+The number of compiler processes (across all builds that share `jobserver_dir()`) that
+may run at once.  Taken from the `BINARYBUILDER_JOBSERVER_SLOTS` environment variable,
+else the `jobserver_slots` preference, else `Sys.CPU_THREADS`.  `0` disables the
+jobserver.  While builds with different values run at once, the largest one applies.  This does not change `nproc` inside the build: recipes still launch as many
+jobs as they like, and the extra ones wait for a slot.
+"""
+function jobserver_slots()
+    slots = get(ENV, "BINARYBUILDER_JOBSERVER_SLOTS", nothing)
+    if slots === nothing
+        slots = @load_preference("jobserver_slots", Sys.CPU_THREADS)
+    end
+    return max(0, isa(slots, Integer) ? Int(slots) : parse(Int, slots))
+end
+
+"""
     universes_dir()
 
 Returns the path of the directory used to store universes, the collection of mini-
