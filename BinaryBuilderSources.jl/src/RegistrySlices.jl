@@ -8,6 +8,14 @@ using Base: UUID
 # registered package, so we never try to walk into it.
 const JULIA_UUID = UUID("1222c4b2-2114-5bfd-aeef-88e4692bbb3e")
 
+# The packages that JLLs use for their wrapper code (`JLLWrappers` and `LazyJLLWrappers`).
+# We only ever install a JLL's artifacts, never its wrapper code, so their entries (and
+# everything only they reach) are left out of our slices; see `registry_slice_hash()`.
+const JLL_WRAPPER_UUIDS = Set{UUID}([
+    UUID("692b3bcd-3c85-4b1f-b108-f13ce0eb3210"),  # JLLWrappers
+    UUID("21706172-204c-4d4f-5420-656854206f44"),  # LazyJLLWrappers
+])
+
 # Guards the memoization tables in this file.  Both of them are keyed (at least in
 # part) on a registry fingerprint, so entries never go stale; they only pile up,
 # which `trim!()` deals with.
@@ -262,6 +270,11 @@ chain of package extensions), at which point every `General` commit would invali
 everything.  Without them, these closures are small: a leaf JLL reaches a handful of
 packages, and a heavy one like `Qt6Base_jll` reaches a few dozen.
 
+We don't walk into the JLL wrapper packages either (see `JLL_WRAPPER_UUIDS`).  Nearly
+every JLL depends on one of them, but what we install is only ever a JLL's artifacts,
+which its own version determines, so a new wrapper release changes nothing we install.
+The compat bounds that JLLs place on them are still part of each JLL's entry hash.
+
 Only tarball registries take part in this (see [`tarball_registries`](@ref)); a
 `Universe`'s local registry contributes nothing.  If we can't find any roots for `pkg`
 (it isn't registered in any tarball registry, and doesn't come from a path or a git
@@ -286,8 +299,8 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
     # Breadth-first walk over the dependency graph as the registries describe it,
     # collecting a hash of each `(registry, package)` pair we touch along the way.
     entry_hashes = Tuple{String,String}[]
-    seen = Set{UUID}(roots)
-    frontier = copy(roots)
+    seen = union(Set{UUID}(roots), JLL_WRAPPER_UUIDS)
+    frontier = filter(uuid -> uuid ∉ JLL_WRAPPER_UUIDS, roots)
     while !isempty(frontier)
         uuid = pop!(frontier)
         for reg in registries

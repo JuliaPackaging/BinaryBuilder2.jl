@@ -597,6 +597,7 @@ end
         "Mid_jll"   => "00000000-0000-0000-0000-000000000002",
         "Leaf_jll"  => "00000000-0000-0000-0000-000000000003",
         "Other_jll" => "00000000-0000-0000-0000-000000000004",
+        "JLLWrappers" => "692b3bcd-3c85-4b1f-b108-f13ce0eb3210",
     )
     reg_uuid = "00000000-0000-0000-0000-0000000000aa"
     # `range_deps` adds dependencies that apply only to a range of versions of a package,
@@ -792,6 +793,23 @@ end
         @test registry_slice_hash(root, root_v2_bumped) != registry_slice_hash(root, root_v2)
         requested_jll = JLLSource(PackageSpec(; name="Root_jll", version=v"1.0.0"), HostPlatform())
         @test spec_hash(requested_jll; registries=root_v2) == spec_hash(requested_jll; registries=base)
+
+        # We never install a JLL's wrapper code, so new releases of `JLLWrappers` (and of
+        # anything only it reaches) must not change the slice of a JLL that uses it,
+        # whether we reach it as a dependency or start from it as a pinned JLL's root.
+        # The JLL's own dependency on it is still part of the JLL's entry.
+        wrapped_deps = Dict("Leaf_jll" => Dict("1" => ["JLLWrappers"]), "JLLWrappers" => Dict("1" => ["Other_jll"]))
+        wrapped = [make_registry(joinpath(dir, "wrapped"); range_deps=wrapped_deps)]
+        @test registry_slice_hash(root, wrapped) != base_hash
+        wrapped_bumped = [make_registry(joinpath(dir, "wrapped_bumped"); range_deps=wrapped_deps,
+                                        versions=Dict("JLLWrappers" => ["1.0.0", "1.1.0"], "Other_jll" => ["1.0.0", "2.0.0"]))]
+        pinned_mid = repo_spec("Mid_jll"; rev="0"^40)
+        for pkg in (root, pinned_mid, repo_spec("Leaf_jll"; rev="0"^40))
+            @test registry_slice_hash(pkg, wrapped_bumped) == registry_slice_hash(pkg, wrapped)
+        end
+        wrapped_leaf_bumped = [make_registry(joinpath(dir, "wrapped_leaf_bumped"); range_deps=wrapped_deps,
+                                             versions=Dict("Leaf_jll" => ["1.0.0", "1.1.0"]))]
+        @test registry_slice_hash(pinned_mid, wrapped_leaf_bumped) != registry_slice_hash(pinned_mid, wrapped)
 
         # Anything other than a full commit hash counts as tracking a branch.
         @test tracks_branch(repo_spec("Root_jll"))
