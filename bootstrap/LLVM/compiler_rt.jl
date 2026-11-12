@@ -12,11 +12,21 @@ build_tarballs(;
         -DCOMPILER_RT_BUILD_LIBFUZZER=OFF
         -DCOMPILER_RT_BUILD_MEMPROF=OFF
         -DCOMPILER_RT_BUILD_PROFILE=OFF
-        -DCOMPILER_RT_BUILD_SANITIZERS=OFF
         -DCOMPILER_RT_BUILD_XRAY=OFF
         -DCOMPILER_RT_ENABLE_IOS=OFF
         -DCOMPILER_RT_DEFAULT_TARGET_TRIPLE="${target}"
     )
+
+    # The MemorySanitizer runtime, for x86_64-linux-gnu-sanitize+memory targets.  The
+    # runtime is not instrumented itself, so it ships in the plain x86_64-linux-gnu build.
+    if [[ "${target}" == x86_64-linux-gnu ]]; then
+        CMAKE_FLAGS+=(
+            -DCOMPILER_RT_BUILD_SANITIZERS=ON
+            -DCOMPILER_RT_SANITIZERS_TO_BUILD=msan
+        )
+    else
+        CMAKE_FLAGS+=( -DCOMPILER_RT_BUILD_SANITIZERS=OFF )
+    fi
 
     # configure, build, install!
     ${CMAKE} ${WORKSPACE}/srcdir/llvm-project/compiler-rt ${CMAKE_FLAGS[@]}
