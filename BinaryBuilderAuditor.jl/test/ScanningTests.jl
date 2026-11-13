@@ -40,6 +40,24 @@ using Test, BinaryBuilderAuditor, ObjectFile, JLLPrefixes, Base.BinaryPlatforms,
     # Test soname_forwards knows about the symlink as well
     liblzma_soname = scan.soname_forwards[basename(liblzma_relpath)]
     @test haskey(scan.binary_objects, scan.soname_locator[liblzma_soname])
+
+    # A product path containing `..` must be keyed by the same normalized path
+    # as the scanned binary object it refers to
+    real_xz_path = realpath(xz_path)
+    env = Dict(
+        "prefix" => real_xz_path,
+        "bindir" => joinpath(real_xz_path, "bin"),
+        "bb_full_target" => triplet(HostPlatform()),
+    )
+    dotdot_scan = scan_files(
+        xz_path,
+        HostPlatform(),
+        [LibraryProduct("\${bindir}/../lib/liblzma", :liblzma)],
+        env,
+    )
+    dotdot_key = only(keys(dotdot_scan.library_products))
+    @test dotdot_key == only(keys(scan.library_products))
+    @test haskey(dotdot_scan.binary_objects, dotdot_key)
 end
 
 @testset "is_static_archive" begin

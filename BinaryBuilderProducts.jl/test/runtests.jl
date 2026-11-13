@@ -251,4 +251,46 @@ using JLLGenerator: rtld_symbols, rtld_flags
             @test locate(StaticLibraryProduct("libbar"), prefix; env, platform=windows) == joinpath("lib", "libbar.a")
         end
     end
+
+    @testset "`..` segments in product paths are resolved" begin
+        mktempdir() do prefix
+            platform = Platform("aarch64", "linux")
+            env = Dict(
+                "prefix" => prefix,
+                "bindir" => joinpath(prefix, "bin"),
+                "host" => "x86_64-linux-gnu",
+                "target" => "aarch64-linux-gnu",
+            )
+            libdir = joinpath(prefix, "x86_64-linux-gnu", "aarch64-linux-gnu", "lib")
+            tooldir = joinpath(prefix, "x86_64-linux-gnu", "aarch64-linux-gnu", "bin")
+            mkpath(joinpath(prefix, "bin"))
+            mkpath(libdir)
+            mkpath(tooldir)
+            touch(joinpath(libdir, "libbfd-2.41.so"))
+            touch(joinpath(libdir, "libctf.so.0.0.0"))
+            touch(joinpath(libdir, "libbfd.a"))
+            touch(joinpath(libdir, "ldscripts.x"))
+            touch(joinpath(tooldir, "ld"))
+            chmod(joinpath(tooldir, "ld"), 0o755)
+
+            subdir = "\${bindir}/../\${host}/\${target}"
+            rel(parts...) = joinpath("x86_64-linux-gnu", "aarch64-linux-gnu", parts...)
+
+            # Libraries found by scanning the directory, and by exact name
+            @test locate(LibraryProduct("$(subdir)/lib/libctf", :libctf), prefix; env, platform) ==
+                rel("lib", "libctf.so.0.0.0")
+            @test locate(LibraryProduct("$(subdir)/lib/libbfd-2.41.so", :libbfd), prefix; env, platform) ==
+                rel("lib", "libbfd-2.41.so")
+            @test locate(StaticLibraryProduct("$(subdir)/lib/libbfd"), prefix; env, platform) ==
+                rel("lib", "libbfd.a")
+            @test locate(ExecutableProduct("$(subdir)/bin/ld", :ld), prefix; env, platform) ==
+                rel("bin", "ld")
+            @test locate(FileProduct("$(subdir)/lib/ldscripts.x", :ldscripts), prefix; env, platform) ==
+                rel("lib", "ldscripts.x")
+
+            # Paths that climb out of the prefix are rejected
+            @test_throws ArgumentError locate(FileProduct("\${bindir}/../../outside", :outside), prefix; env, platform)
+            @test_throws ArgumentError locate(LibraryProduct("../libout", :libout), prefix; env, platform)
+        end
+    end
 end
