@@ -24,8 +24,8 @@ const jll_pins = Dict{Tuple{String,String},String}(
     ("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-aarch64-linux-gnu") => "62fd2c28b11f48366ea8de7dcc9f711a735b8462",
     ("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")  => "7214cef0c101b668960de5bf364a227f0ca5bfff",
     ("LLVMCompilerRT_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")         => "6906d5e391b23af8f2486c5350e9e4392944de65",
-    ("LLVMLibcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")             => "7442c470a7cf202deb279bcd1af7220635d63719",
-    ("LLVMLibunwind_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")          => "2bd0fa3286d1db770b9f142cc6c28038b970bc83",
+    ("LLVMLibcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")             => "cae8f7a4b36bb5ea06c1ff48dfeb08ee2a38c8c8",
+    ("LLVMLibunwind_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")          => "a2d527dc0159edf7cd4f11fc319bdceae781cd17",
 )
 
 """
