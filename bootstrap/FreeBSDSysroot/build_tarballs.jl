@@ -54,23 +54,28 @@ build_tarballs(;
         # ./usr/lib/libc++.a
         # ./usr/lib/libc++experimental.a
 
-        # We're only going to extract certain libraries that are required to bootstrap GCC/Clang:
+        # We're only going to extract certain libraries that are required to bootstrap GCC/Clang,
+        # along with their static archives so that `-static` links work:
         # libc
         ./lib/libc.so.7
         ./usr/lib/libc.so
         ./usr/lib/libc_nonshared.a
+        ./usr/lib/libc.a
 
         # libdl
         ./usr/lib/libdl.so.1
         ./usr/lib/libdl.so
+        ./usr/lib/libdl.a
 
         # libm
         ./lib/libm.so.5
         ./usr/lib/libm.so
+        ./usr/lib/libm.a
         
         # libthr
         ./lib/libthr.so.3
         ./usr/lib/libthr.so
+        ./usr/lib/libthr.a
 
         # libpthread
         ./usr/lib/libpthread.so
