@@ -277,6 +277,24 @@ function get_cxx_runtime_str(args...)
     return replace(cxx_runtime, r"xx$" => "++")
 end
 
+"""
+    get_unwindlib_str(toolchain::CToolchain)
+
+The `--unwindlib` that clang should link with, or `nothing` to leave clang's choice.
+
+On Linux, clang links no unwinder at all alongside `--rtlib=compiler-rt`, but
+static glibc, libstdc++ and libc++abi all call `_Unwind_*`.  We pick the unwinder
+that the C++ runtime was built against: libgcc's for libstdc++ (whose
+`_Unwind_*@GCC_3.0` references only `libgcc_s` satisfies) and LLVM's libunwind
+for libc++.
+"""
+function get_unwindlib_str(toolchain::CToolchain)
+    if os(target_if_crossplatform(toolchain.platform)) != "linux" || get_compiler_runtime(toolchain) != :compiler_rt
+        return nothing
+    end
+    return get_cxx_runtime(toolchain) == :libstdcxx ? "libgcc" : "libunwind"
+end
+
 
 function get_linker(linker::Symbol, platform::AbstractPlatform)
     lld_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
@@ -998,6 +1016,13 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
                 # Set the runtime library
                 "--rtlib=$(get_compiler_runtime_str(toolchain))",
             ])
+
+            unwindlib = get_unwindlib_str(toolchain)
+            if unwindlib !== nothing
+                flagmatch(io, [!flag"--unwindlib=.*"r]) do io
+                    append_flags(io, :PRE, ["--unwindlib=$(unwindlib)"])
+                end
+            end
 
             # Link through the `ld.<triplet>` (`ld64.<triplet>` on macOS) wrapper from our
             # `BinutilsToolchain`, unless the user has chosen a linker themselves.
