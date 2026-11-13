@@ -57,30 +57,40 @@ function add_default_product_dir(T, path, platform)
 end
 
 """
-    path_prefix_transformation(::Type{<:AbstractProduct}, path, prefix, env)
+    path_prefix_transformation(::Type{<:AbstractProduct}, path, prefix, platform, env)
 
 Performs ths transformation to alter a `path` to be relative to `prefix`.  Takes into
 account templating via `env`, as well as applying `add_default_product_dir()` to products
 that can have their leading directory dropped (e.g. `ExecutableProduct` and
-`LibraryProduct`).
+`LibraryProduct`).  The prefix-relative portion is normalized, so that a path such as
+`"\${bindir}/../share/foo"` resolves to `share/foo`; a relative path that would escape
+`prefix` through `..` segments throws an `ArgumentError`.
 """
 function path_prefix_transformation(T::Type{<:AbstractProduct}, path, prefix, platform, env)
-    # Finally, put this relative to `prefix`
-    return joinpath(
-        prefix,
-        # If we were given `"foo"` instead of `"${bindir}/foo`, automatically
-        # add `bin/` if we're an ExecutableProduct, `bin/lib` if we're a `LibraryProduct`, etc...
-        add_default_product_dir(
-            T,
-            # Remove `/workspace/destdir/bin` from the beginning
-            prefix_remove(
-                # Template `${bindir}/foo` to e.g. `/workspace/destdir/bin/foo`
-                template(path, env),
-                env_checked_get(env, "prefix"),
-            ),
-            platform,
-        )
+    # If we were given `"foo"` instead of `"${bindir}/foo`, automatically
+    # add `bin/` if we're an ExecutableProduct, `bin/lib` if we're a `LibraryProduct`, etc...
+    rel_path = add_default_product_dir(
+        T,
+        # Remove `/workspace/destdir/bin` from the beginning
+        prefix_remove(
+            # Template `${bindir}/foo` to e.g. `/workspace/destdir/bin/foo`
+            template(path, env),
+            env_checked_get(env, "prefix"),
+        ),
+        platform,
     )
+
+    # Resolve `..` segments so that located paths match the normalized relative
+    # paths that the rest of the toolchain (e.g. the auditor) keys files by.
+    if !isabspath(rel_path)
+        rel_path = normpath(rel_path)
+        if first(splitpath(rel_path)) == ".."
+            throw(ArgumentError("Product path '$(path)' resolves to '$(rel_path)', which is outside of the prefix"))
+        end
+    end
+
+    # Finally, put this relative to `prefix`
+    return joinpath(prefix, rel_path)
 end
 
 # env-block templating
