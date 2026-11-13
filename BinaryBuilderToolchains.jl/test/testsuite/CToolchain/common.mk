@@ -42,6 +42,9 @@ AR ?= $(CC_TARGET)-ar
 RANLIB ?= $(CC_TARGET)-ranlib
 OBJCOPY ?= $(CC_TARGET)-objcopy
 STRIP ?= $(CC_TARGET)-strip
+NM ?= $(CC_TARGET)-nm
+READELF ?= $(CC_TARGET)-readelf
+OBJDUMP ?= $(CC_TARGET)-objdump
 
 # Magic variables
 SPACE:=$(eval) $(eval)
