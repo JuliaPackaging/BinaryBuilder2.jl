@@ -199,6 +199,30 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
 
             # source works
             @test source(gs) == url
+
+            # A tag pointing to the commit (`v2.0.3` is a lightweight tag on `prev_hash`)
+            gs = GitSource(url, prev_hash; tag="v2.0.3")
+            @test gs.tag == "v2.0.3"
+            prepare(gs)
+            @test verify(gs)
+            @test retarget(gs, "foo").tag == "v2.0.3"
+
+            # The tag doesn't change any hashes
+            @test spec_hash(gs) == spec_hash(GitSource(url, prev_hash))
+            @test content_hash(gs) == content_hash(GitSource(url, prev_hash))
+
+            # A tag pointing to another commit, or a missing tag, fails `prepare()`
+            # even though the commit itself is cached
+            gs = GitSource(url, hash; tag="v2.0.3")
+            @test !verify(gs)
+            @test_throws r"points to commit dab23a5df2e33495c8d843920cc267c0c5051fe8" prepare(gs)
+            gs = GitSource(url, prev_hash; tag="v0.0.0-nonexistent")
+            @test !verify(gs)
+            @test_throws r"\"v0.0.0-nonexistent\" not found" prepare(gs)
+
+            # Invalid tag names are rejected; revision syntax is not interpreted
+            @test_throws ArgumentError GitSource(url, prev_hash; tag="v2.0.4~1")
+            @test_throws ArgumentError GitSource(url, prev_hash; tag="v2.0..3")
         end
 
         @testset "DirectorySource" begin
@@ -1141,6 +1165,71 @@ end
 
                     @test retarget(GitSource([upstream, mirror], new_commit), "foo").urls == [upstream, mirror]
                     @test_throws ArgumentError GitSource(String[], new_commit)
+                end
+            end
+
+            @testset "GitSource tags" begin
+                mktempdir() do dir
+                    upstream = joinpath(dir, "tagged.git")
+                    init!(upstream)
+                    commits = String[]
+                    mktempdir() do checkout
+                        run(git(["clone", "--quiet", upstream, checkout]))
+                        for content in ("one", "two")
+                            write(joinpath(checkout, "file"), content)
+                            commit!(checkout, content)
+                            push!(commits, readchomp(git(["-C", checkout, "rev-parse", "HEAD"])))
+                        end
+                        push!(checkout)
+                    end
+                    one, two = commits
+                    run(git(["-C", upstream, "tag", "light", one]))
+                    run(git(["-C", upstream, "-c", "user.name=t", "-c", "user.email=t@t",
+                             "tag", "-a", "-m", "annotated", "annotated", two]))
+                    run(git(["-C", upstream, "-c", "user.name=t", "-c", "user.email=t@t",
+                             "tag", "-a", "-m", "nested", "nested", "annotated"]))
+
+                    # Lightweight, annotated and nested annotated tags
+                    for (tag, commit) in (("light", one), ("annotated", two), ("nested", two))
+                        gs = GitSource(upstream, commit; tag)
+                        prepare(gs)
+                        @test verify(gs)
+                    end
+                    @test_throws r"points to commit" prepare(GitSource(upstream, one; tag="annotated"))
+
+                    # A tag added upstream after the clone was cached is fetched
+                    run(git(["-C", upstream, "tag", "late", one]))
+                    gs = GitSource(upstream, one; tag="late")
+                    @test !verify(gs)
+                    prepare(gs)
+                    @test verify(gs)
+
+                    # A tag moved upstream replaces the stale cached one
+                    run(git(["-C", upstream, "tag", "-f", "late", two]))
+                    gs = GitSource(upstream, two; tag="late")
+                    @test !verify(gs)
+                    prepare(gs)
+                    @test verify(gs)
+                    @test !verify(GitSource(upstream, one; tag="late"))
+
+                    # With mirrors, one URL having the tag on the commit is enough
+                    mirror = joinpath(dir, "tagmirror.git")
+                    run(git(["clone", "--quiet", "--bare", upstream, mirror]))
+                    run(git(["-C", mirror, "tag", "mirror-only", one]))
+                    gs = GitSource([upstream, mirror], one; tag="mirror-only")
+                    @test_logs (:warn, r"trying the next URL") match_mode=:any prepare(gs)
+                    @test verify(gs)
+
+                    # If no URL has it, every URL's failure is reported
+                    gs = GitSource([upstream, mirror], one; tag="nowhere")
+                    err = try
+                        prepare(gs)
+                        nothing
+                    catch e
+                        e
+                    end
+                    @test err isa BinaryBuilderSources.MirrorsFailedError
+                    @test all(occursin("\"nowhere\" not found", sprint(showerror, e)) for (_, e) in err.errors)
                 end
             end
 
