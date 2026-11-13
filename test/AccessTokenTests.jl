@@ -251,7 +251,7 @@ end
             assets = withenv("GH_TOKEN" => test_zone_org_token) do
                 with_gh(gh -> split(readchomp(`$(gh) release view $(tag_name) --repo $(test_zone)/Zlib_jll.jl --json assets --jq '.assets[].name'`)))
             end
-            expected_assets = [exported_artifact_filename(jll.name, build.name, jll.version, build.platform) for build in jll.builds]
+            expected_assets = [exported_artifact_filename(build.name, nothing, jll.version, build.platform) for build in jll.builds]
             @test sort(assets) == sort(expected_assets)
         end
     end

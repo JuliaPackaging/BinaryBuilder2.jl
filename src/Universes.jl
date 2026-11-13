@@ -576,12 +576,17 @@ function reset_timeline!(u::Universe)
 end
 
 """
-    exported_artifact_filename(jll_name, build_name, auxiliary_name, verison, platform)
+    exported_artifact_filename(build_name, auxiliary_name, version, platform; compressor = "gzip")
 
-Given the parameters for an artifact within a JLL, generate its filename.
-In full generality, this will look something like the following:
+Given the parameters for an artifact within a JLL, generate its filename.  This
+follows BinaryBuilder's `<name>.v<version>.<triplet>.tar.gz` naming, with the
+full triplet of `platform` (including any OS version).  The main artifact of a
+build is named after the build alone, while auxiliary artifacts append their
+name to it:
 
-    Readline-debug-build_log-v1.0.0-x86_64-linux-gnu.tar.gz
+    Readline.v1.0.0.x86_64-linux-gnu.tar.gz
+    Readline-build_log.v1.0.0.x86_64-linux-gnu.tar.gz
+    Readline.v1.0.0.aarch64-apple-darwin20.tar.zst
 """
 function exported_artifact_filename(build_name::String,
                                     auxiliary_name::Union{Nothing,String},
@@ -592,8 +597,7 @@ function exported_artifact_filename(build_name::String,
     if auxiliary_name !== nothing
         ret = string(ret, "-", auxiliary_name)
     end
-    ret = string(ret, "-v", version)
-    ret = string(ret, "-", triplet(platform))
+    ret = string(ret, ".v", version, ".", triplet(platform))
 
     if compressor == "gzip"
         ret = string(ret, ".tar.gz")
@@ -650,8 +654,8 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
                         artifact_path(u, build.artifact.treehash),
                         joinpath(output_dir,
                             exported_artifact_filename(
-                                jll.name,
                                 build.name,
+                                nothing,
                                 jll.version,
                                 build.platform;
                                 compressor
@@ -668,7 +672,7 @@ function export_artifacts!(u::Universe, jll::JLLInfo, tag_name::String,
                             artifact_path(u, art.treehash),
                             joinpath(output_dir,
                                 exported_artifact_filename(
-                                    jll.name,
+                                    build.name,
                                     aux_name,
                                     jll.version,
                                     build.platform;

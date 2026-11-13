@@ -1,6 +1,18 @@
 using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
 using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
 using BinaryBuilder2: update_registries!, registries_to_download, registry_path, parse_registry_hashes
+using BinaryBuilder2: exported_artifact_filename
+using Base.BinaryPlatforms: Platform
+
+@testset "Exported artifact filenames" begin
+    linux = Platform("x86_64", "linux")
+    darwin = Platform("aarch64", "macos"; os_version="20")
+    @test exported_artifact_filename("Zlib", nothing, v"1.4.1", linux) == "Zlib.v1.4.1.x86_64-linux-gnu.tar.gz"
+    @test exported_artifact_filename("Zlib", nothing, v"1.4.1", darwin) == "Zlib.v1.4.1.aarch64-apple-darwin20.tar.gz"
+    @test exported_artifact_filename("Zlib", "build_log", v"1.4.1", linux) == "Zlib-build_log.v1.4.1.x86_64-linux-gnu.tar.gz"
+    @test exported_artifact_filename("Zlib", nothing, v"1.4.1", linux; compressor="zstd") == "Zlib.v1.4.1.x86_64-linux-gnu.tar.zst"
+    @test_throws ArgumentError exported_artifact_filename("Zlib", nothing, v"1.4.1", linux; compressor="xz")
+end
 
 @testset "Universes" begin
     # Create a universe holding just `General`
