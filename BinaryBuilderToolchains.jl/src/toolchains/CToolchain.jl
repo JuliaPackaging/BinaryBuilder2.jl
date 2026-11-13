@@ -978,7 +978,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             end
         end
 
-        if get_compiler_runtime(toolchain) == :libgcc_s || get_cxx_runtime(toolchain) == :libstdcxx
+        if get_compiler_runtime(toolchain) == :libgcc || get_cxx_runtime(toolchain) == :libstdcxx
             append_flags(io, :PRE, [
                 # Set the GCC install dir; this is required on some platforms because
                 # our triplet isn't default (e.g. `armv7l` instead of `arm`) so clang can't find it.
@@ -1014,6 +1014,24 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
                 # does so when asked with `-pthread`.
                 flagmatch(io, [flag"-static(-libstdc\+\+)?"r]) do io
                     append_flags(io, :PRE, ["-pthread"])
+                end
+            end
+
+            # libc++, libc++abi and libunwind call `pthread_*` directly (libstdc++ only
+            # references them weakly), and libunwind calls `dladdr()`.  glibc before 2.34
+            # keeps those in separate `libpthread` and `libdl` libraries, which clang
+            # doesn't link for libc++, and which a user's `-lpthread -ldl` can't supply
+            # either, because clang puts its `-lc++` after all user arguments.  A fully
+            # static link takes all of `libpthread.a`: pulling in only some of its
+            # members, after `libc.a` has already provided its own lowlevellock, defines
+            # `__lll_lock_wait_private` twice.
+            if libc(p) == "glibc" && ((is_clangxx && get_cxx_runtime(toolchain) == :libcxx) ||
+                                      get_compiler_runtime(toolchain) == :compiler_rt)
+                flagmatch(io, [flag"-static"]) do io
+                    append_flags(io, :PRE, ["-Wl,--whole-archive", "-lpthread", "-ldl", "-Wl,--no-whole-archive"])
+                end
+                flagmatch(io, [flag"-static-libstdc\+\+"r, !flag"-static"]) do io
+                    append_flags(io, :PRE, ["-pthread", "-ldl"])
                 end
             end
         end

@@ -59,6 +59,12 @@ build_tarballs(;
     CMAKE_FLAGS+=( "-DLIBCXXABI_USE_COMPILER_RT=ON" )
     CMAKE_FLAGS+=( "-DLIBCXXABI_USE_LLVM_UNWINDER=ON" )
     CMAKE_FLAGS+=( "-DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON" )
+    # `libc++.so` carries its own copy of libunwind, but `libc++.a` must not: a static
+    # link with `--rtlib=libgcc` also pulls in `libgcc_eh.a`'s unwinder (glibc's
+    # `libc.a` and `libpthread.a` call `_Unwind_*`), and the two copies of
+    # `_Unwind_RaiseException` and friends then collide.  Static links instead get
+    # their unwinder from `libgcc_eh.a`, or from `libunwind.a` with `--unwindlib=libunwind`.
+    CMAKE_FLAGS+=( "-DLIBCXXABI_STATICALLY_LINK_UNWINDER_IN_STATIC_LIBRARY=OFF" )
     CMAKE_FLAGS+=( "-DLIBUNWIND_USE_COMPILER_RT=ON" )
     
     CMAKE_FLAGS+=( "-DLIBCXXABI_ENABLE_SHARED=OFF" )
