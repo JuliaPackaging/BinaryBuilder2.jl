@@ -12,6 +12,7 @@ include("AuditInfo.jl")
 include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/DanglingSymlinks.jl")
+include("passes/PkgConfig.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
@@ -45,6 +46,11 @@ function audit!(prefix::String,
     # Ensure that every symlink points at something that exists
     dangling_symlinks(result, prefix_alias)
 
+    # Make pkg-config files relocatable
+    if !readonly
+        relocate_pkgconfig_files!(result, prefix_alias)
+    end
+
     # Ensure that all libraries have SONAMEs
     if !readonly
         ensure_sonames!(result)
@@ -77,6 +83,7 @@ end
 # prefix-wide passes:
 #  - [!] symlink absolute -> relative translation
 #  - dangling symlink check
+#  - [!] pkg-config file relocation
 # object passes:
 #  - ISA check
 #  - OS ABI check
