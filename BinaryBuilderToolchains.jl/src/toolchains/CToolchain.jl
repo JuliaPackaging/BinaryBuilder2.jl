@@ -1008,6 +1008,13 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
             # A user-chosen linker bypasses our `ld` wrapper, so disable timestamps here too.
             if Sys.iswindows(p)
                 append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
+
+                # Our mingw `libstdc++` and `libgcc_eh` use the posix thread model, so their
+                # static archives need `libwinpthread`.  GCC always links it, but clang only
+                # does so when asked with `-pthread`.
+                flagmatch(io, [flag"-static(-libstdc\+\+)?"r]) do io
+                    append_flags(io, :PRE, ["-pthread"])
+                end
             end
         end
 
