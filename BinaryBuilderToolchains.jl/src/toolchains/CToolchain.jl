@@ -354,7 +354,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "FreeBSDSysroot_jll",
             platform.target;
             uuid=Base.UUID("671a10c0-f9bf-59ae-b52a-dff4adda89ae"),
-            version=v"14.1.0",
+            version=v"14.1.1",
             target=sysroot_path,
         )
         libc_jlls = [freebsd_sdk_jll]
