@@ -269,6 +269,26 @@ end
         @test haskey(project["deps"], "Pkg")
         @test !haskey(project["deps"], "Artifacts")
     end
+
+    # The intersection is written in a form that means the same to `Pkg`; in particular,
+    # `X.Y` would be a caret specifier allowing everything up to `(X+1).0.0`.
+    function merged_compat(compat1, compat2)
+        mktempdir() do dir
+            generate_jll(dir, make_dual_deps_constraint(compat1, compat2))
+            return get(TOML.parsefile(joinpath(dir, "Project.toml"))["compat"], "Glibc_jll", nothing)
+        end
+    end
+    for (compat1, compat2) in [("~2.17", "2.17"), ("2.17", "2.19"), ("0.4", "0.4.2"),
+                               ("2.17", "*"), ("2.15, 3.1", "2.16 - 3.2")]
+        merged = merged_compat(compat1, compat2)
+        @test JLLGenerator.compat_spec(merged) ==
+              JLLGenerator.compat_spec(compat1) ∩ JLLGenerator.compat_spec(compat2)
+    end
+    @test merged_compat("~2.17", "2.17") == "2.17 - 2.17"
+    @test merged_compat("2.17", "*") == "2.17.0 - 2"
+    @test merged_compat("*", "*") === nothing
+    @test merged_compat("2.17", "2.17") == "2.17"
+    @test_throws r"\"~2.12\", \"2.19\"" merged_compat("~2.12", "2.19")
 end
 
 @testset "Missing Dependency" begin
