@@ -198,11 +198,34 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
     )
 end
 
+"""
+    JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
+
+The dependencies of the JLL that packages `result`: the `JLLSource`s among the
+default target's `dependencies`, and `extra_deps`.  Each `JLLSource` gets the
+`[compat]` entry given by `jll_compat()`: its explicit `compat`, or else a bound on the
+version it resolved to, as recorded by the build (see `dependency_versions()`).  A
+cached build whose cache entry doesn't carry those versions falls back to the
+version the dependency was requested at, if it was requested at an exact version,
+and to no bound at all otherwise.
+"""
 function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
     # Get list of JLLSources installed in this target's prefix
-    build_config = result.config.build.config
+    build_result = result.config.build
+    build_config = build_result.config
     target_jll_deps = filter(d -> isa(d, JLLSource), get_default_target_spec(build_config).dependencies)
-    deps = [JLLPackageDependency(jll.package.name, jll.package.uuid) for jll in target_jll_deps]
+    recorded_versions = something(build_result.dependency_versions, Dict{String,VersionNumber}())
+
+    deps = JLLPackageDependency[]
+    for jll in target_jll_deps
+        version = get(recorded_versions, jll.package.name, resolved_dependency(build_config, jll).package.version)
+        compat = jll_compat(jll, version)
+        if compat === nothing
+            @warn("No resolved version recorded for $(jll.package.name), not recording a compat bound for it", build=build_config)
+            compat = "*"
+        end
+        push!(deps, JLLPackageDependency(jll.package.name, jll.package.uuid, compat))
+    end
     for pkg in extra_deps
         push!(deps, JLLPackageDependency(pkg.name, pkg.uuid))
     end

@@ -3,7 +3,7 @@ using TreeArchival, TimerOutputs, TOML
 using Base.BinaryPlatforms, JLLPrefixes, Pkg
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
 
-export JLLSource, deduplicate_jlls
+export JLLSource, deduplicate_jlls, jll_compat
 
 struct JLLSource <: AbstractSource
     # The JLL that will be installed
@@ -30,6 +30,12 @@ struct JLLSource <: AbstractSource
     # toolchain installs.  These get resolved as if the platform lacked the strict tags.
     exempt_from_strict_tags::Bool
 
+    # The `[compat]` entry that a JLL depending on this one records for it, as a `Pkg`
+    # version specifier string.  `nothing` means "derive it from the resolved version",
+    # see `jll_compat()`.  This affects only the generated JLL, not the build, so it is
+    # not part of `spec_hash()`.
+    compat::Union{Nothing,String}
+
     # A copy of `package` as it was requested, taken before `prepare()` fills the
     # results of resolution (version, path, tree hash, repo) into `package`.  Never
     # mutated; registry slicing and `dev_content_hash()` read it in `spec_hash()`.
@@ -41,7 +47,18 @@ struct JLLSource <: AbstractSource
 
     function JLLSource(package::PkgSpec, platform::AbstractPlatform, target::String,
                        artifact_paths::Vector{String}, warn_on_overwrite::Bool,
-                       exempt_from_strict_tags::Bool, spec::PkgSpec = deepcopy(package))
+                       exempt_from_strict_tags::Bool, compat::Union{Nothing,AbstractString},
+                       spec::PkgSpec = deepcopy(package))
+        compat = compat === nothing ? nothing : string(compat)
+        # `"*"` is not a valid `Pkg` version specifier, but stands for "no bound" in
+        # `JLLGenerator`, as it does in BinaryBuilder.
+        if compat !== nothing && compat != "*"
+            try
+                Pkg.Types.semver_spec(compat)
+            catch e
+                throw(ArgumentError("Invalid compat specifier $(repr(compat)) for $(spec.name): $(sprint(showerror, e))"))
+            end
+        end
         input_block = string(
             "name = ", spec.name, "\n",
             "version = ", spec.version != Pkg.Types.VersionSpec() ? string(spec.version) : "", "\n",
@@ -56,12 +73,29 @@ struct JLLSource <: AbstractSource
             "target = ", target, "\n",
         )
         return new(package, platform, target, artifact_paths, warn_on_overwrite,
-                   exempt_from_strict_tags, spec, input_block)
+                   exempt_from_strict_tags, compat, spec, input_block)
     end
 end
 
+"""
+    JLLSource(package::PkgSpec, platform; target = "", warn_on_overwrite = true,
+              exempt_from_strict_tags = false, compat = nothing)
+    JLLSource(name::String, platform; target, warn_on_overwrite,
+              exempt_from_strict_tags, compat, pkgspec_kwargs...)
+
+A JLL package (and its dependencies) installed for `platform` into the subdirectory
+`target` of the prefix it is used in.  In the second form, `pkgspec_kwargs` (such as
+`version`, `uuid` or `repo`) are passed to `PkgSpec` along with `name`.
+
+`compat` is the `Pkg` version specifier (e.g. `"~1.4"`, `"1.2.3 - 1.5"`) recorded in
+the `[compat]` section of a JLL that is generated with this JLL as a dependency.  It
+is written verbatim, so `"1.4"` means `[1.4.0, 2.0.0)` as usual in `Project.toml`
+files; `"*"` records no compat bound at all.  When it is not given, the bound is
+derived from the version this JLL resolves to, see [`jll_compat`](@ref).
+"""
 function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "",
-                   warn_on_overwrite::Bool = true, exempt_from_strict_tags::Bool = false)
+                   warn_on_overwrite::Bool = true, exempt_from_strict_tags::Bool = false,
+                   compat::Union{Nothing,AbstractString} = nothing)
     noabspath!(target)
     return JLLSource(
         package,
@@ -72,19 +106,45 @@ function JLLSource(package::PkgSpec, platform::AbstractPlatform; target = "",
         String[],
         warn_on_overwrite,
         exempt_from_strict_tags,
+        compat,
     )
 end
 
 function JLLSource(name::String, platform; target = "", warn_on_overwrite = true,
-                   exempt_from_strict_tags = false, kwargs...)
+                   exempt_from_strict_tags = false, compat = nothing, kwargs...)
     noabspath!(target)
-    return JLLSource(PkgSpec(;name, kwargs...), platform; target, warn_on_overwrite, exempt_from_strict_tags)
+    return JLLSource(PkgSpec(;name, kwargs...), platform; target, warn_on_overwrite,
+                     exempt_from_strict_tags, compat)
 end
 
 function retarget(jll::JLLSource, new_target::String)
     noabspath!(new_target)
     return JLLSource(jll.package, jll.platform, new_target, jll.artifact_paths,
-                     jll.warn_on_overwrite, jll.exempt_from_strict_tags, jll.spec)
+                     jll.warn_on_overwrite, jll.exempt_from_strict_tags, jll.compat, jll.spec)
+end
+
+"""
+    jll_compat(jll::JLLSource, version = jll.package.version)
+
+The `[compat]` entry for `jll` in the `Project.toml` of a JLL that depends on it.  This
+is `jll.compat` if one was given.  Otherwise it is the caret specifier `"X.Y"` for the
+`version` `X.Y.Z` that `jll` was resolved to: any semver-compatible version from
+`X.Y.0` on, e.g. `"1.4"` for `1.4.1` (`[1.4.0, 2.0.0)`) or `"0.4"` for `0.4.2`
+(`[0.4.0, 0.5.0)`).  `version` defaults to `jll.package.version`, which is the resolved
+version once `jll` has been `prepare()`'ed, and before that the version requested.
+This holds for every way of requesting a JLL: one pinned by `repo`/`rev` or developed
+by `path` gets the version in its own `Project.toml`, and a standard library JLL gets
+the version that was installed for the build, just like any other JLL.  Returns
+`nothing` if `version` is not a `VersionNumber` (e.g. an unresolved version range).
+"""
+function jll_compat(jll::JLLSource, version = jll.package.version)
+    if jll.compat !== nothing
+        return jll.compat
+    end
+    if !isa(version, VersionNumber)
+        return nothing
+    end
+    return string(version.major, ".", version.minor)
 end
 
 """
@@ -184,13 +244,19 @@ function deduplicate_jlls(jlls::Vector{JLLSource})
             if !isa(new_version, VersionNumber) && isempty(new_version)
                 throw(ArgumentError("Impossible constraints on $(jll.package.name): $(seen_jll.spec.version) ∩ $(jll.spec.version)"))
             end
+            # An explicit `compat` on either one carries over; two different ones can't
+            # both be honored by the one JLL that remains.
+            if seen_jll.compat !== nothing && jll.compat !== nothing && seen_jll.compat != jll.compat
+                throw(ArgumentError("Conflicting compat for $(jll.package.name): $(repr(seen_jll.compat)) vs. $(repr(jll.compat))"))
+            end
+            compat = something(seen_jll.compat, jll.compat, Some(nothing))
             package = deepcopy(seen_jll.package)
             package.version = new_version
             spec = deepcopy(seen_jll.spec)
             spec.version = new_version
             seen_jlls[k_idx] = (key, JLLSource(package, seen_jll.platform, seen_jll.target,
                                                copy(seen_jll.artifact_paths), seen_jll.warn_on_overwrite,
-                                               seen_jll.exempt_from_strict_tags, spec))
+                                               seen_jll.exempt_from_strict_tags, compat, spec))
         else
             push!(seen_jlls, (key, jll))
         end
@@ -429,8 +495,8 @@ function prepare(jlls::Vector{JLLSource};
 
                     # Drop the package cache if has the wrong structure (this is how we gracefully deal with Elliot adding new fields)
                     package_cache = cache[string(jll.package.uuid)]
-                    if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash")
-                        @debug("JLLSource cache lacks artifact paths or tree_hash!  Cache corrupt?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
+                    if !haskey(package_cache, "artifact_paths") || !haskey(package_cache, "tree_hash") || !haskey(package_cache, "version")
+                        @debug("JLLSource cache lacks artifact paths, tree_hash or version!  Cache corrupt or out of date?", name=jll.package.name, uuid=string(jll.package.uuid), cache_path)
                         clear_cache!()
                         break
                     end
@@ -450,6 +516,9 @@ function prepare(jlls::Vector{JLLSource};
                             @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths), platform, prefix)
                             append!(jll.artifact_paths, cached_paths)
                             jll.package.tree_hash = tree_hash
+                            if !isempty(package_cache["version"])
+                                jll.package.version = VersionNumber(package_cache["version"])
+                            end
                         end
                     end
                 end
@@ -499,6 +568,8 @@ function prepare(jlls::Vector{JLLSource};
                                 "name" => jll.package.name,
                                 "artifact_paths" => jll.artifact_paths,
                                 "tree_hash" => string(jll.package.tree_hash),
+                                # Empty if resolution didn't give us a version
+                                "version" => isa(jll.package.version, VersionNumber) ? string(jll.package.version) : "",
                             )
                             for jll in jlls_slice)...,
 

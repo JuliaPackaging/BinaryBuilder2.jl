@@ -38,6 +38,11 @@ mutable struct BuildResult
     # `nothing` for a cached build whose cache entry doesn't carry them.
     source_records::Union{Nothing,Vector{JLLSourceRecord}}
 
+    # The versions that the default target's JLL dependencies resolved to, by name, from
+    # which the JLL gets its compat bounds.  `nothing` for a build that didn't run and
+    # for a cached build whose cache entry doesn't carry them.
+    dependency_versions::Union{Nothing,Dict{String,VersionNumber}}
+
     function BuildResult(config::BuildConfig,
                          status::Symbol,
                          exception::Union{Nothing,Exception},
@@ -46,7 +51,8 @@ mutable struct BuildResult
                          log_artifact::Union{Nothing,SHA1Hash},
                          env::Dict{String,String},
                          ccache_log_artifact::Union{Nothing,SHA1Hash} = nothing,
-                         source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
+                         source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing,
+                         dependency_versions::Union{Nothing,Dict{String,VersionNumber}} = nothing)
         obj = new(
             config,
             status,
@@ -57,6 +63,7 @@ mutable struct BuildResult
             env,
             ccache_log_artifact,
             source_records,
+            dependency_versions,
         )
         # Make sure that this is cleaned up _before_ we're in a finalizer.
         push!(get_exit_hooks(), obj)
@@ -72,7 +79,8 @@ function Sandbox.cleanup(result::BuildResult)
 end
 
 function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,SHA1Hash}, env::Dict{String,String},
-                            source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
+                            source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing,
+                            dependency_versions::Union{Nothing,Dict{String,VersionNumber}} = nothing)
     return BuildResult(
         config,
         :cached,
@@ -83,6 +91,7 @@ function BuildResult_cached(config::BuildConfig, log_artifact::Union{Base.SHA1,S
         env,
         nothing,
         source_records,
+        dependency_versions,
     )
 end
 

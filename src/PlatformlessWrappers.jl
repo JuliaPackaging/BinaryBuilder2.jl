@@ -29,9 +29,12 @@ function BinaryBuilderSources.JLLSource(pkg::PkgSpec; target="", kwargs...)
     return PlatformlessWrapper{JLLSource}(;args=[pkg], kwargs=Dict(:target => target, kwargs...))
 end
 function BinaryBuilderSources.JLLSource(name::String; target="", kwargs...)
-    pkg_spec_kwargs = Dict(k => v for (k, v) in kwargs if k ∈ get_function_kwarg_names(PkgSpec))
+    # Keyword arguments that `PkgSpec` doesn't take are passed to `JLLSource`, which
+    # rejects any it doesn't take either once a platform gets applied.
+    pkg_spec_kwarg_names = get_function_kwarg_names(PkgSpec)
+    pkg_spec_kwargs = Dict(k => v for (k, v) in kwargs if k ∈ pkg_spec_kwarg_names)
     jll_source_args = [PkgSpec(;name, pkg_spec_kwargs...)]
-    jll_source_kwargs = Dict(k => v for (k, v) in kwargs if k ∈ get_function_kwarg_names(JLLSource, jll_source_args...))
+    jll_source_kwargs = Dict(k => v for (k, v) in kwargs if k ∉ pkg_spec_kwarg_names)
     return PlatformlessWrapper{JLLSource}(;
         args=jll_source_args,
         kwargs=Dict(:target => target, jll_source_kwargs...),

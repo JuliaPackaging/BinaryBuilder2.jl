@@ -385,6 +385,49 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 @test isfile(joinpath(prefix, binlib, "libbz2$(soext)"))
             end
 
+            @testset "compat" begin
+                # By default, the compat bound comes from the resolved version, as a caret
+                # specifier on its major and minor version.
+                @test bzip2_dep.compat === nothing
+                bzip2_version = bzip2_dep.package.version
+                @test bzip2_version isa VersionNumber
+                @test jll_compat(bzip2_dep) == "$(bzip2_version.major).$(bzip2_version.minor)"
+                @test bzip2_version ∈ Pkg.Types.semver_spec(jll_compat(bzip2_dep))
+
+                # Before resolution, only an exactly requested version is known
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform())) === nothing
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1")) == "1.4"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=v"1.3.1+2")) == "1.3"
+                @test jll_compat(JLLSource("Foo_jll", HostPlatform(); version=v"0.4.2")) == "0.4"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=Pkg.Types.VersionSpec("1.4"))) === nothing
+                # Or the version passed in, e.g. one a build recorded
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform()), v"1.3.1") == "1.3"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="~1.4"), v"1.3.1") == "~1.4"
+
+                # An explicit compat is used verbatim, in all constructors
+                zlib_tilde = JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1", compat="~1.4")
+                @test zlib_tilde.compat == "~1.4"
+                @test jll_compat(zlib_tilde) == "~1.4"
+                @test jll_compat(JLLSource(PackageSpec(; name="Zlib_jll"), HostPlatform(); compat="1.2.3 - 1.5")) == "1.2.3 - 1.5"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="*")) == "*"
+                @test_throws ArgumentError JLLSource("Zlib_jll", HostPlatform(); compat="not a version")
+
+                # It only changes the generated JLL, not what gets built
+                @test spec_hash(zlib_tilde; registries=jll_registries) ==
+                      spec_hash(JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1"); registries=jll_registries)
+
+                # It is carried along by `retarget()` and `deduplicate_jlls()`
+                @test retarget(zlib_tilde, "ext").compat == "~1.4"
+                zlib_any = JLLSource("Zlib_jll", HostPlatform())
+                @test only(deduplicate_jlls([zlib_any, zlib_tilde])).compat == "~1.4"
+                @test only(deduplicate_jlls([zlib_tilde, zlib_any])).compat == "~1.4"
+                @test only(deduplicate_jlls([zlib_tilde, zlib_tilde])).compat == "~1.4"
+                @test only(deduplicate_jlls([zlib_any, zlib_any])).compat === nothing
+                @test_throws r"Conflicting compat for Zlib_jll" deduplicate_jlls([
+                    zlib_tilde, JLLSource("Zlib_jll", HostPlatform(); compat="1.4"),
+                ])
+            end
+
             # Test that subprefix works
             ccache_dep = JLLSource("Ccache_jll", HostPlatform(); target="ext")
             @test ccache_dep.target == "ext"
@@ -421,6 +464,21 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep])
                         @test ccache_dep.artifact_paths == [fake_artifact]
+                        # The resolved version comes out of the cache as well
+                        @test ccache_dep.package.version == VersionNumber(cache[ccache_uuid]["version"])
+
+                        # A cache from before versions were recorded is out of date
+                        cache = TOML.parsefile(cache_path)
+                        delete!(cache[ccache_uuid], "version")
+                        open(io -> TOML.print(io, cache), cache_path; write=true)
+                        ccache_dep = JLLSource("Ccache_jll", HostPlatform())
+                        prepare([ccache_dep])
+                        @test fake_artifact ∉ ccache_dep.artifact_paths
+                        @test ccache_dep.package.version isa VersionNumber
+                        @test haskey(TOML.parsefile(cache_path)[ccache_uuid], "version")
+                        cache = TOML.parsefile(cache_path)
+                        cache[ccache_uuid]["artifact_paths"] = [fake_artifact]
+                        open(io -> TOML.print(io, cache), cache_path; write=true)
 
                         # When a dependency of the slice is one we built ourselves, the cache must
                         # not be used, and the slice gets resolved instead.

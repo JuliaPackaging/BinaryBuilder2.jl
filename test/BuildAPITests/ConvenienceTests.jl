@@ -126,4 +126,45 @@ end
             @test only(JLLPackageDependencies(extraction, PackageSpec[])).name == :Zlib_jll
         end
     end
+
+    @testset "dependency compat" begin
+        # The platformless `JLLSource` constructor splits its keyword arguments between
+        # `PkgSpec` and `JLLSource`.
+        jll = apply_platform(JLLSource("Zlib_jll"; version=v"1.2.13", target="foo", compat="~1.2",
+                                       warn_on_overwrite=false, exempt_from_strict_tags=true),
+                             Platform("x86_64", "linux"))
+        @test jll.package.version == v"1.2.13"
+        @test jll.target == "foo"
+        @test jll.compat == "~1.2"
+        @test !jll.warn_on_overwrite
+        @test jll.exempt_from_strict_tags
+        @test_throws MethodError apply_platform(JLLSource("Zlib_jll"; not_a_kwarg=1), Platform("x86_64", "linux"))
+
+        meta = BuildMeta(;dry_run=["build"])
+        build_tarballs(;
+            meta,
+            src_name = "libcompat",
+            src_version = v"1.2.3",
+            sources = [cxx_string_abi_source],
+            script = "true",
+            target_dependencies = [
+                # Exact version: the bound comes from it even without a build
+                JLLSource("Zlib_jll"; version=v"1.2.13"),
+                # Explicit compat, written verbatim
+                JLLSource("Bzip2_jll"; compat="~1.0.8"),
+                # Neither: only a build records the version this resolves to, and this
+                # one is a dry run, so there is no bound for it.
+                JLLSource("Zstd_jll"),
+            ],
+        )
+        for extraction in collect_extractions(meta["libcompat"])
+            @test extraction.config.build.dependency_versions === nothing
+            deps = @test_logs (:warn, r"No resolved version recorded for Zstd_jll") begin
+                Dict(d.name => d for d in JLLPackageDependencies(extraction, PackageSpec[]))
+            end
+            @test deps[:Zlib_jll].compat == "1.2"
+            @test deps[:Bzip2_jll].compat == "~1.0.8"
+            @test deps[:Zstd_jll].compat == "*"
+        end
+    end
 end
