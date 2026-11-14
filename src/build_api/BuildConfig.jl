@@ -328,6 +328,41 @@ function source_records(config::BuildConfig)
 end
 
 """
+    resolved_dependency(config::BuildConfig, jll::JLLSource)
+
+The `JLLSource` that actually gets resolved and installed for `jll`, one of the default
+target's `dependencies`: `deduplicate_jlls()` may have replaced it in the target
+prefix's source tree.
+"""
+function resolved_dependency(config::BuildConfig, jll::JLLSource)
+    for src in config.source_trees[target_prefix(get_default_target_spec(config))]
+        if isa(src, JLLSource) && src.package.name == jll.package.name && src.target == jll.target
+            return src
+        end
+    end
+    return jll
+end
+
+"""
+    dependency_versions(config::BuildConfig)
+
+The versions that the default target's JLL dependencies resolved to, by package name.
+These must already be `prepare()`'ed.  Packaging derives the JLL's compat bounds for
+them from these, see `JLLPackageDependencies()`.
+"""
+function dependency_versions(config::BuildConfig)
+    versions = Dict{String,VersionNumber}()
+    for jll in get_default_target_spec(config).dependencies
+        isa(jll, JLLSource) || continue
+        version = resolved_dependency(config, jll).package.version
+        if isa(version, VersionNumber)
+            versions[jll.package.name] = version
+        end
+    end
+    return versions
+end
+
+"""
     prepare_source_tree(config::BuildConfig, prefix::String, deps = config.source_trees[prefix])
 
 `prepare()` (download, clone, resolve, ...) the sources of one of `config`'s source
@@ -584,6 +619,7 @@ end
     mounts = deploy(config; verbose)
     # The sources are on disk now, so record them for the JLL (and the build cache)
     srcs_records = source_records(config)
+    dep_versions = dependency_versions(config)
     sandbox_config, collector = sandbox_and_collector(
         build_log_io, config, mounts;
         verbose,
@@ -647,6 +683,7 @@ end
         env,
         ccache_log_artifact_hash,
         srcs_records,
+        dep_versions,
     )
     meta.builds[config] = result
 

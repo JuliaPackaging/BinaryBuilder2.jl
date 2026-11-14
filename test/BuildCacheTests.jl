@@ -1,7 +1,7 @@
 using Test, Pkg, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
 using BinaryBuilder2: load_build_entries!, load_extract_entries!
-using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe, export_source_records
+using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe, export_source_records, export_dependency_versions
 using JLLGenerator
 
 @testset "BuildCache" begin
@@ -40,12 +40,14 @@ using JLLGenerator
             JLLStaticLibraryProduct(:libfoo_a, "lib/libfoo.a"; system_deps = ["m"]),
         ]
 
-        # build1 records its sources, build2 is an entry stored without them
+        # build1 records its sources and dependency versions, build2 is an entry stored without them
         build1_sources = [
             JLLSourceRecord("https://example.com/foo-1.0.tar.gz", SHA1Hash(sha1("foo_tree"))),
             JLLSourceRecord("https://example.com/foo.git", SHA1Hash(sha1("foo_commit"))),
         ]
-        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp; source_records=build1_sources)
+        build1_dep_versions = Dict("Zlib_jll" => v"1.3.1+2", "Bar_jll" => v"0.4.2")
+        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp;
+             source_records=build1_sources, dependency_versions=build1_dep_versions)
         put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp)
 
         function probe_buildcache(bc)
@@ -54,6 +56,7 @@ using JLLGenerator
             @test b1.log_artifact == build_log1_hash
             @test b1.env == build_env1
             @test b1.source_records == build1_sources
+            @test b1.dependency_versions == build1_dep_versions
             @test e1.artifact == artifact1_hash
             @test e1.log_artifact == extract_log1_hash
             @test e1.jll_lib_products == extract1_jlp
@@ -63,6 +66,7 @@ using JLLGenerator
             @test b2.log_artifact == build_log2_hash
             @test b2.env == build_env2
             @test b2.source_records === nothing
+            @test b2.dependency_versions === nothing
             @test e2.artifact == artifact2_hash
             @test e2.log_artifact == extract_log2_hash
             @test e2.jll_lib_products == extract2_jlp
@@ -208,6 +212,16 @@ end
         @test entries_with_sources[h1] == BuildCacheBuildEntry(log1, env1, records)
         @test entries_with_sources[h2].source_records === nothing
         rm(joinpath(cache_dir, "sources"); recursive=true)
+
+        # So are dependency versions
+        dep_versions = Dict("Zlib_jll" => v"1.3.1+2")
+        mkpath(joinpath(cache_dir, "dependency_versions"))
+        export_dependency_versions(dep_versions, joinpath(cache_dir, "dependency_versions", "$(bytes2hex(h1)).toml"))
+        entries_with_versions = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries_with_versions, cache_dir)
+        @test entries_with_versions[h1] == BuildCacheBuildEntry(log1, env1, nothing, dep_versions)
+        @test entries_with_versions[h2].dependency_versions === nothing
+        rm(joinpath(cache_dir, "dependency_versions"); recursive=true)
 
         # Missing .env file → entry skipped
         rm(joinpath(cache_dir, "envs", "$(bytes2hex(h2)).env"))
