@@ -38,7 +38,9 @@ function BinaryBuilderSources.JLLSource(name::String; target="", kwargs...)
     )
 end
 function apply_platform(pw::PlatformlessWrapper{JLLSource}, platform::AbstractPlatform)
-    return JLLSource(pw.args..., platform; pw.kwargs...)
+    # `prepare()` writes the results of resolution into the `JLLSource`'s `PkgSpec`, so
+    # each `JLLSource` made from this wrapper gets a `PkgSpec` of its own.
+    return JLLSource(deepcopy.(pw.args)..., platform; pw.kwargs...)
 end
 # If someone tries to apply a platform to a non-platformless source, just ignore it.
 # They've already specified the platform, we're not going to check.

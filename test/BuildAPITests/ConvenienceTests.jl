@@ -82,6 +82,19 @@ end
         end
     end
 
+    @testset "platformless JLLSource" begin
+        # Resolving one `JLLSource` made from a wrapper must not change what the
+        # wrapper requests for the next one.
+        wrapper = JLLSource("Zstd_jll")
+        first_jll = apply_platform(wrapper, Platform("x86_64", "linux"))
+        first_jll.package.version = v"1.5.7"
+        first_jll.package.tree_hash = Base.SHA1("446b23e73536f84e8037f5dce465e92275f6a308")
+        second_jll = apply_platform(wrapper, Platform("aarch64", "linux"))
+        @test !isa(second_jll.package.version, VersionNumber)
+        @test second_jll.package.tree_hash === nothing
+        @test second_jll.spec.tree_hash === nothing
+    end
+
     @testset "BinaryBuilder2.Compat" begin
         meta = BuildMeta(;dry_run=["build"])
         run_build_tarballs(meta, joinpath(@__DIR__, "build_examples", "binary_builder_one.jl"))
