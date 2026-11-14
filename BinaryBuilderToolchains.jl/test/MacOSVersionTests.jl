@@ -50,7 +50,7 @@ using BinaryBuilderSources: JLLSource
             jll_triplet = "$(arch(target))-apple-darwin20"
             for vendor in (:gcc, :clang)
                 srcs = toolchain_sources(CToolchain(cp; vendor, use_ccache=false))
-                for name in ("macOSSDK_jll", "CCTools_jll", "GCC_jll")
+                for name in ("macOSSDK_jll", "CCTools_jll", "GCC_jll", "LLVMCompilerRT_jll")
                     for src in filter(s -> s isa JLLSource && s.package.name == name, srcs)
                         src_target = src.platform isa CrossPlatform ? src.platform.target : src.platform
                         @test os_version(src_target) == v"20"

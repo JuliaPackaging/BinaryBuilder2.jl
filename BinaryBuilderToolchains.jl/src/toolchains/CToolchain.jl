@@ -410,10 +410,13 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
 
     # The x86_64-linux-gnu build also carries the MemorySanitizer runtime, which
     # sanitize+memory targets link against.
+    # On macOS, LLVMCompilerRT_jll exists only for the SDK's darwin 20.  Its x86_64 runtimes
+    # are built for macOS 10.7, and aarch64 macOS starts at darwin 20, so that build serves
+    # every deployment target.
     compiler_rt_libs = [
         JLLSource(
             "LLVMCompilerRT_jll",
-            platform.target;
+            Sys.isapple(platform.target) ? macos_sdk_platform(platform.target) : platform.target;
             uuid=Base.UUID("4e17d02c-6bf5-513e-be62-445f41c75a11"),
             repo=Pkg.Types.GitRepo(
                 rev=pinned_rev("LLVMCompilerRT_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),

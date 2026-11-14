@@ -39,7 +39,7 @@ end
 Return the macOS `platform` (for a `CrossPlatform`, its target) with its
 `os_version` set to the Darwin kernel version of the macOS SDK (11.1,
 darwin 20) that our macOS toolchain JLLs (`macOSSDK_jll`, `CCTools_jll`,
-`GCC_jll`) are built against.  Those JLLs exist only for that `os_version`,
+`GCC_jll`, `LLVMCompilerRT_jll`) are built against.  Those JLLs exist only for that `os_version`,
 and they name their executables and sysroot directories after it (e.g.
 `x86_64-apple-darwin20-as`).  They serve every deployment target, which is
 selected through flags such as `-mmacosx-version-min` (see
