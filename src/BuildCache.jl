@@ -5,9 +5,11 @@ export BuildCache
     BuildCacheBuildEntry
 
 The `BuildCache` records a few pieces of information that exist per-build,
-such as the build environment, the build log and the sources' `JLLSourceRecord`s
-(so that packaging a cached build doesn't need the sources on disk).  This
-structure is what holds those values.  `source_records` is `nothing` for entries
+such as the build environment, the build log, the sources' `JLLSourceRecord`s
+(so that packaging a cached build doesn't need the sources on disk) and the
+versions its JLL dependencies resolved to (so that packaging doesn't need to
+resolve them again to write their compat bounds).  This structure is what holds
+those values.  `source_records` and `dependency_versions` are `nothing` for entries
 stored without them.  See `BuildCacheExtractEntry` for the pieces that are per-
 extraction instead.
 """
@@ -15,8 +17,11 @@ extraction instead.
     log_artifact::SHA1Hash
     env::Dict{String,String}
     source_records::Union{Nothing,Vector{JLLSourceRecord}}
+    dependency_versions::Union{Nothing,Dict{String,VersionNumber}}
 end
-BuildCacheBuildEntry(log_artifact::SHA1Hash, env::Dict{String,String}) = BuildCacheBuildEntry(log_artifact, env, nothing)
+BuildCacheBuildEntry(log_artifact::SHA1Hash, env::Dict{String,String},
+                     source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing) =
+    BuildCacheBuildEntry(log_artifact, env, source_records, nothing)
 
 """
     export_source_records(records::Vector{JLLSourceRecord}, path::String)
@@ -40,6 +45,33 @@ function import_source_records(path::String)
         return nothing
     end
     return JLLSourceRecord[parse_toml_dict(JLLSourceRecord, d) for d in TOML.parsefile(path)["sources"]]
+end
+
+"""
+    export_dependency_versions(versions::Dict{String,VersionNumber}, path::String)
+
+Write the resolved versions of a build's JLL dependencies (keyed by package name) out
+as a TOML file, read back by `import_dependency_versions()`.
+"""
+function export_dependency_versions(versions::Dict{String,VersionNumber}, path::String)
+    open(path; write=true) do io
+        TOML.print(io, Dict("dependency_versions" => Dict(name => string(v) for (name, v) in versions)))
+    end
+end
+
+"""
+    import_dependency_versions(path::String)
+
+Read the versions written by `export_dependency_versions()`, or return `nothing` if
+`path` does not exist.
+"""
+function import_dependency_versions(path::String)
+    if !isfile(path)
+        return nothing
+    end
+    return Dict{String,VersionNumber}(
+        name => VersionNumber(v) for (name, v) in TOML.parsefile(path)["dependency_versions"]
+    )
 end
 
 
@@ -132,7 +164,8 @@ function Base.put!(bc::BuildCache,
                    build_hash::SHA1Hash, extract_hash::SHA1Hash,
                    build_log_artifact_hash::SHA1Hash, env::Dict{String,String},
                    artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct};
-                   source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing)
+                   source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing,
+                   dependency_versions::Union{Nothing,Dict{String,VersionNumber}} = nothing)
     put!(
         bc,
         build_hash, extract_hash,
@@ -140,6 +173,7 @@ function Base.put!(bc::BuildCache,
             build_log_artifact_hash,
             env,
             source_records,
+            dependency_versions,
         ),
         BuildCacheExtractEntry(
             artifact_hash,
@@ -160,6 +194,7 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
         extract_result.log_artifact,
         extract_result.jll_lib_products;
         build_result.source_records,
+        build_result.dependency_versions,
     )
 end
 
@@ -217,6 +252,11 @@ function export_archive(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1
             export_source_records(build_entry.source_records, path)
         end
     end
+    if build_entry.dependency_versions !== nothing
+        if_missing("$(bh).deps.toml") do path
+            export_dependency_versions(build_entry.dependency_versions, path)
+        end
+    end
 
     # Export BuildCacheExtractEntry
     extract_entry = bc.extract_entries[extract_hash]
@@ -252,7 +292,8 @@ function import_archives(bc::BuildCache, dir::String)
             build_log_artifact = import_artifact("$(bh)-log_artifact.tar.zst")
             build_env = parse_env_block(String(read(joinpath(dir, "$(bh).env"))))
             source_records = import_source_records(joinpath(dir, "$(bh).sources.toml"))
-            build_entry = BuildCacheBuildEntry(build_log_artifact, build_env, source_records)
+            dependency_versions = import_dependency_versions(joinpath(dir, "$(bh).deps.toml"))
+            build_entry = BuildCacheBuildEntry(build_log_artifact, build_env, source_records, dependency_versions)
         catch ex
             @debug("Unable to import BuildCacheBuildEntry", exception=ex, build_hash=bh)
             continue
@@ -296,7 +337,8 @@ function load_build_entries!(build_entries::Dict{SHA1Hash,BuildCacheBuildEntry},
                 log_artifact_hash = SHA1Hash(log_artifact_hash_str)
                 env = parse_env_block(String(read(env_path)))
                 source_records = import_source_records(joinpath(cache_dir, "sources", "$(build_hash_str).toml"))
-                build_entries[build_hash] = BuildCacheBuildEntry(log_artifact_hash, env, source_records)
+                dependency_versions = import_dependency_versions(joinpath(cache_dir, "dependency_versions", "$(build_hash_str).toml"))
+                build_entries[build_hash] = BuildCacheBuildEntry(log_artifact_hash, env, source_records, dependency_versions)
             catch
                 @debug("skip: build entry malformed", build_hash=build_hash_str)
                 continue
@@ -365,6 +407,7 @@ function save_cache(bc::BuildCache)
     # Serialize out build entries
     mkpath(joinpath(bc.cache_dir, "envs"))
     mkpath(joinpath(bc.cache_dir, "sources"))
+    mkpath(joinpath(bc.cache_dir, "dependency_versions"))
     open(joinpath(bc.cache_dir, "build_entries.db"); write=true) do io
         for (build_hash, b) in merged_build_entries
             println(io, "$(bytes2hex(build_hash)) $(bytes2hex(b.log_artifact))")
@@ -380,6 +423,9 @@ function save_cache(bc::BuildCache)
 
             if b.source_records !== nothing
                 export_source_records(b.source_records, joinpath(bc.cache_dir, "sources", "$(bytes2hex(build_hash)).toml"))
+            end
+            if b.dependency_versions !== nothing
+                export_dependency_versions(b.dependency_versions, joinpath(bc.cache_dir, "dependency_versions", "$(bytes2hex(build_hash)).toml"))
             end
         end
     end
@@ -479,12 +525,13 @@ function prune!(bc::BuildCache)
     prune_aux_dir(keys(bc.build_entries), ".env", joinpath(bc.cache_dir, "envs"))
     prune_aux_dir(keys(bc.extract_entries), ".jlp", joinpath(bc.cache_dir, "jll_lib_products"))
     prune_aux_dir(keys(bc.build_entries), ".toml", joinpath(bc.cache_dir, "sources"))
+    prune_aux_dir(keys(bc.build_entries), ".toml", joinpath(bc.cache_dir, "dependency_versions"))
 end
 
 
 # Helper functions for using these cache entries
 function BuildResult_cached(config::BuildConfig, entry::BuildCacheBuildEntry)
-    return BuildResult_cached(config, entry.log_artifact, entry.env, entry.source_records)
+    return BuildResult_cached(config, entry.log_artifact, entry.env, entry.source_records, entry.dependency_versions)
 end
 
 function ExtractResult_cached(config::ExtractConfig, entry::BuildCacheExtractEntry)

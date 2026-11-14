@@ -1,5 +1,5 @@
 using BinaryBuilder2, Test, Random
-import BinaryBuilder2: import_archives, JLLSourceRecords
+import BinaryBuilder2: import_archives, JLLSourceRecords, JLLPackageDependencies, PackageSpec, get_default_target_spec
 using BinaryBuilderSources: download_cache_path, verify
 using TreeArchival: archive, treehash
 using SHA, Downloads
@@ -254,7 +254,15 @@ end
     """
     extract_script = raw"extract ${prefix}/share/**"
     products = [FileProduct("share/hello.txt", :hello_txt)]
-    make_build_config(meta) = BuildConfig(meta, "Hello", v"1.0.0", [source], apply_spec_plan(spec_plan, native_linux, native_linux), script)
+    # A JLL dependency requested without a version, whose compat bound must come from
+    # the version the build resolved it to.  Each session makes its own spec plan, as
+    # separate processes would.
+    deps_spec_plan() = make_target_spec_plan(;
+        host_toolchains=[CToolchain(;use_ccache=false), HostToolsToolchain()],
+        target_toolchains=[CToolchain(;use_ccache=false)],
+        target_dependencies=[JLLSource("Zstd_jll")],
+    )
+    make_build_config(meta) = BuildConfig(meta, "Hello", v"1.0.0", [source], apply_spec_plan(deps_spec_plan(), native_linux, native_linux), script)
 
     # The build job: the source is "downloaded" by seeding the download cache.  Like
     # `build_tarballs()`, pass `extract_arg_hints` so the build hash is computed (and
@@ -266,10 +274,14 @@ end
     @test build_result.status == :success
     expected_records = [JLLSourceRecord(first(source.urls), SHA1Hash(treehash(tarball)))]
     @test build_result.source_records == expected_records
+    zstd_version = build_result.dependency_versions["Zstd_jll"]
+    expected_deps = Dict("Zstd_jll" => zstd_version)
+    @test build_result.dependency_versions == expected_deps
     extract_result = extract!(ExtractConfig(build_result, extract_script, products))
     @test extract_result.status == :success
     build_hash = string(spec_hash(build_result.config))
     @test isfile(joinpath(archive_dir, "$(build_hash).sources.toml"))
+    @test isfile(joinpath(archive_dir, "$(build_hash).deps.toml"))
 
     # Like the registration job: a machine that only has the archives, not the source.
     function cached_extract_result(archive_dir)
@@ -286,9 +298,22 @@ end
     clear_download_cache()
     result = cached_extract_result(archive_dir)
     @test result.config.build.source_records == expected_records
+    # Packaging takes the compat bound from the versions the build recorded, without
+    # resolving the dependency again.
+    @test result.config.build.dependency_versions == expected_deps
+    zstd_jll = only(get_default_target_spec(result.config.build.config).dependencies)
+    @test isempty(BinaryBuilder2.resolved_dependency(result.config.build.config, zstd_jll).artifact_paths)
+    @test only(JLLPackageDependencies(result, PackageSpec[])).compat == "$(zstd_version.major).$(zstd_version.minor)"
     package_result = package!(PackageConfig(result))
     @test package_result.status == :success
     @test !verify(source)
+
+    # Archives without the dependency versions give no compat bound for a dependency
+    # that wasn't requested at an exact version.
+    rm(joinpath(archive_dir, "$(build_hash).deps.toml"))
+    result = cached_extract_result(archive_dir)
+    @test result.config.build.dependency_versions === nothing
+    @test (@test_logs (:warn, r"No resolved version recorded for Zstd_jll") only(JLLPackageDependencies(result, PackageSpec[])).compat) == "*"
 
     # Archives without the source records fall back to fetching the sources
     rm(joinpath(archive_dir, "$(build_hash).sources.toml"))

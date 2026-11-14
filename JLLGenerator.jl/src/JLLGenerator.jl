@@ -963,10 +963,10 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
                 end
                 name = only(names)
 
-                version_specs = Pkg.Types.semver_spec.([d.compat for d in deps])
+                version_specs = compat_spec.([d.compat for d in deps])
                 final_compat = intersect(version_specs...)
                 if isempty(final_compat)
-                    throw(ArgumentError("Unable to satisfy multiple compat constraints on dependency '$(name) ($(uuid))'"))
+                    throw(ArgumentError("Unable to satisfy multiple compat constraints on dependency '$(name) ($(uuid))': $(join(repr.(unique([d.compat for d in deps])), ", "))"))
                 end
 
                 # Replace all those deps by a single dep with the given restricted compat:
@@ -982,9 +982,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
         for dep in alldeps
             name = string(dep.name)
             project_dict["deps"][name] = string(dep.uuid)
-            if dep.compat != "*"
-                # verify dep.compat is valid
-                Pkg.Types.semver_spec(dep.compat)
+            if compat_spec(dep.compat) != Pkg.Types.VersionSpec("*")
                 project_dict["compat"][name] = dep.compat
             end
         end
