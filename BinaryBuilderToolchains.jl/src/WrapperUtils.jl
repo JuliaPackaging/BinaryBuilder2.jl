@@ -167,7 +167,8 @@ An intermediate example of writing a wrapper for `clang` for `x86_64-linux-gnu`:
         end
     end
 """
-function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog::String)
+function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog::String;
+                          jobserver::Bool = false)
     # Start with standard header for all of our compiler wrappers
     println(io, """
     #!/bin/bash
@@ -216,6 +217,11 @@ function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog:
     # Invoke the callback to generate more pieces (flag munging/alteration, mostly)
     pre_func(io)
 
+    if jobserver
+        println(io)
+        print(io, jobserver_snippet())
+    end
+
     println(io, """
 
     # Finally, run the actual command itself
@@ -225,18 +231,61 @@ function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog:
     post_func(io)
 end
 
-function compiler_wrapper(pre_func::Function, post_func::Function, wrapper_path::String, prog::String)
+function compiler_wrapper(pre_func::Function, post_func::Function, wrapper_path::String, prog::String;
+                          jobserver::Bool = false)
     open(wrapper_path; write=true) do io
-        compiler_wrapper(pre_func, post_func, io, prog)
+        compiler_wrapper(pre_func, post_func, io, prog; jobserver)
     end
     chmod(wrapper_path, 0o755)
 end
 
 # Default for `post_func`
-function compiler_wrapper(pre_func::Function, wrapper_path::String, prog::String)
-    return compiler_wrapper(pre_func, identity, wrapper_path, prog)
+function compiler_wrapper(pre_func::Function, wrapper_path::String, prog::String; jobserver::Bool = false)
+    return compiler_wrapper(pre_func, identity, wrapper_path, prog; jobserver)
 end
 
-function compiler_wrapper(wrapper_path::String, prog::String)
-    return compiler_wrapper(identity, wrapper_path, prog)
+function compiler_wrapper(wrapper_path::String, prog::String; jobserver::Bool = false)
+    return compiler_wrapper(identity, wrapper_path, prog; jobserver)
+end
+
+"""
+    jobserver_jll(platform::AbstractPlatform; target::String = "")
+
+A `JLLSource` for `BBJobserver_jll`, which provides `bin/bb_jobserver`: the jobserver
+daemon (`bb_jobserver serve`), the `bb_jobserver session` that a build environment keeps
+open while a build runs, and `bb_jobserver run`, which the wrappers generated with
+`compiler_wrapper(...; jobserver=true)` run their tool through (see
+`jobserver_snippet()`).
+"""
+function jobserver_jll(platform::AbstractPlatform; target::String = "")
+    # Not registered, so Pkg needs the UUID along with the repository
+    return JLLSource("BBJobserver_jll", platform; target,
+                     uuid = Base.UUID("6f5e319e-98ef-58dc-a873-406c0089afd5"),
+                     repo = Pkg.Types.GitRepo(
+                         rev = pinned_rev("BBJobserver_jll", "bb2/BBJobserver"),
+                         source = "https://github.com/staticfloat/BBJobserver_jll.jl",
+                     ))
+end
+
+"""
+    jobserver_snippet()
+
+The bash code that `compiler_wrapper(...; jobserver=true)` runs just before launching
+the wrapped tool.  When the build environment exports `BB_JOBSERVER_SOCKET` (the
+jobserver daemon's socket) and `BB_JOBSERVER_BIN` (`bb_jobserver`), the tool runs
+through `bb_jobserver run`, which waits for a job slot from the daemon, then execs the
+tool and holds the slot until the tool exits.  The daemon shares slots fairly between
+the groups named by `BB_JOBSERVER_GROUP` (one per build).  The tool gets
+`BB_JOBSERVER_HELD`, so wrappers it runs (e.g. `gcc` running `as` and `ld`) don't ask
+for a second slot.  If the daemon can't be reached, the tool runs without a slot.
+`bb_jobserver.c` (in Yggdrasil's `B/BBJobserver` recipe) has the details, including how
+pipelines like `cpp x.S | as` avoid deadlocking.
+"""
+function jobserver_snippet()
+    return raw"""
+    # Run the tool once the jobserver grants it a job slot (see `jobserver_snippet()`)
+    if [[ -n "${BB_JOBSERVER_SOCKET:-}" ]] && [[ -z "${BB_JOBSERVER_HELD:-}" ]] && [[ -x "${BB_JOBSERVER_BIN:-}" ]]; then
+        PROG=( "${BB_JOBSERVER_BIN}" run -- "${PROG[@]}" )
+    fi
+    """
 end

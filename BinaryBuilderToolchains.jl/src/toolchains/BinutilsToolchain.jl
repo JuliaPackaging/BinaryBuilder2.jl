@@ -423,48 +423,48 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     end
 
     # `ld` is a simple tool, except that it can be wrapped with `ccache`:
-    make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "ld", "$(gcc_triplet)-ld"; wrapper=_ld_wrapper, toolchain_prefix, jobserver=true)
 
     # `clang -fuse-ld=<name>` looks for a linker called `ld64.<name>` when targeting
     # macOS, and `ld.<name>` everywhere else.  Our clang wrappers pass `-fuse-ld=<triplet>`
     # so that clang links through this wrapper rather than the bare `ld` executable.
     ld_fuse_name = string(Sys.isapple(p) ? "ld64." : "ld.", triplet(gcc_platform(p)))
-    compiler_wrapper(_ld_wrapper, joinpath(dir, ld_fuse_name), "$(toolchain_prefix)/bin/$(gcc_triplet)-ld")
+    compiler_wrapper(_ld_wrapper, joinpath(dir, ld_fuse_name), "$(toolchain_prefix)/bin/$(gcc_triplet)-ld"; jobserver=true)
 
     # `as` is a simple tool, except that on macOS it needs an `-arch` specified:
-    make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "as", "$(gcc_triplet)-as"; wrapper=_as_wrapper, toolchain_prefix, jobserver=true)
 
     # Our `as` on macOS subs out to `${triplet}-clang-as`, so we generate that here,
     # which in turn subs out to `clang`.
     if Sys.isapple(p)
-        make_tool_wrappers(toolchain, dir, "clang-as", "clang"; wrapper=_clang_as_wrapper, toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "clang-as", "clang"; wrapper=_clang_as_wrapper, toolchain_prefix, jobserver=true)
     end
 
     # `nm` is a simple tool, except that it can take in `--plugin` for LTO
     make_tool_wrappers(toolchain, dir, "nm", "$(gcc_triplet)-nm"; wrapper=_nm_wrapper, toolchain_prefix)
 
     # `strip` needs complicated option parsing if we're on macOS
-    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix, jobserver=true)
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
     make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix)
 
     ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
-    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix, jobserver=true)
 
     ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
-    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix, jobserver=true)
 
     objcopy_name = Sys.isapple(p) ? "llvm-objcopy" : "$(gcc_triplet)-objcopy"
-    make_tool_wrappers(toolchain, dir, "objcopy", objcopy_name; toolchain_prefix)
+    make_tool_wrappers(toolchain, dir, "objcopy", objcopy_name; toolchain_prefix, jobserver=true)
 
     objdump_name = Sys.isapple(p) ? "llvm-objdump" : "$(gcc_triplet)-objdump"
     make_tool_wrappers(toolchain, dir, "objdump", objdump_name; toolchain_prefix)
 
     if Sys.isapple(p)
         # dsymutil is just called `dsymutil`
-        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix)
+        make_tool_wrappers(toolchain, dir, "dsymutil", "dsymutil"; toolchain_prefix, jobserver=true)
     end
 
     # dlltool needs some determinism fixes as well
