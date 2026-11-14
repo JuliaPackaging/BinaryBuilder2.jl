@@ -1,9 +1,6 @@
 using Test, BinaryBuilderToolchains, BinaryBuilderSources, Base.BinaryPlatforms, Scratch
 using HistoricalStdlibVersions
 
-# Enable this for lots of JLLPrefixes output
-const verbose = false
-
 @testset "HostToolsToolchain" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())
     toolchain = HostToolsToolchain(platform)
