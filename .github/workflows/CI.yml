@@ -87,7 +87,13 @@ jobs:
       - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.julia-version }}
+      # Artifacts and scratchspaces hold the toolchains, which alone exceed the 10 GB
+      # repository cache limit, so the caches containing them were evicted before they
+      # could be restored.  Only cache packages, registries and compiled code.
       - uses: julia-actions/cache@v3
+        with:
+          cache-artifacts: false
+          cache-scratchspaces: false
       - uses: julia-actions/julia-buildpkg@v1
         with:
           project: ${{ matrix.project }}
@@ -138,7 +144,11 @@ jobs:
         if: matrix.project == 'LazyJLLWrappers.jl'
         with:
           version: ${{ env.DEFAULT_JULIA }}
+      # Packages, registries and compiled code only, as in the `test` job.
       - uses: julia-actions/cache@v3
+        with:
+          cache-artifacts: false
+          cache-scratchspaces: false
       - name: Run tests
         env:
           PROJECT: ${{ matrix.project }}
