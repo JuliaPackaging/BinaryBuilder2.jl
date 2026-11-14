@@ -91,6 +91,7 @@ ObjectFile = "0.6"
 OrderedCollections = "1.8.1"
 OutputCollectors = "1"
 Pkg = "1.9.0"
+ParallelTestRunner = "2.10"
 PrecompileTools = "1.2.1"
 Preferences = "1.5.0"
 Reexport = "1.2.2"
@@ -108,8 +109,9 @@ julia = "1.12"
 
 [extras]
 Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
+ParallelTestRunner = "d3525ed8-44d0-4b2c-a655-542cee43accc"
 Patchelf_jll = "f2cf89d6-2bfd-5c44-bd2c-068eea195c0c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Accessors", "Test", "Patchelf_jll"]
+test = ["Accessors", "ParallelTestRunner", "Test", "Patchelf_jll"]

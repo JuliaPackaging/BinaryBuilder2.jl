@@ -1,5 +1,5 @@
 using BinaryBuilder2, Test, Random
-import BinaryBuilder2: import_archives, JLLSourceRecords, JLLPackageDependencies, PackageSpec, get_default_target_spec
+import BinaryBuilder2: import_archives, JLLSourceRecord, JLLSourceRecords, JLLPackageDependencies, PackageSpec, get_default_target_spec
 using BinaryBuilderSources: download_cache_path, verify, stdlib_jll_compat
 using TreeArchival: archive, treehash
 using SHA, Downloads, TOML
