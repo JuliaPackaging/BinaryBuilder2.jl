@@ -375,7 +375,8 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @test spec_hash(retarget(bzip2_dep, "ext"); registries=jll_registries) != pre_prepare_hashes[1]
             @test !isempty(bzip2_dep.artifact_paths)
             @test !isempty(zstd_dep.artifact_paths)
-            depot_artifacts_dir = joinpath(source_download_cache("jllsource_depot"), "artifacts")
+            # Artifact paths point into the store behind the JLL depot's `artifacts` symlink
+            depot_artifacts_dir = realpath(joinpath(source_download_cache("jllsource_depot"), "artifacts"))
             @test all(startswith.(bzip2_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test all(startswith.(zstd_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test content_hash(bzip2_dep) != content_hash(zstd_dep)
@@ -515,13 +516,22 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         zstd_uuid = string(zstd_dep.package.uuid)
                         @test zstd_uuid in cache["dep_uuids"]
 
+                        # Cached artifact paths must not go through the (temporary) JLL source
+                        # depot, whose `artifacts` is a symlink into the user depot.
+                        jll_depot = BinaryBuilderSources.default_jll_source_depot()
+                        for path in cache[ccache_uuid]["artifact_paths"]
+                            @test !startswith(path, jll_depot)
+                            @test dirname(path) == realpath(dirname(path))
+                            @test isdir(path)
+                        end
+
                         # Point the cache at a recognizable (existing) directory, to see where paths come from
                         fake_artifact = mkpath(joinpath(dir, "fake_artifact"))
                         cache[ccache_uuid]["artifact_paths"] = [fake_artifact]
                         open(io -> TOML.print(io, cache), cache_path; write=true)
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep])
-                        @test ccache_dep.artifact_paths == [fake_artifact]
+                        @test ccache_dep.artifact_paths == [BinaryBuilderSources.canonical_artifact_path(fake_artifact)]
                         # The resolved version comes out of the cache as well
                         @test ccache_dep.package.version == VersionNumber(cache[ccache_uuid]["version"])
 
@@ -531,7 +541,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         open(io -> TOML.print(io, cache), cache_path; write=true)
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep])
-                        @test fake_artifact ∉ ccache_dep.artifact_paths
+                        @test BinaryBuilderSources.canonical_artifact_path(fake_artifact) ∉ ccache_dep.artifact_paths
                         @test ccache_dep.package.version isa VersionNumber
                         @test haskey(TOML.parsefile(cache_path)[ccache_uuid], "version")
                         cache = TOML.parsefile(cache_path)
@@ -546,7 +556,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep]; project_dir)
                         @test !isempty(ccache_dep.artifact_paths)
-                        @test fake_artifact ∉ ccache_dep.artifact_paths
+                        @test BinaryBuilderSources.canonical_artifact_path(fake_artifact) ∉ ccache_dep.artifact_paths
 
                         # A corrupt cache (here: lacking `dep_uuids`) is dropped, and the slice resolved
                         cache = TOML.parsefile(cache_path)

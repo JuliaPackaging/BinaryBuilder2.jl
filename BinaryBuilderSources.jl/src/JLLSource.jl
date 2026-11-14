@@ -391,6 +391,16 @@ function make_thin_depot!(thin_depot::String, parent_depot::String = first(Base.
     end
 end
 
+"""
+    canonical_artifact_path(path::String)
+
+Resolve the directory containing an artifact (e.g. a thin depot's `artifacts` symlink,
+see `make_thin_depot!()`) so that the path refers to the artifact store itself and
+stays valid after the depot it was found through is deleted.  The artifact's own
+name (its tree hash) is kept as-is, since `content_hash()` relies on it.
+"""
+canonical_artifact_path(path::String) = joinpath(realpath(dirname(path)), basename(path))
+
 function default_jll_source_depot()
     depot = source_download_cache("jllsource_depot")
     make_thin_depot!(depot)
@@ -619,7 +629,7 @@ function prepare(jlls::Vector{JLLSource};
                         # Only use the cached paths if they actually exist on-disk (e.g. they haven't been Pkg.gc()'ed)
                         if all(isdir.(cached_paths)) && isdir(Pkg.Operations.find_installed(jll.package.name, jll.package.uuid, tree_hash))
                             @debug("Loaded for $(jll.package.name)", cached_paths=basename.(cached_paths), platform, prefix)
-                            append!(jll.artifact_paths, cached_paths)
+                            append!(jll.artifact_paths, canonical_artifact_path.(cached_paths))
                             jll.package.tree_hash = tree_hash
                             if !isempty(package_cache["version"])
                                 jll.package.version = VersionNumber(package_cache["version"])
@@ -651,7 +661,7 @@ function prepare(jlls::Vector{JLLSource};
                     if pkg.repo.source !== nothing || pkg.repo.rev !== nothing
                         jll.package.repo = pkg.repo
                     end
-                    append!(jll.artifact_paths, art_paths[pkg])
+                    append!(jll.artifact_paths, canonical_artifact_path.(art_paths[pkg]))
                     @debug("Prepared", jll, pkg, cache_path, prefix, platform)
                 end
 
