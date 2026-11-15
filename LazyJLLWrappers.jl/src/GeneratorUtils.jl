@@ -31,10 +31,13 @@ function get_augmented_platform(jb, jll)
             $(Meta.parse(platform_augmentation_code))
         end # module
     ))
-    if !isdefined(platform_augmentation_module, :augment_platform!)
+    # The module was defined in a newer world than this function runs in, so its
+    # bindings must be accessed through `invokelatest()`.
+    if !Base.invokelatest(isdefined, platform_augmentation_module, :augment_platform!)
         throw(ArgumentError("`platform_augmentation` code does not contain definition for `augment_platform!()`:\n$(platform_augmentation_code)\n"))
     end
-    platform = Base.invokelatest(platform_augmentation_module.augment_platform!, HostPlatform())
+    augment_platform! = Base.invokelatest(getproperty, platform_augmentation_module, :augment_platform!)
+    platform = Base.invokelatest(augment_platform!, HostPlatform())
 
     # Verify that the result of running `platform_augmentation_module.augment_platform!()`
     # at runtime matches what we ran at compile-time.
