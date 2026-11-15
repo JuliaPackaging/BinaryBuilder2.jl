@@ -406,7 +406,11 @@ end
 end
 
 @testset "on-load callbacks" begin
-    function make_on_load_callback(incoherent)
+    function make_on_load_callback(incoherent; callback_def = """
+                                   function libblastrampoline_on_load_callback()
+                                       println("this is our callback!")
+                                   end
+                                   """)
         return jll = JLLInfo(;
             name = "libblastrampoline",
             version = v"5.8.0+1",
@@ -436,11 +440,7 @@ end
                         ),
                     ],
                     callback_defs = Dict(
-                        :libblastrampoline_on_load_callback => """
-                        function libblastrampoline_on_load_callback()
-                            println("this is our callback!")
-                        end
-                        """
+                        :libblastrampoline_on_load_callback => callback_def,
                     ),
                     licenses = [mit_license],
                 ),
@@ -455,6 +455,26 @@ end
 
     # Trying to declare a library product with a non-existant on-load callback fails
     @test_throws ArgumentError make_on_load_callback(true)
+
+    # Multiple statements are accepted inside a `begin ... end` block
+    @test make_on_load_callback(false; callback_def = """
+        begin
+            const callbacks = Function[]
+            libblastrampoline_on_load_callback() = foreach(f -> f(), callbacks)
+        end
+        """) isa JLLInfo
+
+    # A definition that is not a single expression fails
+    @test_throws ArgumentError make_on_load_callback(false; callback_def = """
+        const callbacks = Function[]
+        libblastrampoline_on_load_callback() = foreach(f -> f(), callbacks)
+        """)
+
+    # A definition that does not define the named function fails
+    @test_throws ArgumentError make_on_load_callback(false; callback_def = """
+        function some_other_name()
+        end
+        """)
 end
 
 @testset "Build binding shape" begin

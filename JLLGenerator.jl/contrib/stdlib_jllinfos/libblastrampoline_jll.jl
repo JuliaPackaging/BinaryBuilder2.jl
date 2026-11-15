@@ -1,8 +1,10 @@
 on_load_callback_def = """
-const on_load_callbacks::Vector{Function} = Function[]
-function libblastrampoline_on_load_callback()
-    for callback in on_load_callbacks
-        callback()
+begin
+    const on_load_callbacks::Vector{Function} = Function[]
+    function libblastrampoline_on_load_callback()
+        for callback in on_load_callbacks
+            callback()
+        end
     end
 end
 """

@@ -304,6 +304,42 @@ end
     end
 end
 
+@testset "on_load_callback runs when the library is loaded" begin
+    jllinfo = include(joinpath(example_jllinfos_path, "libxls_jll.jl"))
+    jllinfo = @set jllinfo.builds = map(jllinfo.builds) do build
+        build = @set build.callback_defs = Dict{Symbol,String}(
+            :xls_loaded => "xls_loaded() = (global XLS_CALLBACK_RAN = true; nothing)",
+        )
+        return @set build.products = map(build.products) do p
+            return JLLLibraryProduct(p.varname, p.path, p.deps, p.system_deps;
+                                     soname = p.soname, flags = p.flags,
+                                     on_load_callback = :xls_loaded,
+                                     dont_dlopen = p.dont_dlopen)
+        end
+    end
+
+    # A `LazyLibrary` runs the callback on its first `dlopen()`, the eager regime
+    # runs it in `__init__()`.
+    generate_and_load_jll(
+        jllinfo,
+        """
+        import LazyJLLWrappers
+        @test isdefined(libxls_jll, :XLS_CALLBACK_RAN) == !LazyJLLWrappers.use_lazy_libraries()
+        @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+        @test libxls_jll.XLS_CALLBACK_RAN
+        """,
+    )
+
+    # `eager_mode()` loads every library, so it must run the callback as well.
+    generate_and_load_jll(
+        jllinfo,
+        """
+        libxls_jll.eager_mode()
+        @test libxls_jll.XLS_CALLBACK_RAN
+        """,
+    )
+end
+
 @testset "builds for unparseable platforms are skipped" begin
     # Older Julias cannot parse some triplets (e.g. `riscv64` before v1.10); such
     # builds must not prevent selecting among the ones that do parse.

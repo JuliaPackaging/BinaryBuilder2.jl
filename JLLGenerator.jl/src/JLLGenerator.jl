@@ -466,6 +466,26 @@ end
 
 
 """
+    defines_function(ex, name::Symbol)
+
+Return whether the top-level expression `ex` (possibly a `begin ... end` block)
+defines a method of the function `name`.
+"""
+function defines_function(ex, name::Symbol)
+    if Meta.isexpr(ex, :block)
+        return any(arg -> defines_function(arg, name), ex.args)
+    end
+    if Meta.isexpr(ex, (:function, :(=))) && !isempty(ex.args)
+        sig = ex.args[1]
+        while Meta.isexpr(sig, (:where, :(::)))
+            sig = sig.args[1]
+        end
+        return Meta.isexpr(sig, :call) && sig.args[1] === name
+    end
+    return false
+end
+
+"""
     JLLBuildInfo
 
 A structure representing all platform-specific information in a JLL.  This structure is
@@ -550,6 +570,19 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
                         throw(ArgumentError("Product '$(p.varname)' references on-load callback '$(p.on_load_callback)', but matching definition not found!"))
                     end
                 end
+            end
+        end
+
+        # The wrapper `Meta.parse()`s each callback definition into its top level, so
+        # each must be a single expression that defines a function of the given name.
+        for (cb_name, code) in callback_defs
+            ex = try
+                Meta.parse(string(code))
+            catch e
+                throw(ArgumentError("On-load callback '$(cb_name)' definition must parse as a single expression (wrap multiple statements in `begin ... end`): $(sprint(showerror, e))"))
+            end
+            if !defines_function(ex, Symbol(cb_name))
+                throw(ArgumentError("On-load callback '$(cb_name)' definition does not define a function named '$(cb_name)'!"))
             end
         end
 
