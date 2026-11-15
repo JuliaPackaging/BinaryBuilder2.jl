@@ -245,12 +245,12 @@ function init_footer(jb::JLLBlocks, build, lib_products)
     for product in build["products"]
         if product["type"] == "executable"
             _, path_var_name, _ = product_names(product)
-            push!(jb.init_blocks, :(push!(PATH_list, $(path_var_name))))
+            push!(jb.init_blocks, :(push!(PATH_list, dirname($(path_var_name)))))
         end
     end
     for lib in lib_products
         _, path_var_name, _ = product_names(lib)
-        push!(jb.init_blocks, :(push!(LIBPATH_list, $(path_var_name))))
+        push!(jb.init_blocks, :(push!(LIBPATH_list, dirname($(path_var_name)))))
     end
 
     # Append our dependencies' PATH and LIBPATH:
