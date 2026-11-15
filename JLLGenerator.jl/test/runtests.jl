@@ -263,9 +263,9 @@ end
         project = TOML.parsefile(joinpath(dir, "Project.toml"))
         @test project["compat"]["Glibc_jll"] == "2.15 - 2.17"
 
-        # Because this JLL doesn't have any exotic platforms, it defaults to Julia v1.0
+        # Because this JLL doesn't have any exotic platforms, it defaults to Julia v1.3
         # and therefore depends on `Pkg`
-        @test project["compat"]["julia"] == "1.0"
+        @test project["compat"]["julia"] == "1.3"
         @test haskey(project["deps"], "Pkg")
         @test !haskey(project["deps"], "Artifacts")
     end

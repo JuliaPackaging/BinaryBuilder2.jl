@@ -633,9 +633,8 @@ function guess_julia_compat(artifacts)
         end
     end
 
-    # We require at least Julia 1.3+, for Pkg.builds support, but we claim
-    # Julia 1.0+ by default so that empty JLLs can be installed on older versions.
-    return "1.0"
+    # LazyJLLWrappers needs `Pkg.Artifacts`, which arrived in Julia v1.3
+    return "1.3"
 end
 
 """
