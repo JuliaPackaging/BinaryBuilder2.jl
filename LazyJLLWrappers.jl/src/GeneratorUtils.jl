@@ -142,10 +142,11 @@ dlopen()'ed and ready for use.  Old JLLWrappers will then call
 """
 function build_eager_mode(jb::JLLBlocks, lib_products)
     statements = Expr[]
-    # For every library in `lib_products`, open it!
+    # For every library in `lib_products`, open it!  A `LazyLibrary` is opened
+    # through the object itself, so that its dependencies and on-load callback run.
     for lib in lib_products
-        _, path_var_name, _ = product_names(lib)
-        push!(statements, :(dlopen($(path_var_name))))
+        var_name, path_var_name, _ = product_names(lib)
+        push!(statements, :(dlopen($(use_lazy_libraries() ? var_name : path_var_name))))
     end
 
     push!(jb.top_level_blocks, quote
