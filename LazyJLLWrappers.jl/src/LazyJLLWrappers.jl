@@ -82,8 +82,10 @@ function check_format_version(jll, toml_path)
     if !haskey(jll, "format_version")
         return v"1.0.0"
     end
-    format = tryparse(VersionNumber, string(jll["format_version"]))
-    if format === nothing
+    # `tryparse(VersionNumber, ...)` does not exist before Julia v1.5
+    format = try
+        VersionNumber(string(jll["format_version"]))
+    catch
         error("`$(toml_path)` declares an invalid `format_version`")
     end
     if format.major != 1

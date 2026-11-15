@@ -27,7 +27,7 @@ function get_augmented_platform(jb, jll)
     # want to store our platform augmentation code twice.
     platform_augmentation_module = Core.eval(jb.mod, :(
         module platform_augmentation_module
-            using Base.BinaryPlatforms
+            using LazyJLLWrappers.BinaryPlatforms
             $(Meta.parse(platform_augmentation_code))
         end # module
     ))
@@ -39,7 +39,7 @@ function get_augmented_platform(jb, jll)
     # Verify that the result of running `platform_augmentation_module.augment_platform!()`
     # at runtime matches what we ran at compile-time.
     push!(jb.init_blocks, quote
-        host_platform = platform_augmentation_module.augment_platform!(Base.BinaryPlatforms.HostPlatform())
+        host_platform = platform_augmentation_module.augment_platform!(LazyJLLWrappers.HostPlatform())
         if $(platform) != host_platform
             # TODO: Ask Jameson for a `__verify__()` or similar, so that we can abort
             # loading of this module and compile a new one, rather than just erroring
@@ -68,7 +68,7 @@ function select_artifact(artifacts, name::String, host::AbstractPlatform)
 
     if any(a["platform"] == "any" for a in artifacts)
         if length(artifacts) == 1
-            return only(artifacts)
+            return artifacts[1]
         end
         # Throw an error since `AnyPlatform` artifacts can't exist alongside any other artifact with the same name.
         throw(ArgumentError("AnyPlatform artifact $(name) must be a singleton, this JLL is malformed."))
@@ -102,14 +102,12 @@ end
 
 
 function top_level_statements(jb::JLLBlocks, artifact, platform)
-    if VERSION >= v"1.6.0"
-        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Artifacts, Base.BinaryPlatforms))
-    elseif VERSION >= v"1.3.0-rc4"
-        # Use slower Pkg-based artifacts
-        push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers, Pkg.Artifacts, Base.BinaryPlatforms))
-    else
-        error("Unable to use $(src_name)_jll on Julia versions older than 1.3!")
-    end
+    # `Artifacts` and `BinaryPlatforms` come from `Pkg` before Julia v1.6 and from
+    # their own stdlibs afterwards, and a JLL declares only one of `Pkg` or `Artifacts`
+    # as a dependency, so reach both through `LazyJLLWrappers` rather than importing them.
+    push!(jb.top_level_blocks, :(using Libdl, LazyJLLWrappers))
+    push!(jb.top_level_blocks, :(using LazyJLLWrappers: artifact_path))
+    push!(jb.top_level_blocks, :(using LazyJLLWrappers.BinaryPlatforms))
 
     # Add `using $dep` for every dep
     for dep in artifact["deps"]

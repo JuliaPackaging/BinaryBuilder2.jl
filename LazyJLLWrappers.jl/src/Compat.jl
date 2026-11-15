@@ -6,7 +6,11 @@ if !isdefined(BinaryPlatforms, :HostPlatform)
     HostPlatform() = BinaryPlatforms.default_platkey
     Base.parse(::Type{<:AbstractPlatform}, str::AbstractString) = BinaryPlatforms.platform_key_abi(str)
     function Base.tryparse(::Type{<:AbstractPlatform}, str::AbstractString)
-        p = BinaryPlatforms.platform_key_abi(str)
+        # `platform_key_abi()` warns about every triplet it does not understand; those
+        # are reported by returning `nothing` instead.
+        p = Base.CoreLogging.with_logger(Base.CoreLogging.NullLogger()) do
+            BinaryPlatforms.platform_key_abi(str)
+        end
         return p isa BinaryPlatforms.UnknownPlatform ? nothing : p
     end
 end

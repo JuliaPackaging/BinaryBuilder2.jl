@@ -51,7 +51,7 @@ function executable_product_definition(jb::JLLBlocks, artifact, product)
                 adjust_PATH,
                 adjust_LIBPATH,
             )
-            return Cmd(Cmd([string($(path_ref))]); env)
+            return Cmd(Cmd([string($(path_ref))]); env = env)
         end
     end)
     push!(jb.exports, var_name)
