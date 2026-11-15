@@ -2,6 +2,7 @@ using Test, BinaryBuilderSources, SHA, Base.BinaryPlatforms, Pkg, TreeArchival, 
 using BinaryBuilderSources: verify, download_cache_path, source_download_cache, generated_source_cache
 using BinaryBuilderSources: registry_slice_hash, full_registries_hash, tracks_branch
 using BinaryBuilderSources: strict_tags, drop_strict_tags, resolution_platform
+using BinaryBuilderSources: stdlib_jll_compat, stdlib_jll_versions
 using Pkg.Registry: RegistryInstance
 using BinaryBuilderGitUtils: init!, commit!, remote_url
 using BinaryBuilderSources: remote_name
@@ -391,25 +392,82 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                 @test bzip2_dep.compat === nothing
                 bzip2_version = bzip2_dep.package.version
                 @test bzip2_version isa VersionNumber
-                @test jll_compat(bzip2_dep) == "$(bzip2_version.major).$(bzip2_version.minor)"
-                @test bzip2_version ∈ Pkg.Types.semver_spec(jll_compat(bzip2_dep))
+                @test jll_compat(bzip2_dep; julia_compat="1.6") == "$(bzip2_version.major).$(bzip2_version.minor)"
+                @test bzip2_version ∈ Pkg.Types.semver_spec(jll_compat(bzip2_dep; julia_compat="1.6"))
 
                 # Before resolution, only an exactly requested version is known
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform())) === nothing
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1")) == "1.4"
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=v"1.3.1+2")) == "1.3"
-                @test jll_compat(JLLSource("Foo_jll", HostPlatform(); version=v"0.4.2")) == "0.4"
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); version=Pkg.Types.VersionSpec("1.4"))) === nothing
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform()); julia_compat="1.6") === nothing
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform(); version=v"1.4.1"); julia_compat="1.6") == "1.4"
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform(); version=v"1.3.1+2"); julia_compat="1.6") == "1.3"
+                @test jll_compat(JLLSource("Foo_jll", HostPlatform(); version=v"0.4.2"); julia_compat="1.6") == "0.4"
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform(); version=Pkg.Types.VersionSpec("1.4")); julia_compat="1.6") === nothing
                 # Or the version passed in, e.g. one a build recorded
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform()), v"1.3.1") == "1.3"
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="~1.4"), v"1.3.1") == "~1.4"
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform()), v"1.3.1"; julia_compat="1.6") == "1.3"
+                @test jll_compat(JLLSource("Bzip2_jll", HostPlatform(); compat="~1.4"), v"1.3.1"; julia_compat="1.6") == "~1.4"
+
+                # A stdlib JLL admits every version that a Julia allowed by the `julia`
+                # compat ships, whatever version it was requested at or resolved to.
+                for zlib in (JLLSource("Zlib_jll", HostPlatform()), JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1"))
+                    @test jll_compat(zlib; julia_compat="1.6 - 1.8") == "1.2"
+                    @test jll_compat(zlib, v"1.4.1"; julia_compat="1.6 - 1.8") == "1.2"
+                    @test jll_compat(zlib; julia_compat="1.6") == "1.2"
+                    @test jll_compat(zlib; julia_compat="1.12") == "1.3"
+                end
+                for (name, julia_compat) in (("Zlib_jll", "1.6"), ("CompilerSupportLibraries_jll", "1.3"),
+                                             ("LibCURL_jll", "1.6"), ("SuiteSparse_jll", "1.6"))
+                    jll = JLLSource(name, HostPlatform())
+                    shipped = stdlib_jll_versions(jll, julia_compat)
+                    @test !isempty(shipped)
+                    @test all(v ∈ Pkg.Types.semver_spec(jll_compat(jll; julia_compat)) for v in shipped)
+                end
+                # Versions that an older version's caret specifier covers are left out
+                csl = JLLSource("CompilerSupportLibraries_jll", HostPlatform())
+                @test jll_compat(csl; julia_compat="1.6 - 1.11") == "0.3, 0.5, 1.0"
+                @test stdlib_jll_compat(csl, "1.6 - 1.11") == "0.3, 0.5, 1.0"
+                @test jll_compat(JLLSource("LibCURL_jll", HostPlatform()); julia_compat="1.6 - 1.11") == "7.73, 8.4"
+                # The oldest allowed Julia counts even between two HistoricalStdlibVersions entries
+                @test first(stdlib_jll_versions(csl, "1.6.1")) == first(stdlib_jll_versions(csl, "1.6.0"))
+                # A stdlib added after the oldest allowed Julia admits the versions from
+                # the first Julia that ships it on.
+                zstd_compat = jll_compat(JLLSource("Zstd_jll", HostPlatform()); julia_compat="1.6")
+                @test zstd_compat == stdlib_jll_compat(JLLSource("Zstd_jll", HostPlatform()), "1.13")
+                @test zstd_dep.package.version isa VersionNumber
+                @test jll_compat(zstd_dep; julia_compat="1.6") == zstd_compat
+                # A JLL that is a stdlib only outside the allowed Julia versions is treated
+                # like any other JLL.
+                @test isempty(stdlib_jll_versions(JLLSource("Zstd_jll", HostPlatform()), "1.6 - 1.12"))
+                @test jll_compat(JLLSource("Zstd_jll", HostPlatform(); version=v"1.5.2"); julia_compat="1.6 - 1.12") == "1.5"
+                @test jll_compat(JLLSource("MbedTLS_jll", HostPlatform()); julia_compat="1.6 - 1.8") == "2.24"
+                @test stdlib_jll_compat(JLLSource("MbedTLS_jll", HostPlatform()), "1.12") === nothing
+                @test jll_compat(JLLSource("MbedTLS_jll", HostPlatform(); version=v"2.28.1010"); julia_compat="1.12") == "2.28"
+                # MozillaCACerts_jll's version doesn't matter to a JLL depending on it
+                @test jll_compat(JLLSource("MozillaCACerts_jll", HostPlatform()); julia_compat="1.6") == "*"
+                @test jll_compat(JLLSource("MozillaCACerts_jll", HostPlatform(); compat="2023"); julia_compat="1.6") == "2023"
+                # Non-stdlib JLLs are unaffected by the `julia` compat
+                @test stdlib_jll_compat(bzip2_dep, "1.6") === nothing
+                @test jll_compat(bzip2_dep; julia_compat="1.6") == jll_compat(bzip2_dep; julia_compat="1.12")
+                # A stdlib's UUID decides over its name
+                zlib_uuid = Base.UUID("83775a58-1f1d-513f-b197-d71354ab007a")
+                @test stdlib_jll_compat(JLLSource(PackageSpec(; name="Foo_jll", uuid=zlib_uuid), HostPlatform()), "1.12") == "1.3"
+                @test stdlib_jll_compat(JLLSource(PackageSpec(; name="Zlib_jll", uuid=bzip2_dep.package.uuid), HostPlatform()), "1.6") === nothing
+                # An explicit compat still wins, also for a stdlib
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="~1.4"); julia_compat="1.6") == "~1.4"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="*"); julia_compat="1.6") == "*"
+                # The LLVM JLLs change their major version with nearly every Julia
+                # release, so they need an explicit compat.
+                for name in ("libLLVM_jll", "LLD_jll", "LLVMLibUnwind_jll")
+                    @test_throws ArgumentError BinaryBuilderSources.check_explicit_compat(JLLSource(name, HostPlatform()))
+                    @test_throws r"explicit `compat`" jll_compat(JLLSource(name, HostPlatform(); version=v"18.1.7"); julia_compat="1.6")
+                    @test BinaryBuilderSources.check_explicit_compat(JLLSource(name, HostPlatform(); compat="18.1")) === nothing
+                    @test jll_compat(JLLSource(name, HostPlatform(); compat="18.1"); julia_compat="1.6") == "18.1"
+                end
 
                 # An explicit compat is used verbatim, in all constructors
                 zlib_tilde = JLLSource("Zlib_jll", HostPlatform(); version=v"1.4.1", compat="~1.4")
                 @test zlib_tilde.compat == "~1.4"
-                @test jll_compat(zlib_tilde) == "~1.4"
-                @test jll_compat(JLLSource(PackageSpec(; name="Zlib_jll"), HostPlatform(); compat="1.2.3 - 1.5")) == "1.2.3 - 1.5"
-                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="*")) == "*"
+                @test jll_compat(zlib_tilde; julia_compat="1.6") == "~1.4"
+                @test jll_compat(JLLSource(PackageSpec(; name="Zlib_jll"), HostPlatform(); compat="1.2.3 - 1.5"); julia_compat="1.6") == "1.2.3 - 1.5"
+                @test jll_compat(JLLSource("Zlib_jll", HostPlatform(); compat="*"); julia_compat="1.6") == "*"
                 @test_throws ArgumentError JLLSource("Zlib_jll", HostPlatform(); compat="not a version")
 
                 # It only changes the generated JLL, not what gets built

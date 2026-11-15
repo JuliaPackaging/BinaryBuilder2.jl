@@ -1,8 +1,8 @@
 using BinaryBuilder2, Test, Random
 import BinaryBuilder2: import_archives, JLLSourceRecords, JLLPackageDependencies, PackageSpec, get_default_target_spec
-using BinaryBuilderSources: download_cache_path, verify
+using BinaryBuilderSources: download_cache_path, verify, stdlib_jll_compat
 using TreeArchival: archive, treehash
-using SHA, Downloads
+using SHA, Downloads, TOML
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
@@ -254,13 +254,14 @@ end
     """
     extract_script = raw"extract ${prefix}/share/**"
     products = [FileProduct("share/hello.txt", :hello_txt)]
-    # A JLL dependency requested without a version, whose compat bound must come from
-    # the version the build resolved it to.  Each session makes its own spec plan, as
-    # separate processes would.
+    # JLL dependencies requested without a version: `Bzip2_jll`'s compat bound must
+    # come from the version the build resolved it to, and the stdlib `Zlib_jll`'s from
+    # the versions the Julia versions the JLL supports ship.  Each session makes its own
+    # spec plan, as separate processes would.
     deps_spec_plan() = make_target_spec_plan(;
         host_toolchains=[CToolchain(;use_ccache=false), HostToolsToolchain()],
         target_toolchains=[CToolchain(;use_ccache=false)],
-        target_dependencies=[JLLSource("Zstd_jll")],
+        target_dependencies=[JLLSource("Bzip2_jll"), JLLSource("Zlib_jll")],
     )
     make_build_config(meta) = BuildConfig(meta, "Hello", v"1.0.0", [source], apply_spec_plan(deps_spec_plan(), native_linux, native_linux), script)
 
@@ -274,8 +275,8 @@ end
     @test build_result.status == :success
     expected_records = [JLLSourceRecord(first(source.urls), SHA1Hash(treehash(tarball)))]
     @test build_result.source_records == expected_records
-    zstd_version = build_result.dependency_versions["Zstd_jll"]
-    expected_deps = Dict("Zstd_jll" => zstd_version)
+    bzip2_version = build_result.dependency_versions["Bzip2_jll"]
+    expected_deps = Dict("Bzip2_jll" => bzip2_version, "Zlib_jll" => build_result.dependency_versions["Zlib_jll"])
     @test build_result.dependency_versions == expected_deps
     extract_result = extract!(ExtractConfig(build_result, extract_script, products))
     @test extract_result.status == :success
@@ -301,19 +302,27 @@ end
     # Packaging takes the compat bound from the versions the build recorded, without
     # resolving the dependency again.
     @test result.config.build.dependency_versions == expected_deps
-    zstd_jll = only(get_default_target_spec(result.config.build.config).dependencies)
-    @test isempty(BinaryBuilder2.resolved_dependency(result.config.build.config, zstd_jll).artifact_paths)
-    @test only(JLLPackageDependencies(result, PackageSpec[])).compat == "$(zstd_version.major).$(zstd_version.minor)"
-    package_result = package!(PackageConfig(result))
+    bzip2_jll = only(filter(d -> d.package.name == "Bzip2_jll", get_default_target_spec(result.config.build.config).dependencies))
+    @test isempty(BinaryBuilder2.resolved_dependency(result.config.build.config, bzip2_jll).artifact_paths)
+    dep_compats(result; kwargs...) = Dict(d.name => d.compat for d in JLLPackageDependencies(result, PackageSpec[]; kwargs...))
+    bzip2_compat = "$(bzip2_version.major).$(bzip2_version.minor)"
+    zlib_compat(julia_compat) = stdlib_jll_compat(JLLSource("Zlib_jll", HostPlatform()), julia_compat)
+    @test dep_compats(result; julia_compat="1.6") == Dict(:Bzip2_jll => bzip2_compat, :Zlib_jll => zlib_compat("1.6"))
+    @test dep_compats(result; julia_compat="1.12") == Dict(:Bzip2_jll => bzip2_compat, :Zlib_jll => zlib_compat("1.12"))
+    package_result = package!(PackageConfig(result; julia_compat="1.12"))
     @test package_result.status == :success
+    jll_project = TOML.parsefile(joinpath(result.config.build.config.meta.universe.depot_path, "dev", "Hello_jll", "Project.toml"))
+    @test jll_project["compat"]["Bzip2_jll"] == bzip2_compat
+    @test jll_project["compat"]["Zlib_jll"] == zlib_compat("1.12")
     @test !verify(source)
 
     # Archives without the dependency versions give no compat bound for a dependency
-    # that wasn't requested at an exact version.
+    # that wasn't requested at an exact version, unless it is a stdlib.
     rm(joinpath(archive_dir, "$(build_hash).deps.toml"))
     result = cached_extract_result(archive_dir)
     @test result.config.build.dependency_versions === nothing
-    @test (@test_logs (:warn, r"No resolved version recorded for Zstd_jll") only(JLLPackageDependencies(result, PackageSpec[])).compat) == "*"
+    @test (@test_logs (:warn, r"No resolved version recorded for Bzip2_jll") dep_compats(result; julia_compat="1.6")) ==
+          Dict(:Bzip2_jll => "*", :Zlib_jll => zlib_compat("1.6"))
 
     # Archives without the source records fall back to fetching the sources
     rm(joinpath(archive_dir, "$(build_hash).sources.toml"))

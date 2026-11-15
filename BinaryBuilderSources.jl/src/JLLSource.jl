@@ -2,6 +2,7 @@ using TreeArchival, TimerOutputs, TOML
 
 using Base.BinaryPlatforms, JLLPrefixes, Pkg
 using JLLPrefixes: PkgSpec, flatten_artifact_paths
+import HistoricalStdlibVersions
 
 export JLLSource, deduplicate_jlls, jll_compat
 
@@ -124,27 +125,131 @@ function retarget(jll::JLLSource, new_target::String)
 end
 
 """
-    jll_compat(jll::JLLSource, version = jll.package.version)
+    STDLIB_JLLS_REQUIRING_COMPAT
 
-The `[compat]` entry for `jll` in the `Project.toml` of a JLL that depends on it.  This
-is `jll.compat` if one was given.  Otherwise it is the caret specifier `"X.Y"` for the
-`version` `X.Y.Z` that `jll` was resolved to: any semver-compatible version from
-`X.Y.0` on, e.g. `"1.4"` for `1.4.1` (`[1.4.0, 2.0.0)`) or `"0.4"` for `0.4.2`
-(`[0.4.0, 0.5.0)`).  `version` defaults to `jll.package.version`, which is the resolved
-version once `jll` has been `prepare()`'ed, and before that the version requested.
-This holds for every way of requesting a JLL: one pinned by `repo`/`rev` or developed
-by `path` gets the version in its own `Project.toml`, and a standard library JLL gets
-the version that was installed for the build, just like any other JLL.  Returns
-`nothing` if `version` is not a `VersionNumber` (e.g. an unresolved version range).
+Stdlib JLLs that take a new major version with nearly every Julia release, so that no
+default bound fits them: a JLL depending on one must give an explicit `compat`.
 """
-function jll_compat(jll::JLLSource, version = jll.package.version)
+const STDLIB_JLLS_REQUIRING_COMPAT = ("libLLVM_jll", "LLD_jll", "LLVMLibUnwind_jll")
+
+"""
+    STDLIB_JLLS_ANY_COMPAT
+
+Stdlib JLLs whose version does not matter to a JLL depending on them, e.g. the CA
+certificate bundle: their default bound is `"*"`.
+"""
+const STDLIB_JLLS_ANY_COMPAT = ("MozillaCACerts_jll",)
+
+"""
+    check_explicit_compat(jll::JLLSource)
+
+Throw an `ArgumentError` if `jll` is one of [`STDLIB_JLLS_REQUIRING_COMPAT`](@ref) but
+was not given an explicit `compat`.
+"""
+function check_explicit_compat(jll::JLLSource)
+    if jll.compat === nothing && jll.package.name ∈ STDLIB_JLLS_REQUIRING_COMPAT
+        throw(ArgumentError(string(
+            "$(jll.package.name) changes its major version with nearly every Julia release, ",
+            "so it gets no default compat bound; pass an explicit `compat` to its JLLSource, ",
+            "e.g. JLLSource(\"$(jll.package.name)\"; compat=\"...\")",
+        )))
+    end
+end
+
+"""
+    jll_compat(jll::JLLSource, version = jll.package.version; julia_compat)
+
+The `[compat]` entry for `jll` in the `Project.toml` of a JLL that depends on it, where
+`julia_compat` is that JLL's `julia` compat specifier.  This is `jll.compat` if one was
+given.
+
+Otherwise, for a JLL that is a standard library in a Julia version that `julia_compat`
+allows, it is [`stdlib_jll_compat`](@ref): every version those Julia versions ship, as
+Julia fixes the version of its stdlibs and a bound derived from the build could exclude
+the Julia versions the generated JLL supports.  The exceptions are the JLLs in
+[`STDLIB_JLLS_ANY_COMPAT`](@ref), which get `"*"`, and the JLLs in
+[`STDLIB_JLLS_REQUIRING_COMPAT`](@ref), which have no default, see
+`check_explicit_compat()`.
+
+For any other JLL, it is the caret specifier `"X.Y"` for `version` `X.Y.Z`, the version
+`jll` was resolved to: any semver-compatible version from `X.Y.0` on, e.g. `"1.4"` for
+`1.4.1` (`[1.4.0, 2.0.0)`) or `"0.4"` for `0.4.2` (`[0.4.0, 0.5.0)`).  `version`
+defaults to `jll.package.version`, which is the resolved version once `jll` has been
+`prepare()`'ed, and before that the version requested.  This holds for every way of
+requesting a JLL: one pinned by `repo`/`rev` or developed by `path` gets the version
+in its own `Project.toml`.  Returns `nothing` if `version` is not a `VersionNumber`
+(e.g. an unresolved version range).
+"""
+function jll_compat(jll::JLLSource, version = jll.package.version; julia_compat::AbstractString)
     if jll.compat !== nothing
         return jll.compat
+    end
+    check_explicit_compat(jll)
+    stdlib_compat = stdlib_jll_compat(jll, julia_compat)
+    if stdlib_compat !== nothing
+        return jll.package.name ∈ STDLIB_JLLS_ANY_COMPAT ? "*" : stdlib_compat
     end
     if !isa(version, VersionNumber)
         return nothing
     end
-    return string(version.major, ".", version.minor)
+    return caret_compat(version)
+end
+
+caret_compat(v::VersionNumber) = string(v.major, ".", v.minor)
+
+"""
+    stdlib_jll_compat(jll::JLLSource, julia_compat::AbstractString)
+
+The union of the caret specifiers `"X.Y"` for the versions of `jll` that the Julia
+versions allowed by the `julia` compat specifier `julia_compat` ship as a standard
+library (see [`stdlib_jll_versions`](@ref)), leaving out those an older version's
+specifier already covers, e.g. `"0.3, 0.5, 1.0"`.  Returns `nothing` if none of those
+Julia versions has `jll` as a stdlib.
+"""
+function stdlib_jll_compat(jll::JLLSource, julia_compat::AbstractString)
+    kept = VersionNumber[]
+    for v in sort(unique(stdlib_jll_versions(jll, julia_compat)))
+        if !any(v ∈ Pkg.Types.semver_spec(caret_compat(k)) for k in kept)
+            push!(kept, v)
+        end
+    end
+    return isempty(kept) ? nothing : join(caret_compat.(kept), ", ")
+end
+
+"""
+    stdlib_jll_versions(jll::JLLSource, julia_compat::AbstractString)
+
+The versions of `jll` that the Julia versions allowed by the `julia` compat specifier
+`julia_compat` ship as a standard library, from the oldest such Julia version on,
+according to `HistoricalStdlibVersions`; empty if none of them has `jll` as a stdlib.
+The oldest allowed Julia version counts even if `HistoricalStdlibVersions` lists its
+stdlibs under an older Julia version.  Stdlibs are matched by UUID if `jll.package` has
+one, and by name otherwise.
+"""
+function stdlib_jll_versions(jll::JLLSource, julia_compat::AbstractString)
+    spec = Pkg.Types.semver_spec(julia_compat)
+    floor = minimum(VersionNumber(r.lower.t...) for r in spec.ranges)
+
+    # Each entry gives the stdlibs of the Julia versions from its own up to the next one's
+    stdlibs_by_version = sort(HistoricalStdlibVersions.STDLIBS_BY_VERSION; by=first)
+
+    uuid = jll.package.uuid
+    name = jll.package.name
+    versions = VersionNumber[]
+    for (idx, (julia_version, stdlibs)) in enumerate(stdlibs_by_version)
+        # The entry in effect at `floor` counts even though its own version is older
+        next_version = idx < length(stdlibs_by_version) ? first(stdlibs_by_version[idx+1]) : nothing
+        in_effect_at_floor = julia_version <= floor && (next_version === nothing || next_version > floor)
+        if !(julia_version ∈ spec || in_effect_at_floor)
+            continue
+        end
+        for (stdlib_uuid, info) in stdlibs
+            if (uuid === nothing ? info.name == name : stdlib_uuid == uuid) && info.version !== nothing
+                push!(versions, info.version)
+            end
+        end
+    end
+    return versions
 end
 
 """
