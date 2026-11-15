@@ -171,6 +171,28 @@ if LazyJLLWrappers.use_lazy_libraries()
     end
 end
 
+@testset "PATH and LIBPATH hold directories" begin
+    generate_and_load_jll(
+        include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl")),
+        """
+        @test HelloWorldC_jll.is_available()
+        @test dirname(HelloWorldC_jll.hello_world_path) in HelloWorldC_jll.PATH_list
+        @test all(isdir, HelloWorldC_jll.PATH_list)
+        @test dirname(HelloWorldC_jll.hello_world_path) in split(HelloWorldC_jll.PATH[], $(repr(LazyJLLWrappers.pathsep)))
+        """,
+    )
+
+    generate_and_load_jll(
+        include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
+        """
+        @test libxls_jll.is_available()
+        @test dirname(libxls_jll.libxlsreader_path) in libxls_jll.LIBPATH_list
+        @test all(isdir, libxls_jll.LIBPATH_list)
+        @test dirname(libxls_jll.libxlsreader_path) in split(libxls_jll.LIBPATH[], $(repr(LazyJLLWrappers.pathsep)))
+        """,
+    )
+end
+
 using Base.BinaryPlatforms: Platform
 @testset "system_deps are ignored by the wrapper" begin
     # A record may name the system libraries a product links against; the
