@@ -241,6 +241,22 @@ const acceptable_statuses = (:success, :skipped, :cached)
             push!(extract_results[extract_name], extract_result)
         end
 
+        # Fail early if this platform's binaries can't be packaged with the JLL's `julia_compat`
+        if build_error === nothing && package_jll
+            julia_compat = get(kwargs, :julia_compat, DEFAULT_JULIA_COMPAT)
+            for (jll_name, extract_names) in jll_extraction_map
+                named = Dict(n => [build_extract_results[n]] for n in extract_names if haskey(build_extract_results, n))
+                isempty(named) && continue
+                try
+                    audit_package!(jll_name, julia_compat, named)
+                catch e
+                    isa(e, PackageAuditError) || rethrow()
+                    build_error = make_BuildError(sprint(showerror, e), first(first(values(named))))
+                    break
+                end
+            end
+        end
+
         # In the background, cleanup the previous build result
         if eager_cleanup
             push!(cleanup_tasks, Threads.@spawn cleanup(build_result))
