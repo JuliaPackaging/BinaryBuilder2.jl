@@ -20,9 +20,12 @@ struct AuditResult
 
     # These contain the learned interdependency structure of the libraries
     jll_lib_products::Vector{AbstractJLLProduct}
+
+    # What the binary objects need from the runtime they get loaded into
+    runtime_requirements::RuntimeRequirements
 end
 
-AuditResult(scan::ScanResult) = AuditResult(scan, Dict{String,Vector{PassResult}}(), AbstractJLLProduct[])
+AuditResult(scan::ScanResult) = AuditResult(scan, Dict{String,Vector{PassResult}}(), AbstractJLLProduct[], RuntimeRequirements())
 
 Base.success(ar::AuditResult) = success(ar.pass_results)
 function Base.success(pass_results::Dict{String,Vector{PassResult}})
@@ -44,7 +47,10 @@ function status_style(status::Symbol)
     )[status]
 end
 
-Base.show(io::IO, ar::AuditResult) = show(io, ar.pass_results)
+function Base.show(io::IO, ar::AuditResult)
+    show(io, ar.pass_results)
+    show(io, ar.runtime_requirements)
+end
 function Base.show(io::IO, pass_results::Dict{String,Vector{PassResult}})
     println(io, "Audit results:")
     for (name, results) in pass_results

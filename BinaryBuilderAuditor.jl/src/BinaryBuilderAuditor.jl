@@ -8,6 +8,7 @@ include("JuliaLibstdcxx.jl")
 include("SystemLibraries.jl")
 include("AuditorToolchain.jl")
 include("Scanning.jl")
+include("RuntimeRequirements.jl")
 include("AuditResult.jl")
 include("AuditInfo.jl")
 include("LdScriptParser.jl")
@@ -18,6 +19,7 @@ include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
+include("passes/RuntimeRequirementChecks.jl")
 
 function audit!(prefix::String,
                 products::Vector{<:AbstractProduct},
@@ -28,6 +30,7 @@ function audit!(prefix::String,
                     "prefix" => prefix,
                     "bb_full_target" => triplet(platform),
                 ),
+                os_version::Union{Nothing,VersionNumber} = Base.BinaryPlatforms.os_version(platform),
                 verbose::Bool = false,
                 readonly::Bool = false)
     # First, scan the prefix:
@@ -70,6 +73,10 @@ function audit!(prefix::String,
 
     # Ensure that there are some licenses
     licenses_present(result)
+
+    # Record what the binaries need from their runtime, and check what the platform decides
+    record_runtime_requirements!(result)
+    check_runtime_requirements(result; os_version)
 
     if verbose
         show(result.pass_results)
