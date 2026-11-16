@@ -32,10 +32,13 @@
 # (e.g. you bumped it by hand already).
 #
 # Every other `Project.toml` in the repository whose `[compat]` entry for this
-# package does not admit the new version gets that entry widened (e.g.
-# `"0.2"` -> `"0.2, 0.3"`), and the change is included in the release commit.
-# In `--dry-run` mode the projects that would need widening are only listed.
-# These changes are listed in a "Compat bounds widened" section placed before
+# package does not admit the new version, or also admits versions older than
+# its `major.minor`, gets that entry replaced by the new version's `major.minor`
+# (e.g. `"0.2"` -> `"0.3"`, or `"1.2"` -> `"1.3"`), so that it only admits the
+# in-repo copy (as `test/MonorepoCompatTests.jl` requires), and the change is
+# included in the release commit.  In `--dry-run` mode the projects that would
+# need updating are only listed.
+# These changes are listed in a "Compat bounds updated" section placed before
 # the trigger, so they are recorded in the commit but stay out of the
 # package's release notes.
 #
@@ -189,23 +192,22 @@ if ${registry_check}; then
 fi
 
 # Find every other project in the repo whose `[compat]` entry for this package
-# does not admit the new version, and (unless this is a dry run) widen it by
-# appending the minimal caret specifier that covers the new version.  Prints one
-# `<path>\t<old spec>\t<new spec>` line per project needing a change.
+# does not admit the new version or reaches below its `major.minor` (`"1.2"`
+# when releasing v1.3.0), and (unless this is a dry run) replace it with
+# the new version's `major.minor` (`0.0.patch` for `0.0.x` versions, where every
+# patch release is breaking).  Prints one `<path>\t<old spec>\t<new spec>`
+# line per project needing a change.
 compat_script='
 using Pkg, TOML
 name, version, fix = ARGS[1], VersionNumber(ARGS[2]), ARGS[3] == "true"
-entry = version.major > 0 ? "$(version.major)" :
-        version.minor > 0 ? "0.$(version.minor)" : "0.0.$(version.patch)"
+new_spec = version.major == version.minor == 0 ? "0.0.$(version.patch)" : "$(version.major).$(version.minor)"
+floor_spec = Pkg.Types.semver_spec(new_spec)
 for path in ARGS[4:end]
     compat = get(TOML.parsefile(path), "compat", Dict())
     haskey(compat, name) || continue
     old_spec = compat[name]
-    version in Pkg.Types.semver_spec(old_spec) && continue
-    new_spec = "$(old_spec), $(entry)"
-    if !(version in Pkg.Types.semver_spec(new_spec))
-        error("appending \"$(entry)\" to $(name) compat in $(path) still does not admit v$(version)")
-    end
+    spec = Pkg.Types.semver_spec(old_spec)
+    version in spec && (spec ∩ floor_spec) == spec && continue
     println(path, "\t", old_spec, "\t", new_spec)
     fix || continue
     # Rewrite just the matching line within the `[compat]` section to preserve formatting
@@ -292,7 +294,7 @@ fi
 
 message="Release ${name}.jl v${version}"
 if [[ -n "${compat_notes}" ]]; then
-    message="${message}"$'\n\n'"Compat bounds widened to admit v${version}:"$'\n'"${compat_notes}"
+    message="${message}"$'\n\n'"Compat bounds updated to admit v${version}:"$'\n'"${compat_notes}"
 fi
 message="${message}"$'\n\n'"${trigger}"
 if [[ -n "${notes}" ]]; then
