@@ -55,7 +55,7 @@ multi_stage_build = joinpath(build_examples_dir, "multi_stage_build.jl")
     build_results = [
         YggdrasilBuildResult(
             spec_hash(er.config),
-            BuildCacheExtractEntry(er.artifact, er.log_artifact, er.jll_lib_products),
+            BuildCacheExtractEntry(er.artifact, er.log_artifact, er.jll_lib_products, er.runtime_requirements),
         )
         for er in filter(er -> er.status == :success, extract_results)
     ]

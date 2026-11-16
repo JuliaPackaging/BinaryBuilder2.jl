@@ -232,6 +232,8 @@ end
         prefix_alias,
         env = config.build.env,
         platform,
+        # Check the binaries against the OS version that packaging records for this platform
+        os_version = os_version(host_if_crossplatform(add_os_version(config.platform, config.target_spec))),
         kwargs...
     )
 end
@@ -283,7 +285,7 @@ end
                 @info("Extraction cached", config, extract_hash, build_hash, path=artifact_path(extract_entry.artifact))
             end
             try
-                result = ExtractResult_cached(config, extract_entry.artifact, extract_entry.log_artifact, extract_entry.jll_lib_products)
+                result = ExtractResult_cached(config, extract_entry)
                 export_archive(result)
                 meta.extractions[config] = result
                 return result
@@ -382,6 +384,7 @@ end
         log_artifact_hash,
         audit_result,
         jll_lib_products,
+        run_status == :success ? audit_result.runtime_requirements : nothing,
         extract_log,
     )
     if run_status == :success

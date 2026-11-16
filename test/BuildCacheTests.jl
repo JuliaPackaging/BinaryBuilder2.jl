@@ -2,7 +2,8 @@ using Test, Pkg, BinaryBuilder2, SHA, MultiHashParsing, Patchelf_jll
 using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_archives
 using BinaryBuilder2: load_build_entries!, load_extract_entries!
 using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe, export_source_records, export_dependency_versions
-using JLLGenerator
+using JLLGenerator, TOML
+using BinaryBuilder2.BinaryBuilderAuditor: RuntimeRequirement, RuntimeRequirements
 
 @testset "BuildCache" begin
     archive_dir = mktempdir()
@@ -39,6 +40,11 @@ using JLLGenerator
             JLLLibraryProduct(:libfoo, "lib/libfoo.2.dylib", [], [], flags = [:RTLD_LAZY, :RTLD_DEEPBIND]),
             JLLStaticLibraryProduct(:libfoo_a, "lib/libfoo.a"; system_deps = ["m"]),
         ]
+        extract1_reqs = RuntimeRequirements()
+        extract1_reqs.libstdcxx = RuntimeRequirement(v"6.0.32", "lib/libfoo.1.dylib", "GLIBCXX_3.4.32")
+        extract1_reqs.unknown_libstdcxx = [RuntimeRequirement("GLIBCXX_3.4.99", "lib/libfoo.1.dylib", "libstdc++.so.6")]
+        extract1_reqs.libgfortran = [RuntimeRequirement(5, "lib/libfoo.1.dylib", "libgfortran.so.5")]
+        extract2_reqs = RuntimeRequirements()
 
         # build1 records its sources and dependency versions, build2 is an entry stored without them
         build1_sources = [
@@ -46,9 +52,9 @@ using JLLGenerator
             JLLSourceRecord("https://example.com/foo.git", SHA1Hash(sha1("foo_commit"))),
         ]
         build1_dep_versions = Dict("Zlib_jll" => v"1.3.1+2", "Bar_jll" => v"0.4.2")
-        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp;
+        put!(bc, build1_hash, extract1_hash, build_log1_hash, build_env1, artifact1_hash, extract_log1_hash, extract1_jlp, extract1_reqs;
              source_records=build1_sources, dependency_versions=build1_dep_versions)
-        put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp)
+        put!(bc, build2_hash, extract2_hash, build_log2_hash, build_env2, artifact2_hash, extract_log2_hash, extract2_jlp, extract2_reqs)
 
         function probe_buildcache(bc)
             @test haskey(bc, build1_hash, extract1_hash)
@@ -60,6 +66,7 @@ using JLLGenerator
             @test e1.artifact == artifact1_hash
             @test e1.log_artifact == extract_log1_hash
             @test e1.jll_lib_products == extract1_jlp
+            @test e1.runtime_requirements == extract1_reqs
 
             @test haskey(bc, build2_hash, extract2_hash)
             b2, e2 = get(bc, build2_hash, extract2_hash)
@@ -70,6 +77,7 @@ using JLLGenerator
             @test e2.artifact == artifact2_hash
             @test e2.log_artifact == extract_log2_hash
             @test e2.jll_lib_products == extract2_jlp
+            @test e2.runtime_requirements == extract2_reqs
         end
         probe_buildcache(bc)
 
@@ -87,6 +95,7 @@ using JLLGenerator
             # Include a static archive entry so that `load_cache()` exercises the
             # linkage-dispatched deserialization of `jll_lib_products`.
             AbstractJLLProduct[JLLStaticLibraryProduct(:libpatchelf_a, "lib/libpatchelf.a"; system_deps = ["c"])],
+            RuntimeRequirements(),
         )
         put!(bc, patchelf_build_hash, patchelf_extract_hash, patchelf_build_entry, patchelf_extract_entry)
         save_cache(bc)
@@ -268,10 +277,13 @@ end
         log2 = SHA1Hash(sha1("extlog2"))
         jlp1 = [JLLLibraryProduct(:libfoo, "lib/libfoo.so", [], [], flags=[:RTLD_LAZY])]
         jlp2 = JLLLibraryProduct[]
+        reqs1 = RuntimeRequirements()
+        reqs1.glibc = RuntimeRequirement(v"2.17", "lib/libfoo.so", "GLIBC_2.17")
+        reqs2 = RuntimeRequirements()
 
         # Write .jlp files
-        export_jll_lib_products(jlp1, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h1)).jlp"))
-        export_jll_lib_products(jlp2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
+        export_jll_lib_products(jlp1, reqs1, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h1)).jlp"))
+        export_jll_lib_products(jlp2, reqs2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
 
         # Write a valid extract_entries.db
         db = joinpath(cache_dir, "extract_entries.db")
@@ -280,8 +292,17 @@ end
         entries = Dict{SHA1Hash,BuildCacheExtractEntry}()
         load_extract_entries!(entries, cache_dir)
         @test length(entries) == 2
-        @test entries[h1] == BuildCacheExtractEntry(art1, log1, jlp1)
-        @test entries[h2] == BuildCacheExtractEntry(art2, log2, jlp2)
+        @test entries[h1] == BuildCacheExtractEntry(art1, log1, jlp1, reqs1)
+        @test entries[h2] == BuildCacheExtractEntry(art2, log2, jlp2, reqs2)
+
+        # A .jlp without runtime requirements → entry skipped
+        open(joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"); write=true) do io
+            TOML.print(io, Dict("jll_lib_products" => []))
+        end
+        entries_noreqs = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries_noreqs, cache_dir)
+        @test haskey(entries_noreqs, h1)
+        @test !haskey(entries_noreqs, h2)
 
         # Missing .jlp file → entry skipped
         rm(joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
@@ -299,7 +320,7 @@ end
 
         # Malformed hash line → entry skipped
         write(db, "$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\nnotahash notahash notahash\n")
-        export_jll_lib_products(jlp2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
+        export_jll_lib_products(jlp2, reqs2, joinpath(cache_dir, "jll_lib_products", "$(bytes2hex(h2)).jlp"))
         entries4 = Dict{SHA1Hash,BuildCacheExtractEntry}()
         load_extract_entries!(entries4, cache_dir)
         @test length(entries4) == 1
@@ -313,7 +334,7 @@ end
 
         # Pre-existing entries in the dict are preserved (merge semantics)
         write(db, "$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\n")
-        existing_entry = BuildCacheExtractEntry(SHA1Hash(sha1("other")), SHA1Hash(sha1("otherlog")), jlp2)
+        existing_entry = BuildCacheExtractEntry(SHA1Hash(sha1("other")), SHA1Hash(sha1("otherlog")), jlp2, reqs2)
         entries6 = Dict{SHA1Hash,BuildCacheExtractEntry}(h2 => existing_entry)
         load_extract_entries!(entries6, cache_dir)
         @test haskey(entries6, h1)
