@@ -1,6 +1,6 @@
 import Pkg
 using BinaryBuilderPlatformExtensions, BinaryBuilderSources
-using BinaryBuilderToolchains: AbstractToolchain, resolve_versions!, insert_PATH!, gcc_target_triplet
+using BinaryBuilderToolchains: AbstractToolchain, resolve_versions!, insert_PATH!, macos_sdk_platform, toolchain_jll_triplet
 import BinaryBuilderToolchains: toolchain_env, toolchain_sources
 export AuditorToolchain
 
@@ -18,9 +18,10 @@ struct AuditorToolchain <: AbstractToolchain
         tools = JLLSource[]
         if Sys.isapple(platform.target)
             push!(tools,
+                # The CCTools JLL exists only for the macOS SDK's `os_version`, and serves every deployment target
                 JLLSource(
                     "CCTools_jll",
-                    platform;
+                    macos_sdk_platform(platform);
                     uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                     repo=Pkg.Types.GitRepo(
                         rev="bb2/GCCBootstrap-x86_64-linux-gnu",
@@ -112,7 +113,7 @@ function Base.show(io::IO, toolchain::AuditorToolchain)
 end
 
 patchelf_filename(toolchain::AuditorToolchain) = "patchelf"
-install_name_tool_filename(toolchain::AuditorToolchain) = "$(gcc_target_triplet(toolchain.platform.target))-install_name_tool"
+install_name_tool_filename(toolchain::AuditorToolchain) = "$(toolchain_jll_triplet(toolchain.platform.target))-install_name_tool"
 function toolchain_sources(toolchain::AuditorToolchain)
     return toolchain.deps
 end
