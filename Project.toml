@@ -68,7 +68,7 @@ TreeArchival = {path = "TreeArchival.jl"}
 
 [compat]
 Accessors = "0.1.42"
-BinaryBuilderAuditor = "0.4"
+BinaryBuilderAuditor = "0.4.1"
 BinaryBuilderGitUtils = "0.3"
 BinaryBuilderPlatformExtensions = "0.2.2"
 BinaryBuilderProducts = "0.3"
