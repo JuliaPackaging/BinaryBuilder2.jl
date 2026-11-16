@@ -32,7 +32,7 @@ struct PackageConfig
                            jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = default_jll_version_series(extractions),
                            extra_deps::Vector{PackageSpec} = PackageSpec[],
-                           julia_compat::AbstractString = "1.6",
+                           julia_compat::AbstractString = DEFAULT_JULIA_COMPAT,
                            duplicate_extraction_handling::Symbol = :error)
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
@@ -403,6 +403,7 @@ end
         builds = vcat(
             ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
         )
+        audit_package!(config.name, config.julia_compat, config.named_extractions)
         jll = JLLInfo(;
             name = config.name,
             version = config.version,

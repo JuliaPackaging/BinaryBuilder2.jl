@@ -20,6 +20,7 @@ include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
 include("passes/RuntimeRequirementChecks.jl")
+include("passes/PackageChecks.jl")
 
 function audit!(prefix::String,
                 products::Vector{<:AbstractProduct},

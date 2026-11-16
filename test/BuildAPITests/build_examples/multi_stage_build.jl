@@ -89,5 +89,7 @@ build_tarballs(;
     platforms = filter(p -> Sys.islinux(p), supported_platforms()),
     host_toolchains = [CToolchain(;use_ccache=false), HostToolsToolchain()],
     target_toolchains = [CToolchain(;use_ccache=false)],
+    # `cxx_string_abi` needs GLIBCXX_3.4.32, which Julia bundles from v1.10.1 on
+    julia_compat = "1.10.1",
     disable_cache=true,
 )
