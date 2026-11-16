@@ -16,8 +16,14 @@ struct Dependency
     build_dependency::Bool
 end
 
-function Dependency(name_or_pkgspec)
-    return Dependency(JLLSource(name_or_pkgspec), false, false)
+"""
+    Dependency(name_or_pkgspec; compat = nothing)
+
+A BinaryBuilder1-style target dependency.  `compat` is the `[compat]` entry recorded
+for it in the generated JLL, see `jll_compat()`.
+"""
+function Dependency(name_or_pkgspec; compat::Union{Nothing,AbstractString} = nothing)
+    return Dependency(JLLSource(name_or_pkgspec; compat), false, false)
 end
 
 function BuildDependency(name_or_pkgspec)

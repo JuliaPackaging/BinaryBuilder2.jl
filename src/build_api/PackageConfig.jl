@@ -199,17 +199,21 @@ function next_jll_version(versions::Union{Nothing,Vector{VersionNumber}}, base::
 end
 
 """
-    JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
+    JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec};
+                           julia_compat)
 
-The dependencies of the JLL that packages `result`: the `JLLSource`s among the
-default target's `dependencies`, and `extra_deps`.  Each `JLLSource` gets the
-`[compat]` entry given by `jll_compat()`: its explicit `compat`, or else a bound on the
-version it resolved to, as recorded by the build (see `dependency_versions()`).  A
-cached build whose cache entry doesn't carry those versions falls back to the
-version the dependency was requested at, if it was requested at an exact version,
-and to no bound at all otherwise.
+The dependencies of the JLL that packages `result`, whose `julia` compat specifier is
+`julia_compat`: the `JLLSource`s among the default target's `dependencies`, and
+`extra_deps`.  Each `JLLSource` gets the `[compat]` entry given by `jll_compat()`: its
+explicit `compat`, or else for a stdlib a bound admitting every version that the
+Julia versions allowed by `julia_compat` ship, or else a bound on the version it
+resolved to, as recorded by the build (see `dependency_versions()`).  A cached build whose cache
+entry doesn't carry those versions falls back to the version the dependency was
+requested at, if it was requested at an exact version, and to no bound at all
+otherwise.
 """
-function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec})
+function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{PackageSpec};
+                                julia_compat::AbstractString)
     # Get list of JLLSources installed in this target's prefix
     build_result = result.config.build
     build_config = build_result.config
@@ -219,7 +223,7 @@ function JLLPackageDependencies(result::ExtractResult, extra_deps::Vector{Packag
     deps = JLLPackageDependency[]
     for jll in target_jll_deps
         version = get(recorded_versions, jll.package.name, resolved_dependency(build_config, jll).package.version)
-        compat = jll_compat(jll, version)
+        compat = jll_compat(jll, version; julia_compat)
         if compat === nothing
             @warn("No resolved version recorded for $(jll.package.name), not recording a compat bound for it", build=build_config)
             compat = "*"
@@ -347,7 +351,8 @@ function add_os_version(cp::CrossPlatform, target_spec::BuildTargetSpec)
     return CrossPlatform(add_os_version(cp.host, target_spec) => cp.target)
 end
 
-function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec})
+function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec};
+                                    julia_compat::AbstractString)
     if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
@@ -355,7 +360,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
 
     return JLLBuildInfo(;
         src_version = build_config.src_version,
-        deps = JLLPackageDependencies(result, extra_deps),
+        deps = JLLPackageDependencies(result, extra_deps; julia_compat),
         # Encode all sources that are mounted in `/workspace/srcdir`
         sources = JLLSourceRecords(result),
         platform = add_os_version(result.config.platform, result.config.target_spec),
@@ -401,7 +406,7 @@ end
 
     with_trace(meta, "bb2.package_phase"; to, timer_name="package", args=(jll_name=config.name,)) do
         builds = vcat(
-            ([JLLBuildInfo(name, extraction, config.extra_deps) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+            ([JLLBuildInfo(name, extraction, config.extra_deps; config.julia_compat) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
         )
         audit_package!(config.name, config.julia_compat, config.named_extractions)
         jll = JLLInfo(;

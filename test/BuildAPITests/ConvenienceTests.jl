@@ -107,6 +107,11 @@ end
         @test any(isa.(host_toolchains, PlatformlessWrapper{CToolchain}))
         @test any(isa.(host_toolchains, PlatformlessWrapper{HostToolsToolchain}))
         @test_throws ArgumentError BinaryBuilder2.Compat.compilers_to_toolchains([:c, :rust])
+
+        # `Dependency` passes an explicit compat on to its `JLLSource`
+        native = Platform("x86_64", "linux")
+        @test apply_platform(BinaryBuilder2.Compat.Dependency("libLLVM_jll"; compat="18.1").jll, native).compat == "18.1"
+        @test apply_platform(BinaryBuilder2.Compat.Dependency("Zlib_jll").jll, native).compat === nothing
     end
 
     @testset "host and build deps" begin
@@ -136,7 +141,7 @@ end
 
         # Test that only Zlib_jll is recorded as a dependency
         for extraction in collect_extractions(meta["libcxxstring"])
-            @test only(JLLPackageDependencies(extraction, PackageSpec[])).name == :Zlib_jll
+            @test only(JLLPackageDependencies(extraction, PackageSpec[]; julia_compat="1.6")).name == :Zlib_jll
         end
     end
 
@@ -162,22 +167,41 @@ end
             script = "true",
             target_dependencies = [
                 # Exact version: the bound comes from it even without a build
-                JLLSource("Zlib_jll"; version=v"1.2.13"),
-                # Explicit compat, written verbatim
-                JLLSource("Bzip2_jll"; compat="~1.0.8"),
+                JLLSource("Bzip2_jll"; version=v"1.0.8"),
+                # Explicit compat, written verbatim, also for a stdlib
+                JLLSource("Zstd_jll"; compat="~1.5"),
+                # A stdlib without explicit compat admits every version that the Julia
+                # versions the JLL supports ship, whatever version it was requested at
+                JLLSource("Zlib_jll"; version=v"1.4.1"),
                 # Neither: only a build records the version this resolves to, and this
                 # one is a dry run, so there is no bound for it.
-                JLLSource("Zstd_jll"),
+                JLLSource("XZ_jll"),
             ],
         )
         for extraction in collect_extractions(meta["libcompat"])
             @test extraction.config.build.dependency_versions === nothing
-            deps = @test_logs (:warn, r"No resolved version recorded for Zstd_jll") begin
-                Dict(d.name => d for d in JLLPackageDependencies(extraction, PackageSpec[]))
+            for (julia_compat, zlib_compat) in (("1.6", "1.2"), ("1.12", "1.3"))
+                deps = @test_logs (:warn, r"No resolved version recorded for XZ_jll") begin
+                    Dict(d.name => d for d in JLLPackageDependencies(extraction, PackageSpec[]; julia_compat))
+                end
+                @test deps[:Bzip2_jll].compat == "1.0"
+                @test deps[:Zstd_jll].compat == "~1.5"
+                @test deps[:Zlib_jll].compat == zlib_compat
+                @test deps[:XZ_jll].compat == "*"
             end
-            @test deps[:Zlib_jll].compat == "1.2"
-            @test deps[:Bzip2_jll].compat == "~1.0.8"
-            @test deps[:Zstd_jll].compat == "*"
         end
+
+        # A dependency on an LLVM JLL needs an explicit compat, and its absence is caught
+        # before anything gets built.
+        meta = BuildMeta(;dry_run=["build"])
+        @test_throws r"libLLVM_jll .* explicit `compat`" build_tarballs(;
+            meta,
+            src_name = "libllvmuser",
+            src_version = v"1.2.3",
+            sources = [cxx_string_abi_source],
+            script = "true",
+            target_dependencies = [JLLSource("libLLVM_jll")],
+        )
+        @test isempty(meta.builds)
     end
 end

@@ -148,6 +148,16 @@ const acceptable_statuses = (:success, :skipped, :cached)
     # Ensure that our vectors can be properly typed
     sources = Vector{AbstractSource}(sources)
     target_dependencies = Vector{ConvenienceSource}(target_dependencies)
+    # Fail before building, rather than when packaging, on a dependency that needs an
+    # explicit compat bound but lacks one.
+    for dep in target_dependencies
+        if isa(dep, PlatformlessWrapper{JLLSource})
+            dep = apply_platform(dep, host)
+        end
+        if isa(dep, JLLSource)
+            BinaryBuilderSources.check_explicit_compat(dep)
+        end
+    end
     host_dependencies = Vector{ConvenienceSource}(host_dependencies)
     platforms = Vector{AbstractPlatform}(platforms)
 
