@@ -4,6 +4,7 @@ using Base.BinaryPlatforms
 export audit!, AuditResult
 
 include("Utils.jl")
+include("JuliaLibstdcxx.jl")
 include("SystemLibraries.jl")
 include("AuditorToolchain.jl")
 include("Scanning.jl")
