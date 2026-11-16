@@ -90,6 +90,7 @@ that are per build, not per extraction.
     artifact::SHA1Hash
     log_artifact::SHA1Hash
     jll_lib_products::Vector{AbstractJLLProduct}
+    runtime_requirements::RuntimeRequirements
 end
 
 """
@@ -163,7 +164,8 @@ end
 function Base.put!(bc::BuildCache,
                    build_hash::SHA1Hash, extract_hash::SHA1Hash,
                    build_log_artifact_hash::SHA1Hash, env::Dict{String,String},
-                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct};
+                   artifact_hash::SHA1Hash, extract_log_artifact_hash::SHA1Hash, jll_lib_products::Vector{<:AbstractJLLProduct},
+                   runtime_requirements::RuntimeRequirements;
                    source_records::Union{Nothing,Vector{JLLSourceRecord}} = nothing,
                    dependency_versions::Union{Nothing,Dict{String,VersionNumber}} = nothing)
     put!(
@@ -179,6 +181,7 @@ function Base.put!(bc::BuildCache,
             artifact_hash,
             extract_log_artifact_hash,
             jll_lib_products,
+            runtime_requirements,
         ),
     )
 end
@@ -192,7 +195,8 @@ function Base.put!(bc::BuildCache, extract_result::ExtractResult)
         build_result.env,
         SHA1Hash(extract_result.artifact),
         extract_result.log_artifact,
-        extract_result.jll_lib_products;
+        extract_result.jll_lib_products,
+        extract_result.runtime_requirements;
         build_result.source_records,
         build_result.dependency_versions,
     )
@@ -264,7 +268,7 @@ function export_archive(bc::BuildCache, build_hash::SHA1Hash, extract_hash::SHA1
     if_missing_artifact("$(bh)-$(eh)-artifact.tar.zst", extract_entry.artifact)
     if_missing_artifact("$(bh)-$(eh)-log_artifact.tar.zst", extract_entry.log_artifact)
     if_missing("$(bh)-$(eh).jlp") do path
-        export_jll_lib_products(extract_entry.jll_lib_products, path)
+        export_jll_lib_products(extract_entry.jll_lib_products, extract_entry.runtime_requirements, path)
     end
 end
 
@@ -304,11 +308,12 @@ function import_archives(bc::BuildCache, dir::String)
         try
             extract_artifact = import_artifact("$(bh)-$(eh)-artifact.tar.zst")
             extract_log_artifact = import_artifact("$(bh)-$(eh)-log_artifact.tar.zst")
-            jll_lib_products = TOML.parsefile(joinpath(dir, "$(bh)-$(eh).jlp"))["jll_lib_products"]
+            jll_lib_products, runtime_requirements = import_jll_lib_products(joinpath(dir, "$(bh)-$(eh).jlp"))
             extract_entry = BuildCacheExtractEntry(
                 extract_artifact,
                 extract_log_artifact,
-                parse_toml_dict.(AbstractJLLProduct, jll_lib_products),
+                jll_lib_products,
+                runtime_requirements,
             )
         catch ex
             @debug("Unable to import BuildCacheExtractEntry", exception=ex, build_hash=bh, extract_hash=eh)
@@ -358,9 +363,9 @@ function load_extract_entries!(extract_entries::Dict{SHA1Hash,BuildCacheExtractE
                 @debug("skip: jlp nonexistent", extract_hash=extract_hash_str)
                 continue
             end
-            local jll_lib_products
+            local jll_lib_products, runtime_requirements
             try
-                jll_lib_products = TOML.parsefile(jlp_path)["jll_lib_products"]
+                jll_lib_products, runtime_requirements = import_jll_lib_products(jlp_path)
             catch
                 @debug("skip: jlp malformed", extract_hash=extract_hash_str)
                 continue
@@ -372,7 +377,8 @@ function load_extract_entries!(extract_entries::Dict{SHA1Hash,BuildCacheExtractE
                 extract_entries[extract_hash] = BuildCacheExtractEntry(
                     artifact_hash,
                     log_artifact_hash,
-                    parse_toml_dict.(AbstractJLLProduct, jll_lib_products),
+                    jll_lib_products,
+                    runtime_requirements,
                 )
             catch
                 @debug("skip: extract entry malformed", extract_hash=extract_hash_str)
@@ -438,7 +444,7 @@ function save_cache(bc::BuildCache)
 
             # JLL library information gets saved to a separate file, to ease serialization
             jlp_path = joinpath(bc.cache_dir, "jll_lib_products", "$(bytes2hex(extract_hash)).jlp")
-            export_jll_lib_products(e.jll_lib_products, jlp_path)
+            export_jll_lib_products(e.jll_lib_products, e.runtime_requirements, jlp_path)
         end
     end
 end
@@ -535,5 +541,5 @@ function BuildResult_cached(config::BuildConfig, entry::BuildCacheBuildEntry)
 end
 
 function ExtractResult_cached(config::ExtractConfig, entry::BuildCacheExtractEntry)
-    return ExtractResult_cached(config, entry.artifact, entry.log_artifact, entry.jll_lib_products)
+    return ExtractResult_cached(config, entry.artifact, entry.log_artifact, entry.jll_lib_products, entry.runtime_requirements)
 end

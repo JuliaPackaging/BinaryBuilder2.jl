@@ -24,6 +24,10 @@ struct ExtractResult
     # The JLL library product structure, comes from `audit_result`.
     jll_lib_products::Vector{AbstractJLLProduct}
 
+    # What the extracted binaries need from their runtime, comes from `audit_result`
+    # (or the build cache).  `nothing` for failed or skipped extractions.
+    runtime_requirements::Union{Nothing,RuntimeRequirements}
+
     # Logs generated during this extraction (audit logs, mostly)
     extract_log::String
 
@@ -34,6 +38,7 @@ struct ExtractResult
                            log_artifact::Union{Base.SHA1,SHA1Hash,Nothing},
                            audit_result::Union{Nothing,AuditResult},
                            jll_lib_products::Vector{<:AbstractJLLProduct},
+                           runtime_requirements::Union{Nothing,RuntimeRequirements},
                            extract_log::String)
         return new(
             config,
@@ -43,13 +48,14 @@ struct ExtractResult
             log_artifact !== nothing ? SHA1Hash(log_artifact) : nothing,
             audit_result,
             jll_lib_products,
+            runtime_requirements,
             extract_log,
         )
     end
 end
 AbstractBuildMeta(result::ExtractResult) = AbstractBuildMeta(result.config)
 
-function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash}, jll_lib_products::Vector{<:AbstractJLLProduct})
+function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,SHA1Hash}, log_artifact::Union{Base.SHA1,SHA1Hash}, jll_lib_products::Vector{<:AbstractJLLProduct}, runtime_requirements::RuntimeRequirements)
     build_config = config.build.config
     extract_log = joinpath(artifact_path(build_config.meta.universe, log_artifact), "$(build_config.src_name)-extract.log")
     return ExtractResult(
@@ -60,6 +66,7 @@ function ExtractResult_cached(config::ExtractConfig, artifact::Union{Base.SHA1,S
         log_artifact,
         nothing,
         jll_lib_products,
+        runtime_requirements,
         String(read(extract_log)),
     )
 end
@@ -73,6 +80,7 @@ function ExtractResult_skipped(config::ExtractConfig)
         nothing,
         nothing,
         AbstractJLLProduct[],
+        nothing,
         "",
     )
 end
@@ -128,13 +136,36 @@ function ExtractResultSource(result::ExtractResult, target::String = "")
     )
 end
 
-function export_jll_lib_products(products::Vector{<:AbstractJLLProduct}, jlp_path::String)
+"""
+    export_jll_lib_products(products, runtime_requirements, jlp_path)
+
+Write an extraction's library products and runtime requirements to the `.jlp`
+TOML file `jlp_path`; `import_jll_lib_products()` reads them back.
+"""
+function export_jll_lib_products(products::Vector{<:AbstractJLLProduct}, runtime_requirements::RuntimeRequirements, jlp_path::String)
     toml_io = IOBuffer()
-    TOML.print(toml_io, Dict("jll_lib_products" => generate_toml_dict.(products)))
+    TOML.print(toml_io, Dict(
+        "jll_lib_products" => generate_toml_dict.(products),
+        "runtime_requirements" => generate_toml_dict(runtime_requirements),
+    ))
     jll_lib_product_str = String(take!(toml_io))
     if filesize(jlp_path) != length(jll_lib_product_str)
         open(jlp_path; write=true) do jlp_io
             write(jlp_io, jll_lib_product_str)
         end
     end
+end
+
+"""
+    import_jll_lib_products(jlp_path)
+
+Read the `(jll_lib_products, runtime_requirements)` that `export_jll_lib_products()`
+wrote to `jlp_path`.  Throws if either is missing.
+"""
+function import_jll_lib_products(jlp_path::String)
+    d = TOML.parsefile(jlp_path)
+    return (
+        parse_toml_dict.(AbstractJLLProduct, d["jll_lib_products"]),
+        parse_toml_dict(RuntimeRequirements, d["runtime_requirements"]),
+    )
 end
