@@ -12,6 +12,7 @@ include("passes/StaticLibrariesTests.jl")
 include("JuliaLibstdcxxTests.jl")
 include("passes/RuntimeRequirementsTests.jl")
 include("passes/PackageChecksTests.jl")
+include("passes/FrameworkTests.jl")
 
 @testset "audit!" begin
     platform = CrossPlatform(BBHostPlatform() => HostPlatform())

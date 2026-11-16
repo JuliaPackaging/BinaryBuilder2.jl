@@ -28,6 +28,7 @@ function ensure_sonames!(result::AuditResult)
         soname = sonames[rel_path]
         abs_path = abspath(scan, rel_path)
         if Sys.isapple(scan.platform)
+            soname = something(framework_relpath(rel_path), soname)
             cmd = install_name_tool(scan, `-id @rpath/$(soname) $(abs_path)`)
         elseif Sys.islinux(scan.platform) || Sys.isbsd(scan.platform)
             cmd = patchelf(scan, `--set-soname $(soname) $(abs_path)`)
@@ -45,6 +46,26 @@ function ensure_sonames!(result::AuditResult)
         # may have completely re-arranged things.
         refresh!(scan, rel_path)
     end
+end
+
+"""
+    framework_relpath(rel_path::AbstractString)
+
+If `rel_path` is the binary of a macOS framework bundle (e.g.
+`lib/Foo.framework/Versions/A/Foo` or `lib/Foo.framework/Foo`), returns its path
+relative to the directory containing the bundle (`Foo.framework/Versions/A/Foo`),
+which is how the binary is named in install names (`@rpath/Foo.framework/...`).
+Otherwise returns `nothing`.
+"""
+function framework_relpath(rel_path::AbstractString)
+    parts = splitpath(rel_path)
+    name = parts[end]
+    for idx in length(parts)-1:-1:1
+        if parts[idx] == "$(name).framework"
+            return join(parts[idx:end], "/")
+        end
+    end
+    return nothing
 end
 
 function get_soname(oh::ELFHandle)

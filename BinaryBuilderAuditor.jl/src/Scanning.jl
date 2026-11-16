@@ -41,7 +41,8 @@ struct ScanResult
     # This maps the `rel_path` of a static archive to its `StaticLibraryProduct`.
     static_library_products::Dict{String,StaticLibraryProduct}
 
-    # For easy lookup of things by symlink alias
+    # For easy lookup of things by symlink alias; this maps the `rel_path` of every
+    # symlink (to a file or a directory) to the `rel_path` it points to.
     symlinks::Dict{String,String}
 
     # List of all import libraries (windows-only)
@@ -101,7 +102,23 @@ function scan_files(prefix::String, platform::AbstractPlatform,
     binary_objects = Dict{String,ObjectHandle}()
     static_libraries = Set{String}()
     symlinks = Dict{String,String}()
+    function record_symlink!(f_path, f_key)
+        link_target = readlink(f_path)
+        if startswith(link_target, prefix_alias)
+            symlinks[f_key] = relpath(link_target, prefix_alias)
+        elseif !isabspath(link_target)
+            symlinks[f_key] = normpath(joinpath(dirname(f_key), link_target))
+        end
+    end
     for (root, dirs, files) in walkdir(prefix)
+        # `walkdir()` lists symlinks to directories (such as a framework's
+        # `Versions/Current`) in `dirs`, without descending into them.
+        for d in dirs
+            d_path = joinpath(root, d)
+            if islink(d_path)
+                record_symlink!(d_path, relpath(d_path, prefix))
+            end
+        end
         for f in files
             f_path = joinpath(root, f)
             f_key = relpath(f_path, prefix)
@@ -126,12 +143,7 @@ function scan_files(prefix::String, platform::AbstractPlatform,
 
             # Store within-prefix symlinks for quick lookup
             if islink(all_files[f_key])
-                link_target = readlink(f_path)
-                if startswith(link_target, prefix_alias)
-                    symlinks[f_key] = relpath(link_target, prefix_alias)
-                elseif !isabspath(link_target)
-                    symlinks[f_key] = joinpath(dirname(f_key), link_target)
-                end
+                record_symlink!(f_path, f_key)
             end
         end
     end
@@ -296,13 +308,37 @@ function refresh!(scan::ScanResult, rel_path::String)
     end
 end
 
+"""
+    relpath_search(symlinks::Dict{String,String}, rel_path::AbstractString)
+
+Resolves the symlinks in `rel_path` (relative to the prefix) using `symlinks`, the
+map from each symlink's `rel_path` to its target's.  Every leading component is
+resolved, so a path through a directory symlink, such as a framework's
+`Foo.framework/Versions/Current/Foo`, is followed to the real file.  Links that
+leave the prefix or loop are left unresolved.
+"""
 function relpath_search(symlinks::Dict{String,String}, rel_path::AbstractString)
-    while haskey(symlinks, rel_path)
-        new_rel_path = symlinks[rel_path]
-        if new_rel_path == rel_path
+    rel_path = String(rel_path)
+    # Each link can be followed at most once on the way to the real file
+    for _ in 0:length(symlinks)
+        parts = splitpath(rel_path)
+        resolved = false
+        for idx in 1:length(parts)
+            target = get(symlinks, joinpath(parts[1:idx]...), nothing)
+            if target === nothing
+                continue
+            end
+            new_rel_path = normpath(joinpath(target, parts[idx+1:end]...))
+            if new_rel_path == rel_path || first(splitpath(new_rel_path)) == ".."
+                return rel_path
+            end
+            rel_path = new_rel_path
+            resolved = true
             break
         end
-        rel_path = new_rel_path
+        if !resolved
+            return rel_path
+        end
     end
     return rel_path
 end
