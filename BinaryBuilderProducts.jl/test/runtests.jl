@@ -335,4 +335,99 @@ using JLLGenerator: rtld_symbols, rtld_flags
             @test_throws ArgumentError locate(LibraryProduct("../libout", :libout), prefix; env, platform)
         end
     end
+
+    @testset "FrameworkProduct" begin
+        # `FrameworkProduct` is a `LibraryProduct` with framework paths
+        fp = FrameworkProduct("QtCore", :libqtcore)
+        @test fp isa LibraryProduct
+        @test fp.paths == ["QtCore.framework"]
+        @test FrameworkProduct(["\${libdir}/Foo.framework", "Bar"], :libfoo).paths == ["\${libdir}/Foo.framework", "Bar.framework"]
+        @test FrameworkProduct("Foo", :libfoo; dont_dlopen=true).dont_dlopen
+        @test_throws ArgumentError FrameworkProduct(String[], :libfoo)
+        # Framework paths have no static archive
+        @test LibraryProduct(["Foo.framework", "libfoo"], :libfoo; static=:auto).static.paths == ["libfoo"]
+
+        macos = Platform("aarch64", "macos")
+        linux = Platform("x86_64", "linux")
+        windows = Platform("x86_64", "windows")
+        envfor(prefix, platform) = Dict(
+            "prefix" => prefix,
+            "libdir" => joinpath(prefix, Sys.iswindows(platform) ? "bin" : "lib"),
+            "bb_full_target" => triplet(platform),
+        )
+
+        mktempdir() do prefix
+            # A versioned bundle, laid out the way macOS frameworks usually are
+            fw = joinpath(prefix, "lib", "Foo.framework")
+            mkpath(joinpath(fw, "Versions", "A", "Resources"))
+            touch(joinpath(fw, "Versions", "A", "Foo"))
+            symlink("A", joinpath(fw, "Versions", "Current"))
+            symlink("Versions/Current/Foo", joinpath(fw, "Foo"))
+            symlink("Versions/Current/Resources", joinpath(fw, "Resources"))
+
+            # A shallow bundle with no `Versions` directory, in a custom location
+            mkpath(joinpath(prefix, "Frameworks", "Bar.framework"))
+            touch(joinpath(prefix, "Frameworks", "Bar.framework", "Bar"))
+
+            # An empty bundle
+            mkpath(joinpath(prefix, "lib", "Empty.framework"))
+
+            env = envfor(prefix, macos)
+            foo_path = joinpath("lib", "Foo.framework", "Versions", "A", "Foo")
+            for name in ("Foo", "Foo.framework", "lib/Foo", "\${libdir}/Foo")
+                @test locate(FrameworkProduct(name, :libfoo), prefix; env, platform=macos) == foo_path
+            end
+            # The platform can also come from `env`
+            @test locate(FrameworkProduct("Foo", :libfoo), prefix; env) == foo_path
+            @test locate(FrameworkProduct("Frameworks/Bar", :libbar), prefix; env, platform=macos) ==
+                joinpath("Frameworks", "Bar.framework", "Bar")
+            @test locate(FrameworkProduct(["Missing", "Empty", "Foo"], :libfoo), prefix; env, platform=macos) == foo_path
+            @test locate(FrameworkProduct("Bar", :libbar), prefix; env, platform=macos) === nothing
+            @test locate(FrameworkProduct("Empty", :libempty), prefix; env, platform=macos) === nothing
+
+            # A dylib is not a framework, nor a framework a plain library path
+            touch(joinpath(prefix, "lib", "libbaz.dylib"))
+            @test locate(FrameworkProduct("baz", :libbaz), prefix; env, platform=macos) === nothing
+            @test locate(LibraryProduct("Foo", :libfoo), prefix; env, platform=macos) === nothing
+
+            # Paths are tried in order, frameworks and plain libraries alike
+            @test locate(LibraryProduct(["Missing.framework", "libbaz"], :libbaz), prefix; env, platform=macos) == joinpath("lib", "libbaz.dylib")
+            @test locate(LibraryProduct(["libmissing", "Foo.framework", "libbaz"], :libfoo), prefix; env, platform=macos) == foo_path
+
+            # A `Current` link pointing out of the prefix is not followed
+            mktempdir() do outside
+                mkpath(joinpath(outside, "A"))
+                touch(joinpath(outside, "A", "Out"))
+                out_fw = joinpath(prefix, "lib", "Out.framework", "Versions")
+                mkpath(out_fw)
+                symlink(joinpath(outside, "A"), joinpath(out_fw, "Current"))
+                @test locate(FrameworkProduct("Out", :libout), prefix; env, platform=macos) === nothing
+            end
+
+            # The JLL sees an ordinary library product
+            jlp = JLLGenerator.AbstractJLLProduct(FrameworkProduct("Foo", :libfoo; dlopen_flags=[:RTLD_NOW]), prefix; env, platform=macos)
+            @test jlp isa JLLLibraryProduct
+            @test jlp.varname == :libfoo
+            @test jlp.path == foo_path
+            @test jlp.flags == [:RTLD_NOW]
+        end
+
+        # Elsewhere, framework paths are skipped
+        for (platform, libname) in ((linux, "libad9361.so.0"), (windows, "libad9361.dll"))
+            mktempdir() do prefix
+                libdir = joinpath(prefix, Sys.iswindows(platform) ? "bin" : "lib")
+                mkpath(libdir)
+                touch(joinpath(libdir, libname))
+                for dir in ("lib", "bin")
+                    mkpath(joinpath(prefix, dir, "ad9361.framework", "Versions", "A"))
+                    touch(joinpath(prefix, dir, "ad9361.framework", "Versions", "A", "ad9361"))
+                    symlink("A", joinpath(prefix, dir, "ad9361.framework", "Versions", "Current"))
+                end
+                env = envfor(prefix, platform)
+                located = locate(LibraryProduct(["ad9361.framework", "libad9361"], :libad9361), prefix; env, platform)
+                @test located == relpath(joinpath(libdir, libname), prefix)
+                @test locate(FrameworkProduct("ad9361", :libad9361), prefix; env, platform) === nothing
+            end
+        end
+    end
 end

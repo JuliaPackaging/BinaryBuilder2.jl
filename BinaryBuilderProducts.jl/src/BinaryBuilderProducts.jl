@@ -8,7 +8,7 @@ export ExecutableProduct, FileProduct, FrameworkProduct, LibraryProduct, StaticL
 """
 An `AbstractProduct` is an expected result after building of a package.
 
-Examples of `Product`s include [`LibraryProduct`](@ref), [`FrameworkProduct`](@ref),
+Examples of `Product`s include [`LibraryProduct`](@ref),
 [`ExecutableProduct`](@ref) and [`FileProduct`](@ref). All `AbstractProduct` types must
 define the following minimum set of functionality:
 

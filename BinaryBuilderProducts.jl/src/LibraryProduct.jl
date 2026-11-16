@@ -45,6 +45,16 @@ On non-Windows targets, omitting `dirname` will automatically prepend `lib`,
 while on Windows targets `bin` will be prepended.  Omitting the versioned
 extension will allow any version of the library to be used (usually not a
 problem as there's typically only one version of a library at a time).
+
+A path may also name a macOS framework bundle, `[dirname/]name.framework`.  On
+macOS this finds the binary inside the bundle, at
+`name.framework/Versions/Current/name` (or `name.framework/name` for a bundle
+without a `Versions` directory), and the located path is that binary inside the
+concrete version directory, e.g. `lib/QtCore.framework/Versions/5/QtCore`.  On
+every other OS framework paths are skipped, so the paths are tried in order and
+`LibraryProduct(["QtCore.framework", "libQt5Core"], :libqt5core)` finds the
+framework on macOS and `libQt5Core` elsewhere.  See also
+[`FrameworkProduct`](@ref).
 """
 struct LibraryProduct <: AbstractProduct
     paths::Vector{String}
@@ -126,6 +136,16 @@ function locate(lp::LibraryProduct, prefix::String;
     @debug("Locating LibraryProduct", lp)
     for path in lp.paths
         path = path_prefix_transformation(LibraryProduct, path, prefix, platform, env)
+
+        if is_framework_path(path)
+            if Sys.isapple(platform)
+                rel_path = locate_framework(path, prefix)
+                if rel_path !== nothing
+                    return rel_path
+                end
+            end
+            continue
+        end
 
         if isfile(path) && valid_dl_path(basename(path), platform)
             @debug("Found exact match for path", path)
