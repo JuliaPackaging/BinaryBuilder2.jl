@@ -508,6 +508,7 @@ function extract_build_tarballs(package_config::PackageConfig)
         :version_series => VersionNumber(package_config.version.major, package_config.version.minor),
         :julia_compat => package_config.julia_compat,
         :augment_platform_block => package_config.augment_platform_block,
+        :init_block => package_config.init_block,
     )
 end
 extract_build_tarballs(result::PackageResult) = extract_build_tarballs(result.config)

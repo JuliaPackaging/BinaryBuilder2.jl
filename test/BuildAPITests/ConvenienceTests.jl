@@ -1,5 +1,5 @@
 
-using Test, BinaryBuilder2, Random
+using Test, BinaryBuilder2, Random, TOML
 using BinaryBuilder2: get_package_result, JLLPackageDependencies, PackageSpec
 
 if !isdefined(@__MODULE__, :TestingUtils)
@@ -66,6 +66,72 @@ end
         @test get_package_result(meta, "Readline").status == :success
     end
 
+    @testset "init_block" begin
+        init_block = """
+        greeting_dir = joinpath(artifact_dir, "share", "hello")
+        ENV["BB2_INIT_BLOCK_GREETING_DIR"] = greeting_dir
+        """
+        build_tarballs(;
+            meta,
+            src_name = "InitBlockTest",
+            src_version = v"1.0.0",
+            sources = [],
+            script = raw"""
+            mkdir -p ${prefix}/share/hello
+            echo "hello" > ${prefix}/share/hello/greeting.txt
+            echo "MIT" > LICENSE
+            install_license LICENSE
+            """,
+            products = [FileProduct("share/hello/greeting.txt", :greeting)],
+            platforms = [BBHostPlatform()],
+            init_block,
+        )
+        @test get_package_result(meta, "InitBlockTest").status == :success
+
+        jll_dir = joinpath(meta.universe.depot_path, "dev", "InitBlockTest_jll")
+        jll_toml = TOML.parsefile(joinpath(jll_dir, "JLL.toml"))
+        @test !isempty(jll_toml["builds"])
+        @test all(b["init_def"] == init_block for b in jll_toml["builds"])
+
+        # The init code runs when the JLL is loaded, with `artifact_dir` set
+        in_universe(meta.universe) do env
+            test_code = """
+            using InitBlockTest_jll, Test
+            @test ENV["BB2_INIT_BLOCK_GREETING_DIR"] == dirname(InitBlockTest_jll.greeting)
+            @test ENV["BB2_INIT_BLOCK_GREETING_DIR"] == joinpath(InitBlockTest_jll.artifact_dir, "share", "hello")
+            @test readchomp(InitBlockTest_jll.greeting) == "hello"
+            """
+            @test success(run(addenv(`$(Base.julia_cmd()) --project=$(BinaryBuilder2.environment_path(meta.universe)) -e $(test_code)`, env)))
+        end
+
+        # Code that does not parse is rejected before anything is built
+        dry_meta = BuildMeta(;dry_run=["build"])
+        @test_throws ArgumentError build_tarballs(;
+            meta = dry_meta,
+            src_name = "InitBlockBroken",
+            src_version = v"1.0.0",
+            sources = [],
+            script = "true",
+            platforms = [BBHostPlatform()],
+            init_block = "if true",
+        )
+
+        # An empty `init_block` (`BinaryBuilder`'s default) means no init code
+        dry_meta = BuildMeta(;dry_run=["build"])
+        build_tarballs(;
+            meta = dry_meta,
+            src_name = "InitBlockEmpty",
+            src_version = v"1.0.0",
+            sources = [],
+            script = "true",
+            platforms = [BBHostPlatform()],
+            init_block = "",
+        )
+        config = only(keys(dry_meta.packagings))
+        @test config.init_block === nothing
+        @test extract_build_tarballs(config)[:init_block] === nothing
+    end
+
     # Test that we can see these builds in our universe:
     uni = Universe(universe_name; persistent=false)
     jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
@@ -118,6 +184,8 @@ end
         meta = BuildMeta(;dry_run=["build"])
         run_build_tarballs(meta, joinpath(@__DIR__, "build_examples", "binary_builder_one.jl"))
         @test meta["SSW"].status == :skipped
+        ssw_config = only(c for c in keys(meta.packagings) if c.name == "SSW")
+        @test ssw_config.init_block == "ENV[\"SSW_ARTIFACT_DIR\"] = artifact_dir\n"
 
         # Ensure that `compilers` gets mapped to the appropriate toolchains
         target_toolchains, host_toolchains = BinaryBuilder2.Compat.compilers_to_toolchains([:c])

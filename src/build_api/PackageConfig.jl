@@ -34,12 +34,17 @@ struct PackageConfig
     # installs the JLL's artifacts).  Empty if the host platform is used as-is.
     augment_platform_block::String
 
+    # Code spliced into the JLL's `__init__()` for every build of this JLL, or `nothing`.
+    # It runs after the JLL's `artifact_dir` and product paths are set, so it may refer to them.
+    init_block::Union{Nothing,String}
+
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
                            jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = default_jll_version_series(extractions),
                            extra_deps::Vector{PackageSpec} = PackageSpec[],
                            julia_compat::AbstractString = DEFAULT_JULIA_COMPAT,
                            augment_platform_block::AbstractString = "",
+                           init_block::Union{Nothing,AbstractString} = nothing,
                            duplicate_extraction_handling::Symbol = :error)
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
@@ -109,12 +114,30 @@ struct PackageConfig
             end
         end
 
+        init_block = normalize_init_block(init_block)
+
         # Calculate the next version number immediately
         meta = AbstractBuildMeta(extractions)
         version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
 
-        return new(jll_name, version, extractions, extra_deps, string(julia_compat), string(augment_platform_block))
+        return new(jll_name, version, extractions, extra_deps, string(julia_compat), string(augment_platform_block), init_block)
     end
+end
+
+# An empty `init_block` (`BinaryBuilder`'s default) means there is no init code.
+# Anything else must parse as a sequence of statements, which the JLL's `__init__()` runs.
+normalize_init_block(::Nothing) = nothing
+function normalize_init_block(code::AbstractString)
+    isempty(strip(code)) && return nothing
+    ex = try
+        Meta.parse(string("begin\n", code, "\nend"))
+    catch e
+        throw(ArgumentError("`init_block` does not parse: $(sprint(showerror, e))"))
+    end
+    if Meta.isexpr(ex, (:incomplete, :error))
+        throw(ArgumentError("`init_block` does not parse: $(ex.args[1])"))
+    end
+    return string(code)
 end
 
 # Helper functions for quickly packaging a few ExtractResults
@@ -131,6 +154,7 @@ function PackageConfig(config::PackageConfig, extractions::Dict{String,Vector{Ex
         extra_deps = config.extra_deps,
         julia_compat = config.julia_compat,
         augment_platform_block = config.augment_platform_block,
+        init_block = config.init_block,
     )
 end
 
@@ -366,7 +390,8 @@ function add_os_version(cp::CrossPlatform, target_spec::BuildTargetSpec)
 end
 
 function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_deps::Vector{PackageSpec};
-                                    julia_compat::AbstractString)
+                                    julia_compat::AbstractString,
+                                    init_def::Union{Nothing,String} = nothing)
     if result.status ∉ (:success, :cached)
         throw(ArgumentError("Cannot package failing result: $(result)"))
     end
@@ -397,6 +422,7 @@ function JLLGenerator.JLLBuildInfo(name::String, result::ExtractResult, extra_de
         ),
         licenses = JLLBuildLicenses(result),
         products = JLLProducts(result),
+        init_def,
     )
 end
 
@@ -420,7 +446,7 @@ end
 
     with_trace(meta, "bb2.package_phase"; to, timer_name="package", args=(jll_name=config.name,)) do
         builds = vcat(
-            ([JLLBuildInfo(name, extraction, config.extra_deps; config.julia_compat) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
+            ([JLLBuildInfo(name, extraction, config.extra_deps; config.julia_compat, init_def = config.init_block) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
         )
         audit_package!(config.name, config.julia_compat, config.named_extractions)
         jll = JLLInfo(;

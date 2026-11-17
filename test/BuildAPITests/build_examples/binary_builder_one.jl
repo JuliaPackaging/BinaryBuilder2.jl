@@ -86,6 +86,9 @@ build_tarballs(
     products,
     dependencies;
     julia_compat = "1.6",
+    init_block = """
+    ENV["SSW_ARTIFACT_DIR"] = artifact_dir
+    """,
     compilers = [:c],
     preferred_gcc_version = v"6",
 )

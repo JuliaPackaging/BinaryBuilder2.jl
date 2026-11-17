@@ -57,7 +57,7 @@ function compilers_to_toolchains(compilers::Vector{Symbol})
 end
 
 # Map BinaryBuilder1 syntax to BB2 syntax
-function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, src_version, sources, script, platforms, products, dependencies; julia_compat::String = "1.6", augment_platform_block::String = "", compilers::Vector{Symbol} = [:c], kwargs...)
+function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, src_version, sources, script, platforms, products, dependencies; julia_compat::String = "1.6", augment_platform_block::String = "", init_block::Union{Nothing,String} = nothing, compilers::Vector{Symbol} = [:c], kwargs...)
     # Separate out the dependencies into target dependencies and host dependencies
     target_dependencies = []
     target_build_time_dependencies = []
@@ -91,6 +91,7 @@ function BinaryBuilder2.build_tarballs(ARGS::Vector{String}, src_name::String, s
         host_toolchains,
         julia_compat,
         augment_platform_block,
+        init_block,
     )
 end
 
