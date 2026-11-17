@@ -62,10 +62,13 @@ struct CToolchain <: AbstractToolchain
     linker::Symbol
 
     # Extra compiler and linker flags that should be inserted.
-    # We typically use these to add `-L/workspace/destdir/${target}`
-    # in BinaryBuilder.
     extra_cflags::Vector{String}
     extra_ldflags::Vector{String}
+
+    # Extra library directories, e.g. `/workspace/destdir/${target}/lib` in BinaryBuilder.
+    # Each one is added as `-L<dir>` and, on ELF targets, as `-Wl,-rpath-link,<dir>`, so
+    # that the linker also finds the dependencies of the libraries it finds there.
+    extra_libdirs::Vector{String}
 
     # Cache key that we use to store our generated wrappers
     cache_key::String
@@ -86,7 +89,8 @@ struct CToolchain <: AbstractToolchain
                         cxx_runtime = :auto,
                         linker = :auto,
                         extra_cflags = String[],
-                        extra_ldflags = String[])
+                        extra_ldflags = String[],
+                        extra_libdirs = String[])
         function _check_valid(val, valid_set, name)
             if val ∉ valid_set
                 throw(ArgumentError("Invalid value '$(val)' for `$(name)`, must be one of $(valid_set)"))
@@ -176,6 +180,7 @@ struct CToolchain <: AbstractToolchain
             wrapper_prefixes...,
             extra_cflags...,
             extra_ldflags...,
+            extra_libdirs...,
         )
         cache_key = string(
             "CToolchain-",
@@ -195,6 +200,7 @@ struct CToolchain <: AbstractToolchain
             linker,
             string.(extra_cflags),
             string.(extra_ldflags),
+            string.(extra_libdirs),
             cache_key,
             binutils_toolchain,
         )
@@ -822,8 +828,10 @@ end
 """
     add_user_flags(io, toolchain)
 
-The user can insert "extra" CFLAGS and LDFLAGS that they want our CToolchain
-to use; this adds them to the relevant PRE and POST flag lists.
+The user can insert "extra" CFLAGS, LDFLAGS and library directories that they
+want our CToolchain to use; this adds them to the relevant PRE and POST flag
+lists.  The `-rpath-link` flags for the library directories are added
+separately, by `add_rpath_link_flags()`.
 """
 function add_user_flags(io, toolchain)
     compile_flagmatch(io) do io
@@ -833,6 +841,30 @@ function add_user_flags(io, toolchain)
     link_flagmatch(io) do io
         # Add any extra linker flags that the user has requested of us
         append_flags(io, :POST, toolchain.extra_ldflags)
+        if !isempty(toolchain.extra_libdirs)
+            append_flags(io, :POST, ["-L$(dir)" for dir in toolchain.extra_libdirs])
+        end
+    end
+end
+
+"""
+    add_rpath_link_flags(io, toolchain)
+
+ELF linkers look for the dependencies (`DT_NEEDED` entries) of the shared
+libraries being linked in `-rpath-link` directories, not in `-L` ones, and
+cross linkers have no other way to find them.  This adds each of the
+toolchain's `extra_libdirs` as an `-rpath-link` directory on ELF targets, so
+that linking against e.g. `libxml2.so` finds the `libz.so.1` next to it.
+Wrappers call this after adding the compiler's own library directories, so
+that those keep precedence, e.g. over `CompilerSupportLibraries_jll` copies of
+`libstdc++.so.6` in a dependency prefix.
+"""
+function add_rpath_link_flags(io, toolchain)
+    p = toolchain.platform.target
+    if (Sys.islinux(p) || Sys.isfreebsd(p)) && !isempty(toolchain.extra_libdirs)
+        link_flagmatch(io) do io
+            append_flags(io, :POST, ["-Wl,-rpath-link,$(dir)" for dir in toolchain.extra_libdirs])
+        end
     end
 end
 
@@ -939,6 +971,7 @@ function gcc_wrappers(toolchain::CToolchain, dir::String)
             end
         end
 
+        add_rpath_link_flags(io, toolchain)
         add_ccache_preamble(io, toolchain)
     end
 
@@ -1086,6 +1119,7 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
         add_microarchitectural_flags(io, toolchain)
         add_cxxabi_flags(io, toolchain)
         add_user_flags(io, toolchain)
+        add_rpath_link_flags(io, toolchain)
         add_macos_flags(io, toolchain)
 
         # If `ccache` is allowed, sneak `ccache` in as the first argument to `PROG`
