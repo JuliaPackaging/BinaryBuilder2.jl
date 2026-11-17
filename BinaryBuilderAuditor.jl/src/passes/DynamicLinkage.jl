@@ -148,6 +148,81 @@ function update_linkage!(result::AuditResult, rel_path::AbstractString,
     refresh!(scan, rel_path)
 end
 
+is_under(path::AbstractString, root::AbstractString) = path == root || startswith(path, rstrip(root, '/') * "/")
+
+"""
+    relink_absolute_dependencies!(result::AuditResult; prefix_alias)
+
+Build systems that link against a library by its full path (e.g. libtool-style
+builds that set `-install_name \$(libdir)/libfoo.dylib` on macOS) record that
+in-sandbox path, `/workspace/destdir/target-<triplet>/lib/libfoo.dylib`, in the
+dependent's load commands, where it cannot be found once the JLL is installed.
+Rewrite every absolute dependency path that points into the prefix (by its real
+path or by `prefix_alias`, which also holds the dependency JLLs' libraries during
+the build) to `@rpath/<basename>` on macOS and to the bare `<basename>` on ELF
+platforms.  `rpaths_consistent!()` then adds the RPATHs that locate it.
+Dependencies outside the prefix are left alone.
+"""
+function relink_absolute_dependencies!(result::AuditResult; prefix_alias::String = result.scan.prefix)
+    scan, pass_results = result.scan, result.pass_results
+    if Sys.iswindows(scan.platform)
+        return
+    end
+
+    roots = unique([scan.prefix, prefix_alias])
+    should_relink(dep::AbstractString) = isabspath(dep) && any(r -> is_under(dep, r), roots)
+
+    # Hard links are one file on disk; rewrite each file once, then refresh all its names.
+    visited = Set{Tuple{UInt64,UInt64}}()
+    for rel_path in sort!(collect(keys(scan.binary_objects)))
+        st = scan.files[rel_path]
+        if (st.device, st.inode) ∈ visited
+            continue
+        end
+        push!(visited, (st.device, st.inode))
+
+        local deps
+        try
+            oh = scan.binary_objects[rel_path]
+            if !isdynamic(oh)
+                continue
+            end
+            deps = [path(dl) for dl in DynamicLinks(oh)]
+        catch e
+            push_result!(pass_results, "relink_absolute_dependencies!", :warn, rel_path, "Unable to read the object: $(sprint(showerror, e))")
+            continue
+        end
+
+        changes = Pair{String,String}[]
+        for dep in unique(filter(should_relink, deps))
+            new_dep = Sys.isapple(scan.platform) ? "@rpath/$(basename(dep))" : basename(dep)
+            push!(changes, dep => new_dep)
+        end
+        if isempty(changes)
+            continue
+        end
+
+        if Sys.isapple(scan.platform)
+            args = collect(Iterators.flatten(["-change", old, new] for (old, new) in changes))
+        else
+            args = collect(Iterators.flatten(["--replace-needed", old, new] for (old, new) in changes))
+        end
+        abs_path = abspath(scan, rel_path)
+        cmd = Sys.isapple(scan.platform) ? install_name_tool(scan, `$(args) $(abs_path)`) : patchelf(scan, `$(args) $(abs_path)`)
+        proc, output = with_writable(abs_path) do
+            capture_output(cmd)
+        end
+        for (old, new) in changes
+            if success(proc)
+                push_result!(pass_results, "relink_absolute_dependencies!", :success, rel_path, "Updating linkage '$(old)' -> '$(new)'")
+            else
+                push_result!(pass_results, "relink_absolute_dependencies!", :fail, rel_path, "Failed to update linkage '$(old)' -> '$(new)': $(output)")
+            end
+        end
+        refresh!(scan, rel_path)
+    end
+end
+
 function rpaths_consistent!(result::AuditResult, info::AuditInfo)
     scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do RPATHs, *sob*
