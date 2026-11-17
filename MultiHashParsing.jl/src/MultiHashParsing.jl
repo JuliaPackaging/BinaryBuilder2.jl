@@ -134,8 +134,8 @@ end
 import Base: SHA1
 SHA1Hash(hash::SHA1) = SHA1Hash(hash.bytes)
 SHA1(hash::SHA1Hash) = SHA1(hash.data)
-Base.convert(SHA1Hash, hash::SHA1) = SHA1Hash(hash)
-Base.convert(SHA1, hash::SHA1Hash) = SHA1(hash)
+Base.convert(::Type{SHA1Hash}, hash::SHA1) = SHA1Hash(hash)
+Base.convert(::Type{SHA1}, hash::SHA1Hash) = SHA1(hash)
 MultiHash(hash::SHA1) = SHA1Hash(hash.bytes)
 
 end # module MultiHashParsing
