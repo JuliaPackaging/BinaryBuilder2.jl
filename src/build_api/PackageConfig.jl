@@ -28,11 +28,17 @@ struct PackageConfig
     # Julia compat specification for this JLL
     julia_compat::String
 
+    # Julia code defining `augment_platform!(p::Platform)`, which adds tags to the host
+    # platform before the JLL's artifact is selected (both at load time and when Pkg
+    # installs the JLL's artifacts).  Empty if the host platform is used as-is.
+    augment_platform_block::String
+
     function PackageConfig(extractions::Dict{String,Vector{ExtractResult}};
                            jll_name::AbstractString = default_jll_name(extractions),
                            version_series::VersionNumber = default_jll_version_series(extractions),
                            extra_deps::Vector{PackageSpec} = PackageSpec[],
                            julia_compat::AbstractString = DEFAULT_JULIA_COMPAT,
+                           augment_platform_block::AbstractString = "",
                            duplicate_extraction_handling::Symbol = :error)
         if isempty(extractions)
             throw(ArgumentError("extractions must not be empty!"))
@@ -100,7 +106,7 @@ struct PackageConfig
         meta = AbstractBuildMeta(extractions)
         version = next_jll_version(meta.universe, "$(jll_name)_jll", version_series)
 
-        return new(jll_name, version, extractions, extra_deps, string(julia_compat))
+        return new(jll_name, version, extractions, extra_deps, string(julia_compat), string(augment_platform_block))
     end
 end
 
@@ -117,6 +123,7 @@ function PackageConfig(config::PackageConfig, extractions::Dict{String,Vector{Ex
         version_series = config.version,
         extra_deps = config.extra_deps,
         julia_compat = config.julia_compat,
+        augment_platform_block = config.augment_platform_block,
     )
 end
 
@@ -414,6 +421,7 @@ end
             version = config.version,
             builds,
             julia_compat = config.julia_compat,
+            platform_augmentation_code = config.augment_platform_block,
         )
 
         with_trace(meta, "bb2.register_jll"; to, timer_name="register_jll!", args=(jll_name=config.name,)) do
