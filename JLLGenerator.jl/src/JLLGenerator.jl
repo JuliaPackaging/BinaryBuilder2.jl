@@ -842,6 +842,13 @@ function generate_pkg_hooks(out_dir::String, info::JLLInfo)
         push!(Base.LOAD_PATH, dirname(@__DIR__), "@stdlib")
 
         using TOML, Artifacts, Base.BinaryPlatforms
+
+        # Julia before v1.10 cannot parse riscv64 triplets, which Pkg passes when
+        # installing for a riscv64 platform.
+        if !haskey(BinaryPlatforms.arch_mapping, "riscv64")
+            BinaryPlatforms.arch_mapping["riscv64"] = "(rv64|riscv64)"
+        end
+
         include("./platform_augmentation.jl")
         artifacts_toml = joinpath(dirname(@__DIR__), "Artifacts.toml")
 
