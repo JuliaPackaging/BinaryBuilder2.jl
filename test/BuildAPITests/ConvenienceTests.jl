@@ -38,7 +38,10 @@ end
         end
         """
         empty!(meta.packagings)
-        build_tarballs(;build_args..., augment_platform_block, build_script_path = zlib_build_script_path)
+        @test_throws r"`augment_platform_block` requires a `julia_compat`" build_tarballs(;build_args..., augment_platform_block, build_script_path = zlib_build_script_path)
+        empty!(meta.packagings)
+        augment_args = merge(build_args, Dict(:julia_compat => "1.7", :augment_platform_block => augment_platform_block))
+        build_tarballs(;augment_args..., build_script_path = zlib_build_script_path)
         package_result = get_package_result(meta, "Zlib")
         @test package_result.status == :success
         @test extract_build_tarballs(package_result)[:augment_platform_block] == augment_platform_block

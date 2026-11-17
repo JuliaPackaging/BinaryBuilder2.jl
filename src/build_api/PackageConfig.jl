@@ -1,4 +1,5 @@
 using BinaryBuilderProducts, JLLGenerator, MultiHashParsing
+using Pkg.Types: semver_spec
 
 export PackageConfig, package!
 
@@ -64,6 +65,12 @@ struct PackageConfig
 
         if jll_name ∉ keys(extractions)
             throw(ArgumentError("One of the extractions must have the same name as the JLL itself!"))
+        end
+
+        # Pkg runs the generated `.pkg/select_artifacts.jl` only from Julia v1.7 on, so on
+        # older Julia it would install artifacts for the un-augmented host platform.
+        if !isempty(augment_platform_block) && !isempty(intersect(semver_spec(julia_compat), semver_spec("1.0 - 1.6")))
+            throw(ArgumentError("`augment_platform_block` requires a `julia_compat` that admits only Julia v1.7 and later, got \"$(julia_compat)\""))
         end
 
         valid_deh_values = (:error, :ignore_all, :ignore_identical)
