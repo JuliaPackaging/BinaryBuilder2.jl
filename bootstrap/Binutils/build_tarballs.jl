@@ -1,4 +1,4 @@
-using BinaryBuilder2, Pkg
+using BinaryBuilder2
 
 # `--bootstrap` causes us to only build `host => target` binutils for everything
 # This does not require a target C toolchain.
@@ -106,14 +106,7 @@ build_tarballs(;
         DirectorySource("./patches-v2.41.0"; follow_symlinks=true, target="patches"),
     ],
     target_dependencies = [
-        JLLSource(
-            "Zlib_jll";
-            # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
+        JLLSource("Zlib_jll"; version=v"1.4.1"),
     ],
     script,
     platforms,

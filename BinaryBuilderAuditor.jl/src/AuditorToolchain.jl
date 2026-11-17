@@ -1,4 +1,3 @@
-import Pkg
 using BinaryBuilderPlatformExtensions, BinaryBuilderSources
 using BinaryBuilderToolchains: AbstractToolchain, resolve_versions!, insert_PATH!, macos_sdk_platform, toolchain_jll_triplet
 import BinaryBuilderToolchains: toolchain_env, toolchain_sources
@@ -23,12 +22,7 @@ struct AuditorToolchain <: AbstractToolchain
                     "CCTools_jll",
                     macos_sdk_platform(platform);
                     uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
-                    repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                        source="https://github.com/staticfloat/CCTools_jll.jl",
-                    ),
-                    # eventually, include a resolved version
-                    version=v"986.0.0",
+                    version=v"986.0.1",
                 ),
             )
         elseif Sys.islinux(platform.target) || Sys.isbsd(platform.target)

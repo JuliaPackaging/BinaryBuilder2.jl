@@ -40,13 +40,7 @@ build_tarballs(;
     ],
     host_dependencies = [JLLSource("Python_jll")],
     target_dependencies = [
-        JLLSource(
-            "Zlib_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl",
-            ),
-        ),
+        JLLSource("Zlib_jll"; version=v"1.4.1"),
     ],
     host_toolchains = [CToolchain(;vendor=:gcc_bootstrap), CMakeToolchain(), HostToolsToolchain()],
     target_toolchains = [CToolchain(;vendor=:gcc_bootstrap), CMakeToolchain()],

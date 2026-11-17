@@ -76,26 +76,9 @@ function binutils_jll_source_selection(vendor, platform)
                 "CCTools_jll",
                 macos_sdk_platform(platform);
                 uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
-                repo=Pkg.Types.GitRepo(
-                    rev=pinned_rev("CCTools_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-                    source="https://github.com/staticfloat/CCTools_jll.jl",
-                ),
-                # eventually, include a resolved version
-                version=v"986.0.0",
+                version=v"986.0.1",
                 target=simple_vendor,
             ),
-            # JLLSource(
-            #     "libtapi_jll",
-            #     platform.host;
-            #     uuid=Base.UUID("defda0c2-6d1f-5f19-8ead-78afca958a10"),
-            #     repo=Pkg.Types.GitRepo(
-            #         rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-            #         source="https://github.com/staticfloat/libtapi_jll.jl",
-            #     ),
-            #     # eventually, include a resolved version
-            #     version=v"1300.6.0",
-            #     target=simple_vendor,
-            # ),
             JLLSource("ldid_jll", platform.host),
         ])
 
@@ -129,12 +112,7 @@ function binutils_jll_source_selection(vendor, platform)
         push!(deps, JLLSource(
             "Binutils_jll",
             platform;
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("Binutils_jll", "bb2/GCCBootstrap-x86_64-linux-gnu"),
-                source="https://github.com/staticfloat/Binutils_jll.jl",
-            ),
-            # eventually, include a resolved version
-            version=v"2.41.0",
+            version=v"2.41.1",
             target=simple_vendor,
         ))
     end
