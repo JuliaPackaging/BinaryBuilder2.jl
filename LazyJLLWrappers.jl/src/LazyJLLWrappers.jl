@@ -212,12 +212,6 @@ macro generate_jll_from_toml()
         end
     end
 
-    # If we have an `init_def`, insert that into our `init_blocks`
-    init_def = get(build, "init_def", nothing)
-    if init_def !== nothing
-        push!(jb.init_blocks, Meta.parse(init_def))
-    end
-
     init_footer(jb, build, lib_products)
     return synthesize(jb)
 end

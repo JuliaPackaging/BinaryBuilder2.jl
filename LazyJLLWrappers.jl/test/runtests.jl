@@ -224,7 +224,56 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
         @test !isdefined(HelloWorldC_jll, :hello_world)
         @test isdefined(HelloWorldC_jll, :eager_mode)
         @test HelloWorldC_jll.eager_mode() === nothing
+        @test !isdefined(HelloWorldC_jll, :artifact_dir)
+        @test !isdefined(HelloWorldC_jll, :find_artifact_dir)
         """,
+    )
+end
+
+@testset "artifact_dir" begin
+    generate_and_load_jll(
+        include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl")),
+        """
+        @test HelloWorldC_jll.artifact_dir isa String
+        @test isdir(HelloWorldC_jll.artifact_dir)
+        @test HelloWorldC_jll.artifact_dir == HelloWorldC_jll.find_artifact_dir()
+        @test startswith(HelloWorldC_jll.hello_world_path, HelloWorldC_jll.artifact_dir)
+        """,
+    )
+
+    generate_and_load_jll(
+        include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
+        """
+        @test isdir(libxls_jll.artifact_dir)
+        @test startswith(libxls_jll.libxlsreader_path, libxls_jll.artifact_dir)
+        @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+        """,
+    )
+end
+
+@testset "init_def runs last and sees artifact_dir" begin
+    # A `BinaryBuilder`-style `init_block`: several statements, referring to `artifact_dir`.
+    init_def = """
+    terminfo_dir = joinpath(artifact_dir, "share", "terminfo")
+    old = get(ENV, "TERMINFO_DIRS", nothing)
+    ENV["TERMINFO_DIRS"] = old === nothing ? terminfo_dir : string(old, ":", terminfo_dir)
+    global INIT_SAW = (artifact_dir, hello_world_path, PATH[])
+    """
+    jllinfo = include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl"))
+    jllinfo = @set jllinfo.builds = map(jllinfo.builds) do build
+        return @set build.init_def = init_def
+    end
+    generate_and_load_jll(
+        jllinfo,
+        """
+        art_dir, exe_path, path = HelloWorldC_jll.INIT_SAW
+        @test art_dir == HelloWorldC_jll.artifact_dir
+        @test isdir(art_dir)
+        @test exe_path == HelloWorldC_jll.hello_world_path
+        @test dirname(exe_path) in split(path, $(repr(LazyJLLWrappers.pathsep)))
+        @test split(ENV["TERMINFO_DIRS"], ":") == ["/somewhere/else", joinpath(art_dir, "share", "terminfo")]
+        """;
+        extra_envs = Dict("TERMINFO_DIRS" => "/somewhere/else"),
     )
 end
 
