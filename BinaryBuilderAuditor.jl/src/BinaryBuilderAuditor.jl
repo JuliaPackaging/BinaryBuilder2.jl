@@ -74,7 +74,7 @@ function audit!(prefix::String,
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
-        rpaths_consistent!(result, info)
+        rpaths_consistent!(result, info; prefix_alias)
     end
 
     # Ensure that there are some licenses

@@ -445,3 +445,24 @@ end
         @test "c" ∈ libmult.system_deps
     end
 end
+
+@testset "normalize_rpaths" begin
+    using BinaryBuilderAuditor: normalize_rpaths
+    linux = Platform("x86_64", "linux")
+    macos = Platform("aarch64", "macos")
+    prefix = "/tmp/extract"
+    alias = "/workspace/destdir/target-x86_64-linux-gnu"
+
+    # Absolute paths into the prefix, by its real path or by its in-sandbox alias, become relative
+    @test normalize_rpaths(["$(alias)/lib", "\$ORIGIN"], linux, prefix, "lib/libfoo.so"; prefix_alias=alias) == ["\$ORIGIN"]
+    @test normalize_rpaths(["$(alias)/lib/plus"], linux, prefix, "bin/foo"; prefix_alias=alias) == ["\$ORIGIN/../lib/plus"]
+    @test normalize_rpaths(["$(prefix)/lib"], linux, prefix, "bin/foo"; prefix_alias=alias) == ["\$ORIGIN/../lib"]
+    @test normalize_rpaths(["$(alias)/lib"], macos, prefix, "lib/libfoo.dylib"; prefix_alias=alias) == ["@loader_path"]
+
+    # Paths outside the prefix, including ones that merely share a string prefix, are left alone
+    @test normalize_rpaths(["/usr/lib", "$(alias)-other/lib"], linux, prefix, "lib/libfoo.so"; prefix_alias=alias) == ["/usr/lib", "$(alias)-other/lib"]
+    @test normalize_rpaths(["$(alias)/lib"], linux, prefix, "lib/libfoo.so") == ["$(alias)/lib"]
+
+    # Relative entries are anchored at the origin, and empty ones dropped
+    @test normalize_rpaths(["", "lib", "./lib"], linux, prefix, "libfoo.so") == ["\$ORIGIN/lib"]
+end

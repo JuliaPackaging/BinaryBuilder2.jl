@@ -223,7 +223,7 @@ function relink_absolute_dependencies!(result::AuditResult; prefix_alias::String
     end
 end
 
-function rpaths_consistent!(result::AuditResult, info::AuditInfo)
+function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::String = result.scan.prefix)
     scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
@@ -296,7 +296,7 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo)
         for name in names
             dep_relpaths = unique([relpath(d, dirname(name)) for d in dep_dirs])
             name_rpaths = String[String(x) for x in vcat(obj_rpaths, dep_relpaths)]
-            append!(all_rpaths, normalize_rpaths(name_rpaths, scan.platform, scan.prefix, name))
+            append!(all_rpaths, normalize_rpaths(name_rpaths, scan.platform, scan.prefix, name; prefix_alias))
         end
         unique!(all_rpaths)
 
@@ -356,7 +356,8 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo)
 end
 
 
-function normalize_rpaths(rpaths::Vector{String}, platform::AbstractPlatform, prefix::String, obj_path::String)
+function normalize_rpaths(rpaths::Vector{String}, platform::AbstractPlatform, prefix::String, obj_path::String;
+                         prefix_alias::String = prefix)
     origin = "\$ORIGIN"
     if Sys.isapple(platform)
         origin = "@loader_path"
@@ -364,12 +365,15 @@ function normalize_rpaths(rpaths::Vector{String}, platform::AbstractPlatform, pr
 
     # Drop empty entries
     rpaths = filter(!isempty, rpaths)
+    roots = unique([prefix, prefix_alias])
 
     rpaths = map(rpaths) do rpath
-        # If we have an absolute rpath, if it starts with `prefix`, rewrite it to be relative.
+        # If we have an absolute rpath that points into the prefix, rewrite it to be relative.
+        # Build systems record the prefix by its in-sandbox path, `prefix_alias`.
         if isabspath(rpath)
-            if startswith(rpath, prefix)
-                target = relpath(rpath, dirname(joinpath(prefix, obj_path)))
+            root_idx = findfirst(r -> is_under(rpath, r), roots)
+            if root_idx !== nothing
+                target = relpath(rpath, dirname(joinpath(roots[root_idx], obj_path)))
                 rpath = joinpath(origin, target)
             else
                 # Do nothing in this case, just leave it be, could be a weird system library or something
