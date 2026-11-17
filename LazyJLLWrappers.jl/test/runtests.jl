@@ -76,6 +76,52 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
         """,
     )
 
+    # FlavoredHelloWorldC_jll has two builds for the host platform that differ only by a
+    # `flavor` tag that the host platform lacks.  Without augmentation, the `flavor+zzz`
+    # build (a foreign binary) would be chosen; the augmentation selects `flavor+native`,
+    # both when Pkg installs the artifacts and when the JLL is loaded.
+    let hwc = include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl"))
+        host_build = only(filter(b -> platforms_match(b.platform, HostPlatform()), hwc.builds))
+        foreign_build = first(filter(b -> !platforms_match(b.platform, HostPlatform()), hwc.builds))
+        flavored(build, flavor) = JLLBuildInfo(;
+            src_version = build.src_version,
+            deps = build.deps,
+            sources = build.sources,
+            platform = Platform(arch(host_build.platform), os(host_build.platform);
+                                (Symbol(k) => v for (k, v) in tags(host_build.platform) if k ∉ ("arch", "os"))...,
+                                flavor),
+            name = "FlavoredHelloWorldC",
+            artifact = build.artifact,
+            products = build.products,
+            licenses = build.licenses,
+        )
+        jll = JLLInfo(;
+            name = "FlavoredHelloWorldC",
+            version = hwc.version,
+            builds = [flavored(host_build, "native"), flavored(foreign_build, "zzz")],
+            platform_augmentation_code = """
+            function augment_platform!(p::Platform)
+                if !haskey(p, "flavor")
+                    p["flavor"] = "native"
+                end
+                return p
+            end
+            """,
+        )
+        host_treehash = string(host_build.artifact.treehash)[6:end]
+        generate_and_load_jll(
+            jll,
+            """
+            using Pkg
+            @test FlavoredHelloWorldC_jll.platform["flavor"] == "native"
+            @test occursin("$(host_treehash)", hello_world().exec[1])
+            @test success(hello_world())
+            installed = only(Pkg.Operations.collect_artifacts(dirname(dirname(pathof(FlavoredHelloWorldC_jll)))))[2]
+            @test installed["FlavoredHelloWorldC"]["git-tree-sha1"] == "$(host_treehash)"
+            """,
+        )
+    end
+
     # PlatformAugmentedHelloWorldC_jll just adds an extra tag to the platform it loads based on
     # an environment variable (which is a TERRIBLE idea but allows us to test things like mismatched
     # platforms and whatnot).

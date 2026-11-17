@@ -30,6 +30,25 @@ end
         package_result = get_package_result(meta, "Zlib")
         @test package_result.status == :success
 
+        # `augment_platform_block` reaches the generated JLL and survives `extract_build_tarballs()`
+        @test build_args[:augment_platform_block] == ""
+        augment_platform_block = """
+        function augment_platform!(p::Platform)
+            return p
+        end
+        """
+        empty!(meta.packagings)
+        @test_throws r"`augment_platform_block` requires a `julia_compat`" build_tarballs(;build_args..., augment_platform_block, build_script_path = zlib_build_script_path)
+        empty!(meta.packagings)
+        augment_args = merge(build_args, Dict(:julia_compat => "1.7", :augment_platform_block => augment_platform_block))
+        build_tarballs(;augment_args..., build_script_path = zlib_build_script_path)
+        package_result = get_package_result(meta, "Zlib")
+        @test package_result.status == :success
+        @test extract_build_tarballs(package_result)[:augment_platform_block] == augment_platform_block
+        jll_path = joinpath(meta.universe.depot_path, "dev", "Zlib_jll")
+        @test occursin(augment_platform_block, read(joinpath(jll_path, ".pkg", "platform_augmentation.jl"), String))
+        @test isfile(joinpath(jll_path, ".pkg", "select_artifacts.jl"))
+
         # Next, test some failing builds
         fail_build_args = copy(build_args)
         fail_build_args[:script] = "false"

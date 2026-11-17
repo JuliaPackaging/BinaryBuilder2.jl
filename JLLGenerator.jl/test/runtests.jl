@@ -1,4 +1,4 @@
-using JLLGenerator, Test, Base.BinaryPlatforms, Libdl, TOML
+using JLLGenerator, Test, Base.BinaryPlatforms, Libdl, TOML, Pkg
 
 using JLLGenerator: rtld_symbols, rtld_flags, default_rtld_flags
 @testset "RTLD flags" begin
@@ -719,6 +719,52 @@ end
 end
 
 # Ensure that all of our example JLLInfos are valid and roundtrip properly.
+@testset "Platform augmentation Pkg hooks" begin
+    function flavored_build(flavor, treehash)
+        return JLLBuildInfo(; src_version = v"1.0.0",
+                            platform = Platform("x86_64", "linux"; libc = "glibc", flavor),
+                            name = "Flavored",
+                            artifact = JLLArtifactBinding(; treehash, download_sources = []),
+                            products = [JLLLibraryProduct(:libz, "lib/libz.so.1", [], [])],
+                            licenses = [mit_license])
+    end
+    native_treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e"
+    zzz_treehash = "1c6c284985577758b3a339c6215c9d4e3d71420e"
+    builds = [flavored_build("native", native_treehash), flavored_build("zzz", zzz_treehash)]
+    augmentation = """
+    function augment_platform!(p::Platform)
+        if !haskey(p, "flavor")
+            p["flavor"] = get(ENV, "FLAVORED_JLL_FLAVOR", "native")
+        end
+        return p
+    end
+    """
+    selected_treehash(dir, platform) = only(values(only(Pkg.Operations.collect_artifacts(dir; platform))[2]))["git-tree-sha1"]
+    x86_64_linux = Platform("x86_64", "linux"; libc = "glibc")
+
+    mktempdir() do dir
+        generate_jll(dir, JLLInfo(; name = "Flavored", version = v"1.0.0", builds,
+                                  platform_augmentation_code = augmentation))
+        @test isfile(joinpath(dir, ".pkg", "platform_augmentation.jl"))
+        @test isfile(joinpath(dir, ".pkg", "select_artifacts.jl"))
+
+        # Pkg runs `.pkg/select_artifacts.jl` to choose what to install, which augments the platform
+        @test selected_treehash(dir, x86_64_linux) == native_treehash
+        withenv("FLAVORED_JLL_FLAVOR" => "zzz") do
+            @test selected_treehash(dir, x86_64_linux) == zzz_treehash
+        end
+        # A platform that is already tagged is left alone
+        @test selected_treehash(dir, Platform("x86_64", "linux"; libc = "glibc", flavor = "zzz")) == zzz_treehash
+        @test isempty(only(Pkg.Operations.collect_artifacts(dir; platform = Platform("aarch64", "linux")))[2])
+    end
+
+    # Without augmentation code, there are no hooks
+    mktempdir() do dir
+        generate_jll(dir, JLLInfo(; name = "Flavored", version = v"1.0.0", builds))
+        @test !ispath(joinpath(dir, ".pkg"))
+    end
+end
+
 @testset "Example JLLInfos" begin
     for example_file in readdir(joinpath(dirname(@__DIR__), "contrib", "example_jllinfos"); join=true)
         jll = include(example_file)

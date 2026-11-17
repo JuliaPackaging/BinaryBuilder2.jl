@@ -816,6 +816,57 @@ end
 # read every feature a `JLL.toml` may use (static library entries, `dont_dlopen`).
 const lazy_jll_wrappers_compat = "1.2.2"
 
+"""
+    generate_pkg_hooks(out_dir::String, info::JLLInfo)
+
+Write `.pkg/platform_augmentation.jl` (the JLL's `platform_augmentation_code`) and
+`.pkg/select_artifacts.jl` into the JLL at `out_dir`.  When a package contains
+`.pkg/select_artifacts.jl`, Pkg runs it in a separate process (with the target triplet
+as its first argument) to decide which artifacts to install, instead of matching the
+`Artifacts.toml` against the plain host platform.  The script augments the platform the
+same way `LazyJLLWrappers` does when the JLL is loaded, so that the artifact the JLL
+loads is the one that was installed.  As the JLL's dependencies are not loadable from
+this process, the augmentation code may use only `Base` and the standard libraries.
+"""
+function generate_pkg_hooks(out_dir::String, info::JLLInfo)
+    pkg_dir = joinpath(out_dir, ".pkg")
+    mkpath(pkg_dir)
+    open(joinpath(pkg_dir, "platform_augmentation.jl"); write=true) do io
+        println(io, "using Base.BinaryPlatforms")
+        println(io, info.platform_augmentation_code)
+    end
+    open(joinpath(pkg_dir, "select_artifacts.jl"); write=true) do io
+        print(io, """
+        # Pkg runs this with the `LOAD_PATH` of the process installing the JLL, which may
+        # not include the standard libraries (e.g. within `Pkg.test()`).
+        push!(Base.LOAD_PATH, dirname(@__DIR__), "@stdlib")
+
+        using TOML, Artifacts, Base.BinaryPlatforms
+
+        # Julia before v1.10 cannot parse riscv64 triplets, which Pkg passes when
+        # installing for a riscv64 platform.
+        if !haskey(BinaryPlatforms.arch_mapping, "riscv64")
+            BinaryPlatforms.arch_mapping["riscv64"] = "(rv64|riscv64)"
+        end
+
+        include("./platform_augmentation.jl")
+        artifacts_toml = joinpath(dirname(@__DIR__), "Artifacts.toml")
+
+        # Get the target triplet from ARGS, if given (defaulting to the host triplet otherwise)
+        target_triplet = get(ARGS, 1, Base.BinaryPlatforms.host_triplet())
+
+        # Augment this platform object with any special tags we require
+        platform = augment_platform!(HostPlatform(parse(Platform, target_triplet)))
+
+        # Select all downloadable artifacts that match that platform
+        artifacts = select_downloadable_artifacts(artifacts_toml; platform, include_lazy=false)
+
+        # Output the result to `stdout` as a TOML dictionary
+        TOML.print(stdout, artifacts)
+        """)
+    end
+end
+
 function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_metadata::Dict{String,String} = Dict{String,String}())
     if clear && isdir(out_dir)
         for child in readdir(out_dir)
@@ -832,6 +883,11 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
     toml_dict = generate_toml_dict(info)
     open(joinpath(out_dir, "JLL.toml"); write=true) do io
         TOML.print(io, toml_dict)
+    end
+
+    # Generate the `.pkg/` hooks that let Pkg install the artifacts that match the augmented platform
+    if !isempty(info.platform_augmentation_code)
+        generate_pkg_hooks(out_dir, info)
     end
 
     # Generate `Artifacts.toml`
