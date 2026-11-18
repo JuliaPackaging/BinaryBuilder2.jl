@@ -110,17 +110,12 @@ end
     # ... though a static archive shares its library's name
     ncurses_jll([lp, JLLStaticLibraryProduct(:libncursesw, "lib/libncursesw.a")])
 
-    # Only a JLL that has aliases requires a `LazyJLLWrappers` able to export them
     tic = JLLExecutableProduct(:tic, "bin/tic"; aliases = [:infotocap])
     terminfo = JLLFileProduct(:terminfo, "share/terminfo"; aliases = [:terminfo_dir])
-    for (products, compat) in (([lp], JLLGenerator.lazy_jll_wrappers_aliases_compat),
-                               ([bare, tic], JLLGenerator.lazy_jll_wrappers_aliases_compat),
-                               ([bare, terminfo], JLLGenerator.lazy_jll_wrappers_aliases_compat),
-                               ([bare, JLLExecutableProduct(:tic, "bin/tic")], JLLGenerator.lazy_jll_wrappers_compat))
+    for products in ([lp], [bare, tic], [bare, terminfo])
         jll = ncurses_jll(products)
         mktempdir() do dir
             generate_jll(dir, jll)
-            @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == compat
             @test jll == parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
         end
     end
@@ -637,11 +632,17 @@ end
     nonsense = copy(d); nonsense["format_version"] = "not-a-version"
     @test_throws ArgumentError parse_toml_dict(nonsense)
 
-    # Every JLL requires a wrapper that understands every feature a record may use
+    # Every JLL requires the latest `LazyJLLWrappers`, which understands every feature a
+    # record may use
     mktempdir() do dir
         generate_jll(dir, jll)
         @test TOML.parsefile(joinpath(dir, "JLL.toml"))["format_version"] == "1.0"
-        @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == "1.2.2"
+        @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] ==
+              JLLGenerator.lazy_jll_wrappers_compat
+    end
+    ljw_project = joinpath(@__DIR__, "..", "..", "LazyJLLWrappers.jl", "Project.toml")
+    if isfile(ljw_project)
+        @test JLLGenerator.lazy_jll_wrappers_compat == TOML.parsefile(ljw_project)["version"]
     end
 end
 

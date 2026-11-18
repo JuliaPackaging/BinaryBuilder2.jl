@@ -866,19 +866,9 @@ All names a JLL exports for the product `p`: its `varname` and any aliases.
 exported_names(p::AbstractJLLProduct) = Symbol[p.varname; exported_aliases(p)]
 exported_aliases(p::AbstractJLLProduct) = hasfield(typeof(p), :aliases) ? p.aliases : Symbol[]
 
-# The `LazyJLLWrappers` every generated JLL requires: the first release that can
-# read every feature a `JLL.toml` may use (static library entries, `dont_dlopen`).
-const lazy_jll_wrappers_compat = "1.2.2"
-# The first `LazyJLLWrappers` release that exports product aliases, required only by
-# JLLs that have any.
-const lazy_jll_wrappers_aliases_compat = "1.3.0"
-
-function lazy_jll_wrappers_compat_for(info::JLLInfo)
-    has_aliases = any(info.builds) do build
-        return any(p -> !isempty(exported_aliases(p)), build.products)
-    end
-    return has_aliases ? lazy_jll_wrappers_aliases_compat : lazy_jll_wrappers_compat
-end
+# The `LazyJLLWrappers` every generated JLL requires: always the latest release, so
+# every JLL can use every feature a `JLL.toml` may record.
+const lazy_jll_wrappers_compat = "1.2.6"
 
 """
     generate_pkg_hooks(out_dir::String, info::JLLInfo)
@@ -1083,7 +1073,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             ),
 
             "compat" => Dict{String,Any}(
-                "LazyJLLWrappers" => lazy_jll_wrappers_compat_for(info),
+                "LazyJLLWrappers" => lazy_jll_wrappers_compat,
                 "julia" => info.julia_compat,
             )
         )
