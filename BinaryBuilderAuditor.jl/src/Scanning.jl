@@ -142,15 +142,27 @@ function scan_files(prefix::String, platform::AbstractPlatform,
             continue
         end
 
-        # If something doesn't have an SONAME, we default to `basename(rel_path)`
-        # On macOS, we take an absolute path here to be the same as no SONAME. :)
-        # This will be fixed by `ensure_sonames!()`.
+        # Libraries listed in `missing_sonames` get the SONAME chosen here
+        # written into them by `ensure_sonames!()`.
         soname = get_soname(oh)
-        if soname === nothing || (Sys.isapple(platform) && isabspath(soname))
+        if soname === nothing
+            # Without an SONAME, default to the library's filename.
             if !Sys.iswindows(platform)
                 push!(missing_sonames, rel_path)
             end
             soname = basename(rel_path)
+        elseif Sys.isapple(platform) && isabspath(soname)
+            # An absolute install name gets replaced by an `@rpath`-relative one.
+            # Keep the name the build chose (e.g. `libfoo.1.dylib` for `libfoo.1.2.dylib`)
+            # when a file of that name next to the library resolves to it, otherwise
+            # use the library's filename.
+            push!(missing_sonames, rel_path)
+            id_rel_path = joinpath(dirname(rel_path), basename(soname))
+            if normpath(relpath_search(symlinks, id_rel_path)) == rel_path
+                soname = basename(soname)
+            else
+                soname = basename(rel_path)
+            end
         end
 
         # If this is an apple platform, and the dylib ID is something like
