@@ -12,14 +12,8 @@ build_tarballs(;
         DirectorySource(joinpath(@__DIR__, "./bundled")),
     ],
     target_dependencies = [
-        # TODO: Drop these once `Zlib_jll` on `General` is built by BB2.
-        JLLSource(
-            "Zlib_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
+        JLLSource("Zlib_jll"; version=v"1.4.1"),
+        # TODO: Drop these once `Ncurses_jll` and `Readline_jll` on `General` are built by BB2.
         JLLSource(
             "Ncurses_jll";
             repo=Pkg.Types.GitRepo(

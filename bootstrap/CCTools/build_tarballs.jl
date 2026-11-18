@@ -1,4 +1,4 @@
-using BinaryBuilder2, Pkg
+using BinaryBuilder2
 include("../bootstrap_common.jl")
 
 # `--bootstrap` causes us to only build `host => target` binutils for everything
@@ -58,13 +58,7 @@ build_tarballs(;
     ],
     host_dependencies = [JLLSource("Python_jll")],
     target_dependencies = [
-        JLLSource(
-            "Zlib_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
+        JLLSource("Zlib_jll"; version=v"1.4.1"),
     ],
     host_toolchains,
     target_toolchains,
@@ -106,13 +100,7 @@ build_tarballs(;
         JLLSource("LibTAPITblgen_jll"),
     ],
     target_dependencies = [
-        JLLSource(
-            "Zlib_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
+        JLLSource("Zlib_jll"; version=v"1.4.1"),
     ],
     host_toolchains,
     target_toolchains,
@@ -136,14 +124,7 @@ function cctools_build_spec_generator(host, platform)
             [CToolchain(;vendor=:clang_bootstrap), CMakeToolchain()],
             [
                 JLLSource("libtapi_jll"),
-                JLLSource(
-                    "Zlib_jll";
-                    # TODO: Drop this once `Zlib_jll` on `General` is built by BB2.
-                    repo=Pkg.Types.GitRepo(
-                        rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                        source="https://github.com/staticfloat/Zlib_jll.jl"
-                    ),
-                ),
+                JLLSource("Zlib_jll"; version=v"1.4.1"),
             ],
             [],
             Set([:default]),
