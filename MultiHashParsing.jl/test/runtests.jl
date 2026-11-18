@@ -81,4 +81,19 @@ using Test, MultiHashParsing, SHA
     h1 = sha1_holder(SHA1Hash(sha1("")))
     h2 = sha1hash_holder(Base.SHA1(sha1("")))
     @test SHA1Hash(h1.hash) == h2.hash
+
+    # Test explicit conversions, including to and through unions
+    h = SHA1Hash(sha1(""))
+    b = Base.SHA1(sha1(""))
+    @test convert(Base.SHA1, h) === b
+    @test convert(SHA1Hash, b) === h
+    @test convert(SHA1Hash, h) === h
+    @test convert(Base.SHA1, b) === b
+    @test convert(Union{Nothing,Base.SHA1}, b) === b
+    @test convert(Union{Nothing,Base.SHA1}, h) === b
+    @test convert(Union{Nothing,SHA1Hash}, h) === h
+    @test convert(Union{Nothing,SHA1Hash}, b) === h
+    @test_throws MethodError convert(String, h)
+    @test_throws MethodError convert(String, b)
+    @test isempty(Test.detect_ambiguities(MultiHashParsing))
 end
