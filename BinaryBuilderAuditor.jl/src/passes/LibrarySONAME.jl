@@ -23,8 +23,9 @@ function ensure_sonames!(result::AuditResult)
 
     # `scan_files()` already found the libraries with missing SONAMEs,
     # so here all we need to do is update the binaries
+    sonames = Dict(rel_path => soname for (soname, rel_path) in scan.soname_locator)
     for rel_path in scan.missing_sonames
-        soname = basename(rel_path)
+        soname = sonames[rel_path]
         abs_path = abspath(scan, rel_path)
         if Sys.isapple(scan.platform)
             cmd = install_name_tool(scan, `-id @rpath/$(soname) $(abs_path)`)

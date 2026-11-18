@@ -65,3 +65,42 @@ end
         end
     end
 end
+
+@testset "ensure_sonames keeps the install name's basename on macOS" begin
+    target = Platform("aarch64", "macos"; os_version=v"20")
+    platform = CrossPlatform(BBHostPlatform() => target)
+    toolchain = CToolchain(platform; use_ccache=false)
+    libplus_c_path = joinpath(dirname(@__DIR__), "source", "libplus.c")
+    mktempdir() do prefix
+        # Like readline: the real file is `libfoo.1.2.dylib`, linked with the install
+        # name `<libdir>/libfoo.1.dylib`, and that name is a symlink to the real file.
+        mkpath(joinpath(prefix, "lib"))
+        libfoo_path = joinpath(prefix, "lib", "libfoo.1.2.dylib")
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -o $(libfoo_path) -shared $(libplus_c_path) -Wl,-install_name,$(prefix)/lib/libfoo.1.dylib`, env))
+        end
+        symlink("libfoo.1.2.dylib", joinpath(prefix, "lib", "libfoo.1.dylib"))
+        symlink("libfoo.1.dylib", joinpath(prefix, "lib", "libfoo.dylib"))
+
+        scan = scan_files(prefix, target)
+        @test scan.soname_locator["libfoo.1.dylib"] == "lib/libfoo.1.2.dylib"
+        result = AuditResult(scan)
+        ensure_sonames!(result)
+        @test success(result.pass_results)
+        @test readmeta(ohs -> get_soname(only(ohs)), libfoo_path) == "@rpath/libfoo.1.dylib"
+    end
+
+    mktempdir() do prefix
+        # Without a file of the install name's basename, fall back to the real file's name
+        mkpath(joinpath(prefix, "lib"))
+        libfoo_path = joinpath(prefix, "lib", "libfoo.1.2.dylib")
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -o $(libfoo_path) -shared $(libplus_c_path) -Wl,-install_name,$(prefix)/lib/libfoo.1.dylib`, env))
+        end
+        scan = scan_files(prefix, target)
+        result = AuditResult(scan)
+        ensure_sonames!(result)
+        @test success(result.pass_results)
+        @test readmeta(ohs -> get_soname(only(ohs)), libfoo_path) == "@rpath/libfoo.1.2.dylib"
+    end
+end
