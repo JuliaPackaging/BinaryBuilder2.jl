@@ -22,7 +22,8 @@ end
 function JLLExecutableProduct(ep::ExecutableProduct, prefix::String; kwargs...)
     return JLLExecutableProduct(
         ep.varname,
-        locate(ep, prefix; kwargs...),
+        locate(ep, prefix; kwargs...);
+        aliases = ep.aliases,
     )
 end
 function AbstractJLLProduct(ep::ExecutableProduct, prefix::String; kwargs...)
@@ -32,7 +33,8 @@ end
 function JLLFileProduct(fp::FileProduct, prefix::String; kwargs...)
     return JLLFileProduct(
         fp.varname,
-        locate(fp, prefix; kwargs...),
+        locate(fp, prefix; kwargs...);
+        aliases = fp.aliases,
     )
 end
 function AbstractJLLProduct(fp::FileProduct, prefix::String; kwargs...)
@@ -54,6 +56,7 @@ function JLLLibraryProduct(lp::LibraryProduct, prefix::String; kwargs...)
         flags = lp.dlopen_flags,
         on_load_callback = lp.on_load_callback,
         dont_dlopen = lp.dont_dlopen,
+        aliases = lp.aliases,
     )
 end
 function AbstractJLLProduct(lp::LibraryProduct, prefix::String; kwargs...)

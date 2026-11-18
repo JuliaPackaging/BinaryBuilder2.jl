@@ -39,7 +39,8 @@ function audit!(prefix::String,
         prefix,
         platform,
         products,
-        env,
+        env;
+        prefix_alias,
     )
     result = AuditResult(scan)
 

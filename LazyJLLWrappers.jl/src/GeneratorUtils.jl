@@ -187,6 +187,24 @@ end
 
 use_lazy_libraries() = isdefined(Libdl, :LazyLibrary)
 
+"""
+    alias_definitions(define, jb, product, path_var_name)
+
+Export each of `product`'s aliases (further names for it, as a symlink is for a file):
+`define(alias)` binds `alias` to the same object as the product, and `<alias>_path`
+is set to the product's path, so that a preference overriding the product's path
+applies to its aliases as well.
+"""
+function alias_definitions(define, jb::JLLBlocks, product, path_var_name::Symbol)
+    for alias in Symbol.(get(product, "aliases", String[]))
+        define(alias)
+        alias_path_var_name = Symbol(string(alias, "_path"))
+        push!(jb.top_level_blocks, emit_typed_global(alias_path_var_name, String, ""; isconst=false))
+        push!(jb.init_blocks, :(global $(alias_path_var_name) = $(path_var_name)))
+        push!(jb.exports, alias)
+    end
+end
+
 function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
     # The hashes in this TOML are `MultiHashParsing` hashes,
     # but we only support `sha1` hashes:

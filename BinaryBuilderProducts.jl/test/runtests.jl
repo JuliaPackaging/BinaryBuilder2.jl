@@ -165,6 +165,48 @@ using JLLGenerator: rtld_symbols, rtld_flags
         end
     end
 
+    @testset "LibraryProduct aliases" begin
+        @test isempty(LibraryProduct("libfoo", :libfoo).aliases)
+        lp = LibraryProduct("libncursesw", :libncursesw; aliases=[:libncurses])
+        @test lp.aliases == [:libncurses]
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo; aliases=[:libfoo])
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo; aliases=[:libbar, :libbar])
+        @test_throws ArgumentError LibraryProduct("libfoo", :libfoo; aliases=[:sin])
+        mktempdir() do dir
+            mkpath(joinpath(dir, "lib"))
+            touch(joinpath(dir, "lib", "libncursesw.so"))
+            platform = Platform("x86_64", "linux")
+            env = Dict("prefix" => dir, "libdir" => joinpath(dir, "lib"), "bb_full_target" => triplet(platform))
+            @test JLLGenerator.JLLLibraryProduct(lp, dir; env, platform).aliases == [:libncurses]
+        end
+    end
+
+    @testset "ExecutableProduct and FileProduct aliases" begin
+        @test isempty(ExecutableProduct("xz", :xz).aliases)
+        @test isempty(FileProduct("include/lzma.h", :lzma_h).aliases)
+        ep = ExecutableProduct("xz", :xz; aliases=[:lzma, :unxz])
+        @test ep.aliases == [:lzma, :unxz]
+        @test ExecutableProduct(["xz"], :xz; aliases=[:lzma]).aliases == [:lzma]
+        fp = FileProduct("include/lzma.h", :lzma_h; aliases=[:lzma_header])
+        @test fp.aliases == [:lzma_header]
+        @test FileProduct(["include/lzma.h"], :lzma_h; aliases=[:lzma_header]).aliases == [:lzma_header]
+        @test_throws ArgumentError ExecutableProduct("xz", :xz; aliases=[:xz])
+        @test_throws ArgumentError FileProduct("include/lzma.h", :lzma_h; aliases=[:a, :a])
+        @test_throws ArgumentError ExecutableProduct("xz", :xz; aliases=[:sin])
+
+        mktempdir() do dir
+            mkpath(joinpath(dir, "bin"))
+            mkpath(joinpath(dir, "include"))
+            touch(joinpath(dir, "bin", "xz"))
+            chmod(joinpath(dir, "bin", "xz"), 0o755)
+            touch(joinpath(dir, "include", "lzma.h"))
+            platform = Platform("x86_64", "linux")
+            env = Dict("prefix" => dir, "bindir" => joinpath(dir, "bin"), "bb_full_target" => triplet(platform))
+            @test JLLGenerator.JLLExecutableProduct(ep, dir; env, platform).aliases == [:lzma, :unxz]
+            @test JLLGenerator.JLLFileProduct(fp, dir; env, platform).aliases == [:lzma_header]
+        end
+    end
+
     @testset "StaticLibraryProduct construction" begin
         # An archive declared for a `LibraryProduct` has no name of its own until it is
         # attached, inherits by default, and takes the library's name when attached

@@ -94,6 +94,9 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
     println(hash_buffer, "[products]")
     for product in sort(products; by = p->p.varname)
         println(hash_buffer, "  $(product.varname) = $(product.paths)")
+        if hasfield(typeof(product), :aliases) && !isempty(product.aliases)
+            println(hash_buffer, "  $(product.varname).aliases = $(product.aliases)")
+        end
         archive = isa(product, LibraryProduct) ? product.static :
                   isa(product, StaticLibraryProduct) ? product : nothing
         if archive !== nothing

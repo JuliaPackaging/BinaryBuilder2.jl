@@ -5,7 +5,8 @@ using JLLGenerator: default_rtld_flags, rtld_flags
     LibraryProduct(paths::Vector{String}, varname::Symbol;
                    dlopen_flags=Symbol[],
                    dont_dlopen=false,
-                   static=nothing)
+                   static=nothing,
+                   aliases=Symbol[])
 
 Declares a `LibraryProduct` that points to a library located within the prefix.
 `paths` contain valid paths for this library, `varname` is the name of the
@@ -19,6 +20,11 @@ clash with the one Julia itself runs on.  On Julia versions without
 `Libdl.LazyLibrary` the JLL then does not `dlopen()` the library in its
 `__init__()`, while still exporting its absolute path.  (A `LazyLibrary` is only
 loaded when used, so newer Julia versions need no special handling.)
+
+If the library is also known by other names (e.g. `libncurses`, a symlink to
+`libncursesw`), list those names in `aliases`: the JLL exports each of them as the
+very same library as `varname`.  Declaring a separate `LibraryProduct` that resolves
+to the same file instead is an error.
 
 If this library is also shipped as a static archive, declare that archive by
 passing a [`StaticLibraryProduct`](@ref) as the `static` keyword argument; it is
@@ -47,19 +53,22 @@ struct LibraryProduct <: AbstractProduct
     on_load_callback::Union{Nothing,Symbol}
     dont_dlopen::Bool
     static::Union{Nothing,StaticLibraryProduct}
+    aliases::Vector{Symbol}
 
     function LibraryProduct(paths::Vector{<:AbstractString},
                             varname::Symbol;
                             dlopen_flags::Union{Vector{Symbol},typeof(default_rtld_flags)} = default_rtld_flags,
                             on_load_callback::Union{Nothing,Symbol} = nothing,
                             dont_dlopen::Bool = false,
-                            static::Union{Nothing,Symbol,StaticLibraryProduct} = nothing)
+                            static::Union{Nothing,Symbol,StaticLibraryProduct} = nothing,
+                            aliases::Vector{Symbol} = Symbol[])
         if isa(dlopen_flags, Vector{Symbol})
             dlopen_flags = rtld_flags(dlopen_flags)
         end
         if isdefined(Base, varname)
             error("`$(varname)` is already defined in Base")
         end
+        aliases = check_aliases(varname, aliases)
         if static === :auto
             static = StaticLibraryProduct(generate_default_static_lib_paths(paths))
         elseif isa(static, Symbol)
@@ -71,7 +80,7 @@ struct LibraryProduct <: AbstractProduct
             end
             static = StaticLibraryProduct(static, varname)
         end
-        return new(string.(paths), varname, dlopen_flags, on_load_callback, dont_dlopen, static)
+        return new(string.(paths), varname, dlopen_flags, on_load_callback, dont_dlopen, static, aliases)
     end
 end
 LibraryProduct(path::AbstractString, args...; kwargs...) = LibraryProduct([path], args...; kwargs...)

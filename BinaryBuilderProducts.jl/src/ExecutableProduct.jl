@@ -1,21 +1,28 @@
 """
-    ExecutableProduct(names::Vector{String}, varname::Symbol; dir_path = nothing)
+    ExecutableProduct(names::Vector{String}, varname::Symbol; aliases = Symbol[])
 
 On all platforms, an `ExecutableProduct` checks for existence of the file.  On
 Windows platforms, it will check that the file ends with ".exe", (adding it on
 automatically to the search paths, if it is not already present).
+
+`aliases` are further names under which the JLL exports this very same executable:
+each runs the path this product was found at.  An executable that behaves differently
+depending on the name it is run by (e.g. `clang++`, a symlink to `clang`) needs a
+product of its own for each such name instead.
 """
 struct ExecutableProduct <: AbstractProduct
     paths::Vector{String}
     varname::Symbol
+    aliases::Vector{Symbol}
 
-    function ExecutableProduct(paths::Vector{<:AbstractString}, varname::Symbol)
+    function ExecutableProduct(paths::Vector{<:AbstractString}, varname::Symbol;
+                               aliases::Vector{Symbol} = Symbol[])
         varname = Symbol(varname)
         check_varname(varname)
-        return new(string.(paths), varname)
+        return new(string.(paths), varname, check_aliases(varname, aliases))
     end
 end
-ExecutableProduct(path::AbstractString, varname::Symbol) = ExecutableProduct([path], varname)
+ExecutableProduct(path::AbstractString, varname::Symbol; kwargs...) = ExecutableProduct([path], varname; kwargs...)
 
 function default_product_dir(::Type{ExecutableProduct}, platform::AbstractPlatform)
     return "bin"

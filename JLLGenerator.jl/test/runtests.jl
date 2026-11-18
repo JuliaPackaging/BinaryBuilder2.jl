@@ -63,6 +63,88 @@ end
     @test bare != lp
 end
 
+@testset "library aliases" begin
+    lp = JLLLibraryProduct(:libncursesw, "lib/libncursesw.so.6", JLLLibraryDep[], []; aliases = [:libncurses])
+    d = generate_toml_dict(lp)
+    @test d["aliases"] == ["libncurses"]
+    @test parse_toml_dict(JLLLibraryProduct, d) == lp
+    @test JLLGenerator.exported_names(lp) == [:libncursesw, :libncurses]
+
+    # Only written when there are any, and a record without them reads back as having none
+    bare = JLLLibraryProduct(:libncursesw, "lib/libncursesw.so.6", JLLLibraryDep[], [])
+    d = generate_toml_dict(bare)
+    @test !haskey(d, "aliases")
+    @test parse_toml_dict(JLLLibraryProduct, d) == bare
+    @test bare != lp
+
+    @test_throws ArgumentError JLLLibraryProduct(:libfoo, "lib/libfoo.so", JLLLibraryDep[], []; aliases = [:libfoo])
+    @test_throws ArgumentError JLLLibraryProduct(:libfoo, "lib/libfoo.so", JLLLibraryDep[], []; aliases = [:libbar, :libbar])
+
+    function ncurses_jll(products)
+        return JLLInfo(;
+            name = "Ncurses",
+            version = v"6.6.0",
+            builds = [
+                JLLBuildInfo(;
+                    src_version = v"6.6.0",
+                    platform = Platform("x86_64", "linux"),
+                    name = "Ncurses",
+                    artifact = JLLArtifactBinding(;
+                        treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
+                        download_sources = [],
+                    ),
+                    products,
+                    licenses = [mit_license],
+                ),
+            ],
+        )
+    end
+
+    # An alias may not clash with another product's name or alias, of whatever kind
+    @test_throws ArgumentError ncurses_jll([
+        lp,
+        JLLLibraryProduct(:libncurses, "lib/libncurses.so.6", JLLLibraryDep[], []),
+    ])
+    @test_throws ArgumentError ncurses_jll([lp, JLLExecutableProduct(:libncurses, "bin/libncurses")])
+    @test_throws ArgumentError ncurses_jll([lp, JLLFileProduct(:tic, "bin/tic"; aliases = [:libncurses])])
+    # ... though a static archive shares its library's name
+    ncurses_jll([lp, JLLStaticLibraryProduct(:libncursesw, "lib/libncursesw.a")])
+
+    # Only a JLL that has aliases requires a `LazyJLLWrappers` able to export them
+    tic = JLLExecutableProduct(:tic, "bin/tic"; aliases = [:infotocap])
+    terminfo = JLLFileProduct(:terminfo, "share/terminfo"; aliases = [:terminfo_dir])
+    for (products, compat) in (([lp], JLLGenerator.lazy_jll_wrappers_aliases_compat),
+                               ([bare, tic], JLLGenerator.lazy_jll_wrappers_aliases_compat),
+                               ([bare, terminfo], JLLGenerator.lazy_jll_wrappers_aliases_compat),
+                               ([bare, JLLExecutableProduct(:tic, "bin/tic")], JLLGenerator.lazy_jll_wrappers_compat))
+        jll = ncurses_jll(products)
+        mktempdir() do dir
+            generate_jll(dir, jll)
+            @test TOML.parsefile(joinpath(dir, "Project.toml"))["compat"]["LazyJLLWrappers"] == compat
+            @test jll == parse_toml_dict(TOML.parsefile(joinpath(dir, "JLL.toml")))
+        end
+    end
+end
+
+@testset "executable and file aliases" begin
+    for p in (JLLExecutableProduct(:xz, "bin/xz"; aliases = [:lzma, :unxz]),
+              JLLFileProduct(:lzma_h, "include/lzma.h"; aliases = [:lzma_header]))
+        d = generate_toml_dict(p)
+        @test d["aliases"] == string.(p.aliases)
+        @test parse_toml_dict(typeof(p), d) == p
+        @test parse_toml_dict(AbstractJLLProduct, d) == p
+        @test JLLGenerator.exported_names(p) == [p.varname; p.aliases]
+
+        bare = typeof(p)(p.varname, p.path)
+        d = generate_toml_dict(bare)
+        @test !haskey(d, "aliases")
+        @test parse_toml_dict(typeof(p), d) == bare
+        @test bare != p
+    end
+    @test_throws ArgumentError JLLExecutableProduct(:xz, "bin/xz"; aliases = [:xz])
+    @test_throws ArgumentError JLLFileProduct(:f, "f"; aliases = [:g, :g])
+end
+
 @testset "Hand-crafted XZ_jll" begin
     # Hand-crafted XZ_jll impersonation
     xz_sources = [

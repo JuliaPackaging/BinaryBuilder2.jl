@@ -55,4 +55,9 @@ function executable_product_definition(jb::JLLBlocks, artifact, product)
         end
     end)
     push!(jb.exports, var_name)
+
+    # Aliases are the same wrapper function
+    alias_definitions(jb, product, path_var_name) do alias
+        push!(jb.top_level_blocks, :(const $(alias) = $(var_name)))
+    end
 end

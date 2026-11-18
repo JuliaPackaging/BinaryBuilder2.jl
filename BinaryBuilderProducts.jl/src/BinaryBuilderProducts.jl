@@ -32,6 +32,16 @@ function check_varname(varname::Symbol)
     end
 end
 
+# Check the `aliases` of the product named `varname`: further names under which the JLL
+# exports the same product, as a symlink gives a file further names.
+function check_aliases(varname::Symbol, aliases::Vector{Symbol})
+    foreach(check_varname, aliases)
+    if varname ∈ aliases || !allunique(aliases)
+        throw(ArgumentError("Aliases $(aliases) of '$(varname)' must be unique, and differ from its name"))
+    end
+    return copy(aliases)
+end
+
 # Get a value from `env`, throwing an error if it does not exist
 function env_checked_get(env, key)
     if !haskey(env, key)

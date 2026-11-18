@@ -24,41 +24,74 @@ optimized to only hold the bare information necessary to generate a JLL package.
 """
 abstract type AbstractJLLProduct; end
 
-struct JLLExecutableProduct <: AbstractJLLProduct
+# Further names under which a JLL exports a product (e.g. `lzma` for `xz`, or
+# `libncurses` for `libncursesw`), each bound to the very same object and path.
+function check_aliases(varname::Symbol, aliases)
+    aliases = Symbol.(aliases)
+    if varname ∈ aliases || !allunique(aliases)
+        throw(ArgumentError("Aliases $(aliases) of '$(varname)' must be unique, and differ from its name"))
+    end
+    return aliases
+end
+
+# The `aliases` entry of a product's TOML dict, written only when there are any
+function add_aliases!(d::Dict, aliases::Vector{Symbol})
+    if !isempty(aliases)
+        d["aliases"] = string.(aliases)
+    end
+    return d
+end
+parse_aliases(d) = Symbol.(get(d, "aliases", String[]))
+
+@struct_hash_equal struct JLLExecutableProduct <: AbstractJLLProduct
     varname::Symbol
     path::String
+    aliases::Vector{Symbol}
+
+    function JLLExecutableProduct(varname, path; aliases = Symbol[])
+        varname = Symbol(varname)
+        return new(varname, path, check_aliases(varname, aliases))
+    end
 end
 
 function generate_toml_dict(ep::JLLExecutableProduct)
-    return Dict(
+    return add_aliases!(Dict{String,Any}(
         "type" => "executable",
         "name" => string(ep.varname),
         "path" => ep.path,
-    )
+    ), ep.aliases)
 end
 function parse_toml_dict(::Type{JLLExecutableProduct}, d)
     return JLLExecutableProduct(
         Symbol(d["name"]),
-        d["path"],
+        d["path"];
+        aliases = parse_aliases(d),
     )
 end
 
-struct JLLFileProduct <: AbstractJLLProduct
+@struct_hash_equal struct JLLFileProduct <: AbstractJLLProduct
     varname::Symbol
     path::String
+    aliases::Vector{Symbol}
+
+    function JLLFileProduct(varname, path; aliases = Symbol[])
+        varname = Symbol(varname)
+        return new(varname, path, check_aliases(varname, aliases))
+    end
 end
 
 function generate_toml_dict(fp::JLLFileProduct)
-    return Dict(
+    return add_aliases!(Dict{String,Any}(
         "type" => "file",
         "name" => string(fp.varname),
         "path" => fp.path,
-    )
+    ), fp.aliases)
 end
 function parse_toml_dict(::Type{JLLFileProduct}, d)
     return JLLFileProduct(
         Symbol(d["name"]),
-        d["path"],
+        d["path"];
+        aliases = parse_aliases(d),
     )
 end
 
@@ -112,16 +145,20 @@ end
     on_load_callback::Union{Nothing,Symbol}
     # Never `dlopen()` this library eagerly in the JLL's `__init__()`
     dont_dlopen::Bool
+    # Further names for this same library (e.g. `libncurses` for `libncursesw`)
+    aliases::Vector{Symbol}
 
     function JLLLibraryProduct(varname, path, deps, system_deps;
                                flags = rtld_symbols(default_rtld_flags),
                                soname = basename(path),
                                on_load_callback = nothing,
-                               dont_dlopen::Bool = false)
+                               dont_dlopen::Bool = false,
+                               aliases = Symbol[])
         if isa(flags, UInt32)
             flags = rtld_symbols(flags)
         end
-        return new(varname, path, deps, system_deps, soname, flags, on_load_callback, dont_dlopen)
+        aliases = check_aliases(Symbol(varname), aliases)
+        return new(varname, path, deps, system_deps, soname, flags, on_load_callback, dont_dlopen, aliases)
     end
 end
 
@@ -144,7 +181,7 @@ function generate_toml_dict(lp::JLLLibraryProduct)
     if !isempty(lp.system_deps)
         d["system_deps"] = copy(lp.system_deps)
     end
-    return d
+    return add_aliases!(d, lp.aliases)
 end
 function parse_toml_dict(::Type{JLLLibraryProduct}, d)
     linkage = get(d, "linkage", "dynamic")
@@ -164,6 +201,7 @@ function parse_toml_dict(::Type{JLLLibraryProduct}, d)
         flags = Symbol.(d["flags"]),
         on_load_callback,
         dont_dlopen = get(d, "dont_dlopen", false)::Bool,
+        aliases = parse_aliases(d),
     )
 end
 
@@ -547,6 +585,14 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             end
         end
 
+        # An alias names the same thing as its product, so may name nothing else
+        exported = [p for p in products if !isa(p, JLLStaticLibraryProduct)]
+        for p in exported, alias in exported_aliases(p)
+            if count(op -> alias ∈ exported_names(op), exported) > 1
+                throw(ArgumentError("Alias '$(alias)' of '$(p.varname)' is also the name of another product for platform '$(triplet(platform))'!"))
+            end
+        end
+
         # Quick verification of dependency structure, to ensure we're not incoherent.
         for p in products
             if isa(p, JLLLibraryProduct) || isa(p, JLLStaticLibraryProduct)
@@ -812,9 +858,27 @@ function coalesce_licenses(info::JLLInfo)
     return ret
 end
 
+"""
+    exported_names(p::AbstractJLLProduct)
+
+All names a JLL exports for the product `p`: its `varname` and any aliases.
+"""
+exported_names(p::AbstractJLLProduct) = Symbol[p.varname; exported_aliases(p)]
+exported_aliases(p::AbstractJLLProduct) = hasfield(typeof(p), :aliases) ? p.aliases : Symbol[]
+
 # The `LazyJLLWrappers` every generated JLL requires: the first release that can
 # read every feature a `JLL.toml` may use (static library entries, `dont_dlopen`).
 const lazy_jll_wrappers_compat = "1.2.2"
+# The first `LazyJLLWrappers` release that exports product aliases, required only by
+# JLLs that have any.
+const lazy_jll_wrappers_aliases_compat = "1.3.0"
+
+function lazy_jll_wrappers_compat_for(info::JLLInfo)
+    has_aliases = any(info.builds) do build
+        return any(p -> !isempty(exported_aliases(p)), build.products)
+    end
+    return has_aliases ? lazy_jll_wrappers_aliases_compat : lazy_jll_wrappers_compat
+end
 
 """
     generate_pkg_hooks(out_dir::String, info::JLLInfo)
@@ -1019,7 +1083,7 @@ function generate_jll(out_dir::String, info::JLLInfo; clear::Bool = true, build_
             ),
 
             "compat" => Dict{String,Any}(
-                "LazyJLLWrappers" => lazy_jll_wrappers_compat,
+                "LazyJLLWrappers" => lazy_jll_wrappers_compat_for(info),
                 "julia" => info.julia_compat,
             )
         )

@@ -80,3 +80,81 @@ end
         end
     end
 end
+
+@testset "resolve_prefix_path" begin
+    using BinaryBuilderAuditor: resolve_prefix_path
+    mktempdir() do prefix
+        alias = "/workspace/destdir"
+        mkpath(joinpath(prefix, "bin"))
+        mkpath(joinpath(prefix, "include", "ncursesw"))
+        touch(joinpath(prefix, "bin", "xz"))
+        touch(joinpath(prefix, "include", "ncursesw", "curses.h"))
+        symlink("xz", joinpath(prefix, "bin", "lzma"))
+        symlink("../bin/lzma", joinpath(prefix, "bin", "unlzma"))
+        symlink("$(alias)/bin/xz", joinpath(prefix, "bin", "unxz"))
+        symlink("ncursesw", joinpath(prefix, "include", "ncurses"))
+        symlink("/elsewhere/xz", joinpath(prefix, "bin", "outside"))
+        symlink("loop", joinpath(prefix, "bin", "loop"))
+
+        resolve(p) = resolve_prefix_path(prefix, alias, p)
+        @test resolve("bin/xz") == joinpath("bin", "xz")
+        @test resolve("bin/lzma") == joinpath("bin", "xz")
+        @test resolve("bin/unlzma") == joinpath("bin", "xz")
+        @test resolve("bin/unxz") == joinpath("bin", "xz")
+        @test resolve("include/ncurses") == joinpath("include", "ncursesw")
+        @test resolve("include/ncurses/curses.h") == joinpath("include", "ncursesw", "curses.h")
+        @test resolve("include/ncurses/../ncurses/curses.h") == joinpath("include", "ncursesw", "curses.h")
+        @test resolve("bin/outside") === nothing
+        @test resolve("../bin/xz") === nothing
+        @test resolve("bin/loop") === nothing
+    end
+end
+
+@testset "products naming the same path" begin
+    platform = HostPlatform()
+    mktempdir() do prefix
+        mkpath(joinpath(prefix, "bin"))
+        mkpath(joinpath(prefix, "include", "ncursesw"))
+        write(joinpath(prefix, "bin", "xz"), "#!/bin/sh\n")
+        chmod(joinpath(prefix, "bin", "xz"), 0o755)
+        symlink("xz", joinpath(prefix, "bin", "lzma"))
+        touch(joinpath(prefix, "include", "ncursesw", "curses.h"))
+        symlink("ncursesw", joinpath(prefix, "include", "ncurses"))
+        env = Dict(
+            "prefix" => prefix,
+            "bindir" => joinpath(prefix, "bin"),
+            "includedir" => joinpath(prefix, "include"),
+            "bb_full_target" => triplet(platform),
+        )
+        scan(products) = scan_files(prefix, platform, AbstractProduct[products...], env)
+        function scan_error(products)
+            try
+                scan(products)
+            catch e
+                return e
+            end
+            return nothing
+        end
+
+        # Two file products for one path is an error, whichever way round, through a
+        # symlinked file or a symlinked directory
+        for products in ([FileProduct("include/ncursesw/curses.h", :curses_h), FileProduct("include/ncurses/curses.h", :ncurses_curses_h)],
+                         [FileProduct("include/ncurses/curses.h", :ncurses_curses_h), FileProduct("include/ncursesw/curses.h", :curses_h)],
+                         [FileProduct("include/ncursesw", :ncursesw_include), FileProduct("include/ncurses", :ncurses_include)])
+            err = scan_error(products)
+            @test isa(err, ErrorException)
+            @test contains(err.msg, "FileProducts '$(products[1].varname)' and '$(products[2].varname)' both resolve to")
+        end
+
+        # Executables may share a file, as they can behave differently by the name they
+        # are run by (`lzma` here, like `clang++` for `clang`)
+        scan([ExecutableProduct("xz", :xz), ExecutableProduct("lzma", :lzma)])
+
+        # ... and aliases are the way to give it several names
+        scan([ExecutableProduct("xz", :xz; aliases = [:lzma]),
+              FileProduct("include/ncursesw/curses.h", :curses_h; aliases = [:ncurses_curses_h])])
+        # A file product may name an executable's file, as they are different kinds
+        scan([ExecutableProduct("xz", :xz), FileProduct("bin/lzma", :lzma_path)])
+        @test true
+    end
+end
