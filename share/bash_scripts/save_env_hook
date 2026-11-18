@@ -30,6 +30,8 @@ function save_env() {
 	for GREP_VAR_NAME in BASH_ARGC BASH_ARGV BASH_CMDS BASH_COMMAND BASH_LINENO BASH_SOURCE BASHOPTS BASH_VERSINFO UID EUID PPID SHELLOPTS POSIXLY_CORRECT GREP_VAR_NAME _; do
 		GREP_CMD="${GREP_CMD}|^${GREP_VAR_NAME}="
 	done
+	# The jobserver is only set up for the build script itself
+	GREP_CMD="${GREP_CMD}|^BB_JOBSERVER_"
 	set -o posix; set | grep -E -v "${GREP_CMD}" > /workspace/metadir/env; set +o posix
 	echo "cd $(pwd)" >> /workspace/metadir/env
 }
