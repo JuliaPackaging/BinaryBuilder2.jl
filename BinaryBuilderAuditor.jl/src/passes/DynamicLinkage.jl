@@ -98,6 +98,7 @@ function resolve_dynamic_links!(result::AuditResult, info::AuditInfo)
             soname = lib_soname,
             on_load_callback = lib.on_load_callback,
             dont_dlopen = lib.dont_dlopen,
+            aliases = lib.aliases,
         ))
     end
 

@@ -176,6 +176,26 @@ using JLLGenerator: generate_toml_dict
                 LibraryProduct("libmult", :libmult; static = StaticLibraryProduct("libmult"; deps = [LibraryDependency(:libplus), LibraryDependency(:Zlib_jll, :libz)])),
             ]; info = zlib)
             @test entry(products, :libmult).deps == [JLLLibraryDep(nothing, :libplus), JLLLibraryDep(:Zlib_jll, :libz)]
+            # Aliases name libraries too, in this build and in a dependency
+            ncurses = AuditInfo(Dict(:Ncurses_jll => AuditDependencyInfo([
+                JLLLibraryProduct(:libncursesw, "lib/libncursesw.so.6", [], []; aliases = [:libncurses]),
+            ])))
+            products = emit(prefix, [
+                LibraryProduct("libplus", :libplus; aliases = [:libplusalias]),
+                LibraryProduct("libmult", :libmult; static = StaticLibraryProduct("libmult"; deps = [LibraryDependency(:libplusalias), LibraryDependency(:Ncurses_jll, :libncurses)])),
+            ]; info = ncurses)
+            @test entry(products, :libmult).deps == [JLLLibraryDep(nothing, :libplusalias), JLLLibraryDep(:Ncurses_jll, :libncurses)]
+            result = run_passes(prefix, [
+                LibraryProduct("libplus", :libplus),
+                LibraryProduct("libmult", :libmult; static = StaticLibraryProduct("libmult"; deps = [LibraryDependency(:Ncurses_jll, :libwrong)])),
+            ]; info = ncurses)
+            @test contains(messages(result, "lib/libmult.a"), "(it provides: libncurses, libncursesw)")
+            # An archive named after an alias inherits from the library it aliases
+            products = emit(prefix, [
+                LibraryProduct("libplus", :libplus),
+                LibraryProduct("libmult", :libmult; aliases = [:libmult_alias]),
+            ]; static_library_products = [StaticLibraryProduct("libmult"; varname = :libmult_alias)])
+            @test entry(products, :libmult_alias).deps == [JLLLibraryDep(nothing, :libplus)]
         end
 
         @testset "archives stay out of the dynamic passes" begin

@@ -33,7 +33,9 @@ struct ScanResult
     # Note that on Windows this includes import libraries, which are archives too.
     static_libraries::Set{String}
 
-    # This maps `rel_path` to a library product `LibraryProduct`
+    # This maps `rel_path` to a library product `LibraryProduct`.  Each file is named by
+    # at most one product; further names for it are that product's `aliases`.  (The same
+    # holds for files, which `scan_files()` checks but does not record.)
     library_products::Dict{String,LibraryProduct}
 
     # This maps the `rel_path` of a static archive to its `StaticLibraryProduct`.
@@ -192,7 +194,27 @@ function scan_files(prefix::String, platform::AbstractPlatform,
             error()
         end
 
-        library_product_map[relpath_search(symlinks, lib_located_path)] = lib
+        rel_path = relpath_search(symlinks, lib_located_path)
+        if haskey(library_product_map, rel_path)
+            duplicate_product_error(library_product_map[rel_path], lib, rel_path)
+        end
+        library_product_map[rel_path] = lib
+    end
+
+    # Likewise, each file is named by at most one `FileProduct`.  Executables are exempt:
+    # many take their behavior from the name they are run by (e.g. `clang++`, a symlink
+    # to `clang`), so each such name needs its own product.
+    file_products = Dict{String,FileProduct}()
+    for p in products
+        isa(p, FileProduct) || continue
+        located_path = locate(p, prefix; env, platform)
+        # Products that cannot be located are reported before the audit
+        located_path === nothing && continue
+        rel_path = something(resolve_prefix_path(prefix, prefix_alias, located_path), located_path)
+        if haskey(file_products, rel_path)
+            duplicate_product_error(file_products[rel_path], p, rel_path)
+        end
+        file_products[rel_path] = p
     end
 
     # Locate all static library products, each of which must be one of the archives found above
@@ -283,6 +305,54 @@ function relpath_search(symlinks::Dict{String,String}, rel_path::AbstractString)
         rel_path = new_rel_path
     end
     return rel_path
+end
+
+"""
+    resolve_prefix_path(prefix, prefix_alias, rel_path)
+
+The path, relative to `prefix`, that `rel_path` names once every symlink along it is
+followed, including symlinked directories.  Symlinks may be relative, or absolute
+within `prefix_alias`.  Returns `nothing` if the path leads out of the prefix.
+"""
+function resolve_prefix_path(prefix::AbstractString, prefix_alias::AbstractString, rel_path::AbstractString;
+                             max_links::Int = 64)
+    pending = splitpath(rel_path)
+    resolved = String[]
+    num_links = 0
+    while !isempty(pending)
+        part = popfirst!(pending)
+        if part == "."
+            continue
+        elseif part == ".."
+            isempty(resolved) && return nothing
+            pop!(resolved)
+            continue
+        end
+        path = joinpath(prefix, resolved..., part)
+        if islink(path)
+            num_links += 1
+            num_links > max_links && return nothing
+            target = readlink(path)
+            if isabspath(target)
+                if target != prefix_alias && !startswith(target, rstrip(prefix_alias, '/') * "/")
+                    return nothing
+                end
+                target = relpath(target, prefix_alias)
+                empty!(resolved)
+            end
+            prepend!(pending, splitpath(target))
+        else
+            push!(resolved, part)
+        end
+    end
+    return isempty(resolved) ? "." : joinpath(resolved...)
+end
+
+function duplicate_product_error(first::AbstractProduct, second::AbstractProduct, rel_path::AbstractString)
+    kind = nameof(typeof(first))
+    @error("$(kind)s resolve to the same path; declare one as an alias of the other, e.g. `$(kind)(..., :$(first.varname); aliases=[:$(second.varname)])`",
+           path=rel_path, products=(first.varname, second.varname))
+    error("$(kind)s '$(first.varname)' and '$(second.varname)' both resolve to '$(rel_path)'")
 end
 
 Base.relpath(scan::ScanResult, rel_path::AbstractString) = relpath_search(scan.symlinks, rel_path)

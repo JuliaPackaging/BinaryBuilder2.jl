@@ -1,11 +1,12 @@
 using BinaryBuilderProducts, JLLGenerator
+using JLLGenerator: exported_names
 
 function resolve_static_libraries!(result::AuditResult, info::AuditInfo)
     scan, pass_results, products = result.scan, result.pass_results, result.jll_lib_products
     if isempty(scan.static_library_products)
         return result
     end
-    own_libraries = Set{Symbol}(lib.varname for lib in values(scan.library_products))
+    own_libraries = Set{Symbol}(name for lib in values(scan.library_products) for name in (lib.varname, lib.aliases...))
     union!(own_libraries, (slp.varname for slp in values(scan.static_library_products)))
 
     # Unlike their dynamic counterparts, static libraries do not track dependency information
@@ -28,8 +29,8 @@ function resolve_static_libraries!(result::AuditResult, info::AuditInfo)
             if dep_info === nothing
                 push_result!(pass_results, "resolve_static_libraries!", :fail, rel_path,
                              "Dependency '$(dep_string(jll_dep))' names '$(dep.pkg)', which is not a dependency of this build")
-            elseif !any(lib -> lib.varname == dep.varname, dep_info.libs)
-                available = join(sort(unique(string(lib.varname) for lib in dep_info.libs)), ", ")
+            elseif !any(lib -> dep.varname ∈ exported_names(lib), dep_info.libs)
+                available = join(sort(unique(string(name) for lib in dep_info.libs for name in exported_names(lib))), ", ")
                 push_result!(pass_results, "resolve_static_libraries!", :fail, rel_path,
                              "Dependency '$(dep_string(jll_dep))' does not name a library product of '$(dep.pkg)' (it provides: $(isempty(available) ? "nothing" : available))")
             end
@@ -38,7 +39,7 @@ function resolve_static_libraries!(result::AuditResult, info::AuditInfo)
     end
     resolve(rel_path::String, deps::Vector{LibraryDependency}) = unique!(JLLLibraryDep[resolve(rel_path, dep) for dep in deps])
 
-    dynamic_libs = Dict{Symbol,JLLLibraryProduct}(p.varname => p for p in products if isa(p, JLLLibraryProduct))
+    dynamic_libs = Dict{Symbol,JLLLibraryProduct}(name => p for p in products if isa(p, JLLLibraryProduct) for name in exported_names(p))
     for (rel_path, slp) in scan.static_library_products
         shlib = get(dynamic_libs, slp.varname, nothing)
         if shlib === nothing

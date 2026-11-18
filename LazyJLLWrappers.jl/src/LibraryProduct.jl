@@ -68,4 +68,18 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
         end
     end
     push!(jb.exports, var_name)
+
+    # Aliases are the same library object, so it is loaded, and its callback run, once
+    alias_definitions(jb, product, path_var_name) do alias
+        if use_lazy_libraries()
+            push!(jb.top_level_blocks, emit_typed_global(alias, LazyLibrary, var_name; isconst=true))
+        else
+            push!(jb.top_level_blocks, emit_typed_global(
+                alias, String, soname(product); isconst = VERSION < v"1.6.0",
+            ))
+            if VERSION >= v"1.6.0"
+                push!(jb.init_blocks, :(global $(alias) = $(var_name)))
+            end
+        end
+    end
 end

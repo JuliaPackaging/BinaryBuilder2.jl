@@ -1,4 +1,4 @@
-using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl, Accessors
+using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl, Accessors, TOML
 
 # The Julia that installs and loads the generated JLLs: the one running these tests,
 # unless `LAZYJLLWRAPPERS_TEST_JULIA` names another Julia executable.  That lets the
@@ -35,6 +35,13 @@ function generate_and_load_jll(jllinfo, test_code::String;
     end
     mktempdir() do dir
         JLLGenerator.generate_jll(dir, jllinfo)
+        # The JLL may ask for a `LazyJLLWrappers` release newer than this checkout, when
+        # it uses a feature this checkout adds; it is this checkout that is under test.
+        project = TOML.parsefile(joinpath(dir, "Project.toml"))
+        if pkgversion(LazyJLLWrappers) ∉ Pkg.Types.semver_spec(project["compat"]["LazyJLLWrappers"])
+            project["compat"]["LazyJLLWrappers"] = string(pkgversion(LazyJLLWrappers))
+            open(io -> TOML.print(io, project), joinpath(dir, "Project.toml"); write=true)
+        end
         Pkg.activate(dir) do
             Preferences.set_preferences!("$(jllinfo.name)_jll", pairs(extra_preferences)...)
         end
@@ -423,6 +430,95 @@ end
         @test libxls_jll.XLS_CALLBACK_RAN
         """,
     )
+end
+
+@testset "library aliases name the same library" begin
+    jllinfo = include(joinpath(example_jllinfos_path, "libxls_jll.jl"))
+    jllinfo = @set jllinfo.builds = map(jllinfo.builds) do build
+        build = @set build.callback_defs = Dict{Symbol,String}(
+            :xls_loaded => "xls_loaded() = (global XLS_CALLBACK_RUNS = (isdefined(@__MODULE__, :XLS_CALLBACK_RUNS) ? XLS_CALLBACK_RUNS : 0) + 1; nothing)",
+        )
+        return @set build.products = map(build.products) do p
+            isa(p, JLLLibraryProduct) || return p
+            return JLLLibraryProduct(p.varname, p.path, p.deps, p.system_deps;
+                                     soname = p.soname, flags = p.flags,
+                                     on_load_callback = :xls_loaded,
+                                     dont_dlopen = p.dont_dlopen,
+                                     aliases = [:libxlsalias])
+        end
+    end
+    generate_and_load_jll(
+        jllinfo,
+        """
+        import LazyJLLWrappers
+        @test :libxlsalias ∈ names(libxls_jll)
+        @test libxlsalias === libxlsreader
+        @test libxls_jll.libxlsalias_path == libxls_jll.libxlsreader_path
+        @test isfile(libxls_jll.libxlsalias_path)
+        @test unsafe_string(ccall((:xls_getVersion, libxlsalias), Cstring, ())) == "1.6.2"
+        @test unsafe_string(ccall((:xls_getVersion, libxlsreader), Cstring, ())) == "1.6.2"
+        # One library, so its callback runs once
+        @test libxls_jll.XLS_CALLBACK_RUNS == 1
+        """,
+    )
+
+    # A preference overriding the library's path applies to the alias as well.  (The
+    # override names no real library, so this needs a regime that does not load it.)
+    target_uses_lazy_libraries && mktempdir() do dir
+        override = joinpath(dir, "libxlsreader_override")
+        generate_and_load_jll(
+            jllinfo,
+            """
+            @test libxls_jll.libxlsreader_path == $(repr(override))
+            @test libxls_jll.libxlsalias_path == $(repr(override))
+            """;
+            extra_preferences = Dict("libxlsreader_path" => override),
+        )
+    end
+end
+
+@testset "executable and file aliases name the same product" begin
+    with_aliases(jllinfo, varname, aliases) = @set jllinfo.builds = map(jllinfo.builds) do build
+        return @set build.products = map(build.products) do p
+            p.varname == varname || return p
+            return typeof(p)(p.varname, p.path; aliases)
+        end
+    end
+
+    jllinfo = with_aliases(include(joinpath(example_jllinfos_path, "HelloWorldC_jll.jl")), :hello_world, [:hello_alias])
+    generate_and_load_jll(
+        jllinfo,
+        """
+        @test :hello_alias ∈ names(HelloWorldC_jll)
+        @test hello_alias === hello_world
+        @test HelloWorldC_jll.hello_alias_path == HelloWorldC_jll.hello_world_path
+        @test isfile(HelloWorldC_jll.hello_alias_path)
+        @test success(hello_alias())
+        """,
+    )
+
+    jllinfo = with_aliases(include(joinpath(example_jllinfos_path, "Vulkan_Headers_jll.jl")), :vulkan_hpp, [:vulkan_hpp_alias])
+    generate_and_load_jll(
+        jllinfo,
+        """
+        @test :vulkan_hpp_alias ∈ names(Vulkan_Headers_jll)
+        @test vulkan_hpp_alias == vulkan_hpp
+        @test isfile(vulkan_hpp_alias)
+        @test Vulkan_Headers_jll.vulkan_hpp_alias_path == Vulkan_Headers_jll.vulkan_hpp_path
+        """,
+    )
+
+    # A preference overriding the product's path applies to the alias as well
+    mktempdir() do dir
+        generate_and_load_jll(
+            jllinfo,
+            """
+            @test vulkan_hpp_alias == vulkan_hpp == $(repr(dir))
+            @test Vulkan_Headers_jll.vulkan_hpp_alias_path == $(repr(dir))
+            """;
+            extra_preferences = Dict("vulkan_hpp_path" => dir),
+        )
+    end
 end
 
 @testset "builds for unparseable platforms are skipped" begin

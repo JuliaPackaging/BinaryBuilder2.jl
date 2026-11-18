@@ -123,6 +123,48 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
         end
     end
 
+    @testset "library aliases - $(triplet(target_platform))" begin
+        mktempdir() do prefix
+            mkpath(joinpath(prefix, "lib"))
+            libplus_path = joinpath(prefix, "lib", libplus_soname)
+            libmult_path = joinpath(prefix, "lib", libmult_soname)
+            with_toolchains([toolchain]) do _, env
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_soname))`, env))
+                symlink(libplus_soname, joinpath(prefix, "lib", "libplus$(dlext(platform))"))
+                # Another name for the same library, the way `libncurses` points at `libncursesw`
+                symlink("libplus$(dlext(platform))", joinpath(prefix, "lib", "libplusalias$(dlext(platform))"))
+                run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) -L $(prefix)/lib -lplus $(soname_flag(target_platform, libmult_soname))`, env))
+            end
+
+            # Declared as an alias, the other name is carried by the library's product
+            scan = scan_files(prefix, target_platform, [
+                LibraryProduct("libplus", :libplus; aliases = [:libplusalias]),
+                LibraryProduct("libmult", :libmult),
+            ])
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            jll_lib_products = resolve_dynamic_links!(result, AuditInfo()).jll_lib_products
+            @test success(result.pass_results)
+            @test [p.varname for p in jll_lib_products] == [:libmult, :libplus]
+            @test jll_lib_products[2].aliases == [:libplusalias]
+            @test isempty(jll_lib_products[1].aliases)
+            @test jll_lib_products[1].deps == [JLLLibraryDep(nothing, :libplus)]
+
+            # Declared as a separate product, it is an error: whichever is declared first
+            for products in ([LibraryProduct("libplus", :libplus), LibraryProduct("libplusalias", :libplusalias)],
+                             [LibraryProduct("libplusalias", :libplusalias), LibraryProduct("libplus", :libplus)])
+                err = try
+                    scan_files(prefix, target_platform, products)
+                    nothing
+                catch e
+                    e
+                end
+                @test isa(err, ErrorException)
+                @test contains(err.msg, "both resolve to '$(joinpath("lib", libplus_soname))'")
+            end
+        end
+    end
+
     @testset "update_linkage - $(triplet(target_platform))" begin
         mktempdir() do prefix
             mkpath(joinpath(prefix, "lib"))
