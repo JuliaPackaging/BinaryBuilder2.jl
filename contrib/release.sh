@@ -14,6 +14,26 @@
 #      - [abc1234] some commit message
 #      - [def5678] some other commit message
 #
+# A release is breaking when the new version is not compatible with the
+# previous release under Julia's semver rules for `[compat]`: a major bump for
+# 1.x and later, a minor bump for 0.x, and any bump for 0.0.x.  The previous
+# release is the tag that notes are collected from (see `--since`), or else
+# the version in `Project.toml` before it is bumped; with neither, there is no
+# previous release and the release is not breaking.  General's AutoMerge
+# rejects a breaking release unless its notes mention breaking changes, so a
+# breaking release needs at least one `--breaking "<text>"`, and the notes then
+# read:
+#
+#     Release notes:
+#
+#     ## Breaking changes
+#
+#     - <text>
+#
+#     ## Changes
+#
+#      - [abc1234] some commit message
+#
 # The top-level package's trigger is a bare `@JuliaRegistrator register`.
 # Registrator takes everything after `Release notes:` to the end of the comment
 # as the release notes, so the trigger and the notes come last.  Once the
@@ -57,6 +77,10 @@
 #     -n, --dry-run       Print the commit message, don't touch anything
 #     -s, --since <rev>   Collect notes since <rev> instead of the last tag
 #     -a, --add <path>    Also stage <path> in the release commit (repeatable)
+#     -b, --breaking <text>
+#                         Describe a breaking change in the release notes
+#                         (repeatable, one list item each); required when the
+#                         release is breaking
 #     -e, --edit          Open the commit message in your editor
 #         --no-registry-check
 #                         Skip checking that the package's [deps]/[compat]
@@ -94,6 +118,7 @@ edit=false
 registry_check=true
 since=""
 extra_paths=()
+breaking_notes=()
 positional=()
 
 while [[ $# -gt 0 ]]; do
@@ -103,6 +128,7 @@ while [[ $# -gt 0 ]]; do
         --no-registry-check) registry_check=false; shift ;;
         -s|--since)   since="${2:?--since requires a revision}"; shift 2 ;;
         -a|--add)     extra_paths+=("${2:?--add requires a path}"); shift 2 ;;
+        -b|--breaking) breaking_notes+=("${2:?--breaking requires a description}"); shift 2 ;;
         -r|--registrator-comment)
                       registrator_comment "${2:?--registrator-comment requires a revision}"; exit 0 ;;
         -h|--help)    usage; exit 0 ;;
@@ -157,6 +183,54 @@ fi
 tag_name="${tag_prefix}${version}"
 if git -C "${repo_root}" rev-parse -q --verify "refs/tags/${tag_name}" >/dev/null; then
     die "tag '${tag_name}' already exists; bump the version (e.g. \`contrib/release.sh ${subproject} <new version>\`)"
+fi
+
+# Find the point in history to collect release notes from: an explicit `--since`,
+# otherwise the most recent `${tag_prefix}*` tag that is actually an ancestor of HEAD.
+if [[ -z "${since}" ]]; then
+    while read -r tag; do
+        [[ -n "${tag}" ]] || continue
+        if git -C "${repo_root}" merge-base --is-ancestor "${tag}" HEAD 2>/dev/null; then
+            since="${tag}"
+            break
+        fi
+    done < <(git -C "${repo_root}" tag --list "${tag_prefix}*" --sort=-v:refname)
+fi
+
+# The previous release's version: that of the tag notes are collected from, or
+# else the `Project.toml` version before any bump.
+semver_re='^([0-9]+)\.([0-9]+)\.([0-9]+)([-+].*)?$'
+prev_version=""
+if [[ "${since}" == "${tag_prefix}"* && "${since#"${tag_prefix}"}" =~ ${semver_re} ]]; then
+    prev_version="${since#"${tag_prefix}"}"
+elif [[ ${#positional[@]} -eq 2 ]]; then
+    prev_version="$(sed -n 's/^version *= *"\(.*\)"/\1/p' "${project_toml}" | head -1)"
+fi
+
+# Print the `[compat]` range a version belongs to under Julia's semver rules
+# (`2`, `0.3` or `0.0.4`); two versions are compatible iff these match.
+compat_range() {
+    [[ "$1" =~ ${semver_re} ]] || return 1
+    local major="${BASH_REMATCH[1]}" minor="${BASH_REMATCH[2]}" patch="${BASH_REMATCH[3]}"
+    if (( 10#${major} > 0 )); then
+        echo "$((10#${major}))"
+    elif (( 10#${minor} > 0 )); then
+        echo "0.$((10#${minor}))"
+    else
+        echo "0.0.$((10#${patch}))"
+    fi
+}
+
+breaking=false
+if [[ -n "${prev_version}" ]]; then
+    prev_range="$(compat_range "${prev_version}")" \
+        || die "previous version '${prev_version}' is not a semver version"
+    if [[ "${prev_range}" != "$(compat_range "${version}")" ]]; then
+        breaking=true
+    fi
+fi
+if ${breaking} && [[ ${#breaking_notes[@]} -eq 0 ]]; then
+    die "v${version} is a breaking release (previous release v${prev_version}), and AutoMerge rejects breaking releases whose notes don't mention it. Describe each breaking change with --breaking \"<text>\" (repeatable), e.g. \`contrib/release.sh --breaking \"Drop support for Julia 1.9\" ${subproject}${positional[1]:+ ${positional[1]}}\`."
 fi
 
 # Check that the package's `[deps]` and `[compat]` can be satisfied by versions
@@ -255,18 +329,6 @@ if [[ ${#positional[@]} -eq 2 ]] && ! ${dry_run}; then
     mv "${project_toml}.tmp" "${project_toml}"
 fi
 
-# Find the point in history to collect release notes from: an explicit `--since`,
-# otherwise the most recent `${tag_prefix}*` tag that is actually an ancestor of HEAD.
-if [[ -z "${since}" ]]; then
-    while read -r tag; do
-        [[ -n "${tag}" ]] || continue
-        if git merge-base --is-ancestor "${tag}" HEAD 2>/dev/null; then
-            since="${tag}"
-            break
-        fi
-    done < <(git -C "${repo_root}" tag --list "${tag_prefix}*" --sort=-v:refname)
-fi
-
 if [[ -n "${since}" ]]; then
     range="${since}..HEAD"
 else
@@ -297,10 +359,19 @@ if [[ -n "${compat_notes}" ]]; then
     message="${message}"$'\n\n'"Compat bounds updated to admit v${version}:"$'\n'"${compat_notes}"
 fi
 message="${message}"$'\n\n'"${trigger}"
-if [[ -n "${notes}" ]]; then
-    message="${message}"$'\n\n'"Release notes:"$'\n'"${notes}"
-else
+if [[ -z "${notes}" ]]; then
     echo "WARNING: no commits touching ${proj_dir} since ${since:-the start of history}" >&2
+fi
+if [[ ${#breaking_notes[@]} -gt 0 ]]; then
+    message="${message}"$'\n\n'"Release notes:"$'\n\n'"## Breaking changes"$'\n'
+    for item in "${breaking_notes[@]}"; do
+        message="${message}"$'\n'"- ${item}"
+    done
+    if [[ -n "${notes}" ]]; then
+        message="${message}"$'\n\n'"## Changes"$'\n\n'"${notes}"
+    fi
+elif [[ -n "${notes}" ]]; then
+    message="${message}"$'\n\n'"Release notes:"$'\n'"${notes}"
 fi
 
 if ${dry_run}; then
@@ -323,12 +394,14 @@ fi
 
 commit_args=(commit -m "${message}")
 if ${edit}; then
-    commit_args+=(--edit)
+    # Strip only git's instructions below the scissors line, keeping the
+    # `## ...` headings that the default cleanup would drop as comments
+    commit_args+=(--edit --cleanup=scissors)
 fi
 git -C "${repo_root}" "${commit_args[@]}"
 
 # Tag the release commit, reusing its (possibly edited) message as the tag annotation
-git -C "${repo_root}" log -1 --format=%B HEAD | git -C "${repo_root}" tag -a "${tag_name}" -F - HEAD
+git -C "${repo_root}" log -1 --format=%B HEAD | git -C "${repo_root}" tag -a --cleanup=whitespace "${tag_name}" -F - HEAD
 echo "Tagged ${tag_name}; push with: git push origin HEAD ${tag_name}"
 echo "Then register it by posting this comment on the pushed commit:"
 echo "    contrib/release.sh -r ${tag_name} | gh api 'repos/{owner}/{repo}/commits/$(git -C "${repo_root}" rev-parse HEAD)/comments' -F body=@-"
