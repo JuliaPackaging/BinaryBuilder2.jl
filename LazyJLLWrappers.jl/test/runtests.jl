@@ -1,22 +1,53 @@
 using LazyJLLWrappers, Pkg, Test, JLLGenerator, Preferences, Libdl, Accessors
 
+# The Julia that installs and loads the generated JLLs: the one running these tests,
+# unless `LAZYJLLWRAPPERS_TEST_JULIA` names another Julia executable.  That lets the
+# JLLs be tested on Julia versions too old to run JLLGenerator itself.
+const target_julia = haskey(ENV, "LAZYJLLWRAPPERS_TEST_JULIA") ?
+    `$(ENV["LAZYJLLWRAPPERS_TEST_JULIA"]) --startup-file=no` : Base.julia_cmd()
+const target_version = VersionNumber(readchomp(`$(target_julia) -e "print(VERSION)"`))
+const target_uses_lazy_libraries =
+    parse(Bool, readchomp(`$(target_julia) -e "using Libdl; print(isdefined(Libdl, :LazyLibrary))"`))
+@info("Loading generated JLLs with Julia $(target_version)")
+
 # For more debugging info, set `io = stdout`
 function generate_and_load_jll(jllinfo, test_code::String;
                                extra_envs::Dict{String,String} = Dict{String,String}(),
                                extra_preferences::Dict{String,String} = Dict{String,String}(),
                                expect_cache_mismatch::Bool = false,
                                io::IO = devnull)
+    # LazyJLLWrappers supports preferences and platform augmentation from Julia v1.6 on.
+    if target_version < v"1.6" &&
+       (!isempty(extra_preferences) || !isempty(jllinfo.platform_augmentation_code))
+        @info("Skipping $(jllinfo.name)_jll test: needs Julia v1.6 or later")
+        return
+    end
+
+    # When the target Julia is older than the JLL's julia compat, drop the builds for
+    # platforms it does not know, as a JLL made for that Julia would.  (`AnyPlatform`
+    # builds load anywhere, though `guess_julia_compat()` asks v1.6 for them.)
+    if target_version ∉ Pkg.Types.semver_spec(jllinfo.julia_compat)
+        jllinfo = @set jllinfo.builds = filter(jllinfo.builds) do build
+            return build.platform isa AnyPlatform ||
+                   target_version ∈ Pkg.Types.semver_spec(JLLGenerator.guess_julia_compat([build]))
+        end
+        jllinfo = @set jllinfo.julia_compat = "$(target_version.major).$(target_version.minor)"
+    end
     mktempdir() do dir
         JLLGenerator.generate_jll(dir, jllinfo)
         Pkg.activate(dir) do
             Preferences.set_preferences!("$(jllinfo.name)_jll", pairs(extra_preferences)...)
-            # Ensure we're using the current version of LazyJLLWrappers.jl
-            Pkg.develop(;path=dirname(@__DIR__), io)
-            Pkg.instantiate(;io)
         end
+        # Ensure we're using the current version of LazyJLLWrappers.jl
+        install_code = """
+        using Pkg
+        Pkg.develop(PackageSpec(path = $(repr(dirname(@__DIR__)))))
+        Pkg.instantiate()
+        """
+        run(pipeline(`$(target_julia) --project=$(dir) -e $(install_code)`; stdout = io, stderr = io))
 
         withenv(extra_envs...) do
-            cmd = `$(Base.julia_cmd()) --project=$(dir) -e "using Test, $(jllinfo.name)_jll; $(test_code)"`
+            cmd = `$(target_julia) --project=$(dir) -e "using Test, $(jllinfo.name)_jll; $(test_code)"`
             if expect_cache_mismatch
                 stderr = IOBuffer()
                 @test !success(run(pipeline(ignorestatus(cmd); stderr=stderr)))
@@ -116,8 +147,11 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
             @test FlavoredHelloWorldC_jll.platform["flavor"] == "native"
             @test occursin("$(host_treehash)", hello_world().exec[1])
             @test success(hello_world())
-            installed = only(Pkg.Operations.collect_artifacts(dirname(dirname(pathof(FlavoredHelloWorldC_jll)))))[2]
-            @test installed["FlavoredHelloWorldC"]["git-tree-sha1"] == "$(host_treehash)"
+            # Pkg applies the augmentation when installing artifacts from Julia v1.7 on
+            if VERSION >= v"1.7"
+                installed = only(Pkg.Operations.collect_artifacts(dirname(dirname(pathof(FlavoredHelloWorldC_jll)))))[2]
+                @test installed["FlavoredHelloWorldC"]["git-tree-sha1"] == "$(host_treehash)"
+            end
             """,
         )
     end
@@ -188,7 +222,7 @@ example_jllinfos_path = joinpath(@__DIR__, "..", "..", "JLLGenerator.jl", "contr
 end
 
 # Test that `LazyLibrary` support works on Julias new enough to use it
-if LazyJLLWrappers.use_lazy_libraries()
+if target_uses_lazy_libraries
     @testset "Laziness" begin
         generate_and_load_jll(
             include(joinpath(example_jllinfos_path, "Ncurses_jll.jl")),
@@ -329,7 +363,12 @@ end
         @test isabspath(libxls_jll.libxlsreader_path)
         @test isfile(libxls_jll.libxlsreader_path)
         @test isempty(filter(l -> occursin("libxlsreader", l), Libdl.dllist()))
-        if !LazyJLLWrappers.use_lazy_libraries()
+        if VERSION < v"1.6"
+            # The exported variable is the constant SONAME, which `ccall()` finds only
+            # once the library has been loaded
+            @test !isabspath(libxlsreader)
+            Libdl.dlopen(libxls_jll.libxlsreader_path)
+        elseif !LazyJLLWrappers.use_lazy_libraries()
             # The exported variable still names the library's absolute path
             @test libxlsreader == libxls_jll.libxlsreader_path
         end
@@ -339,7 +378,7 @@ end
     )
 
     # Without the flag, the eager regime loads the library in `__init__()`
-    if !LazyJLLWrappers.use_lazy_libraries()
+    if !target_uses_lazy_libraries
         generate_and_load_jll(
             include(joinpath(example_jllinfos_path, "libxls_jll.jl")),
             """

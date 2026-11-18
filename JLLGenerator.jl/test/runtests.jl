@@ -612,32 +612,36 @@ end
     include(joinpath(dirname(@__DIR__), "contrib", "gen_julia_jlls.jl"))
 end
 
-@testset "jll_auto_upgrade_helper" begin
-    # Just make sure this tool doesn't bitrot too bad:
-    mktempdir() do dir
-        contrib_dir = joinpath(dirname(@__DIR__), "contrib")
-        run(`$(Base.julia_cmd()) --project=$(contrib_dir) -e 'import Pkg; Pkg.instantiate()'`)
+# The helper runs in the `contrib` environment, which finds its in-repo dependencies
+# through the `[sources]` of the Julia v1.12 workspace; older Julias can't load it.
+if VERSION >= v"1.12"
+    @testset "jll_auto_upgrade_helper" begin
+        # Just make sure this tool doesn't bitrot too bad:
+        mktempdir() do dir
+            contrib_dir = joinpath(dirname(@__DIR__), "contrib")
+            run(`$(Base.julia_cmd()) --project=$(contrib_dir) -e 'import Pkg; Pkg.instantiate()'`)
 
-        test_repos = [
-            ("https://github.com/JuliaBinaryWrappers/Zlib_jll.jl", "2c0602d8ec8557ee3f0beb7fd60b324bfc5def82"),
-            ("https://github.com/JuliaBinaryWrappers/GMP_jll.jl", "76b821798c26f25ce230cbfd2237da63255b3931"),
-            ("https://github.com/JuliaBinaryWrappers/p7zip_jll.jl", "10fd1c830f63c9095104d4bce34afac8171b31c2"),
-            ("https://github.com/JuliaBinaryWrappers/CompilerSupportLibraries_jll.jl", "7aeb8eeda1cb109833b8f81d23045fd0e9e31eed"),
-        ]
-        for (url, commit) in test_repos
-            jllinfo_def = readchomp(`$(Base.julia_cmd()) --project=$(contrib_dir) $(contrib_dir)/jll_auto_upgrade_helper.jl $(url) $(commit)`)
+            test_repos = [
+                ("https://github.com/JuliaBinaryWrappers/Zlib_jll.jl", "2c0602d8ec8557ee3f0beb7fd60b324bfc5def82"),
+                ("https://github.com/JuliaBinaryWrappers/GMP_jll.jl", "76b821798c26f25ce230cbfd2237da63255b3931"),
+                ("https://github.com/JuliaBinaryWrappers/p7zip_jll.jl", "10fd1c830f63c9095104d4bce34afac8171b31c2"),
+                ("https://github.com/JuliaBinaryWrappers/CompilerSupportLibraries_jll.jl", "7aeb8eeda1cb109833b8f81d23045fd0e9e31eed"),
+            ]
+            for (url, commit) in test_repos
+                jllinfo_def = readchomp(`$(Base.julia_cmd()) --project=$(contrib_dir) $(contrib_dir)/jll_auto_upgrade_helper.jl $(url) $(commit)`)
 
-            # Just assume no library dependencies for this simple test
-            jllinfo_def = replace(jllinfo_def, "<deps>" => "")
-            
-            # Try constructing the JLLInfo object:
-            m = Module()
-            Core.eval(m, :(using JLLGenerator))
-            Core.eval(m, Meta.parse(jllinfo_def))
+                # Just assume no library dependencies for this simple test
+                jllinfo_def = replace(jllinfo_def, "<deps>" => "")
+                
+                # Try constructing the JLLInfo object:
+                m = Module()
+                Core.eval(m, :(using JLLGenerator))
+                Core.eval(m, Meta.parse(jllinfo_def))
 
-            # Round-trip the JLLInfo object to TOML and ensure it comes back clean:
-            jll = Core.eval(m, :jll)
-            @test jll == roundtrip_jll_through_toml(jll)[2]
+                # Round-trip the JLLInfo object to TOML and ensure it comes back clean:
+                jll = Core.eval(m, :jll)
+                @test jll == roundtrip_jll_through_toml(jll)[2]
+            end
         end
     end
 end

@@ -6,12 +6,16 @@ using BinaryBuilderPlatformExtensions, Test, Base.BinaryPlatforms, Artifacts
             Platform("aarch64", "macos"),
             AnyPlatform(),
         ]
+        targets = [cross_hosts...,
+                   Platform("i686", "windows"),
+                   Platform("ppc64le", "linux"; libgfortran_version=v"3"),
+                   AnyPlatform()]
+        # Julia parses `riscv64` triplets from v1.10 on
+        if tryparse(Platform, "riscv64-linux-gnu") !== nothing
+            push!(targets, Platform("riscv64", "linux"))
+        end
         for host in cross_hosts
-            for target in [cross_hosts...,
-                           Platform("i686", "windows"),
-                           Platform("ppc64le", "linux"; libgfortran_version=v"3"),
-                           Platform("riscv64", "linux"),
-                           AnyPlatform()]
+            for target in targets
                 cp = CrossPlatform(host => target)
 
                 # Early-exit if we're dealing with AnyPlatform's on both sides
