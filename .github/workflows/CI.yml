@@ -10,6 +10,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+env:
+  # The Julia version the `test` job uses; keep its `julia-version` matrix in sync.
+  DEFAULT_JULIA: '1.12'
+
 permissions:
   contents: read
   # Allow julia-actions/cache to delete old caches it has created
@@ -32,6 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       projects: ${{ steps.set-matrix.outputs.projects }}
+      min-julia: ${{ steps.set-matrix.outputs.min-julia }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,6 +54,9 @@ jobs:
           fi
           echo "Selected subprojects: $projects"
           echo "projects=$projects" >> "$GITHUB_OUTPUT"
+          min_julia=$(python3 .github/scripts/min_julia_versions.py "$DEFAULT_JULIA" "$projects")
+          echo "Minimum Julia versions to test: $min_julia"
+          echo "min-julia=$min_julia" >> "$GITHUB_OUTPUT"
 
   test:
     name: ${{ matrix.project == '.' && 'BinaryBuilder2.jl' || matrix.project }} - Julia ${{ matrix.julia-version }} - ${{ matrix.runner.arch }}
@@ -60,6 +68,7 @@ jobs:
       fail-fast: false
       matrix:
         project: ${{ fromJSON(needs.discover.outputs.projects) }}
+        # Keep in sync with DEFAULT_JULIA.
         julia-version:
           - '1.12'
         runner:
@@ -92,18 +101,69 @@ jobs:
           path: BinaryBuilderToolchains.jl/test/*-files.tar.gz
           if-no-files-found: ignore
 
+  # Tests each selected subproject on the lowest Julia version its `[compat] julia`
+  # admits, when that is older than the version the `test` job uses. Older Julias
+  # ignore the root `[workspace]` and `[sources]`, so test_subproject.jl builds an
+  # environment that develops the subproject and its in-repo dependencies by path.
+  test-min-julia:
+    name: ${{ matrix.project }} - Julia ${{ matrix.julia-version }} (minimum) - x86_64
+    needs: discover
+    if: needs.discover.outputs.min-julia != '[]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.discover.outputs.min-julia) }}
+    env:
+      # glibc 2.43 refuses to load Julia 1.9's libopenlibm, which asks for an
+      # executable stack, unless this tunable allows it.
+      GLIBC_TUNABLES: glibc.rtld.execstack=2
+    steps:
+      - uses: actions/checkout@v7
+      - name: Configure git identity for tests
+        run: |
+          git config --global user.email "ci@julialang.org"
+          git config --global user.name "GitHub Actions"
+      - name: Allow unprivileged user namespaces (sandbox support)
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - uses: julia-actions/setup-julia@v3
+        id: min-julia
+        with:
+          version: ${{ matrix.julia-version }}
+      # LazyJLLWrappers' tests generate JLLs with JLLGenerator, which needs a newer
+      # Julia than LazyJLLWrappers does. They run on the default Julia and load
+      # the generated JLLs with the Julia named by LAZYJLLWRAPPERS_TEST_JULIA.
+      - uses: julia-actions/setup-julia@v3
+        if: matrix.project == 'LazyJLLWrappers.jl'
+        with:
+          version: ${{ env.DEFAULT_JULIA }}
+      - uses: julia-actions/cache@v3
+      - name: Run tests
+        env:
+          PROJECT: ${{ matrix.project }}
+          LAZYJLLWRAPPERS_TEST_JULIA: ${{ matrix.project == 'LazyJLLWrappers.jl' && format('{0}/julia', steps.min-julia.outputs.julia-bindir) || '' }}
+        run: |
+          if [ -n "$LAZYJLLWRAPPERS_TEST_JULIA" ]; then
+            julia --project="$PROJECT" -e 'import Pkg; Pkg.instantiate(); Pkg.test()'
+          else
+            julia .github/scripts/test_subproject.jl "$PROJECT"
+          fi
+
   # Single status that reflects the whole workflow, suitable for a required
   # status check: it succeeds when every selected test passed, including when
   # no subproject was selected and `test` was skipped.
   ci-passed:
     name: CI passed
     if: always()
-    needs: [discover, test]
+    needs: [discover, test, test-min-julia]
     runs-on: ubuntu-latest
     steps:
       - env:
           DISCOVER: ${{ needs.discover.result }}
           TEST: ${{ needs.test.result }}
+          TEST_MIN_JULIA: ${{ needs.test-min-julia.result }}
         run: |
-          echo "discover: $DISCOVER, test: $TEST"
-          [ "$DISCOVER" = success ] && { [ "$TEST" = success ] || [ "$TEST" = skipped ]; }
+          echo "discover: $DISCOVER, test: $TEST, test-min-julia: $TEST_MIN_JULIA"
+          ok() { [ "$1" = success ] || [ "$1" = skipped ]; }
+          [ "$DISCOVER" = success ] && ok "$TEST" && ok "$TEST_MIN_JULIA"
