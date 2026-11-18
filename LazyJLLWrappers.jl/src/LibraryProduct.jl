@@ -1,5 +1,7 @@
-# TODO: Decide if this is the best thing to do, or if we should record it in the JLL.toml?
+# The library's SONAME, as recorded by JLLGenerator.  JLL.toml files that predate
+# that record get the name of the library file instead.
 function soname(product)
+    haskey(product, "soname") && return product["soname"]
     if Sys.isapple()
         return "@rpath/$(basename(product["path"]))"
     else
