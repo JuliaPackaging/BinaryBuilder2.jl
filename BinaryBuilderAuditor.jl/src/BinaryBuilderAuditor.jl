@@ -61,6 +61,11 @@ function audit!(prefix::String,
         ensure_sonames!(result)
     end
 
+    # Point dependencies recorded by absolute in-prefix path at `@rpath` instead
+    if !readonly
+        relink_absolute_dependencies!(result; prefix_alias)
+    end
+
     # Solve dynamic linkage, deriving each library product's record
     resolve_dynamic_links!(result, info)
 

@@ -1,5 +1,5 @@
 using Test, BinaryBuilderAuditor, Base.BinaryPlatforms, ObjectFile, BinaryBuilderToolchains, BinaryBuilderProducts, JLLGenerator
-using BinaryBuilderAuditor: resolve_dynamic_links!, ensure_sonames!, rpaths_consistent!
+using BinaryBuilderAuditor: resolve_dynamic_links!, ensure_sonames!, rpaths_consistent!, relink_absolute_dependencies!
 
 function versioned_shlib(name, major_version, platform)
     if Sys.iswindows(platform)
@@ -205,6 +205,113 @@ for target_platform in (Platform("x86_64", "linux"), Platform("aarch64", "macos"
             resolve_dynamic_links!(result, AuditInfo())
             @test success(result.pass_results)
             @test !haskey(result.pass_results, "update_linkage!")
+        end
+    end
+
+    @testset "relink_absolute_dependencies - $(triplet(target_platform))" begin
+        mktempdir() do prefix
+            prefix = realpath(prefix)
+            alias = "/workspace/destdir/target-$(triplet(target_platform))"
+            mkpath(joinpath(prefix, "lib"))
+            mkpath(joinpath(prefix, "bin"))
+            libplus_path = joinpath(prefix, "lib", libplus_soname)
+            libmult_path = joinpath(prefix, "lib", libmult_soname)
+            tool_path = joinpath(prefix, "bin", "tool")
+            main_c_path = joinpath(prefix, "main.c")
+            write(main_c_path, "int plus(int, int);\nint mult(int, int);\nint main() { return mult(1, 0) + plus(1, -1); }\n")
+
+            # Link `libmult` against `libplus` recorded by its in-sandbox path (the way
+            # `-install_name \$(libdir)/...` builds do), and `tool` against both, recording
+            # `libplus` by its real path in the prefix.  Then give `libplus` its real SONAME.
+            sandbox_id = joinpath(alias, "lib", libplus_soname)
+            with_toolchains([toolchain]) do _, env
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, sandbox_id))`, env))
+                run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) $(libplus_path) $(soname_flag(target_platform, Sys.isapple(target_platform) ? "@rpath/$(libmult_soname)" : libmult_soname))`, env))
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_path))`, env))
+                run(setenv(`$(env["CC"]) -o $(tool_path) $(main_c_path) $(libmult_path) $(libplus_path)`, env))
+                run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, Sys.isapple(target_platform) ? "@rpath/$(libplus_soname)" : libplus_soname))`, env))
+            end
+            rm(main_c_path)
+
+            deps_of(p) = readmeta(ohs -> [path(dl) for dl in DynamicLinks(only(ohs))], p)
+            @test sandbox_id ∈ deps_of(libmult_path)
+            @test libplus_path ∈ deps_of(tool_path)
+            # On macOS, system libraries are recorded by absolute path too
+            system_deps = filter(d -> startswith(d, "/usr/lib"), deps_of(tool_path))
+            @test isempty(system_deps) == !Sys.isapple(target_platform)
+
+            products = [LibraryProduct("libplus", :libplus), LibraryProduct("libmult", :libmult)]
+            scan = scan_files(prefix, target_platform, products)
+            result = AuditResult(scan)
+            ensure_sonames!(result)
+            relink_absolute_dependencies!(result; prefix_alias=alias)
+            resolve_dynamic_links!(result, AuditInfo())
+            rpaths_consistent!(result, AuditInfo())
+            @test success(result.pass_results)
+
+            rpath_prefix = Sys.isapple(target_platform) ? "@rpath/" : ""
+            @test deps_of(libmult_path) ⊇ ["$(rpath_prefix)$(libplus_soname)"]
+            @test deps_of(tool_path) ⊇ ["$(rpath_prefix)$(libplus_soname)", "$(rpath_prefix)$(libmult_soname)"]
+            for p in (libmult_path, tool_path)
+                @test !any(d -> startswith(d, prefix) || startswith(d, alias), deps_of(p))
+                # The scan's handles see the rewritten linkage
+                @test deps_of(p) == [path(dl) for dl in DynamicLinks(scan.binary_objects[relpath(p, prefix)])]
+            end
+            # System libraries are left alone
+            @test deps_of(tool_path) ⊇ system_deps
+
+            # ... and the RPATHs find the relinked libraries
+            origin = Sys.isapple(target_platform) ? "@loader_path" : "\$ORIGIN"
+            @test readmeta(ohs -> rpaths(RPath(only(ohs))), libmult_path) == [origin]
+            @test readmeta(ohs -> rpaths(RPath(only(ohs))), tool_path) == ["$(origin)/../lib"]
+
+            libmult = only(p for p in result.jll_lib_products if p.varname == :libmult)
+            @test libmult.deps == [JLLLibraryDep(nothing, :libplus)]
+
+            # Running it again has nothing left to rewrite
+            scan = scan_files(prefix, target_platform, products)
+            result = AuditResult(scan)
+            relink_absolute_dependencies!(result; prefix_alias=alias)
+            @test !haskey(result.pass_results, "relink_absolute_dependencies!")
+        end
+
+        # A library from a dependency JLL is installed into the same prefix during the build,
+        # so it is recorded by an in-prefix path too; libraries outside the prefix are left alone.
+        mktempdir() do prefix
+            prefix = realpath(prefix)
+            alias = "/workspace/destdir/target-$(triplet(target_platform))"
+            mkpath(joinpath(prefix, "lib"))
+            outside_prefix = mktempdir()
+            libplus_path = joinpath(outside_prefix, "lib", libplus_soname)
+            mkpath(dirname(libplus_path))
+            libmult_path = joinpath(prefix, "lib", libmult_soname)
+            libmult_id = Sys.isapple(target_platform) ? "@rpath/$(libmult_soname)" : libmult_soname
+            sandbox_id = joinpath(alias, "lib", libplus_soname)
+            deps_of(p) = readmeta(ohs -> [path(dl) for dl in DynamicLinks(only(ohs))], p)
+            info = AuditInfo(Dict(
+                :LibPlus_jll => AuditDependencyInfo([
+                    JLLLibraryProduct(:libplus, joinpath("lib", libplus_soname), [], []),
+                ]),
+            ))
+
+            for (libplus_id, relinked) in ((sandbox_id, true), (libplus_path, false))
+                with_toolchains([toolchain]) do _, env
+                    run(setenv(`$(env["CC"]) -o $(libplus_path) -shared $(libplus_c_path) $(soname_flag(target_platform, libplus_id))`, env))
+                    run(setenv(`$(env["CC"]) -o $(libmult_path) -shared $(libmult_c_path) $(libplus_path) $(soname_flag(target_platform, libmult_id))`, env))
+                end
+                @test libplus_id ∈ deps_of(libmult_path)
+
+                scan = scan_files(prefix, target_platform, [LibraryProduct("libmult", :libmult)])
+                result = AuditResult(scan)
+                relink_absolute_dependencies!(result; prefix_alias=alias)
+                jll_lib_products = resolve_dynamic_links!(result, info).jll_lib_products
+                @test success(result.pass_results)
+                @test haskey(result.pass_results, "relink_absolute_dependencies!") == relinked
+                @test ((Sys.isapple(target_platform) ? "@rpath/$(libplus_soname)" : libplus_soname) ∈ deps_of(libmult_path)) == relinked
+                @test (libplus_id ∈ deps_of(libmult_path)) == !relinked
+                @test only(jll_lib_products).deps == [JLLLibraryDep(:LibPlus_jll, :libplus)]
+            end
+            rm(outside_prefix; recursive=true)
         end
     end
 
