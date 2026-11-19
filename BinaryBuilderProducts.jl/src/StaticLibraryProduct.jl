@@ -66,11 +66,15 @@ variant, as used by `LibraryProduct(...; static=:auto)`.  Any versioned dynamic
 library extension (`.so.6`, `.6.dylib`, `-6.dll`, ...) is removed from each
 basename, and a leading `\${libdir}` or `\${bindir}` is dropped, since archives
 live in `lib` on every platform (whereas `\${libdir}` is `bin` on Windows).  Any
-other directory is kept as declared.
+other directory is kept as declared.  Framework bundle paths (`name.framework`)
+have no static archive and are skipped.
 """
 function generate_default_static_lib_paths(paths::Vector{<:AbstractString})
     static_paths = String[]
     for path in paths
+        if is_framework_path(path)
+            continue
+        end
         dir, name = dirname(path), basename(path)
         if dir in ("\${libdir}", "\${bindir}")
             dir = ""

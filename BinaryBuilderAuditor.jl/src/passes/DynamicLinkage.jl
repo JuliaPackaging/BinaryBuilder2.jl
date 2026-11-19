@@ -161,7 +161,9 @@ dependent's load commands, where it cannot be found once the JLL is installed.
 Rewrite every absolute dependency path that points into the prefix (by its real
 path or by `prefix_alias`, which also holds the dependency JLLs' libraries during
 the build) to `@rpath/<basename>` on macOS and to the bare `<basename>` on ELF
-platforms.  `rpaths_consistent!()` then adds the RPATHs that locate it.
+platforms.  A macOS framework binary keeps its path from the bundle on, e.g.
+`@rpath/Foo.framework/Versions/A/Foo`.  `rpaths_consistent!()` then adds the
+RPATHs that locate it.
 Dependencies outside the prefix are left alone.
 """
 function relink_absolute_dependencies!(result::AuditResult; prefix_alias::String = result.scan.prefix)
@@ -196,7 +198,7 @@ function relink_absolute_dependencies!(result::AuditResult; prefix_alias::String
 
         changes = Pair{String,String}[]
         for dep in unique(filter(should_relink, deps))
-            new_dep = Sys.isapple(scan.platform) ? "@rpath/$(basename(dep))" : basename(dep)
+            new_dep = Sys.isapple(scan.platform) ? "@rpath/$(something(framework_relpath(dep), basename(dep)))" : basename(dep)
             push!(changes, dep => new_dep)
         end
         if isempty(changes)
@@ -256,11 +258,11 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
         rel_path = first(names)
         oh = scan.binary_objects[rel_path]
 
-        local dynamic, dep_sonames, obj_rpaths
+        local dynamic, dep_names, obj_rpaths
         try
             dynamic = isdynamic(oh)
             if dynamic
-                dep_sonames = [basename(path(dl)) for dl in DynamicLinks(oh)]
+                dep_names = [path(dl) for dl in DynamicLinks(oh)]
                 obj_rpaths = rpaths(RPath(oh))
             end
         catch e
@@ -274,7 +276,8 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
 
         # Resolve each dependency to the directory that holds it
         dep_dirs = String[]
-        for soname in dep_sonames
+        for dep_name in dep_names
+            soname = basename(dep_name)
             # Don't try to insert RPATHs for system libraries
             if is_system_library(soname, scan.platform)
                 continue
@@ -287,7 +290,7 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
                 push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
                 continue
             end
-            push!(dep_dirs, dirname(soname_locator[soname]))
+            push!(dep_dirs, rpath_dir(dep_name, soname_locator[soname], scan.platform))
         end
 
         # Normalize the RPATHs, forcing them to be unique, and relative
@@ -356,6 +359,28 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
     end
 end
 
+
+"""
+    rpath_dir(dep_name::AbstractString, dep_rel_path::AbstractString, platform)
+
+Returns the directory that must be on the RPATH of an object that links against
+`dep_name` (as recorded in the object), in order to find the library at
+`dep_rel_path`.  This is the library's directory, except on macOS for an install
+name with directories after `@rpath/`, such as a framework's
+`@rpath/Foo.framework/Versions/A/Foo`, where it is the directory that holds
+`Foo.framework`.
+"""
+function rpath_dir(dep_name::AbstractString, dep_rel_path::AbstractString, platform::AbstractPlatform)
+    if Sys.isapple(platform) && startswith(dep_name, "@rpath/")
+        suffix = dep_name[length("@rpath/")+1:end]
+        if dep_rel_path == suffix
+            return ""
+        elseif endswith(dep_rel_path, "/" * suffix)
+            return dep_rel_path[1:end-length(suffix)-1]
+        end
+    end
+    return dirname(dep_rel_path)
+end
 
 function normalize_rpaths(rpaths::Vector{String}, platform::AbstractPlatform, prefix::String, obj_path::String;
                          prefix_alias::String = prefix)
