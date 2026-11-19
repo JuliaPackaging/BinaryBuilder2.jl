@@ -890,7 +890,7 @@ exported_aliases(p::AbstractJLLProduct) = hasfield(typeof(p), :aliases) ? p.alia
 
 # The `LazyJLLWrappers` every generated JLL requires: always the latest release, so
 # every JLL can use every feature a `JLL.toml` may record.
-const lazy_jll_wrappers_compat = "1.2.6"
+const lazy_jll_wrappers_compat = "1.2.7"
 
 """
     generate_pkg_hooks(out_dir::String, info::JLLInfo)
