@@ -94,6 +94,42 @@ function dead_jll_definition(jb::JLLBlocks)
     push!(jb.top_level_blocks, :(is_available() = false))
     push!(jb.top_level_blocks, :(eager_mode() = nothing))
     declare_path_libpath(jb)
+
+    # As with `JLLWrappers`, a JLL with no build for this platform declares
+    # `artifact_dir` (where the language allows it) but never assigns it.
+    if VERSION >= v"1.9"
+        push!(jb.top_level_blocks, :(global artifact_dir::String))
+    end
+end
+
+"""
+    artifact_treehash(build)
+
+Return the `Base.SHA1` tree hash of `build`'s artifact.  The hashes in a `JLL.toml`
+are `MultiHashParsing` hashes, of which only `sha1` ones are supported.
+"""
+function artifact_treehash(build)
+    treehash = build["artifact"]["treehash"]
+    if !startswith(treehash, "sha1:")
+        throw(ArgumentError("Treehash must start with `sha1:`: '$(treehash)'"))
+    end
+    return Base.SHA1(treehash[6:end])
+end
+
+"""
+    declare_artifact_dir(jb, build)
+
+Define `find_artifact_dir()`, which returns the directory of the selected artifact,
+and the `artifact_dir::String` global that `__init__()` sets to its result before
+any product paths or the JLL's own `init_def` code are computed, as `JLLWrappers` does.
+The directory is located with `artifact_path()`, which honors `Overrides.toml`, the
+same way the product paths are; it is not downloaded if it is missing.
+"""
+function declare_artifact_dir(jb::JLLBlocks, build)
+    treehash = artifact_treehash(build)
+    push!(jb.top_level_blocks, :(find_artifact_dir() = artifact_path($(treehash))))
+    push!(jb.top_level_blocks, emit_typed_global(:artifact_dir, String, ""; isconst=false))
+    push!(jb.init_blocks, :(global artifact_dir = find_artifact_dir()))
 end
 
 function declare_path_libpath(jb::JLLBlocks)
@@ -129,6 +165,8 @@ function top_level_statements(jb::JLLBlocks, artifact, platform)
 
     # Add our platform object, so that we can introspect the result of platform augmentation
     push!(jb.top_level_blocks, emit_typed_global(:platform, typeof(platform), Meta.parse(repr(platform)); isconst=true))
+
+    declare_artifact_dir(jb, artifact)
 end
 
 """
@@ -206,13 +244,7 @@ function alias_definitions(define, jb::JLLBlocks, product, path_var_name::Symbol
 end
 
 function gen_lazy_artifact_path(jb::JLLBlocks, build, product)
-    # The hashes in this TOML are `MultiHashParsing` hashes,
-    # but we only support `sha1` hashes:
-    treehash = build["artifact"]["treehash"]
-    if !startswith(treehash, "sha1:")
-        throw(ArgumentError("Treehash must start with `sha1:`: '$(treehash)'"))
-    end
-    treehash = Base.SHA1(treehash[6:end])
+    treehash = artifact_treehash(build)
     var_name, path_var_name, lazy_path_var_name = product_names(product)
 
     if !use_lazy_libraries()
@@ -288,4 +320,20 @@ function init_footer(jb::JLLBlocks, build, lib_products)
         PATH[] = join(PATH_list, $(pathsep))
         LIBPATH[] = join(vcat(LIBPATH_list, Base.invokelatest(LazyJLLWrappers.get_julia_libpaths))::Vector{String}, $(pathsep))
     end)
+
+    # The JLL's own `init_def` code runs last, as a `JLLWrappers` `init_block` does,
+    # so that it can use `artifact_dir`, the product paths, `PATH` and `LIBPATH`.
+    init_def = get(build, "init_def", nothing)
+    if init_def !== nothing
+        push!(jb.init_blocks, parse_init_def(init_def))
+    end
+end
+
+"""
+    parse_init_def(code::AbstractString)
+
+Parse a JLL's `init_def`, which may hold any number of statements, into a single block.
+"""
+function parse_init_def(code::AbstractString)
+    return Meta.parse(string("begin\n", code, "\nend"))
 end
