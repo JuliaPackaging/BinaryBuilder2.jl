@@ -300,6 +300,13 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
             name_rpaths = String[String(x) for x in vcat(obj_rpaths, dep_relpaths)]
             append!(all_rpaths, normalize_rpaths(name_rpaths, scan.platform, scan.prefix, name; prefix_alias))
         end
+        # musl's loader never matches a dependency by name against a library that was
+        # loaded by path, so LazyJLLWrappers opens each library on musl through a directory
+        # of symlinks to the libraries loaded so far.  A dependency is then found only
+        # through a plain `$ORIGIN`, which names that directory.
+        if Sys.islinux(scan.platform) && libc(scan.platform) == "musl" && !isempty(dep_dirs)
+            push!(all_rpaths, "\$ORIGIN")
+        end
         unique!(all_rpaths)
 
         rpath_str = join(all_rpaths, ':')
