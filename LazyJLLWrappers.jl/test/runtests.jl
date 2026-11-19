@@ -377,6 +377,47 @@ using Base.BinaryPlatforms: Platform
     @test !contains(code, "stdc++")
 end
 
+@testset "macOS framework libraries" begin
+    # A framework is an ordinary library product whose path is the binary inside
+    # the bundle, and whose soname is its `@rpath/...framework/...` install name.
+    platform = Platform("aarch64", "macos")
+    fw_path = "lib/Foo.framework/Versions/A/Foo"
+    fw_soname = "@rpath/Foo.framework/Versions/A/Foo"
+    @test LazyJLLWrappers.soname(Dict("path" => fw_path, "soname" => fw_soname)) == fw_soname
+    @test LazyJLLWrappers.soname(Dict("path" => "lib/libfoo.so.1")) ==
+        (Sys.isapple() ? "@rpath/libfoo.so.1" : "libfoo.so.1")
+
+    jllinfo = JLLInfo(;
+        name = "Foo",
+        version = v"1.0.0",
+        builds = [
+            JLLBuildInfo(;
+                src_version = v"1.0.0",
+                deps = [],
+                sources = [],
+                platform,
+                name = "Foo",
+                artifact = JLLArtifactBinding(;
+                    treehash = "0000000000000000000000000000000000000000",
+                    download_sources = [],
+                ),
+                products = [
+                    JLLLibraryProduct(:libfoo, fw_path, [], ["framework:CoreFoundation"]; soname = fw_soname),
+                ],
+                licenses = [JLLBuildLicense("LICENSE.md", JLLGenerator.get_license_text("MIT"))],
+            ),
+        ],
+    )
+    build = only(JLLGenerator.generate_toml_dict(jllinfo)["builds"])
+    @test only(build["products"])["soname"] == fw_soname
+    jb = LazyJLLWrappers.JLLBlocks(LazyJLLWrappers)
+    LazyJLLWrappers.top_level_statements(jb, build, platform)
+    LazyJLLWrappers.library_product_definition(jb, build, only(build["products"]))
+    code = string(LazyJLLWrappers.synthesize(jb))
+    @test contains(code, fw_path)
+    @test :libfoo in jb.exports
+end
+
 @testset "static libraries are ignored by the wrapper" begin
     # The wrapper defines nothing for a static library, so it must export nothing for
     # one either.  `libxlsreader` also ships as an archive (a same-named second entry)
