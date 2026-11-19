@@ -17,6 +17,7 @@ include("passes/DanglingSymlinks.jl")
 include("passes/PkgConfig.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
+include("passes/CodeSigning.jl")
 include("passes/StaticLibraries.jl")
 include("passes/Licenses.jl")
 include("passes/RuntimeRequirementChecks.jl")
@@ -78,6 +79,11 @@ function audit!(prefix::String,
         rpaths_consistent!(result, info; prefix_alias)
     end
 
+    # Re-sign the Mach-O binaries (macOS only); this must follow every pass that modifies binaries
+    if !readonly
+        ensure_codesigned!(result)
+    end
+
     # Ensure that there are some licenses
     licenses_present(result)
 
@@ -107,7 +113,7 @@ end
 #  - cxxabi version check
 #  - CSL lib check
 #  - [!] dylib check
-#  - codesign check
+#  - [!] ad-hoc code signing (macOS)
 # library passes:
 #  - dlopen() check?
 #  - [!] SONAME and symlink check

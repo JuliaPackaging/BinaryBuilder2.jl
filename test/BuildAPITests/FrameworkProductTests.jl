@@ -1,10 +1,12 @@
 using Test, BinaryBuilder2, Random, TOML, Artifacts
 using BinaryBuilder2: get_package_result, collect_extractions, jll_dir, in_universe
 using JLLGenerator: JLLLibraryDep
+import BinaryBuilderAuditor
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
 end
+include(joinpath(pkgdir(BinaryBuilderAuditor), "test", "CodeSignatureUtils.jl"))
 
 @testset "Framework bundles" begin
     universe_name = "framework-tests-$(randstring(4))"
@@ -30,6 +32,11 @@ end
             @test readlink(joinpath(fw, "Versions", "Current")) == "A"
             @test readlink(joinpath(fw, "Mult")) == "Versions/Current/Mult"
             @test isfile(joinpath(fw, "Mult"))
+
+            # The auditor rewrote the install names, then re-signed the binaries
+            for name in ("Plus", "Mult")
+                @test codesignature_status(joinpath(artifact_path(er), "lib", "$(name).framework", "Versions", "A", name)) == :adhoc
+            end
         else
             # Elsewhere they are plain shared libraries
             @test jlps[:libplus].path == "lib/libPlus.so"
