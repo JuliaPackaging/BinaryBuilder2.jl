@@ -104,14 +104,14 @@ function alter_toolchain(target_prefix::String, pw::PlatformlessWrapper{CToolcha
     # Alter this object to contain extra flags, prefixes, etc...
     pw = copy(pw)
 
-    # Add CFLAGS and LDFLAGS for the install prefix
+    # Add the install prefix's include and library directories
     pw.kwargs[:extra_cflags] = String[
         get(pw.kwargs, :extra_cflags, String[])...,
         "-I$(target_prefix)/include",
     ]
-    pw.kwargs[:extra_ldflags] = String[
-        get(pw.kwargs, :extra_ldflags, String[])...,
-        "-L$(target_prefix)/lib",
+    pw.kwargs[:extra_libdirs] = String[
+        get(pw.kwargs, :extra_libdirs, String[])...,
+        "$(target_prefix)/lib",
     ]
     return pw
 end
