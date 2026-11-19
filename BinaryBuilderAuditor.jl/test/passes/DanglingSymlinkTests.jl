@@ -2,7 +2,7 @@ using Test, BinaryBuilderAuditor, Base.BinaryPlatforms
 using BinaryBuilderAuditor: dangling_symlinks
 
 function dangling_results(prefix::String; prefix_alias::String = prefix)
-    result = AuditResult(scan_files(prefix, HostPlatform()))
+    result = AuditResult(scan_files(prefix, HostPlatform(); prefix_alias))
     dangling_symlinks(result, prefix_alias)
     return result, Dict(r.identifier => r for r in get(result.pass_results, "dangling_symlinks", PassResult[]))
 end
@@ -48,17 +48,20 @@ end
                 relpath(joinpath(realpath(outside), "libescape.a"), realpath(joinpath(prefix, "lib"))),
                 joinpath(prefix, "lib", "libescape.a"),
             )
+            # Directory symlink that climbs out of the prefix to a directory that exists
+            symlink(relpath(realpath(outside), realpath(joinpath(prefix, "lib"))), joinpath(prefix, "lib", "escape_dir"))
             dangling_results(prefix)
         end
         @test !success(result)
         @test all(r.status == :fail for r in values(rs))
         @test Set(keys(rs)) == Set(joinpath("lib", f) for f in [
             "libpthread.a", "libmissing.a", "libbaz.a", "dangling_dir",
-            "libpthread_chain.a", "libescape.a", "libloop1.a", "libloop2.a",
+            "libpthread_chain.a", "libescape.a", "escape_dir", "libloop1.a", "libloop2.a",
         ])
         @test occursin("dangling", rs[joinpath("lib", "libpthread.a")].message)
         @test occursin("libthr.a", rs[joinpath("lib", "libpthread.a")].message)
         @test occursin("outside", rs[joinpath("lib", "libescape.a")].message)
+        @test occursin("outside", rs[joinpath("lib", "escape_dir")].message)
         @test occursin("loop", rs[joinpath("lib", "libloop1.a")].message)
     end
 

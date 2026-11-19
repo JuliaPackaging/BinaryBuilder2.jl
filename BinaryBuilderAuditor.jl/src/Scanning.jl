@@ -33,6 +33,9 @@ struct ScanResult
     # Note that on Windows this includes import libraries, which are archives too.
     static_libraries::Set{String}
 
+    # List of all libtool archives (`.la` files) and symlinks to them (by `rel_path`)
+    libtool_archives::Set{String}
+
     # This maps `rel_path` to a library product `LibraryProduct`.  Each file is named by
     # at most one product; further names for it are that product's `aliases`.  (The same
     # holds for files, which `scan_files()` checks but does not record.)
@@ -87,6 +90,19 @@ function is_static_archive(path::String)
     end
 end
 
+"""
+    is_libtool_archive(path::String)
+
+Returns `true` if the file at `path` (following symlinks) is a libtool archive,
+judged like `is_static_archive()` by its contents: its first line is a comment
+that mentions `libtool`, as in `# libfoo.la - a libtool library file`.
+"""
+function is_libtool_archive(path::String)
+    isfile(path) || return false
+    line = open(readline, path)
+    return startswith(line, '#') && occursin("libtool", line)
+end
+
 function scan_files(prefix::String, platform::AbstractPlatform,
                     products::Vector{<:AbstractProduct} = AbstractProduct[],
                     env::Dict{String,String} = Dict{String,String}(
@@ -102,6 +118,8 @@ function scan_files(prefix::String, platform::AbstractPlatform,
     binary_objects = Dict{String,ObjectHandle}()
     static_libraries = Set{String}()
     symlinks = Dict{String,String}()
+    libtool_archives = Set{String}()
+    la_symlinks = String[]
     function record_symlink!(f_path, f_key)
         link_target = readlink(f_path)
         if startswith(link_target, prefix_alias)
@@ -138,13 +156,25 @@ function scan_files(prefix::String, platform::AbstractPlatform,
                     binary_objects[f_key] = oh
                 elseif is_static_archive(f_path)
                     push!(static_libraries, f_key)
+                elseif endswith(f, ".la") && is_libtool_archive(f_path)
+                    push!(libtool_archives, f_key)
                 end
+            elseif endswith(f, ".la")
+                push!(la_symlinks, f_key)
             end
 
             # Store within-prefix symlinks for quick lookup
             if islink(all_files[f_key])
                 record_symlink!(f_path, f_key)
             end
+        end
+    end
+
+    # Symlinks can only be checked once the prefix is scanned, as their target may come later
+    for f_key in la_symlinks
+        target = resolve_prefix_path(prefix, prefix_alias, f_key)
+        if target !== nothing && is_libtool_archive(joinpath(prefix, target))
+            push!(libtool_archives, f_key)
         end
     end
 
@@ -272,6 +302,7 @@ function scan_files(prefix::String, platform::AbstractPlatform,
         missing_sonames,
         soname_forwards,
         static_libraries,
+        libtool_archives,
         library_product_map,
         static_product_map,
         symlinks,

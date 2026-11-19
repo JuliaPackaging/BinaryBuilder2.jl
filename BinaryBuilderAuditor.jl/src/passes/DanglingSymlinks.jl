@@ -13,35 +13,30 @@ not checked.
 function dangling_symlinks(result::AuditResult, prefix_alias::String)
     scan, pass_results = result.scan, result.pass_results
     pass_name = "dangling_symlinks"
-    for (root, dirs, files) in walkdir(scan.prefix)
-        for name in vcat(dirs, files)
-            abs_path = joinpath(root, name)
-            if !islink(abs_path)
+    # `scan.symlinks` holds every relative symlink and every absolute one into `prefix_alias`
+    for rel_path in sort!(collect(keys(scan.symlinks)))
+        abs_path = joinpath(scan.prefix, rel_path)
+        target = readlink(abs_path)
+        check_path = abs_path
+        if isabspath(target)
+            if !path_within(target, prefix_alias)
                 continue
             end
-            rel_path = relpath(abs_path, scan.prefix)
-            target = readlink(abs_path)
-            check_path = abs_path
-            if isabspath(target)
-                if !path_within(target, prefix_alias)
-                    continue
-                end
-                check_path = joinpath(scan.prefix, relpath(target, prefix_alias))
-            end
+            check_path = joinpath(scan.prefix, relpath(target, prefix_alias))
+        end
 
-            resolved = try
-                realpath(check_path)
-            catch e
-                if !isa(e, Base.IOError)
-                    rethrow()
-                end
-                msg = e.code == Base.UV_ELOOP ? "symlink loop" : "dangling symlink"
-                push_result!(pass_results, pass_name, :fail, rel_path, "$(msg) -> $(target)")
-                continue
+        resolved = try
+            realpath(check_path)
+        catch e
+            if !isa(e, Base.IOError)
+                rethrow()
             end
-            if !path_within(resolved, scan.prefix)
-                push_result!(pass_results, pass_name, :fail, rel_path, "symlink points outside of the prefix -> $(target)")
-            end
+            msg = e.code == Base.UV_ELOOP ? "symlink loop" : "dangling symlink"
+            push_result!(pass_results, pass_name, :fail, rel_path, "$(msg) -> $(target)")
+            continue
+        end
+        if !path_within(resolved, scan.prefix)
+            push_result!(pass_results, pass_name, :fail, rel_path, "symlink points outside of the prefix -> $(target)")
         end
     end
 end

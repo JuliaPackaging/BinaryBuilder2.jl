@@ -15,6 +15,7 @@ include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
 include("passes/DanglingSymlinks.jl")
 include("passes/PkgConfig.jl")
+include("passes/LibtoolArchives.jl")
 include("passes/LibrarySONAME.jl")
 include("passes/DynamicLinkage.jl")
 include("passes/StaticLibraries.jl")
@@ -55,6 +56,11 @@ function audit!(prefix::String,
     # Make pkg-config files relocatable
     if !readonly
         relocate_pkgconfig_files!(result, prefix_alias)
+    end
+
+    # Remove libtool archives, which hardcode build paths
+    if !readonly
+        remove_libtool_archives!(result)
     end
 
     # Ensure that all libraries have SONAMEs
@@ -112,7 +118,6 @@ end
 #  - dlopen() check?
 #  - [!] SONAME and symlink check
 # prefix-wide passes:
-#  - [!] .la file removal
 #  - [!] symlink removal (windows)
 #  - [!] DLL -> bin (windows)
 #  - [!] implib timestamp normalization (windows)
