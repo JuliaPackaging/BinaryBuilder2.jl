@@ -485,6 +485,46 @@ end
         @test "gcc_s" ∉ libmult.system_deps
         # The C runtime is still a system dependency
         @test "c" ∈ libmult.system_deps
+
+        # ... and the RPATH locates the shipped library
+        rpaths_consistent!(result, AuditInfo())
+        @test success(result.pass_results)
+        readmeta(joinpath(libdir, libmult_soname)) do ohs
+            @test rpaths(RPath(only(ohs))) == ["\$ORIGIN"]
+        end
+    end
+end
+
+@testset "shipped libraries named like macOS system libraries get RPATHs" begin
+    # macOS has a `libiconv.2.dylib`, but so does Libiconv_jll.  An executable in `bin`
+    # linked against ours must be able to find it in `lib`.
+    target_platform = Platform("aarch64", "macos"; os_version=v"20")
+    platform = CrossPlatform(BBHostPlatform() => target_platform)
+    toolchain = CToolchain(platform; use_ccache=false)
+    libplus_c_path = joinpath(dirname(@__DIR__), "source", "libplus.c")
+
+    mktempdir() do prefix
+        libdir = joinpath(prefix, "lib")
+        bindir = joinpath(prefix, "bin")
+        mkpath(libdir)
+        mkpath(bindir)
+        main_c_path = joinpath(prefix, "main.c")
+        write(main_c_path, "int plus(int, int);\nint main() { return plus(1, -1); }\n")
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -o $(joinpath(libdir, "libiconv.2.dylib")) -shared $(libplus_c_path) -Wl,-install_name,@rpath/libiconv.2.dylib`, env))
+            run(setenv(`$(env["CC"]) -o $(joinpath(bindir, "tool")) $(main_c_path) $(joinpath(libdir, "libiconv.2.dylib"))`, env))
+        end
+        rm(main_c_path)
+
+        scan = scan_files(prefix, target_platform, [LibraryProduct("libiconv", :libiconv)])
+        result = AuditResult(scan)
+        ensure_sonames!(result)
+        resolve_dynamic_links!(result, AuditInfo())
+        rpaths_consistent!(result, AuditInfo())
+        @test success(result.pass_results)
+        readmeta(joinpath(bindir, "tool")) do ohs
+            @test rpaths(RPath(only(ohs))) == ["@loader_path/../lib"]
+        end
     end
 end
 
