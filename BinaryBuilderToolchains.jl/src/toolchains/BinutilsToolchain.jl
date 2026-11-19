@@ -62,6 +62,9 @@ function Base.show(io::IO, toolchain::BinutilsToolchain)
 end
 
 
+# The version of `ld64` in the CCTools_jll below (`ld -v`).  Update it with CCTools_jll.
+const cctools_ld64_version = "711"
+
 function binutils_jll_source_selection(vendor, platform)
     deps = JLLSource[]
     # If this is a crosstool-ng based "gcc bootstrap" toolchain, binutils is already included.

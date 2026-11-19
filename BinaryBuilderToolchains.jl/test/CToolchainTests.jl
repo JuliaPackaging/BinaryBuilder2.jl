@@ -374,7 +374,7 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
             end
 
             for vendor in (:gcc, :clang)
-                toolchain = CToolchain(target_cp; vendor, use_ccache=false)
+                toolchain = CToolchain(target_cp; vendor, linker=:ld, use_ccache=false)
                 with_toolchains([toolchain, htt_toolchain]) do prefix, env
                     @testset "$(triplet(target)) - $(vendor)" begin
                         ld = joinpath(prefix, "wrappers", ld_name)
@@ -393,7 +393,7 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                             @test isfile(joinpath(dir, "foo_r.o"))
 
                             if vendor == :clang
-                                # `clang` selects the wrapper when linking...
+                                # With `linker = :ld`, `clang` selects the wrapper when linking...
                                 p, output = capture_output(setenv(`$(cc) -\#\#\# -shared foo.o -o libfoo`, env; dir))
                                 @test success(p)
                                 @test occursin(ld, output)
@@ -407,6 +407,136 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
 
                                 # ...and actually links successfully through it.
                                 @test success(setenv(`$(cc) -shared foo.o -o libfoo`, env; dir))
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    # The `linker` option: `:auto` picks `lld` for clang and `ld` for GCC, and GCC can't use `lld`
+    @testset "linker selection" begin
+        platform = CrossPlatform(BBHostPlatform() => Platform("x86_64", "linux"))
+        riscv64 = CrossPlatform(BBHostPlatform() => Platform("riscv64", "linux"))
+        get_linker = BinaryBuilderToolchains.get_linker
+        @test get_linker(:auto, :clang, platform) == :lld
+        @test get_linker(:auto, :clang_bootstrap, platform) == :lld
+        @test get_linker(:auto, :gcc, platform) == :ld
+        @test get_linker(:auto, :gcc_bootstrap, platform) == :ld
+        @test get_linker(:ld, :clang, platform) == :ld
+        @test get_linker(:auto, :clang, riscv64) == :ld
+        @test get_linker(:lld, :clang, riscv64) == :lld
+        @test_throws ArgumentError CToolchain(platform; vendor=:gcc, linker=:lld)
+        @test_throws ArgumentError CToolchain(platform; vendor=:clang, linker=:gold)
+        @test BinaryBuilderToolchains.cache_key(CToolchain(platform; vendor=:clang, linker=:ld)) !=
+              BinaryBuilderToolchains.cache_key(CToolchain(platform; vendor=:clang, linker=:lld))
+    end
+
+    # clang links with `lld` by default, and LTO links use it even with `linker = :ld`, as
+    # `lld` is the only linker we ship that reads LLVM bitcode on every target.
+    @testset "clang lld and LTO" begin
+        lto_targets = [
+            (HostPlatform(), :clang, :auto),
+            (HostPlatform(), :clang, :ld),
+            (HostPlatform(), :clang_bootstrap, :auto),
+            (Platform("aarch64", "linux"), :clang, :ld),
+            (Platform("x86_64", "linux"; libc="musl"), :clang, :auto),
+            (Platform("x86_64", "freebsd"; os_version="14.1"), :clang, :auto),
+            (Platform("aarch64", "macos"; os_version="20"), :clang, :auto),
+            (Platform("x86_64", "macos"; os_version="20"), :clang, :ld),
+            (Platform("x86_64", "windows"), :clang, :auto),
+            (Platform("i686", "windows"), :clang, :ld),
+        ]
+        for (target, vendor, linker) in lto_targets
+            target_cp = CrossPlatform(BBHostPlatform() => target)
+            native = target == HostPlatform()
+            toolchain = CToolchain(target_cp; vendor, linker, use_ccache=false)
+            with_toolchains([toolchain, htt_toolchain]) do prefix, env
+                @testset "$(triplet(target)) - $(vendor) - $(linker)" begin
+                    cc = joinpath(prefix, "wrappers", env["CC"])
+                    cxx = joinpath(prefix, "wrappers", env["CXX"])
+                    mktempdir() do dir
+                        write(joinpath(dir, "foo.c"), "int foo(void) { return 42; }\n")
+                        write(joinpath(dir, "main.c"), "int foo(void);\nint main(void) { return foo() - 42; }\n")
+                        write(joinpath(dir, "hello.cpp"), "#include <iostream>\nint main() { std::cout << 42 << std::endl; }\n")
+
+                        function lto_link(cmd)
+                            p, output = capture_output(setenv(cmd, env; dir))
+                            if !success(p)
+                                println(output)
+                            end
+                            return success(p)
+                        end
+
+                        # A link selects `lld` when `linker` resolves to it, and an LTO link
+                        # always does, leaving a user's choice of linker alone.
+                        uses_lld(output) = occursin(r"ld(64)?\.lld\"", output)
+                        p, output = capture_output(setenv(`$(cc) -\#\#\# foo.c main.c -o main`, env; dir))
+                        @test success(p)
+                        @test uses_lld(output) == (linker == :auto)
+                        p, output = capture_output(setenv(`$(cc) -\#\#\# -flto foo.c main.c -o main`, env; dir))
+                        @test success(p)
+                        @test uses_lld(output)
+                        p, output = capture_output(setenv(`$(cc) -\#\#\# -flto -fuse-ld=bfd foo.c main.c -o main`, env; dir))
+                        @test !uses_lld(output)
+
+                        # Both `ld64` and `ld64.lld` get the deployment target and SDK version
+                        # with `-platform_version`; `ld64.lld` doesn't implement `-sdk_version`.
+                        if Sys.isapple(target)
+                            p, output = capture_output(setenv(`$(cc) -\#\#\# foo.c main.c -o main`, env; dir))
+                            @test occursin("\"-platform_version\"", output)
+                            @test !occursin("sdk_version", output)
+                            @test !occursin("macosx_version_min", output)
+                            p, output = capture_output(setenv(`$(cc) -O2 -flto foo.c main.c -o main`, env; dir))
+                            @test success(p)
+                            @test !occursin("sdk_version", output)
+                        end
+
+                        # Plain C and C++ links
+                        @test lto_link(`$(cc) -O2 foo.c main.c -o main_plain`)
+                        @test lto_link(`$(cxx) -O2 hello.cpp -o hello_plain`)
+                        if Sys.isapple(target)
+                            # The binary records the deployment target as both its minimum
+                            # macOS version and its SDK version.
+                            p, output = capture_output(setenv(`$(env["OBJDUMP"]) --macho --private-headers main_plain`, env; dir))
+                            mver = BinaryBuilderToolchains.macos_version(BinaryBuilderToolchains.macos_target_kernel_version(target))
+                            @test occursin(Regex("\\bsdk $(mver)\\b"), output)
+                            @test occursin(Regex("\\bminos $(mver)\\b"), output)
+                        end
+                        @test lto_link(`$(cc) -O2 -shared -fPIC foo.c -o libplain.$(platform_dlext(target))`)
+
+                        # Full and thin LTO executables, C and C++
+                        @test lto_link(`$(cc) -O2 -flto foo.c main.c -o main_full`)
+                        @test lto_link(`$(cc) -O2 -flto=thin foo.c main.c -o main_thin`)
+                        @test lto_link(`$(cxx) -O2 -flto hello.cpp -o hello`)
+
+                        # A shared library built from bitcode still defines its symbols
+                        libfoo = "libfoo.$(platform_dlext(target))"
+                        @test lto_link(`$(cc) -O2 -flto -shared -fPIC foo.c -o $(libfoo)`)
+                        p, output = capture_output(setenv(`$(env["NM"]) $(libfoo)`, env; dir))
+                        @test occursin(r"\b_?foo\b", output)
+
+                        # Bitcode objects in a static archive.  `lld` for COFF looks symbols
+                        # up in the archive index, which GNU `ar` can't write for bitcode
+                        # without the `LLVMgold.so` plugin.
+                        @test lto_link(`$(cc) -O2 -flto -c foo.c -o foo.o`)
+                        @test lto_link(`$(env["AR"]) rcs libfoo.a foo.o`)
+                        if Sys.iswindows(target)
+                            @test_broken lto_link(`$(cc) -O2 -flto main.c libfoo.a -o main_ar`)
+                        else
+                            @test lto_link(`$(cc) -O2 -flto main.c libfoo.a -o main_ar`)
+                        end
+
+                        if Sys.islinux(target) || Sys.isfreebsd(target)
+                            # A version script may name symbols that the link doesn't define
+                            write(joinpath(dir, "foo.map"), "FOO_1 { global: foo; missing_symbol; local: *; };\n")
+                            @test lto_link(`$(cc) -O2 -shared -fPIC -Wl,--version-script=foo.map foo.c -o libfoo_versioned.so`)
+                        end
+
+                        if native
+                            for exe in ("main_plain", "hello_plain", "main_full", "main_thin", "main_ar", "hello")
+                                @test success(setenv(`./$(exe)`, env; dir))
                             end
                         end
                     end
