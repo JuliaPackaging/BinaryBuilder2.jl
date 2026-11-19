@@ -277,20 +277,18 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
         # Resolve each dependency to the directory that holds it
         dep_dirs = String[]
         for dep_name in dep_names
-            soname = basename(dep_name)
-            # Don't try to insert RPATHs for system libraries
-            if is_system_library(soname, scan.platform)
-                continue
-            end
-
+            dep_soname = basename(dep_name)
             # Map through symlink forwards
-            soname = get(scan.soname_forwards, soname, soname)
+            soname = get(scan.soname_forwards, dep_soname, dep_soname)
 
-            if soname ∉ keys(soname_locator)
+            if haskey(soname_locator, soname)
+                push!(dep_dirs, rpath_dir(dep_name, soname_locator[soname], scan.platform))
+            # System libraries are checked as the last fallback, as in `resolve_dynamic_links!()`:
+            # a library we or a dependency ship (e.g. Libiconv_jll's `libiconv.2.dylib`, which
+            # macOS also has) needs an RPATH even when it shares a system library's name.
+            elseif !is_system_library(dep_soname, scan.platform)
                 push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
-                continue
             end
-            push!(dep_dirs, rpath_dir(dep_name, soname_locator[soname], scan.platform))
         end
 
         # Normalize the RPATHs, forcing them to be unique, and relative
