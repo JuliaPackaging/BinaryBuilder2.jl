@@ -559,6 +559,50 @@ end
         """)
 end
 
+@testset "init_def" begin
+    function make_init_def_jll(init_def)
+        return JLLInfo(;
+            name = "Foo",
+            version = v"1.0.0",
+            builds = [
+                JLLBuildInfo(;
+                    src_version = v"1.0.0",
+                    platform = Platform("x86_64", "linux"),
+                    name = "Foo",
+                    artifact = JLLArtifactBinding(;
+                        treehash = "214e75bb92aa2acc9de8ff89f8d1aaeeba8fd26d",
+                        download_sources = [],
+                    ),
+                    products = [JLLFileProduct(:foo_txt, "share/foo.txt")],
+                    licenses = [mit_license],
+                    init_def,
+                ),
+            ],
+        )
+    end
+
+    # Multiple statements round-trip through `JLL.toml` unchanged
+    code = """
+    path = joinpath(artifact_dir, "share", "terminfo")
+    ENV["TERMINFO_DIRS"] = path
+    """
+    jll = make_init_def_jll(code)
+    d, new_jll = roundtrip_jll_through_toml(jll)
+    @test only(d["builds"])["init_def"] == code
+    @test only(new_jll.builds).init_def == code
+    @test jll == new_jll
+
+    # Without one, the key is left out
+    d, new_jll = roundtrip_jll_through_toml(make_init_def_jll(nothing))
+    @test !haskey(only(d["builds"]), "init_def")
+    @test only(new_jll.builds).init_def === nothing
+
+    # Code that does not parse is rejected
+    @test_throws ArgumentError make_init_def_jll("if true\n    x = 1\n")
+    @test_throws ArgumentError make_init_def_jll("x = )")
+    @test_throws ArgumentError make_init_def_jll("end")
+end
+
 @testset "Build binding shape" begin
     binding = JLLArtifactBinding(treehash = "0c6c284985577758b3a339c6215c9d4e3d71420e",
                                  download_sources = [])

@@ -524,6 +524,24 @@ function defines_function(ex, name::Symbol)
 end
 
 """
+    check_init_def(code::String)
+
+Throw an `ArgumentError` unless `code`, a JLL's `init_def`, parses as a sequence of
+complete statements.  The wrapper splices those statements into the JLL's `__init__()`.
+"""
+function check_init_def(code::String)
+    ex = try
+        Meta.parse(string("begin\n", code, "\nend"))
+    catch e
+        throw(ArgumentError("`init_def` does not parse: $(sprint(showerror, e))"))
+    end
+    if Meta.isexpr(ex, (:incomplete, :error))
+        throw(ArgumentError("`init_def` does not parse: $(ex.args[1])"))
+    end
+    return nothing
+end
+
+"""
     JLLBuildInfo
 
 A structure representing all platform-specific information in a JLL.  This structure is
@@ -632,6 +650,10 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             end
         end
 
+        if init_def !== nothing
+            check_init_def(string(init_def))
+        end
+
         if isempty(licenses)
             throw(ArgumentError("Must provide at least one license for JLLBuild!"))
         end
@@ -648,7 +670,7 @@ easier for non-BinaryBuilder2 users to make use of this package if needed.
             licenses,
             lazy,
             Dict{Symbol,String}(Symbol(k) => string(v) for (k,v) in callback_defs),
-            init_def,
+            init_def === nothing ? nothing : string(init_def),
         )
     end
 end
