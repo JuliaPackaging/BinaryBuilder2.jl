@@ -77,6 +77,7 @@ include("ExecutableProduct.jl")
 include("FileProduct.jl")
 include("LibraryProduct.jl")
 include("Runtime.jl")
+include("Musl.jl")
 
 function check_format_version(jll, toml_path)
     if !haskey(jll, "format_version")

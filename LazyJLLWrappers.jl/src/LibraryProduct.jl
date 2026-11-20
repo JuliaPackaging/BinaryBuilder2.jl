@@ -35,7 +35,7 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
         push!(jb.top_level_blocks, emit_typed_global(
             var_name, LazyLibrary, quote
                 LazyLibrary(
-                    $(lazy_path_var_name),
+                    LazyJLLWrappers.lazy_library_path($(lazy_path_var_name)),
                     dependencies = LazyJLLWrappers.filter_non_lazy_libraries([$(mod_dot_name.(product["deps"])...)]),
                     flags = $(Expr(:call, :|, [Expr(:., :Libdl, QuoteNode(f)) for f in Symbol.(product["flags"])]...)),
                     on_load_callback = $(on_load_callback),
@@ -52,7 +52,7 @@ function library_product_definition(jb::JLLBlocks, artifact, product)
         # Eagerly dlopen the library (now that the path has been resolved at `__init__()` time),
         # unless the JLL asks for it never to be loaded into this process.
         if !get(product, "dont_dlopen", false)
-            push!(jb.init_blocks, :(dlopen($(path_var_name))))
+            push!(jb.init_blocks, :(dlopen(LazyJLLWrappers.dlopen_path($(path_var_name)))))
         end
 
         # Also, invoke the callback function in `__init__()` here.
