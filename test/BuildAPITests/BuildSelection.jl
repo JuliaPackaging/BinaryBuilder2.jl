@@ -1,5 +1,5 @@
 using BinaryBuilder2, Test, SHA
-import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry
+import BinaryBuilder2: get_target_spec, spec_hash, BuildCacheExtractEntry, build_hash_debug_logger
 
 if !isdefined(@__MODULE__, :TestingUtils)
     include(joinpath(pkgdir(BinaryBuilder2), "test", "TestingUtils.jl"))
@@ -74,9 +74,47 @@ multi_stage_build = joinpath(build_examples_dir, "multi_stage_build.jl")
     package_result = package!(package_config)
     @test package_result.status == :success
 
-    # Ensure that running with a hash that never gets selected fails when we trigger `atexit()`
-    failing_meta = BuildMeta(; verbose=false, build_hash_list=[SHA1Hash(sha1(""))])
-    run_build_tarballs(failing_meta, multi_stage_build)
+    # A build hash that never gets selected causes every build hash to be recomputed
+    # with debug logging enabled, then an `UnconsumedBuildHashesError`.
+    bogus_hash = SHA1Hash(sha1(""))
+    native_linux = Platform(arch(HostPlatform()), "linux")
+    failing_meta() = BuildMeta(; verbose=false, build_hash_list=[bogus_hash], target_list=[native_linux])
+    meta1 = failing_meta()
+    run_build_tarballs(meta1, multi_stage_build; check_build_hashes=false)
+    @test isempty(meta1.build_hash_list_used)
+    scheduled = Dict(config => spec_hash(config) for config in keys(meta1.builds))
+    @test length(scheduled) == 2
+    debug_io = IOBuffer()
+    err = try
+        check_build_hashes_consumed(meta1; debug_logger=build_hash_debug_logger(debug_io))
+        nothing
+    catch e
+        e
+    end
+    @test isa(err, UnconsumedBuildHashesError)
+    debug_output = String(take!(debug_io))
+    @test occursin("Build hash selection", debug_output)
+    @test occursin("BuildConfig hash buffer", debug_output)
+    @test occursin("[source_trees]", debug_output)
+    @test count("Recomputed build hash", debug_output) == 2
+    err_msg = sprint(showerror, err)
+    @test occursin("Not all build hashes provided were used", err_msg)
+    @test occursin("Unconsumed: $(MultiHash(bogus_hash))", err_msg)
+    for (config, build_hash) in scheduled
+        @test occursin("$(build_hash) $(config)", err_msg)
+        # The recomputation leaves the scheduled hash in place
+        @test config.spec_hash[] == build_hash
+    end
+    # `meta1` has been reported, so the exit hooks no longer check it
+    @test meta1 ∉ BinaryBuilder2.get_exit_hooks().build_metas
+
+    # `run_build_tarballs()` performs this check once the script has finished
+    @test_throws UnconsumedBuildHashesError run_build_tarballs(failing_meta(), multi_stage_build)
+
+    # If nobody checked, the `atexit()` hook does
+    meta3 = failing_meta()
+    run_build_tarballs(meta3, multi_stage_build; check_build_hashes=false)
+    @test meta3 ∈ BinaryBuilder2.get_exit_hooks().build_metas
     @test_logs (:error, r"Not all build hashes provided were used") match_mode=:any Base.atexit(BinaryBuilder2.get_exit_hooks(); exit_process=false)
 
     # Do the same thing, but out-of-process, to ensure that the `atexit()` hook actually
@@ -89,6 +127,8 @@ multi_stage_build = joinpath(build_examples_dir, "multi_stage_build.jl")
     output = String(take!(out_io))
     @test !success(proc)
     @test occursin("Not all build hashes provided were used", output)
+    @test occursin("BuildConfig hash buffer", output)
+    @test occursin("Recomputed build hash", output)
     if success(proc) || !occursin("Not all build hashes provided were used", output)
         @error("Unexpected output from bogus build hash invocation", output)
     end

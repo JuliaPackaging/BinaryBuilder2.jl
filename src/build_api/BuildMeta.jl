@@ -2,7 +2,7 @@ using TimerOutputs, Pkg
 using ChromeTracing: @trace_event, save_trace, clear_trace!
 
 # And then our exports
-export BuildMeta
+export BuildMeta, check_build_hashes_consumed, UnconsumedBuildHashesError
 
 const BUILD_HELP = (
     """
@@ -577,6 +577,122 @@ function should_skip(config::BuildConfig, verbose::Bool)
     end
 
     return false
+end
+
+"""
+    UnconsumedBuildHashesError
+
+Thrown by [`check_build_hashes_consumed`](@ref) when some of the build hashes given
+to a `BuildMeta` (via `build_hash_list` or `--build-hashes`) did not match any build.
+"""
+struct UnconsumedBuildHashesError <: Exception
+    depot_path::String
+    provided::Vector{MultiHash}
+    consumed::Vector{MultiHash}
+    # `string(config) => build_hash` for every build that was scheduled
+    computed::Vector{Pair{String,SHA1Hash}}
+end
+
+function Base.showerror(io::IO, e::UnconsumedBuildHashesError)
+    hashes_str(hs) = isempty(hs) ? "(none)" : join(string.(hs), ", ")
+    println(io, "Not all build hashes provided were used:")
+    println(io, "  Depot path: ", e.depot_path)
+    println(io, "  Provided:   ", hashes_str(e.provided))
+    println(io, "  Consumed:   ", hashes_str(e.consumed))
+    println(io, "  Unconsumed: ", hashes_str(setdiff(e.provided, e.consumed)))
+    if isempty(e.computed)
+        println(io, "  No builds were scheduled.")
+    else
+        println(io, "  Build hashes of the scheduled builds:")
+        for (name, build_hash) in e.computed
+            println(io, "    ", build_hash, " ", name)
+        end
+    end
+    println(io)
+    println(io, "This is either a bug in BinaryBuilder2, or a TOCTOU error.")
+    println(io, "Could someone have registered a new dependency between scheduling and actual build?")
+    print(io, "The debug log above shows the inputs to each recomputed build hash.")
+end
+
+"""
+    build_hash_debug_logger(io::IO = stderr)
+
+Logger that prints `@debug` messages from the `BinaryBuilder*` packages (as if
+`JULIA_DEBUG=BinaryBuilder2,BinaryBuilderSources,...` were set) along with all
+messages of level `Info` or higher.
+"""
+function build_hash_debug_logger(io::IO = stderr)
+    is_bb_module(m) = isa(m, Module) && startswith(string(nameof(Base.moduleroot(m))), "BinaryBuilder")
+    return EarlyFilteredLogger(
+        log -> log.level > Logging.Debug || is_bb_module(log._module),
+        ConsoleLogger(io, Logging.Debug),
+    )
+end
+
+"""
+    check_build_hashes_consumed(meta::BuildMeta; debug_logger = build_hash_debug_logger())
+
+If `meta` was given a list of build hashes and some of them did not match any build
+scheduled so far, recompute the build hash of every scheduled build (every `BuildConfig`
+in `meta.builds`) with `debug_logger` installed, so that the inputs to each hash are
+logged, then throw an [`UnconsumedBuildHashesError`](@ref).  Nothing is rebuilt.
+
+`meta` is removed from the exit hooks, so the same failure is not reported again at
+process exit.
+"""
+function check_build_hashes_consumed(meta::BuildMeta; debug_logger::AbstractLogger = build_hash_debug_logger())
+    # A dry-run build never gets as far as matching build hashes
+    unconsumed = setdiff(meta.build_hash_list, meta.build_hash_list_used)
+    if isempty(unconsumed) || "build" ∈ meta.dry_run
+        return nothing
+    end
+    filter!(m -> m !== meta, get_exit_hooks().build_metas)
+
+    @warn("Not all build hashes provided were used; recomputing build hashes with debug logging enabled")
+    computed = Pair{String,SHA1Hash}[]
+    with_logger(debug_logger) do
+        @debug("Build hash selection",
+            provided = join(sort(string.(collect(meta.build_hash_list))), ", "),
+            consumed = join(sort(string.(collect(meta.build_hash_list_used))), ", "),
+            unconsumed = join(sort(string.(collect(unconsumed))), ", "),
+            num_builds = length(meta.builds),
+        )
+        for config in sort(collect(keys(meta.builds)); by=string)
+            # Recompute without disturbing the hash the build was scheduled under
+            scheduled_hash = config.spec_hash[]
+            old_build_identifier = get(config.env, "bb_build_identifier", nothing)
+            build_hash = try
+                spec_hash(config; force_recompute=true)
+            catch e
+                @error("Unable to recompute build hash", config, exception=(e, catch_backtrace()))
+                continue
+            finally
+                config.spec_hash[] = scheduled_hash
+                if old_build_identifier === nothing
+                    delete!(config.env, "bb_build_identifier")
+                else
+                    config.env["bb_build_identifier"] = old_build_identifier
+                end
+            end
+            @debug("Recomputed build hash",
+                config,
+                build_hash,
+                scheduled_hash,
+                selected = build_hash ∈ meta.build_hash_list,
+            )
+            if scheduled_hash !== nothing && scheduled_hash != build_hash
+                @warn("Build hash changed since the build was scheduled", config, scheduled_hash, build_hash)
+            end
+            push!(computed, string(config) => build_hash)
+        end
+    end
+
+    throw(UnconsumedBuildHashesError(
+        meta.universe.depot_path,
+        sort(collect(meta.build_hash_list); by=string),
+        sort(collect(meta.build_hash_list_used); by=string),
+        computed,
+    ))
 end
 
 function should_skip(config::ExtractConfig, verbose::Bool)

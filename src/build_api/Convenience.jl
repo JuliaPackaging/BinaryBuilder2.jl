@@ -372,7 +372,8 @@ function build_tarballs(;src_name::String,
 end
 
 """
-    run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::String; dry_run::Bool = false)
+    run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::String;
+                       dry_run::Bool = false, check_build_hashes::Bool = true)
 
 Helper function to evaluate a `build_tarballs.jl` script within a new anonymous module.
 Uses `with_default_meta()` to set the default `meta` for use inside of the included
@@ -382,8 +383,16 @@ so try to avoid doing that in any script you want to use this function with.
 
 The `dry_run` keyword argument exists as a convenient way to override the `dry_run`
 parameter inside of `meta`.
+
+Once the script has finished, if `meta` was given build hashes and `check_build_hashes`
+is set, [`check_build_hashes_consumed`](@ref) throws an `UnconsumedBuildHashesError`
+(after logging how each build hash was computed) if any of them did not match a build.
+Pass `check_build_hashes = false` when running several scripts with one `meta`
+whose build hash list spans all of them, and call `check_build_hashes_consumed(meta)`
+after the last one.
 """
-function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString, args::Vector{String} = String[]; dry_run::Bool = false)
+function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::AbstractString, args::Vector{String} = String[];
+                            dry_run::Bool = false, check_build_hashes::Bool = true)
     build_tarballs_path = abspath(build_tarballs_path)
     # If `dry_run` is set, we need to toggle `dry_run` in `meta`, but only
     # for the duration of this call:
@@ -408,6 +417,9 @@ function run_build_tarballs(meta::AbstractBuildMeta, build_tarballs_path::Abstra
                 # that our `Base.source_path()` sniffing works.
                 Base.include(m, build_tarballs_path)
             end
+        end
+        if check_build_hashes && isa(meta, BuildMeta)
+            check_build_hashes_consumed(meta)
         end
     finally
         empty!(meta.dry_run)

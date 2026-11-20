@@ -23,6 +23,23 @@ Perform cleanup of all objects registered with `eh`.  This is called automatical
 at process exit, but can be eagerly called at any time.
 """
 function Base.atexit(eh::ExitHooks; exit_process::Bool=true)
+    # Check build hashes first: recomputing them needs the universe depots that
+    # the cleanups below may delete.
+    hash_check_failed = false
+    for meta in copy(eh.build_metas)
+        try
+            check_build_hashes_consumed(meta)
+        catch e
+            if isa(e, UnconsumedBuildHashesError)
+                @error(sprint(showerror, e))
+            else
+                @error("Unable to check build hashes", exception=(e, catch_backtrace()))
+            end
+            hash_check_failed = true
+        end
+    end
+    empty!(eh.build_metas)
+
     for bc in eh.build_caches
         try
             save_cache(bc)
@@ -49,26 +66,9 @@ function Base.atexit(eh::ExitHooks; exit_process::Bool=true)
     end
     empty!(eh.build_results)
 
-    for meta in eh.build_metas
-        if length(meta.build_hash_list) != length(meta.build_hash_list_used)
-            message = strip("""
-            Not all build hashes provided were used:
-            Depot path: $(meta.universe.depot_path)
-            Provided: $(meta.build_hash_list)
-            Consumed: $(meta.build_hash_list_used)
-
-            This is either a bug in BinaryBuilder2, or a TOCTOU error.
-            Could someone have registered a new dependency between scheduling and actual build?
-            Use JULIA_DEBUG=BinaryBuilder2 to investigate.
-            """)
-            @error(message)
-
-            if exit_process
-                exit(1)
-            end
-        end
+    if hash_check_failed && exit_process
+        exit(1)
     end
-    empty!(eh.build_metas)
 end
 
 const get_exit_hooks = Base.OncePerProcess{ExitHooks}() do
