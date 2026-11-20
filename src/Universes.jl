@@ -8,6 +8,7 @@ import LazyJLLWrappers
 import LocalRegistry
 import Git
 import TreeArchival
+using BinaryBuilderSources: atomic_write
 using Scratch, Pkg, Dates
 using gh_cli_jll
 import Sandbox: cleanup
@@ -57,8 +58,7 @@ function download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot
     url = "$(server)/registry/$(reg.uuid)/$(tree_hash)"
     mkpath(regdir)
     tarball_name = string(reg.name, ".tar.gz")
-    mktempdir(regdir) do tmp
-        tmp_tarball = joinpath(tmp, tarball_name)
+    atomic_write(joinpath(regdir, tarball_name)) do tmp_tarball
         try
             Pkg.PlatformEngines.download_verify(url, nothing, tmp_tarball; quiet_download=!verbose)
         catch e
@@ -70,8 +70,9 @@ function download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot
 
         # Get rid of any unpacked copy of this registry, so that it can't shadow our snapshot.
         rm(joinpath(regdir, reg.name); force=true, recursive=true)
-        mv(tmp_tarball, joinpath(regdir, tarball_name); force=true)
-        open(toml_path; write=true) do io
+    end
+    atomic_write(toml_path) do tmp_toml
+        open(tmp_toml; write=true) do io
             TOML.print(io, Dict(
                 "uuid" => string(reg.uuid),
                 "git-tree-sha1" => tree_hash,
