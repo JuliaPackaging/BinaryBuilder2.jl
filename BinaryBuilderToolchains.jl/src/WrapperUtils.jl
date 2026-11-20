@@ -220,9 +220,13 @@ function compiler_wrapper(pre_func::Function, post_func::Function, io::IO, prog:
 
     # Finally, run the actual command itself
     vrun "\${PROG[@]}" "\${PRE_FLAGS[@]}" "\${ARGS[@]}" "\${POST_FLAGS[@]}"
+    WRAPPED_EXIT_CODE=\$?
     """)
 
+    # Post-processing steps may inspect `WRAPPED_EXIT_CODE`; the wrapper always
+    # exits with the wrapped program's exit code unless a post step exits first.
     post_func(io)
+    println(io, "exit \${WRAPPED_EXIT_CODE}")
 end
 
 function compiler_wrapper(pre_func::Function, post_func::Function, wrapper_path::String, prog::String)

@@ -79,7 +79,6 @@ function binutils_jll_source_selection(vendor, platform)
                 version=v"986.0.1",
                 target=simple_vendor,
             ),
-            JLLSource("ldid_jll", platform.host),
         ])
 
         if simple_vendor != "clang"
@@ -307,60 +306,12 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     function _strip_wrapper_pre(io)
         _simple_U_D_determinism(io)
 
-        # On non-apple platforms, there's nothing else to be done!
-        if !Sys.isapple(p)
-            return
+        # Stripping a macOS binary invalidates its code signature.  The auditor
+        # ad-hoc re-signs every Mach-O binary once the build is finished, so tell
+        # `strip` not to warn about it.
+        if Sys.isapple(p)
+            append_flags(io, :PRE, ["-no_code_signature_warning"])
         end
-
-        # Otherwise, we need to do some RATHER ONEROUS parsing.
-        # We need to identify every file touched by `strip` and then
-        # re-sign them all using `ldid`.  Because `strip` can take
-        # multiple output files, we end up doing a bunch of custom
-        # argument parsing here to identify all files that will be signed.
-        println(io, raw"""
-        FILES_TO_SIGN=()
-        # Parse arguments to figure out what files are being stripped,
-        # so we know what to re-sign after all is said and done.
-        get_files_to_sign()
-        {
-            for ARG_IDX in "${!ARGS[@]}"; do
-                # If `-o` is passed, that's the only file to sign, ignore
-                # everything else and finish off immediately.
-                if [[ "${ARGS[ARG_IDX]}" == "-o" ]] && (( ARG_IDX + 1 < ${#ARGS[@]} )); then
-                    FILES_TO_SIGN=( "${ARGS[ARG_IDX+1]}" )
-                    return
-                elif [[ "${ARGS[ARG_IDX]}" == "-o"* ]]; then
-                    filename="${ARGS[ARG_IDX}]}"
-                    FILES_TO_SIGN=( "${filename%%-o}" )
-                    return
-                fi
-
-                # Otherwise, we collect arguments we don't know what to do with,
-                # assuming they are files we should be signing.
-                if [[ "${ARGS[ARG_IDX]}" != -* ]]; then
-                    FILES_TO_SIGN+=( "${ARGS[ARG_IDX]}" )
-                fi
-            done
-        }
-        """)
-
-        # Tell `strip` not to complain about us invalidating a code signature, since
-        # we're gonna fix it up with `ldid` immediately afterward.
-        append_flags(io, :PRE, ["-no_code_signature_warning"])
-    end
-
-    function _strip_wrapper_post(io)
-        # On non-apple platforms, we don't need to do anything
-        if !Sys.isapple(p)
-            return
-        end
-
-        println(io, raw"""
-        # Re-sign all files listed in `FILES_TO_SIGN`
-        for file in "${FILES_TO_SIGN[@]}"; do
-            ldid -S "${file}"
-        done
-        """)
     end
 
     function _as_wrapper(io)
@@ -421,8 +372,8 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     # `nm` is a simple tool, except that it can take in `--plugin` for LTO
     make_tool_wrappers(toolchain, dir, "nm", "$(gcc_triplet)-nm"; wrapper=_nm_wrapper, toolchain_prefix)
 
-    # `strip` needs complicated option parsing if we're on macOS
-    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, post_func=_strip_wrapper_post, toolchain_prefix)
+    # `strip` needs determinism flags, and on macOS the code signature warning silenced
+    make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, toolchain_prefix)
 
     # c++filt uses `llvm-cxxfilt` on macOS, `c++filt` elsewhere
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"

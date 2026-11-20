@@ -55,5 +55,25 @@ using BinaryBuilderToolchains: compiler_wrapper, @flag_str, flagmatch, append_fl
         no bar!
         fooifier: blah --zork --no-bar-post
         """)
+
+        # A wrapper with a post-processing step still exits with the wrapped tool's
+        # exit code, and the post step can see that exit code.
+        exiter_path = joinpath(dir, "exiter")
+        open(exiter_path, write=true) do io
+            println(io, """
+            #!/bin/bash
+            exit "\$1"
+            """)
+        end
+        chmod(exiter_path, 0o755)
+        post_wrapper_path = joinpath(dir, "post-wrapper")
+        post_func(io) = println(io, "echo \"post: \${WRAPPED_EXIT_CODE}\"")
+        compiler_wrapper(identity, post_func, post_wrapper_path, exiter_path)
+        for code in (0, 3)
+            out = IOBuffer()
+            p = run(pipeline(ignorestatus(`$(post_wrapper_path) $(code)`); stdout=out))
+            @test p.exitcode == code
+            @test strip(String(take!(out))) == "post: $(code)"
+        end
     end
 end
