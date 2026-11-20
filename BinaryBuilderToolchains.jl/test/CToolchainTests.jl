@@ -216,7 +216,7 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                             end
                             # the bootstrap GCC binutils doesn't have our deterministic strip patch
                             if Sys.iswindows(target) && vendor == :gcc_bootstrap
-                                push!(EXCLUDED_DIRS, "08_strip_resigning")
+                                push!(EXCLUDED_DIRS, "08_strip_determinism")
                             end
                             p, output = capture_output(setenv(Cmd(["/bin/bash", "-c", "make clean-all && make compile-all EXCLUDED_DIRS='$(join(EXCLUDED_DIRS, " "))'"]), env))
                             if !success(p)
@@ -397,13 +397,13 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
         end
     end
 
-    # Ensure that `strip` works for macOS without needing to resign
-    @testset "macos strip resigning" begin
+    # Ensure that `strip` is deterministic for macOS and does not warn about code signatures
+    @testset "macos strip determinism" begin
         for macos_target in filter(Sys.isapple, supported_platforms(CToolchain))
             macos_cp = CrossPlatform(BBHostPlatform() => macos_target)
             toolchains = [CToolchain(macos_cp), htt_toolchain]
             with_toolchains(toolchains) do prefix, env
-                cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_resigning")) do
+                cd(joinpath(@__DIR__, "testsuite", "CToolchain", "08_strip_determinism")) do
                     @test success(setenv(Cmd(["/bin/bash", "-c", "make clean; make check"]), env))
                 end
             end
