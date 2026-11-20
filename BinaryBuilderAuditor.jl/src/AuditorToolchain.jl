@@ -7,7 +7,7 @@ export AuditorToolchain
     AuditorToolchain
 
 This toolchain contains the tools necessary for the BinaryBuilder auditor to function,
-such as as `patchelf` and `install_name_tool`.
+such as `patchelf`, `install_name_tool` and `ldid`.
 """
 struct AuditorToolchain <: AbstractToolchain
     platform::CrossPlatform
@@ -24,6 +24,11 @@ struct AuditorToolchain <: AbstractToolchain
                     uuid=Base.UUID("1e42d1a4-ec21-5f39-ae07-c1fb720fbc4b"),
                     version=v"986.0.1",
                 ),
+                # `ldid` re-signs the Mach-O files that the auditor modifies.  `ldid_jll`
+                # places no bound on `libplist_jll`, but links against `libplist-2.0.so.3`,
+                # which only the v2.2 series provides.
+                JLLSource("ldid_jll", platform.host),
+                JLLSource("libplist_jll", platform.host; version=v"2.2.1+0"),
             )
         elseif Sys.islinux(platform.target) || Sys.isbsd(platform.target)
             push!(tools,
@@ -108,6 +113,7 @@ end
 
 patchelf_filename(toolchain::AuditorToolchain) = "patchelf"
 install_name_tool_filename(toolchain::AuditorToolchain) = "$(toolchain_jll_triplet(toolchain.platform.target))-install_name_tool"
+ldid_filename(toolchain::AuditorToolchain) = "ldid"
 function toolchain_sources(toolchain::AuditorToolchain)
     return toolchain.deps
 end
@@ -115,6 +121,7 @@ function toolchain_env(toolchain::AuditorToolchain, deployed_prefix::String)
     env = Dict{String,String}()
     if Sys.isapple(toolchain.platform.target)
         env["INSTALL_NAME_TOOL"] = install_name_tool_filename(toolchain)
+        env["LDID"] = ldid_filename(toolchain)
     elseif Sys.islinux(toolchain.platform.target) || Sys.isbsd(toolchain.platform.target)
         env["PATCHELF"] = patchelf_filename(toolchain)
     end

@@ -9,7 +9,7 @@ struct ScanResult
     prefix_alias::String
     platform::AbstractPlatform
 
-    # Toolchain that contains things like `patchelf`, `install_name_tool`, etc...
+    # Toolchain that contains things like `patchelf`, `install_name_tool`, `ldid`, etc...
     toolchain::AuditorToolchain
     toolchain_prefix::String
 
@@ -453,4 +453,13 @@ end
 function install_name_tool(scan::ScanResult, cmd::Cmd)
     env = path_appending_merge(ENV, toolchain_env(scan.toolchain, scan.toolchain_prefix))
     addenv(`$(install_name_tool_path(scan)) $(cmd)`, env)
+end
+
+function ldid_path(scan::ScanResult)
+    return joinpath(scan.toolchain_prefix, "bin", ldid_filename(scan.toolchain))
+end
+
+function ldid(scan::ScanResult, cmd::Cmd)
+    env = path_appending_merge(ENV, toolchain_env(scan.toolchain, scan.toolchain_prefix))
+    addenv(`$(ldid_path(scan)) $(cmd)`, env)
 end
