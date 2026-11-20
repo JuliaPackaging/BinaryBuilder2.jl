@@ -19,6 +19,7 @@ CToolchain (CrossPlatform(Platform("x86_64", "linux"; libc = "glibc") -> Platfor
  - Clang v17.0.7
  - libLLVM v17.0.7
  - LLVMCompilerRT v17.0.7
+ - pkgconf v3.0.0
 ```
 
 ## Writing new `PlatformlessWrapper` adapters

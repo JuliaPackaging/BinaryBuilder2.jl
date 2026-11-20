@@ -69,6 +69,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
 │     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
 │     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
 │   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
 │     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
 │     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
@@ -114,6 +115,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
 │     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
 │     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
@@ -166,6 +168,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
 │     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
 │     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
 │   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
 │     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
 │     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
@@ -211,6 +214,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
 │     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
 │     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
+│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
