@@ -37,6 +37,24 @@ end
         mkdir -p ${build_prefix}/src
         cp libstring.cpp libstring.h ${build_prefix}/src
 
+        # Each spec's `pkg-config` only finds the `.pc` files in that spec's prefix
+        for spec in build host target; do
+            prefix_var="${spec}_prefix"
+            mkdir -p ${!prefix_var}/lib/pkgconfig
+            printf 'Name: %s\nDescription: %s\nVersion: 1.0\n' ${spec} ${spec} > ${!prefix_var}/lib/pkgconfig/pc_${spec}.pc
+        done
+        for pc in "BUILD_PKG_CONFIG build" "PKG_CONFIG host" "HOST_PKG_CONFIG host" "TARGET_PKG_CONFIG target"; do
+            read pc_var spec <<<"${pc}"
+            for other in build host target; do
+                if ${!pc_var} --exists pc_${other}; then found=${other}; else found=""; fi
+                if [[ ( "${other}" == "${spec}" && -z "${found}" ) || ( "${other}" != "${spec}" && -n "${found}" ) ]]; then
+                    echo "\$${pc_var} (${!pc_var}) finding pc_${other}: '${found}'" >&2
+                    exit 1
+                fi
+            done
+        done
+        rm -rf ${build_prefix}/lib/pkgconfig ${host_prefix}/lib/pkgconfig ${target_prefix}/lib/pkgconfig
+
         for install_prefix in ${build_prefix} ${host_prefix} ${target_prefix}; do
             mkdir -p ${install_prefix}/share/licenses/libstring
             echo "public domain" > ${install_prefix}/share/licenses/libstring/LICENSE.md

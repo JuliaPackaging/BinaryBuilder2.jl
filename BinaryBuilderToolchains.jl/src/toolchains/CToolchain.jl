@@ -68,6 +68,7 @@ struct CToolchain <: AbstractToolchain
     # Extra library directories, e.g. `/workspace/destdir/${target}/lib` in BinaryBuilder.
     # Each one is added as `-L<dir>` and, on ELF targets, as `-Wl,-rpath-link,<dir>`, so
     # that the linker also finds the dependencies of the libraries it finds there.
+    # Our `pkg-config` wrappers search `<dir>/pkgconfig` and `<dir>/../share/pkgconfig`.
     extra_libdirs::Vector{String}
 
     # Cache key that we use to store our generated wrappers
@@ -144,6 +145,9 @@ struct CToolchain <: AbstractToolchain
             compiler_runtime,
             cxx_runtime,
         )
+        # `pkgconf` runs on the host; our `pkg-config` wrappers point it at the target's `.pc` files.
+        # It only reads `.pc` files, so it is not built per value of any strict tag.
+        push!(deps, JLLSource("pkgconf_jll", platform.host; target="pkgconf", exempt_from_strict_tags=true))
         check_jll_pins(deps)
 
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
@@ -670,6 +674,7 @@ function toolchain_sources(toolchain::CToolchain)
         if installing_jll("Clang_jll") || installing_jll("LLVMBootstrap_Clang_jll")
             clang_wrappers(toolchain, out_dir)
         end
+        pkg_config_wrappers(toolchain, out_dir)
     end)
 
     append!(sources, toolchain_sources(toolchain.binutils_toolchain))
@@ -690,6 +695,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
         env["$(envvar_prefix)CXX"] = "$(tool_prefix)c++"
         env["$(envvar_prefix)CPP"] = "$(tool_prefix)cpp"
         env["$(envvar_prefix)CC_TARGET"] = triplet(gcc_platform(toolchain.platform.target))
+        env["$(envvar_prefix)PKG_CONFIG"] = "$(tool_prefix)pkg-config"
     end
 
     # We can have multiple wrapper prefixes, we always use the longest one
@@ -710,6 +716,40 @@ function platform(toolchain::CToolchain)
 end
 
 
+
+"""
+    pkg_config_wrappers(toolchain, dir)
+
+Generates `pkg-config` wrappers (e.g. `x86_64-linux-gnu-pkg-config`, the name
+autoconf's `PKG_PROG_PKG_CONFIG` looks for first when cross-compiling) that run
+our own `pkgconf` with its search path set to exactly the `pkgconfig` directories
+belonging to `toolchain.extra_libdirs` (`<dir>/pkgconfig` and `<dir>/../share/pkgconfig`).
+`pkgconf` is installed off of `PATH`, so a bare `pkg-config` always means the
+wrapper for the default target.  `PKG_CONFIG_PATH` is left alone, so that build
+scripts can still prepend their own directories.  The system include and library
+directory lists are emptied so that `-I`/`-L` flags pointing into the target
+prefix are always printed; consumers like CMake's `FindPkgConfig` need them.
+`PKG_CONFIG_SYSROOT_DIR` is not set, as the `.pc` files we install are
+relocatable (`prefix=\${pcfiledir}/../..`) and already resolve to absolute
+paths within the build environment.
+"""
+function pkg_config_wrappers(toolchain::CToolchain, dir::String)
+    libdir = join([
+        dir
+        for libdir in toolchain.extra_libdirs
+        for dir in (joinpath(libdir, "pkgconfig"), joinpath(dirname(libdir), "share", "pkgconfig"))
+    ], ":")
+    for wrapper_prefix in toolchain.wrapper_prefixes
+        name = string(replace(wrapper_prefix, "\${triplet}" => triplet(gcc_platform(toolchain.platform.target))), "pkg-config")
+        compiler_wrapper(joinpath(dir, name), "\$(dirname \"\${WRAPPER_DIR}\")/pkgconf/bin/pkgconf") do io
+            println(io, """
+            export PKG_CONFIG_LIBDIR="$(libdir)"
+            export PKG_CONFIG_SYSTEM_INCLUDE_PATH=""
+            export PKG_CONFIG_SYSTEM_LIBRARY_PATH=""
+            """)
+        end
+    end
+end
 
 """
     compile_flagmatch(f, io)
