@@ -120,6 +120,20 @@ function update_registries!(registries::Vector{RegistrySpec},
 
     to_download = registries_to_download(filter(reg -> !haskey(registry_hashes, reg.name), registries), depot_path)
     if !isempty(to_download)
+        # `download_registries()` only fetches the registries that the depot is missing,
+        # so update the ones it already holds.  Pkg keeps its registry update log in
+        # `DEPOT_PATH[1]`, so point that at `depot_path`, where our own entries (written
+        # below) lie in the future and must not hold the update back.
+        to_update = filter(reg -> ispath(registry_path(depot_path, reg.name)), to_download)
+        if !isempty(to_update)
+            pushfirst!(DEPOT_PATH, depot_path)
+            try
+                Pkg.Registry.update(to_update; io=verbose ? stdout : devnull, depots=[depot_path],
+                                    update_cooldown=Millisecond(typemin(Int64)))
+            finally
+                popfirst!(DEPOT_PATH)
+            end
+        end
         Pkg.Registry.download_registries(verbose ? stdout : devnull, to_download, depot_path)
         for reg in to_download
             push!(downloaded_registries, (depot_path, reg.name))

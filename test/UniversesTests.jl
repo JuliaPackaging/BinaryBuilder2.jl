@@ -1,4 +1,4 @@
-using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors
+using Test, BinaryBuilder2, Pkg, JLLGenerator, Accessors, TOML
 using BinaryBuilder2: register_jll!, get_package_versions, reset_timeline!
 using BinaryBuilder2: update_registries!, registries_to_download, registry_path, parse_registry_hashes
 using BinaryBuilder2: exported_artifact_filename
@@ -93,6 +93,31 @@ end
             @test mtime(joinpath(pinned_depot, "registries", "General.tar.gz")) == mtime_before
         end
         @test_throws ArgumentError update_registries!(registries, depot; registry_hashes=Dict("Nonexistent" => general_hash))
+    end
+
+    # A registry that a depot already holds from an earlier session gets refreshed by the
+    # first `update_registries!()` of the next session, unless it is pinned.
+    mktempdir() do depot
+        registries = copy(Pkg.Registry.DEFAULT_REGISTRIES)
+        general_toml = joinpath(depot, "registries", "General.toml")
+        stale_hash = "0"^40
+        function make_stale!(depot)
+            toml = TOML.parsefile(general_toml)
+            toml["git-tree-sha1"] = stale_hash
+            open(io -> TOML.print(io, toml), general_toml; write=true)
+            delete!(BinaryBuilder2.downloaded_registries, (depot, "General"))
+        end
+
+        update_registries!(registries, depot)
+        make_stale!(depot)
+        general = only(update_registries!(registries, depot))
+        @test bytes2hex(general.tree_info.bytes) != stale_hash
+        @test TOML.parsefile(general_toml)["git-tree-sha1"] != stale_hash
+
+        make_stale!(depot)
+        pinned = only(update_registries!(registries, depot; registry_hashes=Dict("General" => stale_hash)))
+        @test bytes2hex(pinned.tree_info.bytes) == stale_hash
+        @test TOML.parsefile(general_toml)["git-tree-sha1"] == stale_hash
     end
 
     @test parse_registry_hashes("General=$("a"^40),Other=$("b"^40)") == Dict("General" => "a"^40, "Other" => "b"^40)
