@@ -223,8 +223,11 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                     env = path_appending_merge(host_env, target_env)
                     @test env["PKG_CONFIG"] == "aarch64-linux-gnu-pkg-config"
                     @test env["HOST_PKG_CONFIG"] == "host-pkg-config"
-                    pkg_config(pc, args) = readchomp(setenv(Cmd(["/bin/bash", "-c", "\${$(pc)} $(args)"]), env))
-                    pkg_config_success(pc, args) = success(setenv(Cmd(["/bin/bash", "-c", "\${$(pc)} $(args)"]), env))
+                    # `env` has the user's `PATH` between both toolchains, and that can contain the
+                    # system's own `aarch64-linux-gnu-pkg-config`, so run the target's with `target_env`.
+                    pc_env(pc) = pc == "HOST_PKG_CONFIG" ? env : target_env
+                    pkg_config(pc, args) = readchomp(setenv(Cmd(["/bin/bash", "-c", "\${$(pc)} $(args)"]), pc_env(pc)))
+                    pkg_config_success(pc, args) = success(setenv(Cmd(["/bin/bash", "-c", "\${$(pc)} $(args)"]), pc_env(pc)))
 
                     # `Requires:` is followed, and paths resolve into the prefix
                     foo_pc = "$(target_prefix)/share/pkgconfig/../.."
@@ -240,7 +243,6 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                     @test !pkg_config_success("PKG_CONFIG", "--exists libpkgconf")
 
                     # The plain `pkg-config` and the `\${triplet}-` names are the target's.
-                    # (`env` has the user's `PATH` between both toolchains, so use `target_env`.)
                     @test success(setenv(`pkg-config --exists foo`, target_env))
                     @test success(setenv(`aarch64-linux-gnu-pkg-config --exists foo`, target_env))
                     @test success(setenv(`host-pkg-config --exists hostonly`, env))

@@ -146,7 +146,8 @@ struct CToolchain <: AbstractToolchain
             cxx_runtime,
         )
         # `pkgconf` runs on the host; our `pkg-config` wrappers point it at the target's `.pc` files.
-        push!(deps, JLLSource("pkgconf_jll", platform.host; target="pkgconf"))
+        # It only reads `.pc` files, so it is not built per value of any strict tag.
+        push!(deps, JLLSource("pkgconf_jll", platform.host; target="pkgconf", exempt_from_strict_tags=true))
         check_jll_pins(deps)
 
         # Concretize the JLLSource's `PackageSpec`'s version (and UUID) now:
