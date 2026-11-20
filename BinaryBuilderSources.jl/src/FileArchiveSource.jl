@@ -212,14 +212,9 @@ only then move it into place, so that nobody ever sees (and fails to verify) a p
 or wrong download, even if the download fails or we are interrupted.
 """
 function download_verified(fas::FileArchiveSource, url::String, download_target::String)
-    temp_target, temp_io = mktemp(dirname(download_target); cleanup=false)
-    close(temp_io)
-    try
+    atomic_write(download_target) do temp_target
         Downloads.download(url, temp_target; headers=download_headers(url))
         verify_hash(fas, temp_target; url)
-        mv(temp_target, download_target; force=true)
-    finally
-        rm(temp_target; force=true)
     end
 end
 

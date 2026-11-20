@@ -990,6 +990,58 @@ end
     end
 end
 
+@testset "atomic_write" begin
+    using BinaryBuilderSources: atomic_write
+    mktempdir() do dir
+        path = joinpath(dir, "sub", "file.txt")
+        @test atomic_write(p -> write(p, "first"), path) == path
+        @test read(path, String) == "first"
+
+        # The file gets the mode a plain `touch` gives under the umask, not
+        # the 0600 of a private temporary file.
+        reference = touch(joinpath(dir, "mode-reference"))
+        @test filemode(path) & 0o777 == filemode(reference) & 0o777
+        rm(reference)
+
+        # An existing file is replaced
+        atomic_write(p -> write(p, "second"), path)
+        @test read(path, String) == "second"
+
+        # A failed write leaves the old content and no staging files behind
+        @test_throws ErrorException atomic_write(path) do p
+            write(p, "partial")
+            error("boom")
+        end
+        @test read(path, String) == "second"
+        @test readdir(dirname(path)) == ["file.txt"]
+
+        # Concurrent writers each publish a complete file, so the last one
+        # to finish wins and readers never see a mix.
+        contents = [repeat(string(i), 100_000) for i in 1:8]
+        tasks = map(contents) do content
+            Threads.@spawn atomic_write(path) do p
+                open(p; write=true) do io
+                    for chunk in Iterators.partition(content, 1000)
+                        write(io, String(chunk))
+                        yield()
+                    end
+                end
+            end
+        end
+        foreach(wait, tasks)
+        @test read(path, String) in contents
+        @test readdir(dirname(path)) == ["file.txt"]
+
+        # Directories: filled in place of an empty one, never replacing a populated one
+        dir_path = joinpath(dir, "tree")
+        atomic_write(p -> write(joinpath(p, "a"), "a"), dir_path; directory=true)
+        @test readdir(dir_path) == ["a"]
+        atomic_write(p -> write(joinpath(p, "b"), "b"), dir_path; directory=true)
+        @test readdir(dir_path) == ["a"]
+        @test sort(readdir(dir)) == ["sub", "tree"]
+    end
+end
+
 @testset "make_thin_depot!" begin
     using BinaryBuilderSources: make_thin_depot!
     mktempdir() do dir

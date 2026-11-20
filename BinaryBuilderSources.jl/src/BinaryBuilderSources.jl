@@ -170,4 +170,38 @@ function with_download_lock(f::Function, path::String)
     return FileWatching.Pidfile.mkpidlock(f, string(path, ".lock"); stale_age=60)
 end
 
+"""
+    atomic_write(f, path::String; directory::Bool = false)
+
+Call `f(staging_path)` to write a file (or, with `directory = true`, fill a directory) at
+a staging location next to `path`, then rename it into place, so that other readers
+never see a partially written `path`.  Returns `path`.
+"""
+function atomic_write(f::Function, path::String; directory::Bool = false)
+    parent = dirname(abspath(path))
+    mkpath(parent)
+    # `mktempdir()` creates a mode-0700 directory, so it only holds the staging
+    # location, which `f` (or `mkdir()`) creates with the usual mode.
+    staging_parent = mktempdir(parent; prefix=string(".", basename(path), ".staging-"), cleanup=false)
+    try
+        staging_path = joinpath(staging_parent, basename(path))
+        if directory
+            mkdir(staging_path)
+        end
+        f(staging_path)
+        try
+            # `rename(2)` replaces a file or an empty directory, but fails on a
+            # non-empty directory, so only the first complete directory is published.
+            Base.Filesystem.rename(staging_path, path)
+        catch e
+            if !directory || !isdir(path) || isempty(readdir(path))
+                rethrow(e)
+            end
+        end
+    finally
+        rm(staging_parent; recursive=true, force=true)
+    end
+    return path
+end
+
 end # module

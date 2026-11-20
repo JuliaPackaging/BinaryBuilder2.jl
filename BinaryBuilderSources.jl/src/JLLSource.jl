@@ -663,8 +663,8 @@ function prepare(jlls::Vector{JLLSource};
                     # invalidate this entire slice.
                     slice_uuids = union([m["dep_uuids"] for m in values(artifact_metas)]...)
 
-                    mkpath(dirname(cache_path))
-                    open(cache_path; write=true) do io
+                    # Concurrent `prepare()` calls (e.g. from other processes) must never read a partial file
+                    atomic_write(cache_path) do temp_path; open(temp_path; write=true) do io
                         cache_entry = Dict(
                             # We record both the artifact path and the gitsha as those are the primary outputs
                             # of our resolution and artifact meta collection.
@@ -684,7 +684,7 @@ function prepare(jlls::Vector{JLLSource};
                             "dep_uuids" => string.(slice_uuids),
                         )
                         TOML.print(io, cache_entry)
-                    end
+                    end; end
                 end
             end
         end
