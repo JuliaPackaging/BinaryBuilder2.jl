@@ -204,14 +204,22 @@ end
 is_ucrt_forwarder(name::AbstractString, platform::AbstractPlatform) =
     os(platform) == "windows" && startswith(lowercase(name), "api-ms-win-crt-")
 
+# Likewise, Windows "API sets" such as `api-ms-win-core-synch-l1-2-0.dll` are schema names
+# that the loader resolves to kernelbase/kernel32.  Binaries built for newer Windows versions
+# (e.g. `_WIN32_WINNT=0x0603`) can import them; they are part of the operating system, and
+# nothing links against them.
+is_windows_apiset(name::AbstractString, platform::AbstractPlatform) =
+    os(platform) == "windows" && startswith(lowercase(name), "api-ms-win-core-")
+
 function is_system_library(soname::AbstractString, platform::AbstractPlatform)
     soname = lowercase(basename(soname))
-    return is_ucrt_forwarder(soname, platform) || haskey(known_system_libraries(platform), soname)
+    return is_ucrt_forwarder(soname, platform) || is_windows_apiset(soname, platform) ||
+           haskey(known_system_libraries(platform), soname)
 end
 
 function system_library_linker_name(soname::AbstractString, platform::AbstractPlatform)
     soname = lowercase(basename(soname))
-    if is_ucrt_forwarder(soname, platform)
+    if is_ucrt_forwarder(soname, platform) || is_windows_apiset(soname, platform)
         return nothing
     end
     return get(known_system_libraries(platform), soname, nothing)
