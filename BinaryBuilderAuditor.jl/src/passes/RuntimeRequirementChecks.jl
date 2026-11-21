@@ -27,6 +27,17 @@ function libgfortran_major(lib::AbstractString)
 end
 
 """
+    is_arch_specific_libstdcxx_symbol(name)
+
+`true` for libstdc++ symbol versions that only some architectures define: `CXXABI_ARM_*`
+(32-bit ARM) and `GLIBCXX_LDBL_*` / `CXXABI_LDBL_*` (the long-double ABI of powerpc64le).
+`julia_libstdcxx_versions.jl` is generated from the x86_64 tarballs, which define none of
+them, so they can never be looked up there.
+"""
+is_arch_specific_libstdcxx_symbol(name::AbstractString) =
+    startswith(name, "CXXABI_ARM_") || startswith(name, "GLIBCXX_LDBL_") || startswith(name, "CXXABI_LDBL_")
+
+"""
     record_runtime_requirements!(result::AuditResult)
 
 Record in `result.runtime_requirements` what the binary objects of the prefix need
@@ -70,6 +81,9 @@ function record_runtime_requirements!(result::AuditResult)
                 libv = libstdcxx_version_for_symbol(name)
                 if libv !== nothing
                     reqs.libstdcxx = raise(reqs.libstdcxx, libv, rel_path, name)
+                elseif is_arch_specific_libstdcxx_symbol(name)
+                    # Cannot be checked against the x86_64-derived table; the generic
+                    # `GLIBCXX_3.4.N` / `CXXABI_1.3.N` versions of the library still are.
                 elseif !any(r -> r.value == name, reqs.unknown_libstdcxx)
                     push!(reqs.unknown_libstdcxx, RuntimeRequirement{String}(name, rel_path, lib))
                 end

@@ -89,6 +89,33 @@ end
             @test reqs.glibcxx.value == v"3.4.999"
             @test success(result)
 
+            # Architecture-specific symbol versions cannot be in the x86_64-derived table, so
+            # needing one is neither recorded as unknown nor raises the libstdc++ requirement.
+            # Each family gets its own stub libstdc++ and caller, audited on its own.
+            before = runtime_requirements_audit(prefix, target).runtime_requirements
+            for (fn, node) in (("arm_cxx_fn", "CXXABI_ARM_1.3.3"),
+                               ("ldbl_cxx_fn", "GLIBCXX_LDBL_3.4"),
+                               ("ldbl_abi_fn", "CXXABI_LDBL_1.3"))
+                # `stub_versioned_lib` makes the `libstdc++.so` link, which must not exist yet
+                rm(joinpath(prefix, "lib", "libstdc++.so"); force=true)
+                with_toolchains([toolchain]) do _, env
+                    stub_versioned_lib(env, joinpath(prefix, "lib"), "libstdc++.so.6", node, fn)
+                    build_caller(env, joinpath(prefix, "bin", fn), [fn], joinpath(prefix, "lib"), ["stdc++"])
+                end
+                result = runtime_requirements_audit(prefix, target)
+                reqs = result.runtime_requirements
+                @test length(reqs.unknown_libstdcxx) == length(before.unknown_libstdcxx)
+                @test !any(r -> r.value == node, reqs.unknown_libstdcxx)
+                @test reqs.libstdcxx == before.libstdcxx
+                @test success(result)
+                rm(joinpath(prefix, "bin", fn))
+            end
+            # restore the stub that the following tests expect
+            rm(joinpath(prefix, "lib", "libstdc++.so"); force=true)
+            with_toolchains([toolchain]) do _, env
+                stub_versioned_lib(env, joinpath(prefix, "lib"), "libstdc++.so.6", "GLIBCXX_3.4.999", "future_cxx_fn")
+            end
+
             # Symbol versions named `GLIBCXX_*` from other libraries are not libstdc++'s
             with_toolchains([toolchain]) do _, env
                 stub_versioned_lib(env, joinpath(prefix, "lib"), "libnotcxx.so.1", "GLIBCXX_3.4.998", "notcxx_fn")
