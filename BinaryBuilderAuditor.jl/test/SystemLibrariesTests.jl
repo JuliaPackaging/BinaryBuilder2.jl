@@ -39,6 +39,13 @@ using BinaryBuilderAuditor: is_system_library, system_library_linker_name,
     # ucrt symbol-forwarding DLLs are system libraries, but nothing one links
     @test is_system_library("api-ms-win-crt-math-l1-1-0.dll", windows)
     @test system_library_linker_name("api-ms-win-crt-math-l1-1-0.dll", windows) === nothing
+    # so are API-set DLLs, which binaries targeting Windows 8 or newer import
+    @test is_system_library("api-ms-win-core-synch-l1-2-0.dll", windows)
+    @test is_system_library("API-MS-WIN-CORE-SYNCH-L1-2-0.DLL", windows)
+    @test system_library_linker_name("api-ms-win-core-synch-l1-2-0.dll", windows) === nothing
+    # only on Windows, and only the `core` API sets
+    @test !is_system_library("api-ms-win-core-synch-l1-2-0.dll", Platform("x86_64", "linux"))
+    @test !is_system_library("api-ms-win-something-else-l1-1-0.dll", windows)
 
     # A SONAME outside the map is not a system library, and has no linker name:
     # unknown entries fail the audit loudly rather than being guessed at
