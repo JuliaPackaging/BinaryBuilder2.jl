@@ -753,64 +753,99 @@ function deploy_jll(jll_path::String,
     end
 end
 
-# The shared bare clone of a JLL's repository that `init_jll_repo()` (re)creates.
-# Anyone using it must hold `with_download_lock()` on this path, as it is deleted
-# and re-cloned by every `register_jll!()`.
-jll_bare_repo_path(jll_name::String) = source_download_cache("$(jll_name)_jll")
+# A bare clone of the remote JLL repository at `url`, in the download cache shared by
+# all universes and processes.  Hold `with_download_lock()` on this path while fetching
+# into it or checking out from it.
+jll_repo_cache_path(url::String) = source_download_cache(string(basename(url), "-", bytes2hex(sha256(url))))
 
-function init_jll_repo(u::Universe, jll_name::String)
+# Clone the JLL repository at `url` into the download cache at `repo_path`, or bring an
+# existing clone up to date.  Branches deleted from the remote are pruned, so that we do
+# not check out a branch (e.g. `bb2/<universe>` on a fork) that no longer exists.
+function update_jll_repo_cache!(url::String, repo_path::String; verbose::Bool = false)
+    if ispath(joinpath(repo_path, "HEAD"))
+        quiet = verbose ? String[] : ["--quiet"]
+        BinaryBuilderGitUtils.git_authed(run, url, ["-C", repo_path, "fetch", "--prune", "origin", quiet...])
+    else
+        clone!(url, repo_path; verbose)
+    end
+end
+
+# The bare repository that stands in for the remote repository of a JLL that has none,
+# when not deploying.  It belongs to the universe, so that universes do not share it.
+jll_local_repo_path(u::Universe, jll_name::String) = joinpath(u.depot_path, "jll_repos", "$(jll_name)_jll")
+
+"""
+    init_jll_repo(u::Universe, jll_name::String, jll_path::String; branch_name = nothing, verbose = false)
+
+Check out the JLL's repository to `jll_path`, from `branch_name` if the repository has
+it, otherwise from its default branch.  Returns the URL of the repository.
+"""
+function init_jll_repo(u::Universe, jll_name::String, jll_path::String;
+                       branch_name::Union{Nothing,String} = nothing, verbose::Bool = false)
     # There are four possible control flows here:
     #  - The remote JLL repository already exists and we are deploying
-    #    -> Clone it, fork it on github and push back up to it
+    #    -> Fork it on github, clone the fork and push back up to it
     #  - The remote JLL repository already exists and we are not deploying
     #    -> Clone it
     #  - The remote JLL repository does not exist and we are deploying
     #    -> Create a new repo, clone it, and push back up to it
     #  - The remote JLL repository does not exist and we are not deploying
-    #    -> Create a local bare repo
+    #    -> Use a local bare repo within the universe
 
     # Note that we search for the "upstream" repo URL here only in our non-BB2Local registry
-    jll_repo_url = get_package_repo(u, "$(jll_name)_jll"; registries=u.registry_instances[2:end])
-    jll_bare_repo = jll_bare_repo_path(jll_name)
+    upstream_url = get_package_repo(u, "$(jll_name)_jll"; registries=u.registry_instances[2:end])
+    local_repo = jll_local_repo_path(u, jll_name)
 
     # This is the case if this was previously registered within this
-    # universe when it did not exist previously.  In this case, nuke it.
-    if jll_repo_url == jll_bare_repo
-        jll_repo_url = nothing
+    # universe when it did not exist previously.
+    if upstream_url == local_repo
+        upstream_url = nothing
     end
 
-    rm(jll_bare_repo; force=true, recursive=true)
     if u.deploy_org !== nothing
         fork_org_repo = "$(u.deploy_org)/$(jll_name)_jll.jl"
-        fork_url = "https://github.com/$(fork_org_repo)"
-        if jll_repo_url === nothing
-            if !gh_repo_exists(fork_org_repo)
-                @debug("Creating and cloning JLL fork", fork_url)
-                gh_create(fork_org_repo)
-                sleep(1)
-            end
-        else
-            if !gh_repo_exists(fork_org_repo)
-                @debug("Forking and cloning JLL", fork_url)
-                gh_fork(jll_repo_url, u.deploy_org)
-                sleep(1)
-            else
-                @debug("Cloning existing JLL fork", fork_url)
-            end
-        end
-        jll_repo_url = fork_url
-        clone!(fork_url, jll_bare_repo)
+        repo_url = "https://github.com/$(fork_org_repo)"
+        repo_path = jll_repo_cache_path(repo_url)
+    elseif upstream_url !== nothing
+        repo_url = upstream_url
+        repo_path = jll_repo_cache_path(repo_url)
     else
-        if jll_repo_url === nothing
-            jll_repo_url = jll_bare_repo
-            @debug("Initializing JLL repo", jll_bare_repo)
-            init!(jll_bare_repo)
-        else
-            @debug("Cloning existing JLL repo", jll_repo_url)
-            clone!(jll_repo_url, jll_bare_repo)
-        end
+        repo_url = local_repo
+        repo_path = local_repo
     end
-    return jll_repo_url, jll_bare_repo
+
+    # Other processes (e.g. one per platform, or other universes) may be registering
+    # this JLL at the same time, so hold the lock until we have our own checkout.
+    BinaryBuilderSources.with_download_lock(repo_path) do
+        if u.deploy_org !== nothing
+            if !gh_repo_exists(fork_org_repo)
+                if upstream_url === nothing
+                    @debug("Creating JLL fork", repo_url)
+                    gh_create(fork_org_repo)
+                else
+                    @debug("Forking JLL", repo_url)
+                    gh_fork(upstream_url, u.deploy_org)
+                end
+                sleep(1)
+            end
+            @debug("Cloning JLL fork", repo_url, repo_path)
+            update_jll_repo_cache!(repo_url, repo_path; verbose)
+        elseif upstream_url !== nothing
+            @debug("Cloning existing JLL repo", repo_url, repo_path)
+            update_jll_repo_cache!(repo_url, repo_path; verbose)
+        else
+            @debug("Initializing JLL repo", repo_path)
+            init!(repo_path; verbose)
+        end
+
+        if branch_name !== nothing && isbranch(repo_path, branch_name)
+            src_branch = branch_name
+        else
+            src_branch = head_branch(repo_path)
+        end
+        checkout!(repo_path, jll_path, src_branch; verbose)
+    end
+    return repo_url
 end
 
 const fetched_registries = Set{Base.UUID}()
@@ -926,18 +961,7 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     uni_branch_name = u.name !== nothing ? "bb2/$(u.name)" : nothing
 
-    # The bare repo is shared by every process registering this JLL (e.g. one per platform),
-    # so hold its lock until we have our own checkout of it.
-    jll_repo_url = BinaryBuilderSources.with_download_lock(jll_bare_repo_path(jll.name)) do
-        repo_url, jll_bare_repo = init_jll_repo(u, jll.name)
-        if uni_branch_name !== nothing && isbranch(jll_bare_repo, uni_branch_name)
-            src_branch = uni_branch_name
-        else
-            src_branch = head_branch(jll_bare_repo)
-        end
-        checkout!(jll_bare_repo, jll_path, src_branch; verbose)
-        return repo_url
-    end
+    jll_repo_url = init_jll_repo(u, jll.name, jll_path; branch_name=uni_branch_name, verbose)
     if uni_branch_name !== nothing
         branch!(jll_path, uni_branch_name)
     end
