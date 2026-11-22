@@ -375,7 +375,8 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             @test spec_hash(retarget(bzip2_dep, "ext"); registries=jll_registries) != pre_prepare_hashes[1]
             @test !isempty(bzip2_dep.artifact_paths)
             @test !isempty(zstd_dep.artifact_paths)
-            depot_artifacts_dir = joinpath(source_download_cache("jllsource_depot"), "artifacts")
+            # Artifact paths point into the store behind the JLL depot's `artifacts` symlink
+            depot_artifacts_dir = realpath(joinpath(source_download_cache("jllsource_depot"), "artifacts"))
             @test all(startswith.(bzip2_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test all(startswith.(zstd_dep.artifact_paths, Ref(depot_artifacts_dir)))
             @test content_hash(bzip2_dep) != content_hash(zstd_dep)
@@ -515,13 +516,22 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         zstd_uuid = string(zstd_dep.package.uuid)
                         @test zstd_uuid in cache["dep_uuids"]
 
+                        # Cached artifact paths must not go through the (temporary) JLL source
+                        # depot, whose `artifacts` is a symlink into the user depot.
+                        jll_depot = BinaryBuilderSources.default_jll_source_depot()
+                        for path in cache[ccache_uuid]["artifact_paths"]
+                            @test !startswith(path, jll_depot)
+                            @test dirname(path) == realpath(dirname(path))
+                            @test isdir(path)
+                        end
+
                         # Point the cache at a recognizable (existing) directory, to see where paths come from
                         fake_artifact = mkpath(joinpath(dir, "fake_artifact"))
                         cache[ccache_uuid]["artifact_paths"] = [fake_artifact]
                         open(io -> TOML.print(io, cache), cache_path; write=true)
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep])
-                        @test ccache_dep.artifact_paths == [fake_artifact]
+                        @test ccache_dep.artifact_paths == [BinaryBuilderSources.canonical_artifact_path(fake_artifact)]
                         # The resolved version comes out of the cache as well
                         @test ccache_dep.package.version == VersionNumber(cache[ccache_uuid]["version"])
 
@@ -531,7 +541,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         open(io -> TOML.print(io, cache), cache_path; write=true)
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep])
-                        @test fake_artifact ∉ ccache_dep.artifact_paths
+                        @test BinaryBuilderSources.canonical_artifact_path(fake_artifact) ∉ ccache_dep.artifact_paths
                         @test ccache_dep.package.version isa VersionNumber
                         @test haskey(TOML.parsefile(cache_path)[ccache_uuid], "version")
                         cache = TOML.parsefile(cache_path)
@@ -546,7 +556,7 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
                         ccache_dep = JLLSource("Ccache_jll", HostPlatform())
                         prepare([ccache_dep]; project_dir)
                         @test !isempty(ccache_dep.artifact_paths)
-                        @test fake_artifact ∉ ccache_dep.artifact_paths
+                        @test BinaryBuilderSources.canonical_artifact_path(fake_artifact) ∉ ccache_dep.artifact_paths
 
                         # A corrupt cache (here: lacking `dep_uuids`) is dropped, and the slice resolved
                         cache = TOML.parsefile(cache_path)
@@ -987,6 +997,58 @@ end
         @test isempty(download_headers("https://example.com/repos/JuliaPackaging/Yggdrasil/releases/assets/1"))
     finally
         access_tokens[] = old_tokens
+    end
+end
+
+@testset "atomic_write" begin
+    using BinaryBuilderSources: atomic_write
+    mktempdir() do dir
+        path = joinpath(dir, "sub", "file.txt")
+        @test atomic_write(p -> write(p, "first"), path) == path
+        @test read(path, String) == "first"
+
+        # The file gets the mode a plain `touch` gives under the umask, not
+        # the 0600 of a private temporary file.
+        reference = touch(joinpath(dir, "mode-reference"))
+        @test filemode(path) & 0o777 == filemode(reference) & 0o777
+        rm(reference)
+
+        # An existing file is replaced
+        atomic_write(p -> write(p, "second"), path)
+        @test read(path, String) == "second"
+
+        # A failed write leaves the old content and no staging files behind
+        @test_throws ErrorException atomic_write(path) do p
+            write(p, "partial")
+            error("boom")
+        end
+        @test read(path, String) == "second"
+        @test readdir(dirname(path)) == ["file.txt"]
+
+        # Concurrent writers each publish a complete file, so the last one
+        # to finish wins and readers never see a mix.
+        contents = [repeat(string(i), 100_000) for i in 1:8]
+        tasks = map(contents) do content
+            Threads.@spawn atomic_write(path) do p
+                open(p; write=true) do io
+                    for chunk in Iterators.partition(content, 1000)
+                        write(io, String(chunk))
+                        yield()
+                    end
+                end
+            end
+        end
+        foreach(wait, tasks)
+        @test read(path, String) in contents
+        @test readdir(dirname(path)) == ["file.txt"]
+
+        # Directories: filled in place of an empty one, never replacing a populated one
+        dir_path = joinpath(dir, "tree")
+        atomic_write(p -> write(joinpath(p, "a"), "a"), dir_path; directory=true)
+        @test readdir(dir_path) == ["a"]
+        atomic_write(p -> write(joinpath(p, "b"), "b"), dir_path; directory=true)
+        @test readdir(dir_path) == ["a"]
+        @test sort(readdir(dir)) == ["sub", "tree"]
     end
 end
 

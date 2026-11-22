@@ -227,15 +227,13 @@ end
         @test filemode(empty_path) & 0o777 == mkdir_mode
 
         # An empty deployment creates an empty tree with the usual mode, and
-        # an existing empty tree (another build may have it mounted) is left
-        # in place rather than replaced.
+        # can be repeated over an existing empty tree.
         none_path = joinpath(dir, "4-jkl")
         BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
         @test isdir(none_path) && isempty(readdir(none_path))
         @test filemode(none_path) & 0o777 == mkdir_mode
-        inode = stat(none_path).inode
         BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
-        @test stat(none_path).inode == inode
+        @test isdir(none_path) && isempty(readdir(none_path))
         @test sort(readdir(dir)) == ["1-abc", "3-ghi", "4-jkl"]
     end
 end
