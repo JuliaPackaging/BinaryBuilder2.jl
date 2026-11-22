@@ -59,6 +59,48 @@ end
     end
 end
 
+@testset "Registering a JLL in two universes" begin
+    function example_jll(name, version)
+        jll = include(joinpath(pkgdir(JLLGenerator), "contrib", "example_jllinfos", "HelloWorldC_jll.jl"))
+        jll = @set jll.name = name
+        jll = @set jll.version = version
+        jll = @set jll.builds = map(jll.builds) do build
+            build = @set build.src_version = version
+            build = @set build.name = name
+            return build
+        end
+        return jll
+    end
+
+    # `HelloWorldC_jll` has a repository listed in `General`, `HelloWorldC3_jll` does not.
+    for jll in (example_jll("HelloWorldC", v"1.99.0"), example_jll("HelloWorldC3", v"1.0.0"))
+        mktempdir() do dir_a
+            mktempdir() do dir_b
+                uni_a = Universe("jllcheckout-a"; depot_path=dir_a)
+                uni_b = Universe("jllcheckout-b"; depot_path=dir_b)
+                register_jll!(uni_a, jll; skip_artifact_export=true)
+
+                # Registering the same JLL elsewhere must not disturb the repository
+                # that `uni_a`'s checkout was made from.
+                register_jll!(uni_b, jll; skip_artifact_export=true)
+                for uni in (uni_a, uni_b)
+                    jll_path = joinpath(uni.depot_path, "dev", "$(jll.name)_jll")
+                    @test success(BinaryBuilder2.Git.git(["-C", jll_path, "fsck", "--full"]))
+                    @test !isempty(readchomp(BinaryBuilder2.Git.git(["-C", jll_path, "rev-list", "--max-count=1", "HEAD"])))
+                    @test get_package_versions(uni, "$(jll.name)_jll") ⊇ [jll.version]
+                end
+
+                # A JLL without a remote repository gets a repository of its own in each universe.
+                if jll.name == "HelloWorldC3"
+                    for uni in (uni_a, uni_b)
+                        @test isdir(BinaryBuilder2.jll_local_repo_path(uni, jll.name))
+                    end
+                end
+            end
+        end
+    end
+end
+
 @testset "Registry downloads" begin
     # We want every session to start from an up-to-date registry, but we only want to
     # pay for that once, no matter how many `Universe`s get built on top of it.
