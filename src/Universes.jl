@@ -734,7 +734,17 @@ function deploy_jll(jll_path::String,
     end
     github_remote = "https://github.com/$(deploy_org)/$(jll_name)_jll.jl"
     remote_url!(jll_path, deploy_org, github_remote)
-    push!(jll_path, deploy_org; force=true)
+    # Push only the branch and the tag of this deployment.  `jll_path` is cloned from a
+    # mirror of the remote repository, so it holds every tag that repository had when we
+    # cloned it, and pushing all of them would race with anyone else deploying to it,
+    # re-creating tags they have since deleted.
+    refspecs = [
+        "+HEAD:refs/heads/$(head_branch(jll_path))",
+        "+refs/tags/$(tag_name):refs/tags/$(tag_name)",
+    ]
+    push_args = ["-C", jll_path, "push", "--atomic", (verbose ? String[] : ["--quiet"])...,
+                 deploy_org, refspecs...]
+    BinaryBuilderGitUtils.git_authed(run, github_remote, push_args)
 
     # Upload binaries to a github release attached to the tag we just pushed
     if verbose
