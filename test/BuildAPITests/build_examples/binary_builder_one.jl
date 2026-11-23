@@ -49,29 +49,10 @@ products = Product[
 
 # Dependencies that must be installed before this package can be built
 dependencies = [
-    Dependency(
-        # We need to use our BB2-build Zlib here, until BB2 rebuilds Zlib publicly.
-        PackageSpec(;
-            name = "Zlib_jll",
-            uuid = "83775a58-1f1d-513f-b197-d71354ab007a",
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
-    ),
+    Dependency("Zlib_jll"; compat="1.4.1"),
 
     # This is added, to test the HostBuildDependency support
-    HostBuildDependency(
-        PackageSpec(;
-            name = "Zlib_jll",
-            uuid = "83775a58-1f1d-513f-b197-d71354ab007a",
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Zlib_jll.jl"
-            ),
-        ),
-    ),
+    HostBuildDependency(PackageSpec(; name="Zlib_jll", version=v"1.4.1")),
     HostBuildDependency("XZ_jll"),
 ]
 

@@ -13,21 +13,8 @@ build_tarballs(;
     ],
     target_dependencies = [
         JLLSource("Zlib_jll"; version=v"1.4.1"),
-        # TODO: Drop these once `Ncurses_jll` and `Readline_jll` on `General` are built by BB2.
-        JLLSource(
-            "Ncurses_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Ncurses_jll.jl"
-            ),
-        ),
-        JLLSource(
-            "Readline_jll";
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap-x86_64-linux-gnu",
-                source="https://github.com/staticfloat/Readline_jll.jl"
-            ),
-        ),
+        JLLSource("Ncurses_jll"; version=v"6.6.2"),
+        JLLSource("Readline_jll"; version=v"8.3.4"),
     ],
     script = raw"""
     cd ${WORKSPACE}/srcdir/crosstool-ng*/

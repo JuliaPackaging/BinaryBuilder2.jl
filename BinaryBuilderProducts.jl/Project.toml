@@ -7,7 +7,7 @@ version = "0.3.4"
 BinaryBuilderSources = "0.3"
 JLLGenerator = "0.5.6"
 KeywordArgumentExtraction = "1.2"
-julia = "1.9"
+julia = "1.10"
 
 [deps]
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"

@@ -9,13 +9,7 @@ build_tarballs(;
                       "fe5383204467828cd495ee8d1d3c037a7eba1389c22bc6a041f627976f9061cc"),
     ],
     target_dependencies = [
-        JLLSource(
-            "Ncurses_jll",
-            repo=Pkg.Types.GitRepo(
-                rev="bb2/GCCBootstrap",
-                source="https://github.com/staticfloat/Ncurses_jll.jl",
-            ),
-        ),
+        JLLSource("Ncurses_jll"; version=v"6.6.2"),
     ],
     script = raw"""
     cd $WORKSPACE/srcdir/readline-*/
