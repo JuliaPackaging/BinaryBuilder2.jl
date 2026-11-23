@@ -5,7 +5,7 @@ version = "0.3.4"
 
 [compat]
 BinaryBuilderSources = "0.3"
-JLLGenerator = "0.5.6"
+JLLGenerator = "0.6"
 KeywordArgumentExtraction = "1.2"
 julia = "1.10"
 
