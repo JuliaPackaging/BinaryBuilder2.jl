@@ -5,7 +5,7 @@ version = "0.4.5"
 
 [compat]
 BinaryBuilderPlatformExtensions = "0.2"
-BinaryBuilderProducts = "0.3.4"
+BinaryBuilderProducts = "0.4"
 BinaryBuilderSources = "0.3"
 BinaryBuilderToolchains = "0.4"
 JLLGenerator = "0.6"
