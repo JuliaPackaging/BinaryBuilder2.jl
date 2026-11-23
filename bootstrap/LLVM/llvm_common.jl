@@ -54,13 +54,7 @@ function clang_build_spec_generator(;is_bootstrap::Bool = false)
                 [
                     # Disable this for now
                     #=
-                    JLLSource(
-                        "XML2_jll";
-                        repo=Pkg.Types.GitRepo(
-                            rev="bb2/ClangBootstrap",
-                            source="https://github.com/staticfloat/XML2_jll.jl"
-                        ),
-                    ),
+                    JLLSource("XML2_jll"; version=v"2.15.5"),
                     =#
                     JLLSource("Zlib_jll"; version=v"1.4.1"),
                 ],

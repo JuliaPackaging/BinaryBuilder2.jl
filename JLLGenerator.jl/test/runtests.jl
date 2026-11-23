@@ -906,14 +906,14 @@ end
 using BinaryBuilderSources, Base.BinaryPlatforms, Pkg
 using BinaryBuilderSources: PkgSpec
 @testset "JLLSource TOML loading" begin
-    # Use special Ncurses_jll.jl because we do not yet have any JLLs built in the wild that have a `JLL.toml`.
+    # Ncurses_jll v6.6.2, a BB2-built JLL that carries a `JLL.toml`.
     jll = JLLSource(PkgSpec(;
         name = "Ncurses_jll",
         uuid = "68e3532b-a499-55ff-9963-d1c0c0748b3a",
-        tree_hash = Base.SHA1("f801fa135e0e3aa5b7ff026ff8b5fdcfefefdb3c"),
+        tree_hash = Base.SHA1("d831a04003316b596996d547d8f7da51965a1692"),
         repo=Pkg.Types.GitRepo(
-            rev="3574bb57a8e29d239be1228fadbc1951ff7d50c6",
-            source="https://github.com/staticfloat/Ncurses_jll.jl",
+            rev="77133087e9e9458b9b067e7d7801258c17778234",
+            source="https://github.com/JuliaBinaryWrappers/Ncurses_jll.jl",
         ),
     ), Platform("aarch64", "linux"))
 
