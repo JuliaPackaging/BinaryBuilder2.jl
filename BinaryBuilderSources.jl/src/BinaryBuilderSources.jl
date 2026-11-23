@@ -176,6 +176,11 @@ end
 Call `f(staging_path)` to write a file (or, with `directory = true`, fill a directory) at
 a staging location next to `path`, then rename it into place, so that other readers
 never see a partially written `path`.  Returns `path`.
+
+With `directory = true`, an existing directory at `path` is never replaced while it is
+in use: a populated directory is kept (and the staged copy discarded), and an empty
+result is published with `mkdir()`, which leaves an existing directory in place.  An
+existing empty directory is only replaced by a populated one.
 """
 function atomic_write(f::Function, path::String; directory::Bool = false)
     parent = dirname(abspath(path))
@@ -189,6 +194,16 @@ function atomic_write(f::Function, path::String; directory::Bool = false)
             mkdir(staging_path)
         end
         f(staging_path)
+        if directory && isempty(readdir(staging_path))
+            # `rename(2)` would replace an existing empty directory, which may be
+            # in use (e.g. as an overlay lower dir); `mkdir(2)` never replaces it.
+            try
+                mkdir(path)
+            catch e
+                isdir(path) || rethrow(e)
+            end
+            return path
+        end
         try
             # `rename(2)` replaces a file or an empty directory, but fails on a
             # non-empty directory, so only the first complete directory is published.
