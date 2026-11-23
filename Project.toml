@@ -1,6 +1,6 @@
 name = "BinaryBuilder2"
 uuid = "12aac903-9f7c-5d81-afc2-d9565ea332af"
-version = "1.4.2"
+version = "1.4.3"
 authors = ["Elliot Saba <staticfloat@gmail.com>"]
 
 [workspace]
@@ -68,10 +68,10 @@ TreeArchival = {path = "TreeArchival.jl"}
 
 [compat]
 Accessors = "0.1.42"
-BinaryBuilderAuditor = "0.4.4"
+BinaryBuilderAuditor = "0.4.5"
 BinaryBuilderGitUtils = "0.3"
 BinaryBuilderPlatformExtensions = "0.2.2"
-BinaryBuilderProducts = "0.3.3"
+BinaryBuilderProducts = "0.3.4"
 BinaryBuilderSources = "0.3.4"
 BinaryBuilderToolchains = "0.4.2"
 Ccache_jll = "4.9.1"
