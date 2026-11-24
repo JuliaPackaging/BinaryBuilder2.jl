@@ -517,16 +517,18 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                         p, output = capture_output(setenv(`$(env["NM"]) $(libfoo)`, env; dir))
                         @test occursin(r"\b_?foo\b", output)
 
-                        # Bitcode objects in a static archive.  `lld` for COFF looks symbols
-                        # up in the archive index, which GNU `ar` can't write for bitcode
-                        # without the `LLVMgold.so` plugin.
+                        # Bitcode objects in a static archive, whose index must list their
+                        # symbols (`lld` for COFF looks symbols up in it), whether `ar` or
+                        # `ranlib` writes it.  `nm` reads bitcode too.
                         @test lto_link(`$(cc) -O2 -flto -c foo.c -o foo.o`)
+                        p, output = capture_output(setenv(`$(env["NM"]) foo.o`, env; dir))
+                        @test success(p)
+                        @test occursin(r"\b_?foo\b", output)
                         @test lto_link(`$(env["AR"]) rcs libfoo.a foo.o`)
-                        if Sys.iswindows(target)
-                            @test_broken lto_link(`$(cc) -O2 -flto main.c libfoo.a -o main_ar`)
-                        else
-                            @test lto_link(`$(cc) -O2 -flto main.c libfoo.a -o main_ar`)
-                        end
+                        @test lto_link(`$(cc) -O2 -flto main.c libfoo.a -o main_ar`)
+                        @test lto_link(`$(env["AR"]) cr libfoo_ranlib.a foo.o`)
+                        @test lto_link(`$(env["RANLIB"]) libfoo_ranlib.a`)
+                        @test lto_link(`$(cc) -O2 -flto main.c libfoo_ranlib.a -o main_ranlib`)
 
                         if Sys.islinux(target) || Sys.isfreebsd(target)
                             # A version script may name symbols that the link doesn't define
@@ -535,7 +537,7 @@ ENV["TESTSUITE_OUTPUT_DIR"] = mktempdir(;cleanup=false)
                         end
 
                         if native
-                            for exe in ("main_plain", "hello_plain", "main_full", "main_thin", "main_ar", "hello")
+                            for exe in ("main_plain", "hello_plain", "main_full", "main_thin", "main_ar", "main_ranlib", "hello")
                                 @test success(setenv(`./$(exe)`, env; dir))
                             end
                         end
