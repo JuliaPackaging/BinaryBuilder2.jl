@@ -68,11 +68,11 @@ TreeArchival = {path = "TreeArchival.jl"}
 
 [compat]
 Accessors = "0.1.42"
-BinaryBuilderAuditor = "0.4.5"
+BinaryBuilderAuditor = "0.4.6"
 BinaryBuilderGitUtils = "0.3"
 BinaryBuilderPlatformExtensions = "0.2.2"
 BinaryBuilderProducts = "0.4"
-BinaryBuilderSources = "0.3.4"
+BinaryBuilderSources = "0.3.5"
 BinaryBuilderToolchains = "0.4.2"
 Ccache_jll = "4.9.1"
 ChromeTracing = "1.0"
