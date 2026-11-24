@@ -1049,6 +1049,20 @@ end
         atomic_write(p -> write(joinpath(p, "b"), "b"), dir_path; directory=true)
         @test readdir(dir_path) == ["a"]
         @test sort(readdir(dir)) == ["sub", "tree"]
+
+        # An empty directory is created fresh, and repeating an empty write keeps
+        # the existing directory (and anything holding it open) rather than
+        # replacing it with a new inode.
+        empty_path = joinpath(dir, "empty")
+        atomic_write(_ -> nothing, empty_path; directory=true)
+        @test isdir(empty_path) && isempty(readdir(empty_path))
+        empty_inode = stat(empty_path).inode
+        atomic_write(_ -> nothing, empty_path; directory=true)
+        @test stat(empty_path).inode == empty_inode
+        # A populated result still fills an existing empty directory.
+        atomic_write(p -> write(joinpath(p, "c"), "c"), empty_path; directory=true)
+        @test readdir(empty_path) == ["c"]
+        @test sort(readdir(dir)) == ["empty", "sub", "tree"]
     end
 end
 

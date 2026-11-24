@@ -232,8 +232,12 @@ end
         BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
         @test isdir(none_path) && isempty(readdir(none_path))
         @test filemode(none_path) & 0o777 == mkdir_mode
+        none_inode = stat(none_path).inode
         BinaryBuilder2.deploy_atomically(_ -> nothing, none_path)
         @test isdir(none_path) && isempty(readdir(none_path))
+        # Redeploying an empty tree must not replace the directory, since a
+        # concurrent build may be using it as an overlay lower dir.
+        @test stat(none_path).inode == none_inode
         @test sort(readdir(dir)) == ["1-abc", "3-ghi", "4-jkl"]
     end
 end

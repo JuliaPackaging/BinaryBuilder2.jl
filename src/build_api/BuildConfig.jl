@@ -408,8 +408,10 @@ on a fresh staging directory next to it, then renaming the staging directory
 into place (see `atomic_write()`).  Concurrent callers (in this or other
 processes) never write into the same directory: if `host_path` is already
 populated, nothing is done, and if another caller wins the race to rename, our
-staging copy is discarded.  A deployment that fails partway never becomes
-visible at `host_path`.
+staging copy is discarded.  An existing `host_path` that another build may be
+using as an overlay lower dir is never replaced; in particular an empty
+deployment leaves an existing empty `host_path` in place.  A deployment that
+fails partway never becomes visible at `host_path`.
 
 The deployed directory gets the permissions `mkdir` gives under the current
 umask, so it can serve as an overlay lower dir.
