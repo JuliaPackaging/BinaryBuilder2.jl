@@ -5,13 +5,9 @@ struct CMakeToolchain <: AbstractToolchain
     wrapper_prefixes::Vector{String}
     env_prefixes::Vector{String}
 
-    # Whether `clang` should use `lld` as its linker or `ld`
-    clang_use_lld::Bool
-
     function CMakeToolchain(platform::CrossPlatform;
                             env_prefixes = [""],
-                            wrapper_prefixes = ["\${triplet}-", ""],
-                            clang_use_lld = false)
+                            wrapper_prefixes = ["\${triplet}-", ""])
         if isempty(wrapper_prefixes)
             throw(ArgumentError("Cannot have empty wrapper prefixes!  Did you mean [\"\"]?"))
         end
@@ -22,7 +18,6 @@ struct CMakeToolchain <: AbstractToolchain
             platform,
             string.(wrapper_prefixes),
             string.(env_prefixes),
-            clang_use_lld,
         )
     end
 end
@@ -156,7 +151,6 @@ function toolchain_sources(toolchain::CMakeToolchain)
         "CMake-",
         bytes2hex(sha256(string(
             triplet(toolchain.platform),
-            toolchain.clang_use_lld ? "true" : "false",
             toolchain.env_prefixes...,
             toolchain.wrapper_prefixes...,
         ))),
