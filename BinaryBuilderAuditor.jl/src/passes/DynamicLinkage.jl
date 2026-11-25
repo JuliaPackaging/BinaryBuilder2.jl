@@ -289,8 +289,9 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
             if haskey(soname_locator, soname)
                 push!(dep_dirs, rpath_dir(dep_name, soname_locator[soname], scan.platform))
             # System libraries are checked as the last fallback, as in `resolve_dynamic_links!()`:
-            # a library we or a dependency ship (e.g. Libiconv_jll's `libiconv.2.dylib`, which
-            # macOS also has) needs an RPATH even when it shares a system library's name.
+            # a library we or a dependency ship (e.g. CompilerSupportLibraries_jll's
+            # `libgcc_s.1.1.dylib`, which macOS also has) needs an RPATH even when it shares a
+            # system library's name.
             elseif !is_system_library(dep_soname, scan.platform) && !is_extra_system_library(dep_soname, extra_system_libraries)
                 push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
             end

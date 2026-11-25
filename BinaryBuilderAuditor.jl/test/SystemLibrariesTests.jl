@@ -26,6 +26,10 @@ using BinaryBuilderAuditor: is_system_library, system_library_linker_name,
     # Frameworks are not `-l`-linkable; their linker name is marked as such
     @test system_library_linker_name("CoreFoundation", macos) == "framework:CoreFoundation"
     @test is_system_library("/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation", macos)
+    # macOS ships a `libiconv.2.dylib`, but packages link Libiconv_jll's; a build that
+    # really links the system's declares it in `AuditConfig(; extra_system_libraries)`
+    @test !is_system_library("libiconv.2.dylib", macos)
+    @test !is_system_library("/usr/lib/libiconv.2.dylib", macos)
 
     windows = Platform("x86_64", "windows")
     @test system_library_linker_name("kernel32.dll", windows) == "kernel32"
