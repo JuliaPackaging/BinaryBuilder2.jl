@@ -496,8 +496,8 @@ end
 end
 
 @testset "shipped libraries named like macOS system libraries get RPATHs" begin
-    # macOS has a `libiconv.2.dylib`, but so does Libiconv_jll.  An executable in `bin`
-    # linked against ours must be able to find it in `lib`.
+    # macOS has a `libgcc_s.1.1.dylib`, but so does CompilerSupportLibraries_jll.  An
+    # executable in `bin` linked against a shipped copy must be able to find it in `lib`.
     target_platform = Platform("aarch64", "macos"; os_version=v"20")
     platform = CrossPlatform(BBHostPlatform() => target_platform)
     toolchain = CToolchain(platform; use_ccache=false)
@@ -511,12 +511,12 @@ end
         main_c_path = joinpath(prefix, "main.c")
         write(main_c_path, "int plus(int, int);\nint main() { return plus(1, -1); }\n")
         with_toolchains([toolchain]) do _, env
-            run(setenv(`$(env["CC"]) -o $(joinpath(libdir, "libiconv.2.dylib")) -shared $(libplus_c_path) -Wl,-install_name,@rpath/libiconv.2.dylib`, env))
-            run(setenv(`$(env["CC"]) -o $(joinpath(bindir, "tool")) $(main_c_path) $(joinpath(libdir, "libiconv.2.dylib"))`, env))
+            run(setenv(`$(env["CC"]) -o $(joinpath(libdir, "libgcc_s.1.1.dylib")) -shared $(libplus_c_path) -Wl,-install_name,@rpath/libgcc_s.1.1.dylib`, env))
+            run(setenv(`$(env["CC"]) -o $(joinpath(bindir, "tool")) $(main_c_path) $(joinpath(libdir, "libgcc_s.1.1.dylib"))`, env))
         end
         rm(main_c_path)
 
-        scan = scan_files(prefix, target_platform, [LibraryProduct("libiconv", :libiconv)])
+        scan = scan_files(prefix, target_platform, [LibraryProduct("libgcc_s", :libgcc_s)])
         result = AuditResult(scan)
         ensure_sonames!(result)
         resolve_dynamic_links!(result, AuditInfo())
@@ -524,6 +524,37 @@ end
         @test success(result.pass_results)
         readmeta(joinpath(bindir, "tool")) do ohs
             @test rpaths(RPath(only(ohs))) == ["@loader_path/../lib"]
+        end
+    end
+end
+
+@testset "macOS libiconv is not a system library" begin
+    # Packages get `libiconv.2.dylib` from Libiconv_jll.  A library that links the
+    # system's (`/usr/lib/libiconv.2.dylib`) fails to resolve unless the build declares
+    # it in `extra_system_libraries`.
+    target_platform = Platform("aarch64", "macos"; os_version=v"20")
+    platform = CrossPlatform(BBHostPlatform() => target_platform)
+    toolchain = CToolchain(platform; use_ccache=false)
+
+    mktempdir() do prefix
+        libdir = joinpath(prefix, "lib")
+        mkpath(libdir)
+        src_path = joinpath(prefix, "conv.c")
+        write(src_path, "#include <iconv.h>\nint conv_ok(void) { iconv_t cd = iconv_open(\"UTF-8\", \"UTF-16\"); return cd != (iconv_t)-1; }\n")
+        with_toolchains([toolchain]) do _, env
+            run(setenv(`$(env["CC"]) -o $(joinpath(libdir, "libconv.dylib")) -shared $(src_path) -Wl,-install_name,@rpath/libconv.dylib -liconv`, env))
+        end
+        rm(src_path)
+        readmeta(joinpath(libdir, "libconv.dylib")) do ohs
+            @test "/usr/lib/libiconv.2.dylib" in [path(dl) for dl in DynamicLinks(only(ohs))]
+        end
+
+        products = [LibraryProduct("libconv", :libconv)]
+        for (extra, ok) in ((String[], false), (["libiconv.2.dylib"], true))
+            scan = scan_files(prefix, target_platform, products)
+            result = AuditResult(scan)
+            resolve_dynamic_links!(result, AuditInfo(); extra_system_libraries = extra)
+            @test success(result.pass_results) == ok
         end
     end
 end

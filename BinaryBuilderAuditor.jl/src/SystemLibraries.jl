@@ -53,7 +53,6 @@ const macos_system_libs = Dict{String,Union{Nothing,String}}(
     "libpmsample.dylib" => "pmsample",
     "libsandbox.1.dylib" => "sandbox",
     "libsystem.b.dylib" => "System",
-    "libiconv.2.dylib" => "iconv",
     "libc++.1.dylib" => "c++",
     "libstdc++.6.dylib" => "stdc++",
     "libresolv.9.dylib" => "resolv",
