@@ -281,6 +281,8 @@ const binlib = Sys.iswindows() ? "bin" : "lib"
             mktempdir() do build_dir; cd(build_dir) do
                 num_times_generated = 0
                 function generate_dir(dir)
+                    # The output only becomes visible (and counts as generated) once complete
+                    @test !verify(gs)
                     open(joinpath(dir, "foo"); write=true) do io
                         println(io, "I am foo!")
                     end
