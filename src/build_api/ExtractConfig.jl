@@ -152,11 +152,22 @@ function BinaryBuilderSources.spec_hash(config::ExtractConfig; force_recompute::
 end
 
 function runshell(config::ExtractConfig; output_dir::String=mktempdir(builds_dir(".")), shell::Cmd = `/bin/bash`)
-    sandbox_config = SandboxConfig(config, output_dir; save_env=false)
-    run(config.build.exe, sandbox_config, ignorestatus(shell))
+    mktempdir() do scratch_dir
+        sandbox_config = SandboxConfig(config, output_dir; scratch_dir, save_env=false)
+        run(config.build.exe, sandbox_config, ignorestatus(shell))
+    end
 end
 
-function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts); kwargs...)
+"""
+    SandboxConfig(config::ExtractConfig, output_dir, mounts = copy(config.build.mounts); scratch_dir = mktempdir(), kwargs...)
+
+Build the sandbox configuration for running `config`'s extraction script, which writes
+its output to `output_dir`.  The empty `\${prefix}` overlay and the extraction's metadir
+are created inside `scratch_dir`; callers that run the sandbox to completion should pass
+a `scratch_dir` they remove afterwards (e.g. from `mktempdir() do ... end`).
+"""
+function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts);
+                       scratch_dir::String = mktempdir(), kwargs...)
     # We're going to alter the mounts of the build a bit for extraction.
     # First, we're going swap out any mounts for deployed sources in `${prefix}`
     # This results in `${prefix}` containing only the files that were added by our build
@@ -165,15 +176,13 @@ function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(
     mounts = filter(mounts) do (dest, _)
         !startswith(dest, "/workspace/destdir/")
     end
-    mounts[target_dest] = MountInfo(mktempdir(), MountType.OverlayedReadOnly)
-
+    mounts[target_dest] = MountInfo(mkdir(joinpath(scratch_dir, "prefix")), MountType.OverlayedReadOnly)
 
     # Insert a new metadir
-    metadir = mktempdir()
     # We want to copy the metadir from the BuildConfig and add our own
     # extraction script.  We copy here so that bash history and whatnot is preserved,
     # but unique for this extraction config.
-    rm(metadir)
+    metadir = joinpath(scratch_dir, "metadir")
     cp(mounts[metadir_prefix()].host_path, metadir)
 
     extract_script_path = joinpath(metadir, "extract_script.sh")
@@ -339,9 +348,11 @@ end
     with_trace(config, "bb2.extract_artifact"; timer_name="extract") do
         in_universe(meta.universe) do env
             artifact_hash = Pkg.Artifacts.create_artifact() do artifact_dir
-                sandbox_config, collector = sandbox_and_collector(extract_log_io, config, artifact_dir; verbose)
-                with_trace(config, "bb2.extract_script"; args=(script="extract_script.sh",)) do
-                    run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix())/extract_script.sh`)
+                mktempdir() do scratch_dir
+                    sandbox_config, collector = sandbox_and_collector(extract_log_io, config, artifact_dir; verbose, scratch_dir)
+                    with_trace(config, "bb2.extract_script"; args=(script="extract_script.sh",)) do
+                        run_status, run_exception = run_trycatch(config.build.exe, sandbox_config, `$(metadir_prefix())/extract_script.sh`)
+                    end
                 end
 
                 # Run over the extraction result, ensure that all products can be located:
