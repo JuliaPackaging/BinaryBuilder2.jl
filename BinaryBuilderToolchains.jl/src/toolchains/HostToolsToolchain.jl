@@ -283,21 +283,22 @@ function toolchain_sources(toolchain::HostToolsToolchain;
             [jll.input_block for jll in toolchain.runtime_deps]...,
         )))
         push!(sources, CachedGeneratedSource("HostToolsLoaderCache-$(cache_key)"; target="etc") do out_dir
-            generate_ld_so_cache(out_dir, rootfs, build_sandbox_prefix, toolchain.runtime_deps, runtime_dirs)
+            generate_ld_so_cache(out_dir, rootfs, toolchain.platform, build_sandbox_prefix, toolchain.runtime_deps, runtime_dirs)
         end)
     end
     return sources
 end
 
 """
-    generate_ld_so_cache(out_dir, rootfs, prefix, runtime_jlls, runtime_dirs)
+    generate_ld_so_cache(out_dir, rootfs, platform, prefix, runtime_jlls, runtime_dirs)
 
-Write `out_dir/ld.so.cache`: the dynamic loader cache of `rootfs` with `runtime_dirs`
-(where `runtime_jlls`, which must already be prepared, get deployed when `prefix` is
-mounted inside the sandbox) taking precedence over the rootfs's own libraries.
-`ldconfig` runs within a sandbox.
+Write `out_dir/ld.so.cache`: the dynamic loader cache of `rootfs` (a rootfs for
+`platform`) with `runtime_dirs` (where `runtime_jlls`, which must already be prepared,
+get deployed when `prefix` is mounted inside the sandbox) taking precedence over the
+rootfs's own libraries.  `ldconfig` runs within a sandbox, emulated through QEMU when
+`platform` cannot run natively.
 """
-function generate_ld_so_cache(out_dir::String, rootfs::String, prefix::String,
+function generate_ld_so_cache(out_dir::String, rootfs::String, platform::Platform, prefix::String,
                               runtime_jlls::Vector{JLLSource}, runtime_dirs::Vector{String})
     mktempdir() do tmp
         prefix_dir = joinpath(tmp, "prefix")
@@ -314,7 +315,11 @@ function generate_ld_so_cache(out_dir::String, rootfs::String, prefix::String,
             "/workspace/ldconfig" => Sandbox.MountInfo(conf_dir, Sandbox.MountType.ReadOnly),
             "/workspace/out" => Sandbox.MountInfo(out_dir, Sandbox.MountType.ReadWrite),
         )
-        sandbox_config = Sandbox.SandboxConfig(mounts, Dict("PATH" => "/usr/sbin:/usr/bin:/sbin:/bin"))
+        sandbox_config = Sandbox.SandboxConfig(
+            mounts,
+            Dict("PATH" => "/usr/sbin:/usr/bin:/sbin:/bin");
+            multiarch=[platform],
+        )
         Sandbox.with_executor() do exe
             run(exe, sandbox_config, `/sbin/ldconfig -X -f /workspace/ldconfig/ld.so.conf -C /workspace/out/ld.so.cache`)
         end
