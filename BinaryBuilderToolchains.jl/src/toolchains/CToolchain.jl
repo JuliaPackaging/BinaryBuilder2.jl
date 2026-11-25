@@ -56,7 +56,8 @@ struct CToolchain <: AbstractToolchain
     use_ccache::Bool
 
     # Clang options, we can use different runtime libs (:libgcc, :compiler_rt),
-    # different c++ runtimes (:libstdcxx, :libcxx), and different linkers (:ld, :lld)
+    # different c++ runtimes (:libstdcxx, :libcxx), and different linkers (:ld, :lld).
+    # See `get_linker()` for what `:auto` picks.
     compiler_runtime::Symbol
     cxx_runtime::Symbol
     linker::Symbol
@@ -106,6 +107,9 @@ struct CToolchain <: AbstractToolchain
         valid_compiler_runtimes = (:auto, :libgcc, :compiler_rt)
         _check_valid(compiler_runtime, valid_compiler_runtimes, "compiler_runtime")
 
+        valid_linkers = (:auto, :ld, :lld)
+        _check_valid(linker, valid_linkers, "linker")
+
         if sanitize(target_if_crossplatform(platform)) == "memory" && get_vendor(vendor, platform) ∈ (:gcc, :gcc_bootstrap)
             throw(ArgumentError("GCC does not support MemorySanitizer; use a clang vendor for $(triplet(target_if_crossplatform(platform)))"))
         end
@@ -115,6 +119,9 @@ struct CToolchain <: AbstractToolchain
             end
             if compiler_runtime == :compiler_rt
                 throw(ArgumentError("GCC cannot use compiler_rt, must use libgcc!"))
+            end
+            if linker == :lld
+                throw(ArgumentError("GCC toolchains don't ship lld, must use ld!"))
             end
         end
 
@@ -179,6 +186,7 @@ struct CToolchain <: AbstractToolchain
             use_ccache ? "true" : "false",
             compiler_runtime,
             cxx_runtime,
+            linker,
             vendor,
             env_prefixes...,
             wrapper_prefixes...,
@@ -306,11 +314,20 @@ function get_unwindlib_str(toolchain::CToolchain)
 end
 
 
-function get_linker(linker::Symbol, platform::AbstractPlatform)
-    lld_default(p) = os(target_if_crossplatform(p)) ∈ ("macos", "freebsd")
+"""
+    get_linker(linker::Symbol, vendor::Symbol, platform::AbstractPlatform)
+
+The linker (`:ld` or `:lld`) that a toolchain from `vendor` links with for `platform`.
+`:auto` picks `:lld` for clang, whose builds ship it, and `:ld` for GCC.  On riscv64,
+`:auto` picks `:ld` for clang too: our LLVM 17 `lld` doesn't support the
+`R_RISCV_SET_ULEB128`/`R_RISCV_SUB_ULEB128` relocations in GCC-built objects such as
+glibc's `libc.a`.
+"""
+function get_linker(linker::Symbol, vendor::Symbol, platform::AbstractPlatform)
+    lld_default(p) = vendor ∈ (:clang, :clang_bootstrap) && arch(target_if_crossplatform(p)) != "riscv64"
     return auto_chooser(lld_default, linker, platform, (:lld, :ld))
 end
-get_linker(ct::CToolchain) = get_linker(ct.linker, ct.platform)
+get_linker(ct::CToolchain) = get_linker(ct.linker, get_vendor(ct), ct.platform)
 
 
 function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
@@ -911,8 +928,8 @@ end
 """
     add_macos_flags(io, toolchain)
 
-This adds `-mmacosx-version-min` and `-Wl,-sdk_version` flags for the macOS
-version given by `macos_target_kernel_version()`, i.e. the target's
+This adds `-mmacosx-version-min` and (for GCC) `-Wl,-sdk_version` flags for the
+macOS version given by `macos_target_kernel_version()`, i.e. the target's
 `os_version` tag or the per-architecture default deployment target if the
 triplet has no such tag.  This method also adds some compiler-flag-based
 workarounds for GCC brokenness.
@@ -940,8 +957,11 @@ function add_macos_flags(io, toolchain)
             # to have extra space in the MachO headers so we can expand names, if necessary.
             append_flags(io, :POST, "-Wl,-headerpad_max_install_names")
 
-            # Always link for a particular minimum macOS version
-            append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_ver)")
+            if get_simple_vendor(toolchain) == "gcc"
+                # Record the SDK version in GCC links; clang links pass it with
+                # `-platform_version` (see `clang_wrappers()`).
+                append_flags(io, :PRE, "-Wl,-sdk_version,$(macos_ver)")
+            end
         end
     end
 end
@@ -1100,13 +1120,52 @@ function clang_wrappers(toolchain::CToolchain, dir::String)
                 end
             end
 
-            # Link through the `ld.<triplet>` (`ld64.<triplet>` on macOS) wrapper from our
-            # `BinutilsToolchain`, unless the user has chosen a linker themselves.
-            flagmatch(io, [!flag"-fuse-ld=.*"r, !flag"--ld-path=.*"r]) do io
-                append_flags(io, :PRE, ["-fuse-ld=$(gcc_triplet)"])
+            # Link with `lld`, or with `linker = :ld` through the `ld.<triplet>`
+            # (`ld64.<triplet>` on macOS) wrapper from our `BinutilsToolchain`, unless the
+            # user has chosen a linker themselves.
+            #
+            # LTO links always go through `lld`: GNU ld needs the `LLVMgold.so` plugin to
+            # read LLVM bitcode, which our clang builds don't ship; cctools `ld64` can't
+            # read it either (it ignores bitcode objects in a `-shared` link); and clang
+            # refuses to pass bitcode to any linker but `lld` on MinGW.
+            lld_flags = ["-fuse-ld=lld"]
+            if Sys.islinux(p) || Sys.isfreebsd(p)
+                # Like GNU ld, accept version scripts that name symbols the link doesn't define
+                push!(lld_flags, "-Wl,--undefined-version")
+            end
+            if Sys.iswindows(p) && arch(p) == "i686" && get_cxx_runtime(toolchain) == :libstdcxx
+                # libstdc++'s `<iostream>` references `_ZSt21ios_base_library_initv` from
+                # inline assembly, which misses the leading underscore that i686 Windows
+                # adds to C symbols.  GNU ld ignores the unused reference; lld needs it
+                # pointed at the real `__ZSt21ios_base_library_initv`.  GCC 14.3 fixes this
+                # (PR116159); see the `libstdcxx_jll` pin in `JLLPins.jl`.
+                append!(lld_flags, ["-Xlinker", "/alternatename:_ZSt21ios_base_library_initv=__ZSt21ios_base_library_initv"])
+            end
+            no_user_linker = [!flag"-fuse-ld=.*"r, !flag"--ld-path=.*"r]
+            if get_linker(toolchain) == :lld
+                flagmatch(io, no_user_linker) do io
+                    append_flags(io, :PRE, lld_flags)
+                end
+            else
+                flagmatch(io, [no_user_linker..., flag"-flto(=.*)?"r]) do io
+                    append_flags(io, :PRE, lld_flags)
+                end
+                flagmatch(io, [no_user_linker..., !flag"-flto(=.*)?"r]) do io
+                    append_flags(io, :PRE, ["-fuse-ld=$(gcc_triplet)"])
+                end
+            end
+            if Sys.isapple(p)
+                # Tell clang which `ld64` we ship, so that it passes the deployment target
+                # and SDK version with `-platform_version`, which both `ld64` and
+                # `ld64.lld` take.  Otherwise clang assumes an old `ld64` and passes only
+                # `-macosx_version_min`, and `ld64` makes up an SDK version.
+                flagmatch(io, [!flag"-mlinker-version=.*"r]) do io
+                    append_flags(io, :PRE, ["-mlinker-version=$(cctools_ld64_version)"])
+                end
             end
 
-            # A user-chosen linker bypasses our `ld` wrapper, so disable timestamps here too.
+            # Disable timestamps here too, as neither `lld` nor a user-chosen linker
+            # goes through our `ld` wrapper.
             if Sys.iswindows(p)
                 append_flags(io, :PRE, ["-Wl,--no-insert-timestamp"])
 

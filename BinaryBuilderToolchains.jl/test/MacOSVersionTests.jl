@@ -79,7 +79,8 @@ using BinaryBuilderSources: JLLSource
                 add_macos_flags(io, toolchain)
                 flags = String(take!(io))
                 @test occursin("-mmacosx-version-min=$(mver)", flags)
-                @test occursin("-Wl,-sdk_version,$(mver)", flags)
+                # clang links pass the SDK version with `-platform_version` instead
+                @test occursin("-Wl,-sdk_version,$(mver)", flags) == (vendor == :gcc)
                 @test occursin("-D_DARWIN_FEATURE_CLOCK_GETTIME=0", flags) == (vendor == :gcc && kver < v"16")
 
                 # Generated compiler wrappers carry the deployment target
@@ -90,6 +91,8 @@ using BinaryBuilderSources: JLLSource
                     @test isfile(wrapper)
                     wrapper_src = read(wrapper, String)
                     @test occursin("-mmacosx-version-min=$(mver)", wrapper_src)
+                    @test occursin("-Wl,-sdk_version,$(mver)", wrapper_src) == (vendor == :gcc)
+                    @test occursin("-mlinker-version=", wrapper_src) == (vendor == :clang)
                     if vendor == :gcc
                         @test occursin("/bin/$(jll_triplet)-gcc", wrapper_src)
                     else

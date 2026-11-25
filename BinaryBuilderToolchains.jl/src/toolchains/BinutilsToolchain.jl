@@ -62,6 +62,9 @@ function Base.show(io::IO, toolchain::BinutilsToolchain)
 end
 
 
+# The version of `ld64` in the CCTools_jll below (`ld -v`).  Update it with CCTools_jll.
+const cctools_ld64_version = "711"
+
 function binutils_jll_source_selection(vendor, platform)
     deps = JLLSource[]
     # If this is a crosstool-ng based "gcc bootstrap" toolchain, binutils is already included.
@@ -136,6 +139,12 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")/$(get_simple_vendor(toolchain.vendor))"
     gcc_triplet = toolchain.vendor == :gcc_bootstrap ? gcc_target_triplet(p) : toolchain_jll_triplet(p)
 
+    # Clang toolchains use `llvm-ar`, `llvm-ranlib` and `llvm-nm`, which read the LLVM
+    # bitcode that `clang -flto` emits: GNU `ar` and `ranlib` leave bitcode members out of
+    # the archive index (which `lld` needs on Windows), and GNU `nm` can't read bitcode at
+    # all.  macOS uses `llvm-ar` and `llvm-ranlib` with every vendor.
+    use_llvm_tools = get_simple_vendor(toolchain.vendor) == "clang"
+
     # These tools don't need anything fancy; just `compiler_wrapper()`
     simple_tools = String[]
     # Apple has some extra simple tools
@@ -199,7 +208,7 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     # binutils builds which properly install a symlink in `lib/bfd_plugins/`, but
     # doesn't hurt anything, so we just always do it.
     function lto_plugin_args(io::IO)
-        if !isa(toolchain.gcc_version, VersionNumber)
+        if !isa(toolchain.gcc_version, VersionNumber) || use_llvm_tools
             return
         end
 
@@ -215,7 +224,6 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     end
 
     # `ar` and `ranlib` have special treatment due to determinism requirements.
-    # Additionally, we use the `llvm-` prefixed tools on macOS.
     function _ar_wrapper(io)
         # We need to detect the `-U` flag that is passed to `ar`.  Unfortunately,
         # `ar` accepts many forms of its arguments, and we want to catch all of them.
@@ -370,7 +378,8 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     end
 
     # `nm` is a simple tool, except that it can take in `--plugin` for LTO
-    make_tool_wrappers(toolchain, dir, "nm", "$(gcc_triplet)-nm"; wrapper=_nm_wrapper, toolchain_prefix)
+    nm_name = use_llvm_tools ? "llvm-nm" : "$(gcc_triplet)-nm"
+    make_tool_wrappers(toolchain, dir, "nm", nm_name; wrapper=_nm_wrapper, toolchain_prefix)
 
     # `strip` needs determinism flags, and on macOS the code signature warning silenced
     make_tool_wrappers(toolchain, dir, "strip", "$(gcc_triplet)-strip"; wrapper=_strip_wrapper_pre, toolchain_prefix)
@@ -379,10 +388,10 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     cxxfilt_name = Sys.isapple(p) ? "llvm-cxxfilt" : "$(gcc_triplet)-c++filt"
     make_tool_wrappers(toolchain, dir, "c++filt", cxxfilt_name; toolchain_prefix)
 
-    ar_name = Sys.isapple(p) ? "llvm-ar" : "$(gcc_triplet)-ar"
+    ar_name = (Sys.isapple(p) || use_llvm_tools) ? "llvm-ar" : "$(gcc_triplet)-ar"
     make_tool_wrappers(toolchain, dir, "ar", ar_name; wrapper=_ar_wrapper, toolchain_prefix)
 
-    ranlib_name = Sys.isapple(p) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
+    ranlib_name = (Sys.isapple(p) || use_llvm_tools) ? "llvm-ranlib" : "$(gcc_triplet)-ranlib"
     make_tool_wrappers(toolchain, dir, "ranlib", ranlib_name; wrapper=_ranlib_wrapper, toolchain_prefix)
 
     objcopy_name = Sys.isapple(p) ? "llvm-objcopy" : "$(gcc_triplet)-objcopy"
