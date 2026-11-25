@@ -414,7 +414,7 @@ function binutils_wrappers(toolchain::BinutilsToolchain, dir::String)
     end
 end
 
-function toolchain_sources(toolchain::BinutilsToolchain)
+function toolchain_sources(toolchain::BinutilsToolchain; build_sandbox_prefix::Union{Nothing,String} = nothing)
     sources = AbstractSource[]
 
     installing_jll(name) = get_jll(toolchain, name) !== nothing
@@ -427,7 +427,8 @@ function toolchain_sources(toolchain::BinutilsToolchain)
     return sources
 end
 
-function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String)
+function toolchain_env(toolchain::BinutilsToolchain, deployed_prefix::String;
+                       build_sandbox_prefix::Union{Nothing,String} = nothing)
     env = Dict{String,String}()
 
     insert_PATH!(env, :PRE, [

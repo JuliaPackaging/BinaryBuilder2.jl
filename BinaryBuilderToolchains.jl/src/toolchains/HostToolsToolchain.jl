@@ -13,12 +13,20 @@ put into here.
 This toolchain also provides the files and environment variables to
 override the compiler support libraries (such as `libstdc++.so`)
 within a build environment such that it can run the latest and
-greatest binaries built from e.g. GCC 14.  It does this by setting
-`LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH`/`PATH`.
+greatest binaries built from e.g. GCC 14.  On Linux, the runtime
+libraries of our newest compilers (`libstdcxx_jll` and
+`GCC_support_libraries_jll`, see `runtime_jlls()`) are deployed into
+a `runtime` directory that holds nothing else.  The directories that
+contain them (see `runtime_library_dirs()`) are added to
+`LD_LIBRARY_PATH`, except within a build sandbox, which provides them
+through a dynamic loader cache generated for them instead (see
+`toolchain_sources()`).  On macOS and Windows, the
+toolchain's `lib` directory is added to `DYLD_FALLBACK_LIBRARY_PATH`/`PATH`.
 """
 struct HostToolsToolchain <: AbstractToolchain
     platform::Platform
     deps::Vector{JLLSource}
+    runtime_deps::Vector{JLLSource}
 
     function HostToolsToolchain(platform; overrides::Union{String,Vector{JLLSource}} = JLLSource[])
         platform = host_if_crossplatform(platform)
@@ -92,9 +100,6 @@ struct HostToolsToolchain <: AbstractToolchain
             "strace_jll",
             "libtree_jll",
             "ripgrep_jll",
-
-            # Runtime libraries (e.g. libstdc++.so)
-            "CompilerSupportLibraries_jll",
         ]
 
         deps = JLLSource[]
@@ -127,18 +132,29 @@ struct HostToolsToolchain <: AbstractToolchain
         return new(
             platform,
             deps,
+            runtime_jlls(platform),
         )
     end
 end
 
 function Base.show(io::IO, toolchain::HostToolsToolchain)
     println(io, "HostToolsToolchain ($(triplet(toolchain.platform)))")
-    for dep in toolchain.deps
+    for dep in vcat(toolchain.deps, toolchain.runtime_deps)
         println(io, " - $(dep.package.name[1:end-4]) v$(dep.package.version)")
     end
 end
 
-function toolchain_sources(toolchain::HostToolsToolchain)
+"""
+    toolchain_sources(toolchain::HostToolsToolchain; build_sandbox_prefix = nothing)
+
+The sources that make up `toolchain`.  When the toolchain gets deployed at
+`build_sandbox_prefix` within a Linux build sandbox, they include `etc/ld.so.cache`, a
+dynamic loader cache of the sandbox rootfs in which the runtime libraries take
+precedence over the rootfs's own; the sandbox should mount it at `/etc/ld.so.cache`
+(see `toolchain_env()`'s `BB_LD_SO_CACHE`).
+"""
+function toolchain_sources(toolchain::HostToolsToolchain;
+                           build_sandbox_prefix::Union{Nothing,String} = nothing)
     sources = AbstractSource[]
 
     push!(sources, CachedGeneratedSource("HostToolchainCertificates"; target="etc/certs") do out_dir
@@ -250,10 +266,108 @@ function toolchain_sources(toolchain::HostToolsToolchain)
     end)
 
     append!(sources, toolchain.deps)
+    append!(sources, toolchain.runtime_deps)
+
+    if build_sandbox_prefix !== nothing && Sys.islinux()
+        # The cache records the absolute paths of the libraries, so it is specific to the
+        # prefix, as well as to the rootfs and the runtime JLLs.  The rootfs is keyed by
+        # its artifact tree hash (the basename of its path), not by its path, which
+        # depends on the depot it lives in.  `prepare()` prepares the runtime JLLs
+        # before this generator runs.
+        rootfs = Sandbox.debian_rootfs(; platform=toolchain.platform)
+        runtime_dirs = runtime_library_dirs(toolchain, build_sandbox_prefix)
+        cache_key = bytes2hex(sha1(string(
+            build_sandbox_prefix,
+            basename(rootfs),
+            runtime_dirs,
+            [jll.input_block for jll in toolchain.runtime_deps]...,
+        )))
+        push!(sources, CachedGeneratedSource("HostToolsLoaderCache-$(cache_key)"; target="etc") do out_dir
+            generate_ld_so_cache(out_dir, rootfs, build_sandbox_prefix, toolchain.runtime_deps, runtime_dirs)
+        end)
+    end
     return sources
 end
 
-function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
+"""
+    generate_ld_so_cache(out_dir, rootfs, prefix, runtime_jlls, runtime_dirs)
+
+Write `out_dir/ld.so.cache`: the dynamic loader cache of `rootfs` with `runtime_dirs`
+(where `runtime_jlls`, which must already be prepared, get deployed when `prefix` is
+mounted inside the sandbox) taking precedence over the rootfs's own libraries.
+`ldconfig` runs within a sandbox.
+"""
+function generate_ld_so_cache(out_dir::String, rootfs::String, prefix::String,
+                              runtime_jlls::Vector{JLLSource}, runtime_dirs::Vector{String})
+    mktempdir() do tmp
+        prefix_dir = joinpath(tmp, "prefix")
+        deploy(runtime_jlls, prefix_dir)
+        conf_dir = joinpath(tmp, "conf")
+        mkpath(conf_dir)
+        open(joinpath(conf_dir, "ld.so.conf"); write=true) do io
+            foreach(dir -> println(io, dir), runtime_dirs)
+            println(io, "include /etc/ld.so.conf.d/*.conf")
+        end
+        mounts = Dict{String,Sandbox.MountInfo}(
+            "/" => Sandbox.MountInfo(rootfs, Sandbox.MountType.Overlayed),
+            prefix => Sandbox.MountInfo(prefix_dir, Sandbox.MountType.ReadOnly),
+            "/workspace/ldconfig" => Sandbox.MountInfo(conf_dir, Sandbox.MountType.ReadOnly),
+            "/workspace/out" => Sandbox.MountInfo(out_dir, Sandbox.MountType.ReadWrite),
+        )
+        sandbox_config = Sandbox.SandboxConfig(mounts, Dict("PATH" => "/usr/sbin:/usr/bin:/sbin:/bin"))
+        Sandbox.with_executor() do exe
+            run(exe, sandbox_config, `/sbin/ldconfig -X -f /workspace/ldconfig/ld.so.conf -C /workspace/out/ld.so.cache`)
+        end
+    end
+end
+
+"""
+    runtime_jlls(platform)
+
+The JLLs that provide the runtime libraries (`libstdc++`, `libgcc_s`, `libgomp`, ...)
+needed by programs built with our newest compilers, deployed for `platform` into the
+`runtime` directory of a `HostToolsToolchain`.
+"""
+function runtime_jlls(platform::AbstractPlatform)
+    jll(name, uuid) = JLLSource(
+        name,
+        platform;
+        uuid=Base.UUID(uuid),
+        repo=Pkg.Types.GitRepo(
+            rev=pinned_rev(name, "bb2/GCCBootstrap-x86_64-linux-gnu"),
+            source="https://github.com/staticfloat/$(name).jl",
+        ),
+        version=v"14.2.0",
+        exempt_from_strict_tags=true,
+        target="runtime",
+    )
+    return [
+        jll("libstdcxx_jll", "3ba1ab17-c18f-5d2d-9d5a-db37f286de95"),
+        jll("GCC_support_libraries_jll", "465c4c53-7f13-5720-b733-07d6cbd50c3b"),
+    ]
+end
+
+"""
+    runtime_library_dirs(toolchain::HostToolsToolchain, deployed_prefix::String)
+
+The directories, below `deployed_prefix`, that hold the libraries of `runtime_jlls()`.
+"""
+function runtime_library_dirs(toolchain::HostToolsToolchain, deployed_prefix::String)
+    return [joinpath(deployed_prefix, "runtime", triplet(gcc_platform(toolchain.platform)), "lib64")]
+end
+
+"""
+    toolchain_env(toolchain::HostToolsToolchain, deployed_prefix::String;
+                  build_sandbox_prefix = nothing)
+
+The environment for using `toolchain` deployed at `deployed_prefix`.  On Linux, the
+runtime libraries are added to `LD_LIBRARY_PATH`, except within a build sandbox (when
+`build_sandbox_prefix` is given): that provides them through the dynamic loader cache
+named by `BB_LD_SO_CACHE` (see `toolchain_sources()`), which, unlike `LD_LIBRARY_PATH`,
+neither overrides a program's own `RUNPATH` nor exposes them to the linker.
+"""
+function toolchain_env(toolchain::HostToolsToolchain, deployed_prefix::String;
+                       build_sandbox_prefix::Union{Nothing,String} = nothing)
     env = Dict{String,String}()
     
     insert_PATH!(env, :PRE, [
@@ -278,18 +392,16 @@ function toolchain_env(::HostToolsToolchain, deployed_prefix::String)
         env["SSL_CERT_FILE"] = joinpath(deployed_prefix, "etc", "certs", basename(ca_roots_path()))
     end
 
-    # Apply LD_LIBRARY_PATH for CSL
+    # Make the runtime libraries findable by programs built with our compilers
     if Sys.iswindows()
-        varname = "PATH"
-        pathsep = ";"
+        insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname="PATH", pathsep=";")
     elseif Sys.isapple()
-        varname = "DYLD_FALLBACK_LIBRARY_PATH"
-        pathsep = ":"
+        insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname="DYLD_FALLBACK_LIBRARY_PATH")
+    elseif build_sandbox_prefix !== nothing
+        env["BB_LD_SO_CACHE"] = joinpath(build_sandbox_prefix, "etc", "ld.so.cache")
     else
-        varname = "LD_LIBRARY_PATH"
-        pathsep = ":"
+        insert_PATH!(env, :PRE, runtime_library_dirs(toolchain, deployed_prefix); varname="LD_LIBRARY_PATH")
     end
-    insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname, pathsep)
     return env
 end
 

@@ -126,7 +126,7 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
     end
 end
 
-function toolchain_sources(toolchain::CMakeToolchain)
+function toolchain_sources(toolchain::CMakeToolchain; build_sandbox_prefix::Union{Nothing,String} = nothing)
     toolchain_prefix = "\$(dirname \"\${WRAPPER_DIR}\")"
     function cmake_wrapper(io)
         # Insert our `CMAKE_TOOLCHAIN_FILE` only when `cmake` is being invoked to
@@ -179,7 +179,8 @@ function toolchain_sources(toolchain::CMakeToolchain)
     ]
 end
 
-function toolchain_env(toolchain::CMakeToolchain, deployed_prefix::String)
+function toolchain_env(toolchain::CMakeToolchain, deployed_prefix::String;
+                       build_sandbox_prefix::Union{Nothing,String} = nothing)
     env = Dict{String,String}()
     insert_PATH!(env, :PRE, [
         joinpath(deployed_prefix, "wrappers"),

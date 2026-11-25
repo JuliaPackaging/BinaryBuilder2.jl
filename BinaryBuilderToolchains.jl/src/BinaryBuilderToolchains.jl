@@ -20,10 +20,10 @@ All toolchains must define the following methods:
 
 * Constructor
     - used to configure tool versions, etc...
-* toolchain_sources(toolchain)
+* toolchain_sources(toolchain; build_sandbox_prefix = nothing)
     - returns a vector of `AbstractSource`'s representing the dependencies
       needed to run this toolchain, relative to some installation prefix
-* toolchain_env(toolchain, deployed_prefix::String)
+* toolchain_env(toolchain, deployed_prefix::String; build_sandbox_prefix = nothing)
     - returns a dictionary listing the environment variables to be added
       in to commands that use this toolchain.
 * platform(toolchain)
@@ -33,11 +33,17 @@ All toolchains must define the following methods:
 * supported_platforms(::Type{toolchain})
     - returns a list of platforms (with no tags) that this toolchain
       supports targeting.
+
+`toolchain_sources()` and `toolchain_env()` both take `build_sandbox_prefix`: the prefix
+the toolchain gets deployed at when it is used within a build sandbox, or `nothing`
+otherwise.  Toolchains that set themselves up differently there use it; others ignore it.
 """
 abstract type AbstractToolchain; end
 
 # content hash used to key things like our GeneratedSource's
 import TreeArchival
+import Sandbox
+using SHA: sha1
 const bbt_code_hash = bytes2hex(TreeArchival.treehash(@__DIR__))
 
 """

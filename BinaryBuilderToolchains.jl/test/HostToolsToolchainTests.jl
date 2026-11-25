@@ -53,6 +53,31 @@ const verbose = false
             end
         end
 
+        # The runtime libraries are deployed into a directory of their own, which is
+        # the only one we put on the library search path.
+        if Sys.islinux()
+            runtime_dirs = BinaryBuilderToolchains.runtime_library_dirs(toolchain, prefix)
+            runtime_dir = only(runtime_dirs)
+            @test isfile(joinpath(runtime_dir, "libstdc++.so.6"))
+            @test isfile(joinpath(runtime_dir, "libgcc_s.so.1"))
+            @test isfile(joinpath(runtime_dir, "libgomp.so.1"))
+            @test !ispath(joinpath(runtime_dir, "libz.so.1"))
+            @test isfile(joinpath(prefix, "lib", "libz.so.1"))
+            @test runtime_dir ∈ split(env["LD_LIBRARY_PATH"], ":")
+            @test joinpath(prefix, "lib") ∉ split(env["LD_LIBRARY_PATH"], ":")
+
+            # A build sandbox provides them through a dynamic loader cache instead
+            sandbox_env = toolchain_env(toolchain, "/opt/host-tools"; build_sandbox_prefix="/opt/host-tools")
+            @test !haskey(sandbox_env, "LD_LIBRARY_PATH")
+            @test sandbox_env["BB_LD_SO_CACHE"] == "/opt/host-tools/etc/ld.so.cache"
+            sources = toolchain_sources(toolchain; build_sandbox_prefix="/opt/host-tools")
+            is_cache_source(s) = isa(s, GeneratedSource) && s.ds.target == "etc"
+            cache_source = only(filter(is_cache_source, sources))
+            @test !any(is_cache_source, toolchain_sources(toolchain))
+            prepare(sources)
+            @test isfile(joinpath(cache_source.ds.source, "ld.so.cache"))
+        end
+
         # Run our more extensive test suites.
         testsuite_path = joinpath(@__DIR__, "testsuite", "HostToolsToolchain")
         cd(testsuite_path) do
