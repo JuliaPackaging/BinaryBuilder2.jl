@@ -211,16 +211,6 @@ elif [[ "${target}" == *-darwin* ]]; then
     export ac_cv_func_clock_gettime=no
     export ac_cv_func_mkostemp=no
 
-    # Force GCC to use its own libiconv, don't use Apple's
-    ICONV_PATHS=(
-        /opt/target-*
-        ${target_prefix}
-    )
-    if [[ "${host}" == *-darwin* ]]; then
-        ICONV_PATHS+=( /opt/host-* )
-    fi
-    find ${ICONV_PATHS[@]} -name iconv.h -o -name libiconv\* | xargs rm -fv
-
 elif [[ "${target}" == *-freebsd* ]]; then
     # If we don't already have a version number, add one
     if [[ "${target}" == *-freebsd ]]; then
@@ -323,6 +313,12 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
     else
         append!(gcc_crt_object_names, ["crtbegin.o", "crtend.o"])
     end
+    # GCC links the macOS SDK's `/usr/lib/libiconv.2.dylib`: libstdc++ (and the
+    # sanitizer runtimes) when targeting macOS, and the compiler itself when running on it
+    macos_audit_config = AuditConfig(; extra_system_libraries = ["libiconv.2.dylib"])
+    target_audit_config = Sys.isapple(platform.target) ? macos_audit_config : nothing
+    host_audit_config = Sys.isapple(platform.host) ? macos_audit_config : nothing
+
     gcc_crt_object_products = [
         FileProduct([string(raw"lib/gcc/${target}/${gcc_version}/", name)],
                     Symbol(replace(name, "." => "_"))) for name in gcc_crt_object_names
@@ -341,6 +337,7 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
             get_target_spec_by_name(build, "host");
             jll_name = "libstdcxx",
             platform = platform.target,
+            audit_config = target_audit_config,
         ),
         ExtractSpec(
             raw"""
@@ -361,6 +358,7 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
             get_target_spec_by_name(build, "host");
             jll_name = "GCC_support_libraries",
             platform = platform.target,
+            audit_config = target_audit_config,
         ),
         ExtractSpec(
             raw"""
@@ -401,6 +399,7 @@ function gcc_extract_spec_generator(build::BuildConfig, platform::AbstractPlatfo
             # installed at the same time in JLLPrefixes.
             jll_name = "GCC",
             platform,
+            audit_config = host_audit_config,
         ),
     ]
 end
