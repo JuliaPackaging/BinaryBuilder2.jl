@@ -480,15 +480,24 @@ Ensures that all given JLL sources are downloaded and ready to be used within
 the build environment.  JLLs that already have `artifact_paths` filled out from
 a previous invocation of `prepare()` will not be re-prepared, unless `force` is
 set to `true`.
+
+`project_dir` is the Pkg environment the JLLs are resolved in.  If it is not given,
+a temporary environment is used and removed again before `prepare()` returns.
 """
 function prepare(jlls::Vector{JLLSource};
-                 project_dir::String = mktempdir(),
+                 project_dir::Union{String,Nothing} = nothing,
                  depot::String = default_jll_source_depot(),
                  verbose::Bool = false,
                  force::Bool = false,
                  registries::Vector{Pkg.Registry.RegistryInstance} = Pkg.Registry.reachable_registries(; depots=[depot]),
                  to::TimerOutput = TimerOutput(),
                  ignore_empty_registries::Bool = false)
+    if project_dir === nothing
+        return mktempdir() do project_dir
+            prepare(jlls; project_dir, depot, verbose, force, registries, to, ignore_empty_registries)
+        end
+    end
+
     # Split JLLs by platform:
     jlls_by_platform_by_prefix = Dict{AbstractPlatform,Dict{String,Vector{JLLSource}}}()
 
