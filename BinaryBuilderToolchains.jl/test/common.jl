@@ -1,7 +1,17 @@
-using Test, BinaryBuilderToolchains, BinaryBuilderSources
+using Test, Logging, BinaryBuilderToolchains, BinaryBuilderSources, BinaryBuilderPlatformExtensions, Base.BinaryPlatforms, Scratch
+using BinaryBuilderToolchains: path_appending_merge, get_vendor
+using ObjectFile
 
-# Get `with_temp_storage_locations()`
-include(joinpath(dirname(dirname(pathof(BinaryBuilderSources))), "test", "common.jl"))
+const test_dir = @__DIR__
+const testsuite_dir = joinpath(test_dir, "testsuite")
+
+# Enable this for lots of JLLPrefixes output
+const verbose = false
+
+const htt_toolchain = HostToolsToolchain(BBHostPlatform())
+
+# Minimum OS version recorded in the (single-arch) Mach-O file at `path`
+macho_minos(path::String) = readmeta(ohs -> min_os_version(only(ohs)), path)
 
 function capture_output(cmd)
     output = Pipe()
@@ -21,7 +31,7 @@ function vendors_to_test(curr_arch = arch(BBHostPlatform()))
 end
 
 function toolchain_tests(prefix, env, platform, testsuite; do_cxxabi_tests::Bool = false)
-    testsuite_path = joinpath(@__DIR__, "testsuite", testsuite)
+    testsuite_path = joinpath(testsuite_dir, testsuite)
     @testset "$(triplet(platform)) $(do_cxxabi_tests ? "cxxabi" : "")" begin
         cd(testsuite_path) do
             # Run our entire test suite first

@@ -842,10 +842,21 @@ end
         @test registry_slice_hash(PackageSpec(;name="Unregistered_jll"), base) == full_registries_hash(base)
 
         # A registry that is not a tarball (such as a `Universe`'s local registry) is
-        # ignored entirely, even when it would have changed the slice.
-        directory = make_directory_registry(joinpath(dir, "directory"); versions=Dict("Leaf_jll" => ["1.0.0", "1.1.0"]))
-        @test registry_slice_hash(root, [directory; base]) == base_hash
+        # sliced like any other, and its entries are hashed afresh every time, as there
+        # is nothing to tell us that they changed.  It is left out of the wholesale hash.
+        directory_dir = joinpath(dir, "directory")
+        directory = make_directory_registry(directory_dir)
+        # Identical content hashes identically, whichever way the registry is stored.
+        @test registry_slice_hash(root, [directory]) == base_hash
+        @test registry_slice_hash(root, [directory; base]) != base_hash
+        directory_hash = registry_slice_hash(root, [directory; base])
+        @test registry_slice_hash(root, [directory; base]) == directory_hash
         @test full_registries_hash([directory; base]) == full_registries_hash(base)
+        directory_relevant = make_directory_registry(directory_dir; versions=Dict("Leaf_jll" => ["1.0.0", "1.1.0"]))
+        @test registry_slice_hash(root, [directory_relevant; base]) != directory_hash
+        @test registry_slice_hash(root, [directory_relevant]) == registry_slice_hash(root, relevant)
+        directory_unrelated = make_directory_registry(directory_dir; versions=Dict("Other_jll" => ["1.0.0", "2.0.0"]))
+        @test registry_slice_hash(root, [directory_unrelated; base]) == directory_hash
 
         # A `JLLSource`'s `spec_hash()` must not depend on whether `prepare()` has
         # filled out its UUID for us.
