@@ -18,7 +18,7 @@ const JLL_WRAPPER_UUIDS = Set{UUID}([
 
 # Guards the memoization tables in this file.  Both of them are keyed (at least in
 # part) on a registry fingerprint, so entries never go stale; they only pile up,
-# which `trim!()` deals with.
+# which `trim!()` deals with.  Registries without a fingerprint are never memoized.
 const registry_slice_lock = ReentrantLock()
 
 # (registry fingerprint, package UUID, requested versions) -> hash of that package's registry entry
@@ -39,10 +39,10 @@ end
 """
     tarball_registries(registries)
 
-Return the subset of `registries` that we hash: those that were downloaded as a
-tarball, and so carry the git tree hash of their content.  A registry that lives as a
-git checkout on-disk (such as a `Universe`'s local registry) carries no such hash, and
-we leave it out of our hashes entirely rather than tree-hash its worktree ourselves.
+Return the subset of `registries` that were downloaded as a tarball, and so carry the
+git tree hash of their content (see [`registry_fingerprint`](@ref)).  A registry that
+lives as a git checkout on-disk (such as a `Universe`'s local registry) carries no such
+hash, so its entries can't be memoized, and it can't be hashed wholesale.
 """
 function tarball_registries(registries::Vector{RegistryInstance})
     return filter(reg -> reg.tree_info !== nothing, registries)
@@ -51,9 +51,11 @@ end
 """
     registry_fingerprint(reg::RegistryInstance)
 
-Return a string that uniquely identifies the content of a tarball registry.
+Return a string that uniquely identifies the content of a tarball registry, or
+`nothing` for any other registry.
 """
 function registry_fingerprint(reg::RegistryInstance)
+    reg.tree_info === nothing && return nothing
     return string(reg.uuid, "@", bytes2hex(reg.tree_info.bytes))
 end
 
@@ -109,12 +111,18 @@ of each of those versions.  This is deliberately insensitive to the formatting o
 underlying `.toml` files, and to every other package in the registry.  If `versions`
 is given, only the registered versions within it (and the dependencies and compat
 bounds that apply to them) take part, as no other version can be resolved.
+
+Entries of tarball registries are memoized; those of any other registry are hashed
+again on every call, as nothing tells us when they change.
 """
 function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry,
                              versions::Union{Nothing,VersionSpec} = nothing)
-    key = (registry_fingerprint(reg), entry.uuid, string(something(versions, "")))
-    cached = lock(() -> get(registry_entry_hashes, key, nothing), registry_slice_lock)
-    cached !== nothing && return cached
+    fingerprint = registry_fingerprint(reg)
+    key = (something(fingerprint, ""), entry.uuid, string(something(versions, "")))
+    if fingerprint !== nothing
+        cached = lock(() -> get(registry_entry_hashes, key, nothing), registry_slice_lock)
+        cached !== nothing && return cached
+    end
 
     info = entry_info(reg, entry)
     available = matching_versions(info, versions)
@@ -144,8 +152,10 @@ function registry_entry_hash(reg::RegistryInstance, entry::PkgEntry,
     end
 
     entry_hash = bytes2hex(sha1(take!(io)))
-    lock(registry_slice_lock) do
-        trim!(registry_entry_hashes, 100_000)[key] = entry_hash
+    if fingerprint !== nothing
+        lock(registry_slice_lock) do
+            trim!(registry_entry_hashes, 100_000)[key] = entry_hash
+        end
     end
     return entry_hash
 end
@@ -239,7 +249,8 @@ end
 
 Hash the entirety of every tarball registry, such that any change to any of them
 shows up.  This is our conservative fallback for packages we can't slice; see
-[`registry_slice_hash`](@ref).
+[`registry_slice_hash`](@ref).  Other registries have no fingerprint to hash, so they
+are left out.
 """
 function full_registries_hash(registries::Vector{RegistryInstance})
     fingerprints = (registry_fingerprint(reg) for reg in tarball_registries(registries))
@@ -275,14 +286,15 @@ every JLL depends on one of them, but what we install is only ever a JLL's artif
 which its own version determines, so a new wrapper release changes nothing we install.
 The compat bounds that JLLs place on them are still part of each JLL's entry hash.
 
-Only tarball registries take part in this (see [`tarball_registries`](@ref)); a
-`Universe`'s local registry contributes nothing.  If we can't find any roots for `pkg`
-(it isn't registered in any tarball registry, and doesn't come from a path or a git
-repository) we can't compute a closure, so we fall back to hashing those registries in
-their entirety.
+Registries that live as git checkouts (such as a `Universe`'s local registry) take part
+in the walk like any other, so that a package registered there (or a new version of
+one) changes the slices that reach it, and nothing else.  As they have no fingerprint,
+a slice that includes one is computed afresh on every call (see
+[`registry_fingerprint`](@ref)).  If we can't find any roots for `pkg` (it isn't
+registered in any registry, and doesn't come from a path or a git repository) we can't
+compute a closure, so we fall back to hashing the tarball registries in their entirety.
 """
 function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
-    registries = tarball_registries(registries)
     roots = slice_roots(pkg, registries)
     if roots === nothing
         return full_registries_hash(registries)
@@ -291,10 +303,13 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
     # The requested versions of `pkg` only restrict its own entry, so they only apply
     # when that entry is what we start from.
     versions = requested_versions(pkg)
-    fingerprints = join(registry_fingerprint(reg) for reg in registries)
-    cache_key = (fingerprints, join(sort(string.(roots)), ","), string(something(versions, "")))
-    cached = lock(() -> get(registry_slice_hashes, cache_key, nothing), registry_slice_lock)
-    cached !== nothing && return cached
+    fingerprints = registry_fingerprint.(registries)
+    memoize = all(!isnothing, fingerprints)
+    cache_key = (join(something.(fingerprints, "")), join(sort(string.(roots)), ","), string(something(versions, "")))
+    if memoize
+        cached = lock(() -> get(registry_slice_hashes, cache_key, nothing), registry_slice_lock)
+        cached !== nothing && return cached
+    end
 
     # Breadth-first walk over the dependency graph as the registries describe it,
     # collecting a hash of each `(registry, package)` pair we touch along the way.
@@ -327,8 +342,10 @@ function registry_slice_hash(pkg::PkgSpec, registries::Vector{RegistryInstance})
     # The walk order depends on `Dict` iteration order, so sort before hashing.
     sort!(entry_hashes)
     slice_hash = bytes2hex(sha1(string(("$(k) = $(v)\n" for (k, v) in entry_hashes)...)))
-    lock(registry_slice_lock) do
-        trim!(registry_slice_hashes, 10_000)[cache_key] = slice_hash
+    if memoize
+        lock(registry_slice_lock) do
+            trim!(registry_slice_hashes, 10_000)[cache_key] = slice_hash
+        end
     end
     return slice_hash
 end
