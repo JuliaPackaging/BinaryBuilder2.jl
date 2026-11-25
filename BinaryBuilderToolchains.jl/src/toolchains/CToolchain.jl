@@ -677,7 +677,7 @@ function get_jll(deps::Vector{JLLSource}, name::String)
 end
 get_jll(toolchain, name::String) = get_jll(toolchain.deps, name)
 
-function toolchain_sources(toolchain::CToolchain)
+function toolchain_sources(toolchain::CToolchain; build_sandbox_prefix::Union{Nothing,String} = nothing)
     sources = AbstractSource[]
 
     installing_jll(name) = get_jll(toolchain, name) !== nothing
@@ -694,12 +694,13 @@ function toolchain_sources(toolchain::CToolchain)
         pkg_config_wrappers(toolchain, out_dir)
     end)
 
-    append!(sources, toolchain_sources(toolchain.binutils_toolchain))
+    append!(sources, toolchain_sources(toolchain.binutils_toolchain; build_sandbox_prefix))
     append!(sources, toolchain.deps)
     return sources
 end
 
-function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
+function toolchain_env(toolchain::CToolchain, deployed_prefix::String;
+                       build_sandbox_prefix::Union{Nothing,String} = nothing)
     env = Dict{String,String}()
 
     insert_PATH!(env, :PRE, [
@@ -724,7 +725,7 @@ function toolchain_env(toolchain::CToolchain, deployed_prefix::String)
     end
 
     # Merge in Binutils environment variables
-    merge!(env, toolchain_env(toolchain.binutils_toolchain, deployed_prefix))
+    merge!(env, toolchain_env(toolchain.binutils_toolchain, deployed_prefix; build_sandbox_prefix))
     return env
 end
 

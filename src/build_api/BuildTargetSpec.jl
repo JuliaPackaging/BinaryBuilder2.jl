@@ -165,13 +165,13 @@ function apply_toolchains(bts::BuildTargetSpec,
     for toolchain in bts.toolchains
         # Add toolchain environment variables
         tc_prefix = toolchain_prefix(bts, toolchain)
-        env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix))
+        env = path_appending_merge(env, toolchain_env(toolchain, tc_prefix; build_sandbox_prefix=tc_prefix))
 
         # Add the source trees for these toolchains
         if !haskey(source_trees, tc_prefix)
             source_trees[tc_prefix] = AbstractSource[]
         end
-        append!(source_trees[tc_prefix], toolchain_sources(toolchain))
+        append!(source_trees[tc_prefix], toolchain_sources(toolchain; build_sandbox_prefix=tc_prefix))
     end
 
     return env, source_trees

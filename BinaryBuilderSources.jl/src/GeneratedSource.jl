@@ -45,9 +45,9 @@ function prepare(gs::GeneratedSource; verbose::Bool = false)
         return
     end
 
-    # Run the generator on the source
-    mkpath(gs.ds.source)
-    gs.generator(gs.ds.source)
+    # Run the generator on a staging directory that only appears at `gs.ds.source` once
+    # it is complete, so that no other process takes a partial result as generated.
+    atomic_write(gs.generator, gs.ds.source; directory=true)
 
     # As of the time of this writing, `DirectorySource` has no `prepare()` function,
     # but let's be forward-thinking in case we end up adding something here.

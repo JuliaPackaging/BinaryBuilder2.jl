@@ -408,3 +408,57 @@ end
     patch_test_result = build!(patch_test_build_config)
     @test patch_test_result.status == :failed
 end
+
+@testset "runtime libraries come from a generated loader cache" begin
+    meta = BuildMeta(; verbose=false, disabled_caches=["build"])
+    runtime_dir = "/opt/host-tools/runtime/$(native_arch)-linux-gnu/lib64"
+    build_config = BuildConfig(
+        meta,
+        "runtime_libs_test",
+        v"1.0.0",
+        [],
+        apply_spec_plan(spec_plan, native_linux, native_linux),
+        replace(raw"""
+        # No `HostToolsToolchain` directory is on `LD_LIBRARY_PATH`; the runtime libraries
+        # are in the generated loader cache, the other HostTools libraries aren't.
+        [[ ":${LD_LIBRARY_PATH:-}:" != *:/opt/host-tools/* ]]
+        cmp "${BB_LD_SO_CACHE}" /etc/ld.so.cache
+        ldconfig -p > ldcache.txt
+        grep -q "RUNTIME_DIR/libstdc++.so.6" ldcache.txt
+        if grep -q "/opt/host-tools/lib/" ldcache.txt; then exit 1; fi
+
+        # C++ programs built with our newest GCC need a newer `libstdc++` than the rootfs has
+        cat > prog.cpp <<'END'
+        #include <chrono>
+        #include <iostream>
+        int main() { std::cout << (std::chrono::current_zone() != nullptr) << std::endl; return 0; }
+        END
+        mkdir -p ${bindir}
+        for cxx in "${HOSTCXX}" "${CXX}"; do
+            "${cxx}" -std=c++20 -o ${bindir}/cxxprog prog.cpp
+            [[ "$(${bindir}/cxxprog)" == "1" ]]
+            ldd ${bindir}/cxxprog > ldd.txt
+            grep -q "RUNTIME_DIR/libstdc++.so.6" ldd.txt
+        done
+        install_license /usr/share/licenses/MIT
+        """, "RUNTIME_DIR" => runtime_dir),
+    )
+    @test !haskey(build_config.env, "LD_LIBRARY_PATH")
+    @test build_config.env["BB_LD_SO_CACHE"] == "/opt/host-tools/etc/ld.so.cache"
+
+    # The loader cache is generated once for a given set of runtime libraries, not per build
+    cache_source(config) = only(s for s in config.source_trees["/opt/host-tools"]
+                                if isa(s, GeneratedSource) && s.ds.target == "etc")
+    other_config = BuildConfig(meta, "other", v"1.0.0", [], apply_spec_plan(spec_plan, native_linux, native_linux), "true")
+    @test cache_source(build_config).name_hash == cache_source(other_config).name_hash
+    build_result = build!(build_config)
+    @test build_result.status == :success
+
+    # Extraction scripts can run the programs too
+    extract_script = raw"""
+    [[ "$(${bindir}/cxxprog)" == "1" ]]
+    extract ${bindir}/cxxprog
+    """
+    extract_result = extract!(ExtractConfig(build_result, extract_script, [ExecutableProduct("cxxprog", :cxxprog)]))
+    @test extract_result.status == :success
+end

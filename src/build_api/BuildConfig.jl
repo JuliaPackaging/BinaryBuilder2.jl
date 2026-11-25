@@ -191,6 +191,7 @@ struct BuildConfig
         )
     end
 end
+
 AbstractBuildMeta(config::BuildConfig) = config.meta
 timer_output(config::BuildConfig) = config.to
 get_host_target_spec(config::BuildConfig) = get_host_target_spec(config.target_specs)
@@ -447,6 +448,16 @@ end
                 deploy(srcs, staging_path)
             end
         end
+    end
+
+    # Replace the rootfs's dynamic loader cache with the one generated for our runtime libraries
+    if haskey(config.env, "BB_LD_SO_CACHE")
+        cache_path = config.env["BB_LD_SO_CACHE"]
+        prefix = only(p for p in keys(config.source_trees) if startswith(cache_path, p * "/"))
+        mounts["/etc/ld.so.cache"] = MountInfo(
+            joinpath(mounts[prefix].host_path, relpath(cache_path, prefix)),
+            MountType.ReadOnly,
+        )
     end
     return mounts
 end

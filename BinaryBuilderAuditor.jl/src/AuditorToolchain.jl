@@ -114,10 +114,11 @@ end
 patchelf_filename(toolchain::AuditorToolchain) = "patchelf"
 install_name_tool_filename(toolchain::AuditorToolchain) = "$(toolchain_jll_triplet(toolchain.platform.target))-install_name_tool"
 ldid_filename(toolchain::AuditorToolchain) = "ldid"
-function toolchain_sources(toolchain::AuditorToolchain)
+function toolchain_sources(toolchain::AuditorToolchain; build_sandbox_prefix::Union{Nothing,String} = nothing)
     return toolchain.deps
 end
-function toolchain_env(toolchain::AuditorToolchain, deployed_prefix::String)
+function toolchain_env(toolchain::AuditorToolchain, deployed_prefix::String;
+                       build_sandbox_prefix::Union{Nothing,String} = nothing)
     env = Dict{String,String}()
     if Sys.isapple(toolchain.platform.target)
         env["INSTALL_NAME_TOOL"] = install_name_tool_filename(toolchain)
