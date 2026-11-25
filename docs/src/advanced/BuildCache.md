@@ -73,6 +73,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
 │     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
 │     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
+│     - GeneratedSource: etc sha1:21d1efb7eec2192c8660cd5e69c0886df0211695
 │     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
 │     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
 │     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
@@ -104,7 +105,8 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
 │     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
 │     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
-│     - JLLSource CompilerSupportLibraries_jll  sha1:ae79294c12d14270c41e713ef01d8eb81b3bf11c
+│     - JLLSource libstdcxx_jll runtime sha1:41ead73ddcba2f19defc585a57c00476e4bb639e
+│     - JLLSource GCC_support_libraries_jll runtime sha1:b6130349f1f9da267a315dbbcef7049ff4202ee2
 │   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
 │     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
 │     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
@@ -172,6 +174,7 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
 │     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
 │     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
+│     - GeneratedSource: etc sha1:21d1efb7eec2192c8660cd5e69c0886df0211695
 │     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
 │     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
 │     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
@@ -203,7 +206,8 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
 │     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
 │     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
-│     - JLLSource CompilerSupportLibraries_jll  sha1:ae79294c12d14270c41e713ef01d8eb81b3bf11c
+│     - JLLSource libstdcxx_jll runtime sha1:41ead73ddcba2f19defc585a57c00476e4bb639e
+│     - JLLSource GCC_support_libraries_jll runtime sha1:b6130349f1f9da267a315dbbcef7049ff4202ee2
 │   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
 │     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
 │     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
