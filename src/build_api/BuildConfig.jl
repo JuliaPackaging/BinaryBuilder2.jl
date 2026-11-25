@@ -513,6 +513,7 @@ function sandbox_and_collector(log_io::IO,
         stdout=pipes["stdout"],
         stderr=pipes["stderr"],
         verbose,
+        kwargs...,
     )
     return sandbox_config, collector
 end

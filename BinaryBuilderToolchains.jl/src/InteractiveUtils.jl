@@ -106,11 +106,11 @@ end
 """
     with_toolchains(f::Function, toolchains::Vector{AbstractToolchain};
                     env::Dict{String,String} = ENV,
-                    deploy_dir::String = mktempdir(),
+                    deploy_dir::Union{Nothing,String} = nothing,
                     verbose::Bool = false)
 
 Call `f(prefix, env)` with the given `toolchains` deployed and ready to go
-within `deploy_dir`.  Use this to quickly set up the given toolchains for
+within `deploy_dir` (a temporary directory removed afterwards, if not given).  Use this to quickly set up the given toolchains for
 usage with `run()` commands as follows:
 
     with_toolchains(toolchains) do prefix, env

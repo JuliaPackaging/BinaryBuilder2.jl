@@ -105,15 +105,17 @@ function Base.show(io::IO, result::ExtractResult)
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
-function Sandbox.SandboxConfig(result::ExtractResult; kwargs...)
+function Sandbox.SandboxConfig(result::ExtractResult; scratch_dir::String = mktempdir(), kwargs...)
     meta = AbstractBuildMeta(result)
     mounts = copy(result.config.build.mounts)
     mounts["/workspace/logs/build"] = MountInfo(artifact_path(meta.universe, result.config.build.log_artifact), MountType.ReadOnly)
     mounts["/workspace/logs/extract"] = MountInfo(artifact_path(meta.universe, result.log_artifact), MountType.ReadOnly)
-    return SandboxConfig(result.config, artifact_path(result), mounts; env=result.config.build.env)
+    return SandboxConfig(result.config, artifact_path(result), mounts; scratch_dir, env=result.config.build.env)
 end
 function runshell(result::ExtractResult; verbose::Bool = false, shell::Cmd = `/bin/bash`)
-    run(result.config.build.exe, SandboxConfig(result; verbose), ignorestatus(shell))
+    mktempdir() do scratch_dir
+        run(result.config.build.exe, SandboxConfig(result; verbose, scratch_dir), ignorestatus(shell))
+    end
 end
 
 """
