@@ -61,6 +61,8 @@ end
         done
         """,
         platforms = [CrossPlatform(native_linux => alien_linux)],
+        # Skip `rpaths_consistent!` for the extraction that runs on the cross platform only
+        audit_config = p -> isa(p, CrossPlatform) ? AuditConfig(; rpaths_consistent = false) : AuditConfig(),
 
         # Create a BuildTargetSpec generator that sets up a cross-compiler
         # `build`/`host`/`target` set of CToolchains:
@@ -117,6 +119,7 @@ end
                     get_target_spec_by_name(build_config, "build");
                     jll_name = "libcxxstring_source",
                     platform=AnyPlatform(),
+                    audit_config = AuditConfig(; licenses_present = false),
                 ),
             ]
         end,
@@ -134,4 +137,14 @@ end
     source_jll = get_package_result(meta, "libcxxstring_source")
     source_extraction = source_jll.config.named_extractions["libcxxstring_source"][1]
     @test source_extraction.config.platform == AnyPlatform()
+
+    # The recipe's `audit_config` is resolved per extraction platform, and an
+    # `ExtractSpec`'s own `audit_config` overrides it
+    skipped(extraction, pass_name) = any(r.status == :skipped for r in get(extraction.audit_result.pass_results, pass_name, []))
+    @test cross_extraction.config.audit_config == AuditConfig(; rpaths_consistent = false)
+    @test skipped(cross_extraction, "rpaths_consistent!")
+    @test target_extraction.config.audit_config == AuditConfig()
+    @test !skipped(target_extraction, "rpaths_consistent!")
+    @test source_extraction.config.audit_config == AuditConfig(; licenses_present = false)
+    @test skipped(source_extraction, "licenses_present")
 end

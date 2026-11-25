@@ -1,6 +1,7 @@
 using Test, BinaryBuilderProducts, BinaryBuilderAuditor, JLLGenerator, BinaryBuilderToolchains, TreeArchival
 
 include("ScanningTests.jl")
+include("AuditConfigTests.jl")
 include("SystemLibrariesTests.jl")
 include("passes/RelativeSymlinkTests.jl")
 include("passes/DanglingSymlinkTests.jl")

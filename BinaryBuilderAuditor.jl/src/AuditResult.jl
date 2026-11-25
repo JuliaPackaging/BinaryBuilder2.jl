@@ -2,7 +2,7 @@ using JLLGenerator, StyledStrings
 export PassResult, AuditResult, success
 
 struct PassResult
-    # One of `:success`, `:warn` or `:fail`
+    # One of `:success`, `:warn`, `:fail` or `:skipped` (the pass was disabled)
     status::Symbol
 
     # An identifier, usually the file being audited
@@ -31,7 +31,7 @@ Base.success(ar::AuditResult) = success(ar.pass_results)
 function Base.success(pass_results::Dict{String,Vector{PassResult}})
     for (name, results) in pass_results
         for result in results
-            if result.status != :success
+            if result.status ∉ (:success, :skipped)
                 return false
             end
         end
@@ -44,6 +44,7 @@ function status_style(status::Symbol)
         :success => :green,
         :fail => :red,
         :warn => :yellow,
+        :skipped => :shadow,
     )[status]
 end
 
@@ -68,7 +69,7 @@ function Base.show(io::IO, pass_results::Dict{String,Vector{PassResult}})
 end
 
 function push_result!(pass_results::Dict{String,Vector{PassResult}}, pass_name::String, status::Symbol, identifier::String, message::Union{Nothing,String} = nothing)
-    if status ∉ (:success, :warn, :fail)
+    if status ∉ (:success, :warn, :fail, :skipped)
         throw(ArgumentError("Invalid status '$(status)' for audit result '$(identifier)'"))
     end
 

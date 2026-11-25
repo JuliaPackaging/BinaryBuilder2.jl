@@ -18,11 +18,17 @@ struct ExtractSpec
     # If this extraction depends on others, list them here.
     inter_deps::Vector{String}
 
+    # Which audit passes run over this extraction: an `AuditConfig`, or a function
+    # mapping the extraction's platform to one.  `nothing` defers to the
+    # `audit_config` given to `extract!()` (and `build_tarballs()`).
+    audit_config::Union{Nothing,AuditConfig,Function}
+
     function ExtractSpec(script, products, target_spec;
                          jll_name,
                          name = jll_name,
                          platform = target_spec.platform.target,
-                         inter_deps = String[])
+                         inter_deps = String[],
+                         audit_config = nothing)
         return new(
             string(script),
             Vector{AbstractProduct}(products),
@@ -31,6 +37,7 @@ struct ExtractSpec
             target_spec,
             platform,
             inter_deps,
+            audit_config,
         )
     end
 end
@@ -69,6 +76,7 @@ end
 
 function extract!(extract_specs::Vector{ExtractSpec},
                   build_result::BuildResult;
+                  audit_config::Union{AuditConfig,Function} = AuditConfig(),
                   kwargs...)
     check_unique_names(extract_specs)
     specs_by_name = Dict(es.name => es for es in extract_specs)
@@ -90,6 +98,7 @@ function extract!(extract_specs::Vector{ExtractSpec},
             target_spec = extract_spec.target_spec,
             platform = extract_spec.platform,
             inter_deps = Dict(name => extract_results[name] for name in extract_spec.inter_deps),
+            audit_config = something(extract_spec.audit_config, audit_config),
             kwargs...,
         )
         extract_result = @auto_extract_kwargs extract!(
