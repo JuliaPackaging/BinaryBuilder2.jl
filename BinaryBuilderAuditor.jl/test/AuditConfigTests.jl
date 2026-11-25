@@ -10,6 +10,12 @@ using BinaryBuilderAuditor: disabled_passes
     # Passes the rest of the build relies upon have no switch
     @test_throws MethodError AuditConfig(; resolve_dynamic_links = false)
     @test_throws MethodError AuditConfig(; ensure_codesigned = false)
+    @test disabled_passes(AuditConfig(; extra_system_libraries = ["libcuda.so.1"])) == Symbol[]
+    @test AuditConfig(; extra_system_libraries = ["libcuda.so.1"]) == AuditConfig(; extra_system_libraries = ["libcuda.so.1"])
+    @test hash(AuditConfig(; extra_system_libraries = ["libcuda.so.1"])) == hash(AuditConfig(; extra_system_libraries = ["libcuda.so.1"]))
+    @test AuditConfig(; extra_system_libraries = ["libcuda.so.1"]) != AuditConfig()
+    @test repr(AuditConfig(; rpaths_consistent = false, extra_system_libraries = ["libcuda.so.1"])) ==
+          "AuditConfig(rpaths_consistent = false, extra_system_libraries = [\"libcuda.so.1\"])"
 
     target_platform = Platform("x86_64", "linux")
     platform = CrossPlatform(BBHostPlatform() => target_platform)
@@ -55,5 +61,36 @@ using BinaryBuilderAuditor: disabled_passes
         @test success(result)
         @test !haskey(result.pass_results, "rpaths_consistent!") || all(r.status != :skipped for r in result.pass_results["rpaths_consistent!"])
         @test libmult_rpaths() == ["\$ORIGIN/plus"]
+    end
+
+    # A library provided by the system the binaries run on, rather than by this package
+    # or a dependency, is accepted once it is listed in `extra_system_libraries`
+    mktempdir() do external
+        mktempdir() do prefix
+            libext_path = joinpath(external, "libext.so.3")
+            libuser_path = joinpath(prefix, "lib", "libuser.so.1")
+            mkpath(dirname(libuser_path))
+            mkpath(joinpath(prefix, "share", "licenses", "libuser"))
+            touch(joinpath(prefix, "share", "licenses", "libuser", "LICENSE"))
+            with_toolchains([toolchain]) do _, env
+                run(setenv(`$(env["CC"]) -o $(libext_path) -shared -Wl,-soname,libext.so.3 $(libplus_c_path)`, env))
+                symlink("libext.so.3", joinpath(external, "libext.so"))
+                run(setenv(`$(env["CC"]) -o $(libuser_path) -shared -Wl,-soname,libuser.so.1 $(libmult_c_path) -L $(external) -lext`, env))
+            end
+            products = [LibraryProduct("libuser", :libuser)]
+
+            result = audit!(prefix, products, AuditInfo(); platform=target_platform, readonly=true)
+            @test !success(result)
+            @test any(r.status == :fail for r in result.pass_results["resolve_dynamic_links!"])
+
+            for extra in (["libext.so.3"], ["LIBEXT.SO.3"])
+                result = audit!(prefix, products, AuditInfo(); platform=target_platform,
+                                config=AuditConfig(; extra_system_libraries = extra))
+                @test success(result)
+                libuser = only(result.jll_lib_products)
+                @test isempty(libuser.deps)
+                @test "ext" ∉ libuser.system_deps
+            end
+        end
     end
 end

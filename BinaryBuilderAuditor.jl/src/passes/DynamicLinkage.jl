@@ -1,6 +1,6 @@
 using BinaryBuilderProducts, JLLGenerator
 
-function resolve_dynamic_links!(result::AuditResult, info::AuditInfo)
+function resolve_dynamic_links!(result::AuditResult, info::AuditInfo; extra_system_libraries::Vector{String} = String[])
     scan, pass_results = result.scan, result.pass_results
 
     # Iterate over our own library products, get list of dependencies,
@@ -71,6 +71,10 @@ function resolve_dynamic_links!(result::AuditResult, info::AuditInfo)
                         if name !== nothing
                             push!(system_deps, name)
                         end
+                        continue
+                    end
+                    # Libraries the recipe declares as provided by the system it runs on
+                    if is_extra_system_library(lib_dep_soname, extra_system_libraries)
                         continue
                     end
                     push_result!(pass_results, "resolve_dynamic_links!", :fail, rel_path, "Unable to map dependency '$(lib_dep_soname)'")
@@ -226,7 +230,8 @@ function relink_absolute_dependencies!(result::AuditResult; prefix_alias::String
     end
 end
 
-function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::String = result.scan.prefix)
+function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::String = result.scan.prefix,
+                            extra_system_libraries::Vector{String} = String[])
     scan, pass_results = result.scan, result.pass_results
     # Windows doesn't do RPATHs, *sob*
     if Sys.iswindows(scan.platform)
@@ -286,7 +291,7 @@ function rpaths_consistent!(result::AuditResult, info::AuditInfo; prefix_alias::
             # System libraries are checked as the last fallback, as in `resolve_dynamic_links!()`:
             # a library we or a dependency ship (e.g. Libiconv_jll's `libiconv.2.dylib`, which
             # macOS also has) needs an RPATH even when it shares a system library's name.
-            elseif !is_system_library(dep_soname, scan.platform)
+            elseif !is_system_library(dep_soname, scan.platform) && !is_extra_system_library(dep_soname, extra_system_libraries)
                 push_result!(pass_results, "rpaths_consistent!", :fail, rel_path, "Unable to resolve dependency '$(soname)'")
             end
         end

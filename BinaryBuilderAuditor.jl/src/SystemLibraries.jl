@@ -224,3 +224,15 @@ function system_library_linker_name(soname::AbstractString, platform::AbstractPl
     end
     return get(known_system_libraries(platform), soname, nothing)
 end
+
+"""
+    is_extra_system_library(soname, extra_system_libraries)
+
+Whether `soname` is one of `extra_system_libraries`, the SONAMEs a recipe declares
+as provided by the system its binaries run on (e.g. a driver library such as
+`libcuda.so.1`).  Matching ignores case, as `is_system_library()` does.
+"""
+function is_extra_system_library(soname::AbstractString, extra_system_libraries::Vector{String})
+    soname = lowercase(basename(soname))
+    return any(lowercase(lib) == soname for lib in extra_system_libraries)
+end

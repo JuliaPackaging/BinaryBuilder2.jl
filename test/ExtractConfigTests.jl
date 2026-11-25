@@ -35,6 +35,8 @@ using BinaryBuilder2: extract_spec_hash, resolve_audit_config
     @test extract_spec_hash(build_hash, "install libfoo", AbstractProduct[LibraryProduct("libfoo", :libfoo)], AuditConfig()) == legacy
     no_rpaths = AuditConfig(; rpaths_consistent = false)
     @test extract_spec_hash(build_hash, "install libfoo", AbstractProduct[LibraryProduct("libfoo", :libfoo)], no_rpaths) != legacy
+    extra_libs = AuditConfig(; extra_system_libraries = ["libcuda.so.1"])
+    @test extract_spec_hash(build_hash, "install libfoo", AbstractProduct[LibraryProduct("libfoo", :libfoo)], extra_libs) != legacy
 end
 
 @testset "resolve_audit_config" begin

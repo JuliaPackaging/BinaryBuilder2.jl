@@ -124,9 +124,11 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
 
     # Only a non-default audit config is hashed, so that default extractions keep their hashes
     disabled = BinaryBuilderAuditor.disabled_passes(audit_config)
-    if !isempty(disabled)
+    extra_system_libraries = sort(audit_config.extra_system_libraries)
+    if !isempty(disabled) || !isempty(extra_system_libraries)
         println(hash_buffer, "[audit]")
         println(hash_buffer, "  disabled_passes = $(disabled)")
+        println(hash_buffer, "  extra_system_libraries = $(extra_system_libraries)")
     end
 
     # I think we probably don't need to be sensitive to these, since they're only used in packaging?

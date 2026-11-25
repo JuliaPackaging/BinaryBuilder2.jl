@@ -89,7 +89,7 @@ function audit!(prefix::String,
     end
 
     # Solve dynamic linkage, deriving each library product's record
-    resolve_dynamic_links!(result, info)
+    resolve_dynamic_links!(result, info; config.extra_system_libraries)
 
     # Describe the static archive of each library product, if any, plus any standalone static libraries
     resolve_static_libraries!(result, info)
@@ -97,7 +97,7 @@ function audit!(prefix::String,
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
         run_pass(result, config, :rpaths_consistent, "rpaths_consistent!") do
-            rpaths_consistent!(result, info; prefix_alias)
+            rpaths_consistent!(result, info; prefix_alias, config.extra_system_libraries)
         end
     end
 
