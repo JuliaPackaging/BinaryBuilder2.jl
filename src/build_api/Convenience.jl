@@ -136,6 +136,11 @@ const acceptable_statuses = (:success, :skipped, :cached)
                             cross_compiler = isa(first(platforms), CrossPlatform)
                         ),
                         
+                        # Which audit passes run over each extraction: an `AuditConfig`, or a
+                        # function mapping an extraction's platform to one.  An `ExtractSpec`'s
+                        # own `audit_config` takes precedence.
+                        audit_config::Union{AuditConfig,Function} = AuditConfig(),
+
                         eager_cleanup::Bool = true,
                         kwargs...)
     trace_status = "success"
@@ -217,7 +222,7 @@ const acceptable_statuses = (:success, :skipped, :cached)
 
         build_result = @auto_extract_kwargs build!(
             build_config;
-            extract_arg_hints = [(es.script, es.products) for es in extract_specs],
+            extract_arg_hints = [(es.script, es.products, resolve_audit_config(something(es.audit_config, audit_config), es.platform)) for es in extract_specs],
             kwargs...,
         )
         if build_result.status ∉ acceptable_statuses
@@ -232,7 +237,7 @@ const acceptable_statuses = (:success, :skipped, :cached)
             break
         end
 
-        build_extract_results = extract!(extract_specs, build_result; kwargs...)
+        build_extract_results = extract!(extract_specs, build_result; audit_config, kwargs...)
         for (extract_name, extract_result) in build_extract_results
             if extract_result.status ∉ acceptable_statuses
                 if extract_result.status == :failed

@@ -10,6 +10,7 @@ include("AuditorToolchain.jl")
 include("Scanning.jl")
 include("RuntimeRequirements.jl")
 include("AuditResult.jl")
+include("AuditConfig.jl")
 include("AuditInfo.jl")
 include("LdScriptParser.jl")
 include("passes/RelativeSymlink.jl")
@@ -35,6 +36,7 @@ function audit!(prefix::String,
                 ),
                 os_version::Union{Nothing,VersionNumber} = Base.BinaryPlatforms.os_version(platform),
                 verbose::Bool = false,
+                config::AuditConfig = AuditConfig(),
                 readonly::Bool = false)
     # First, scan the prefix:
     scan = scan_files(
@@ -48,30 +50,42 @@ function audit!(prefix::String,
 
     # First pass; symlink translation
     if !readonly
-        absolute_to_relative_symlinks!(result, prefix_alias)
+        run_pass(result, config, :absolute_to_relative_symlinks, "absolute_to_relative_symlinks!") do
+            absolute_to_relative_symlinks!(result, prefix_alias)
+        end
     end
 
     # Ensure that every symlink points at something that exists
-    dangling_symlinks(result, prefix_alias)
+    run_pass(result, config, :dangling_symlinks, "dangling_symlinks") do
+        dangling_symlinks(result, prefix_alias)
+    end
 
     # Make pkg-config files relocatable
     if !readonly
-        relocate_pkgconfig_files!(result, prefix_alias)
+        run_pass(result, config, :relocate_pkgconfig_files, "relocate_pkgconfig_files!") do
+            relocate_pkgconfig_files!(result, prefix_alias)
+        end
     end
 
     # Remove libtool archives, which hardcode build paths
     if !readonly
-        remove_libtool_archives!(result)
+        run_pass(result, config, :remove_libtool_archives, "remove_libtool_archives!") do
+            remove_libtool_archives!(result)
+        end
     end
 
     # Ensure that all libraries have SONAMEs
     if !readonly
-        ensure_sonames!(result)
+        run_pass(result, config, :ensure_sonames, "ensure_sonames!") do
+            ensure_sonames!(result)
+        end
     end
 
     # Point dependencies recorded by absolute in-prefix path at `@rpath` instead
     if !readonly
-        relink_absolute_dependencies!(result; prefix_alias)
+        run_pass(result, config, :relink_absolute_dependencies, "relink_absolute_dependencies!") do
+            relink_absolute_dependencies!(result; prefix_alias)
+        end
     end
 
     # Solve dynamic linkage, deriving each library product's record
@@ -82,7 +96,9 @@ function audit!(prefix::String,
 
     # Ensure that all libraries and executables have the correct RPATH setup
     if !readonly
-        rpaths_consistent!(result, info; prefix_alias)
+        run_pass(result, config, :rpaths_consistent, "rpaths_consistent!") do
+            rpaths_consistent!(result, info; prefix_alias)
+        end
     end
 
     # Re-sign the Mach-O binaries (macOS only); this must follow every pass that modifies binaries
@@ -91,11 +107,15 @@ function audit!(prefix::String,
     end
 
     # Ensure that there are some licenses
-    licenses_present(result)
+    run_pass(result, config, :licenses_present, "licenses_present") do
+        licenses_present(result)
+    end
 
     # Record what the binaries need from their runtime, and check what the platform decides
     record_runtime_requirements!(result)
-    check_runtime_requirements(result; os_version)
+    run_pass(result, config, :check_runtime_requirements, "runtime_requirements") do
+        check_runtime_requirements(result; os_version)
+    end
 
     if verbose
         show(result.pass_results)

@@ -1,6 +1,6 @@
 using Sandbox, TreeArchival, Pkg, BinaryBuilderProducts, Artifacts, BinaryBuilderAuditor, Pkg, Infiltrator
 
-export ExtractConfig, extract!
+export ExtractConfig, extract!, AuditConfig
 
 """
     ExtractConfig
@@ -45,8 +45,8 @@ struct ExtractConfig
     # has been packaged).
     inter_deps::Dict{String,<:Any}
 
-    # TODO: Add an `AuditConfig` field
-    #audit::AuditConfig
+    # Which audit passes run over the extracted artifact
+    audit_config::AuditConfig
 
     # Timing
     to::TimerOutput
@@ -60,7 +60,8 @@ struct ExtractConfig
                            jll_name::AbstractString = build.config.src_name,
                            target_spec::BuildTargetSpec = get_default_target_spec(build.config),
                            platform::AbstractPlatform = target_spec.platform.target,
-                           inter_deps::Dict{String,<:Any} = Dict{String,Any}())
+                           inter_deps::Dict{String,<:Any} = Dict{String,Any}(),
+                           audit_config::Union{AuditConfig,Function} = AuditConfig())
         return new(
             build,
             String(script),
@@ -69,11 +70,27 @@ struct ExtractConfig
             target_spec,
             platform,
             inter_deps,
+            resolve_audit_config(audit_config, platform),
             copy(build.config.to),
             Ref{Union{SHA1Hash,Nothing}}(nothing),
         )
     end
 end
+"""
+    resolve_audit_config(audit_config, platform)
+
+Returns the `AuditConfig` for an extraction on `platform`; `audit_config` is either
+an `AuditConfig` or a function mapping the extraction's platform to one.
+"""
+resolve_audit_config(audit_config::AuditConfig, platform::AbstractPlatform) = audit_config
+function resolve_audit_config(audit_config::Function, platform::AbstractPlatform)
+    resolved = audit_config(platform)
+    if !isa(resolved, AuditConfig)
+        throw(ArgumentError("`audit_config` function returned a $(typeof(resolved)) for $(triplet(platform)), not an `AuditConfig`"))
+    end
+    return resolved
+end
+
 AbstractBuildMeta(config::ExtractConfig) = AbstractBuildMeta(config.build)
 timer_output(config::ExtractConfig) = config.to
 BuildConfig(config::ExtractConfig) = config.build.config
@@ -83,7 +100,7 @@ function Base.show(io::IO, config::ExtractConfig)
     print(io, "ExtractConfig($(build_config.src_name), $(build_config.src_version), $(config.platform))")
 end
 
-function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, products::Vector{<:AbstractProduct})
+function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, products::Vector{<:AbstractProduct}, audit_config::AuditConfig = AuditConfig())
     # Similar to the `spec_hash()` definition for `BuildConfig`, we construct
     # a string in `hash_buffer` then hash it at the end for the final `spec_hash()`.
     hash_buffer = IOBuffer()
@@ -105,6 +122,13 @@ function extract_spec_hash(build_hash::SHA1Hash, extract_script::String, product
         end
     end
 
+    # Only a non-default audit config is hashed, so that default extractions keep their hashes
+    disabled = BinaryBuilderAuditor.disabled_passes(audit_config)
+    if !isempty(disabled)
+        println(hash_buffer, "[audit]")
+        println(hash_buffer, "  disabled_passes = $(disabled)")
+    end
+
     # I think we probably don't need to be sensitive to these, since they're only used in packaging?
     # println(hash_buffer, "[inter_deps]")
     # for config in inter_dep_configs
@@ -121,7 +145,7 @@ function BinaryBuilderSources.spec_hash(config::ExtractConfig; force_recompute::
     end
 
     build_hash = spec_hash(config.build.config; force_recompute)
-    config.spec_hash[] = extract_spec_hash(build_hash, config.script, config.products)
+    config.spec_hash[] = extract_spec_hash(build_hash, config.script, config.products, config.audit_config)
     return config.spec_hash[]::SHA1Hash
 end
 
@@ -237,6 +261,7 @@ end
         platform,
         # Check the binaries against the OS version that packaging records for this platform
         os_version = os_version(host_if_crossplatform(add_os_version(config.platform, config.target_spec))),
+        config = config.audit_config,
         kwargs...
     )
 end
