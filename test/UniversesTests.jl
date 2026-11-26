@@ -4,6 +4,18 @@ using BinaryBuilder2: update_registries!, registries_to_download, registry_path,
 using BinaryBuilder2: exported_artifact_filename
 using Base.BinaryPlatforms: Platform
 
+function with_depot_path(f, depots)
+    old = copy(DEPOT_PATH)
+    empty!(DEPOT_PATH)
+    append!(DEPOT_PATH, depots)
+    try
+        return f()
+    finally
+        empty!(DEPOT_PATH)
+        append!(DEPOT_PATH, old)
+    end
+end
+
 @testset "Exported artifact filenames" begin
     linux = Platform("x86_64", "linux")
     darwin = Platform("aarch64", "macos"; os_version="20")
@@ -125,14 +137,28 @@ end
         general = only(update_registries!(registries, depot))
         general_hash = bytes2hex(general.tree_info.bytes)
         mktempdir() do pinned_depot
-            pinned = only(update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash)))
+            # No depot on `DEPOT_PATH` holds the snapshot, so it gets downloaded
+            pinned = with_depot_path(String[]) do
+                only(update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash)))
+            end
             @test pinned.tree_info == general.tree_info
             @test isfile(joinpath(pinned_depot, "registries", "General.tar.gz"))
+            @test !islink(joinpath(pinned_depot, "registries", "General.tar.gz"))
 
             # Asking for it again doesn't need to download anything
             mtime_before = mtime(joinpath(pinned_depot, "registries", "General.tar.gz"))
             update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash))
             @test mtime(joinpath(pinned_depot, "registries", "General.tar.gz")) == mtime_before
+        end
+
+        # A depot on `DEPOT_PATH` that holds the snapshot gets linked rather than downloaded
+        mktempdir() do pinned_depot
+            pinned = with_depot_path([depot]) do
+                only(update_registries!(registries, pinned_depot; registry_hashes=Dict("General" => general_hash)))
+            end
+            @test pinned.tree_info == general.tree_info
+            @test islink(joinpath(pinned_depot, "registries", "General.toml"))
+            @test BinaryBuilder2.installed_registry_tree_hash(general) == general_hash
         end
         @test_throws ArgumentError update_registries!(registries, depot; registry_hashes=Dict("Nonexistent" => general_hash))
     end

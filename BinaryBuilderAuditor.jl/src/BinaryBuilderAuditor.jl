@@ -152,4 +152,6 @@ end
 #  - case sensitivity check
 
 
+include("precompile.jl")
+
 end # module

@@ -79,20 +79,31 @@ include("InteractiveUtils.jl")
         Platform("aarch64", "macos"; os_version=v"20"),
     ]
     platforms = [CrossPlatform(native_linux => target) for target in targets]
-    @compile_workload begin
-        for platform in platforms
-            # try/catch when running on platforms other than the typical BB2 host platforms
-            # and where we have incomplete toolchain implementations
-            try
-                with_toolchains((p, e) -> nothing, [
-                    CMakeToolchain(platform),
-                    CToolchain(platform),
-                    HostToolsToolchain(platform)
-                ])
-            catch e
-                @error("Failed to precompile support for platform", platform, exception=(e, catch_backtrace()))
+    # Resolving toolchain JLL versions only needs the installed registries
+    old_offline = Pkg.OFFLINE_MODE[]
+    Pkg.offline(true)
+    try
+        @compile_workload begin
+            for platform in platforms
+                # Not every toolchain supports every platform
+                try
+                    toolchains = [
+                        CMakeToolchain(platform),
+                        CToolchain(platform),
+                        HostToolsToolchain(platform)
+                    ]
+                    reduce(vcat, toolchain_sources.(toolchains))
+                    foldl(path_appending_merge, [
+                        toolchain_env.(toolchains, ("/opt/toolchains",))...,
+                        filter_env_vars(ENV),
+                    ])
+                catch e
+                    @debug("Failed to precompile support for platform", platform, exception=(e, catch_backtrace()))
+                end
             end
         end
+    finally
+        Pkg.offline(old_offline)
     end
 end
 

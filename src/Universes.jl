@@ -36,10 +36,58 @@ function registries_to_download(registries::Vector{RegistrySpec}, depot_path::St
 end
 
 """
+    installed_registry_tree_hash(reg::RegistryInstance)
+
+Return the git tree hash of the installed registry `reg` (for a git checkout, that of
+`HEAD`), or `nothing` if it is neither a tarball nor a git checkout.
+"""
+function installed_registry_tree_hash(reg::RegistryInstance)
+    if reg.tree_info !== nothing
+        return bytes2hex(reg.tree_info.bytes)
+    end
+    if !isdir(joinpath(reg.path, ".git"))
+        return nothing
+    end
+    return readchomp(Git.git(["-C", reg.path, "rev-parse", "HEAD^{tree}"]))
+end
+
+"""
+    link_installed_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
+
+If a depot on `DEPOT_PATH` has the snapshot `tree_hash` of `reg` installed, symlink it
+into `depot_path` and return `true`.
+"""
+function link_installed_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
+    regdir = joinpath(depot_path, "registries")
+    if ispath(joinpath(regdir, reg.name)) || ispath(joinpath(regdir, string(reg.name, ".toml")))
+        return false
+    end
+    depots = filter(d -> abspath(d) != abspath(depot_path), Base.DEPOT_PATH)
+    for inst in Pkg.Registry.reachable_registries(; depots)
+        same_registry = reg.uuid === nothing ? inst.name == reg.name : inst.uuid == reg.uuid
+        if !same_registry || installed_registry_tree_hash(inst) != tree_hash
+            continue
+        end
+        mkpath(regdir)
+        if isdir(inst.path)
+            symlink(inst.path, joinpath(regdir, reg.name))
+        else
+            # `inst.path` is the `.toml` that names the tarball next to it
+            tarball = TOML.parsefile(inst.path)["path"]::String
+            symlink(joinpath(dirname(inst.path), tarball), joinpath(regdir, tarball))
+            symlink(inst.path, joinpath(regdir, string(reg.name, ".toml")))
+        end
+        return true
+    end
+    return false
+end
+
+"""
     download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
 
-Download the snapshot of `reg` whose git tree hash is `tree_hash` from the package
-server into `depot_path`, the same way that `Pkg` stores the registries it downloads
+Make the snapshot of `reg` whose git tree hash is `tree_hash` available in `depot_path`,
+linking an installed copy if a depot on `DEPOT_PATH` has one, and otherwise downloading
+it from the package server the same way that `Pkg` stores the registries it downloads
 (a tarball next to a `.toml` that records its tree hash).  Does nothing if `depot_path`
 already holds that snapshot.
 """
@@ -48,6 +96,9 @@ function download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot
     regdir = joinpath(depot_path, "registries")
     toml_path = joinpath(regdir, string(reg.name, ".toml"))
     if isfile(toml_path) && get(TOML.parsefile(toml_path), "git-tree-sha1", nothing) == tree_hash
+        return
+    end
+    if link_installed_registry_snapshot!(reg, tree_hash, depot_path)
         return
     end
 
@@ -959,7 +1010,7 @@ Given a `JLLInfo`, generate the JLL out into the `dev` folder of the given unive
 upload the JLL and its binaries to the universe's `deploy_org`, and push up the
 registry changes as well.
 """
-function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = false, verbose::Bool = false)
+function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = false, verbose::Bool = false, meta = nothing)
     # Clone/fork/init ourselves a git repo
     if verbose
         @info("Initializing JLL repository", name=jll.name)
@@ -972,7 +1023,9 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     uni_branch_name = u.name !== nothing ? "bb2/$(u.name)" : nothing
 
-    jll_repo_url = init_jll_repo(u, jll.name, jll_path; branch_name=uni_branch_name, verbose)
+    jll_repo_url = with_trace(meta, "bb2.init_jll_repo") do
+        init_jll_repo(u, jll.name, jll_path; branch_name=uni_branch_name, verbose)
+    end
     if uni_branch_name !== nothing
         branch!(jll_path, uni_branch_name)
     end
@@ -988,15 +1041,19 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         if verbose
             @info("Compressing artifacts", num_artifacts=length(jll.builds))
         end
-        export_artifacts!(u, jll, tag_name, export_dir)
+        with_trace(meta, "bb2.export_artifacts") do
+            export_artifacts!(u, jll, tag_name, export_dir)
+        end
     end
 
     # Next, generate the JLL in-place and commit it
-    generate_jll(jll_path, jll)
-    commit!(jll_path, "$(jll.name) v$(jll.version)")
-    deploy_jll(jll_path, u.deploy_org, uni_branch_name, jll.name, tag_name, export_dir, verbose)
+    with_trace(meta, "bb2.generate_jll") do
+        generate_jll(jll_path, jll)
+        commit!(jll_path, "$(jll.name) v$(jll.version)")
+        deploy_jll(jll_path, u.deploy_org, uni_branch_name, jll.name, tag_name, export_dir, verbose)
+    end
 
-    in_universe(u) do env
+    with_trace(meta, "bb2.pkg_develop_jll") do; in_universe(u) do env
         # Next, add that JLL to the universe's environment
         # Pkg refuses to develop a package that is in the running Julia's sysimage
         # (e.g. `CompilerSupportLibraries_jll`, `OpenBLAS_jll`) unless this check is
@@ -1009,13 +1066,13 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         finally
             Pkg.respect_sysimage_versions(respect)
         end
-    end
+    end; end
 
     # Finally, register it into the universe's local BB2 registry
     reg_path = registry_path(u, first(u.registries))
 
     # This `with_logger()` will quash the unconditional `@info()` that LocalRegistry spits out
-    with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
+    with_trace(meta, "bb2.local_registry_register") do; with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
         LocalRegistry.register(
             jll_path;
             registry=reg_path,
@@ -1026,10 +1083,12 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             # When iterating, this is pretty useful.
             ignore_reregistration=true,
         )
-    end
+    end; end
 
     # Reload our cached RegistryInstance
-    u.registry_instances[1] = RegistryInstance(reg_path)
+    with_trace(meta, "bb2.reload_registry_instance") do
+        u.registry_instances[1] = RegistryInstance(reg_path)
+    end
 
     # Push the registry branch up
     if u.deploy_org !== nothing

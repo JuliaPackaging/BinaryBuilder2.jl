@@ -167,7 +167,7 @@ are created inside `scratch_dir`; callers that run the sandbox to completion sho
 a `scratch_dir` they remove afterwards (e.g. from `mktempdir() do ... end`).
 """
 function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts);
-                       scratch_dir::String = mktempdir(), kwargs...)
+                       scratch_dir::String = mktempdir(), @nospecialize(kwargs...))
     # We're going to alter the mounts of the build a bit for extraction.
     # First, we're going swap out any mounts for deployed sources in `${prefix}`
     # This results in `${prefix}` containing only the files that were added by our build
@@ -249,7 +249,9 @@ end
     meta = AbstractBuildMeta(config)
     prefix_alias = target_prefix(config.target_spec)
     # Load JLLInfo structures for each dependency
-    dep_jll_infos = load_dep_jllinfos(config)
+    dep_jll_infos = with_trace(config, "bb2.load_dep_jllinfos") do
+        load_dep_jllinfos(config)
+    end
     platform = host_if_crossplatform(config.platform)
 
     # Get libraries for all JLL dependencies
@@ -263,7 +265,7 @@ end
     for (inter_dep_name, inter_dep) in config.inter_deps
         deps[Symbol(inter_dep_name, "_jll")] = AuditDependencyInfo(inter_dep.audit_result.jll_lib_products)
     end
-    return audit!(
+    return with_trace(config, "bb2.audit_passes") do; audit!(
         artifact_dir,
         config.products,
         AuditInfo(deps);
@@ -274,7 +276,7 @@ end
         os_version = os_version(host_if_crossplatform(add_os_version(config.platform, config.target_spec))),
         config = config.audit_config,
         kwargs...
-    )
+    ); end
 end
 
 function find_unlocatable_products(config::ExtractConfig, prefix)
@@ -357,7 +359,9 @@ end
 
                 # Run over the extraction result, ensure that all products can be located:
                 if run_status == :success
-                    unlocatable_products = find_unlocatable_products(config, artifact_dir)
+                    unlocatable_products = with_trace(config, "bb2.find_unlocatable_products") do
+                        find_unlocatable_products(config, artifact_dir)
+                    end
                     if length(unlocatable_products) > 0
                         @error("""
                             Unable to locate $(length(unlocatable_products)) products!
@@ -404,7 +408,7 @@ end
     extract_log = String(take!(extract_log_io))
 
     # Generate "log" artifact that will later be packaged up.
-    log_artifact_hash = in_universe(meta.universe) do env
+    log_artifact_hash = with_trace(config, "bb2.extract_log_artifact") do; in_universe(meta.universe) do env
         Pkg.Artifacts.create_artifact() do artifact_dir
             open(joinpath(artifact_dir, "$(build_config.src_name)-extract.log"); write=true) do io
                 write(io, extract_log)
@@ -415,7 +419,7 @@ end
                 end
             end
         end
-    end
+    end; end
 
     result = ExtractResult(
         config,

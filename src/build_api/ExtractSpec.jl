@@ -77,7 +77,7 @@ end
 function extract!(extract_specs::Vector{ExtractSpec},
                   build_result::BuildResult;
                   audit_config::Union{AuditConfig,Function} = AuditConfig(),
-                  kwargs...)
+                  @nospecialize(kwargs...))
     check_unique_names(extract_specs)
     specs_by_name = Dict(es.name => es for es in extract_specs)
 

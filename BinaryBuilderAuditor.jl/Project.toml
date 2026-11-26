@@ -9,8 +9,10 @@ BinaryBuilderProducts = "0.4"
 BinaryBuilderSources = "0.3"
 BinaryBuilderToolchains = "0.5"
 JLLGenerator = "0.6"
+Libdl = "1"
 ObjectFile = "0.6.2"
 Pkg = "1.9.0"
+PrecompileTools = "1.2.1"
 julia = "1.12"
 
 [deps]
@@ -19,8 +21,10 @@ BinaryBuilderProducts = "21737265-7a69-6e4f-4974-6375646f7270"
 BinaryBuilderSources = "316c416d-4527-6863-7465-466137743047"
 BinaryBuilderToolchains = "33566f4c-336c-3150-6d30-4374274e6143"
 JLLGenerator = "73536572-7074-4e69-5270-206c4c6a2061"
+Libdl = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
 ObjectFile = "d8793406-e978-5875-9003-1fc021f44a92"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
+PrecompileTools = "aea7be01-6a6a-4083-8856-8a6e6704d82a"
 StyledStrings = "f489334b-da3d-4c2e-b8f0-e476e12c162b"
 
 [extras]

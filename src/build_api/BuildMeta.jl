@@ -287,6 +287,8 @@ This structure holds the metadata of a BinaryBuilder session including:
 When constructed, global options (most commonly passed in on the command line through
 `ARGS`) can be passed to the `BuildMeta` through a `BuildMeta(ARGS::Vector{String})`
 parsing method, or directly through keyword arguments in the constructor.
+
+The `build_cache` keyword argument replaces the `BuildCache` loaded from our scratch space.
 """
 struct BuildMeta <: AbstractBuildMeta
     # Contains a list of builds; when you run build!() with arguments, it records
@@ -353,6 +355,7 @@ struct BuildMeta <: AbstractBuildMeta
                         trace_file::Union{AbstractString,Nothing} = nothing,
                         register::Union{Bool,AbstractString} = false,
                         registry_hashes::AbstractDict{<:AbstractString,<:AbstractString} = Dict{String,String}(),
+                        build_cache::Union{Nothing,BuildCache} = nothing,
                        )
         if !isa(debug_modes, Set)
             debug_modes = Set(debug_modes)
@@ -455,7 +458,7 @@ struct BuildMeta <: AbstractBuildMeta
             Set{MultiHash}(build_hash_list),
             Set{MultiHash}(),
             universe,
-            load_cache(),
+            something(build_cache, load_cache()),
             archive_dir,
             Set{String}(disabled_caches),
             trace_file === nothing ? nothing : String(trace_file),
@@ -510,6 +513,8 @@ function start_trace_session!(meta::BuildMeta)
         return nothing
     end
     clear_trace!()
+    # Lets `with_trace()` report how much of each zone was spent compiling
+    Base.cumulative_compile_timing(true)
     trace_event(
         meta,
         "bb2.trace_session_start";
