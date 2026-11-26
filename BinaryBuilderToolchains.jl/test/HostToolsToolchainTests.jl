@@ -66,13 +66,14 @@ using HistoricalStdlibVersions
             # A build sandbox provides them through a dynamic loader cache instead
             sandbox_env = toolchain_env(toolchain, "/opt/host-tools"; build_sandbox_prefix="/opt/host-tools")
             @test !haskey(sandbox_env, "LD_LIBRARY_PATH")
-            @test sandbox_env["BB_LD_SO_CACHE"] == "/opt/host-tools/etc/ld.so.cache"
             sources = toolchain_sources(toolchain; build_sandbox_prefix="/opt/host-tools")
-            is_cache_source(s) = isa(s, GeneratedSource) && s.ds.target == "etc"
+            is_cache_source(s) = isa(s, GeneratedSource) && s.ds.target == "etc/loader"
             cache_source = only(filter(is_cache_source, sources))
             @test !any(is_cache_source, toolchain_sources(toolchain))
             prepare(sources)
             @test isfile(joinpath(cache_source.ds.source, "ld.so.cache"))
+            dropin = joinpath(cache_source.ds.source, "ld.so.conf.d", "00-bb2-runtime.conf")
+            @test readlines(dropin) == BinaryBuilderToolchains.runtime_library_dirs(toolchain, "/opt/host-tools")
         end
 
         # Run our more extensive test suites.

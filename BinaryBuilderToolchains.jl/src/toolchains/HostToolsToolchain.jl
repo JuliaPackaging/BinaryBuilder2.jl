@@ -2,6 +2,11 @@ using NetworkOptions
 export HostToolsToolchain
 using Pkg.Types: VersionSpec
 
+# The name of the `ld.so.conf.d` drop-in that lists the runtime library directories
+const LD_SO_CONF_NAME = "00-bb2-runtime.conf"
+# Where the dynamic loader configuration for a build sandbox goes, within the toolchain
+const LOADER_CONFIG_DIR = "etc/loader"
+
 """
     HostToolsToolchain
 
@@ -148,10 +153,13 @@ end
     toolchain_sources(toolchain::HostToolsToolchain; build_sandbox_prefix = nothing)
 
 The sources that make up `toolchain`.  When the toolchain gets deployed at
-`build_sandbox_prefix` within a Linux build sandbox, they include `etc/ld.so.cache`, a
-dynamic loader cache of the sandbox rootfs in which the runtime libraries take
-precedence over the rootfs's own; the sandbox should mount it at `/etc/ld.so.cache`
-(see `toolchain_env()`'s `BB_LD_SO_CACHE`).
+`build_sandbox_prefix` within a Linux build sandbox, they include, in
+`$(LOADER_CONFIG_DIR)`, the dynamic loader configuration that makes the runtime libraries
+take precedence over the sandbox rootfs's own (see `generate_loader_config()`): an
+`ld.so.cache` and the `ld.so.conf.d` drop-in it was built from.  The sandbox should
+overlay that directory onto the rootfs's `/etc`, so that both appear at their standard
+paths, and `ldconfig` can rebuild the cache within the sandbox (with the runtime
+libraries still first) without changing the layer.
 """
 function toolchain_sources(toolchain::HostToolsToolchain;
                            build_sandbox_prefix::Union{Nothing,String} = nothing)
@@ -282,37 +290,43 @@ function toolchain_sources(toolchain::HostToolsToolchain;
             runtime_dirs,
             [jll.input_block for jll in toolchain.runtime_deps]...,
         )))
-        push!(sources, CachedGeneratedSource("HostToolsLoaderCache-$(cache_key)"; target="etc") do out_dir
-            generate_ld_so_cache(out_dir, rootfs, toolchain.platform, build_sandbox_prefix, toolchain.runtime_deps, runtime_dirs)
+        push!(sources, CachedGeneratedSource("HostToolsLoaderConfig-$(cache_key)"; target=LOADER_CONFIG_DIR) do out_dir
+            generate_loader_config(out_dir, rootfs, toolchain.platform, build_sandbox_prefix, toolchain.runtime_deps, runtime_dirs)
         end)
     end
     return sources
 end
 
 """
-    generate_ld_so_cache(out_dir, rootfs, platform, prefix, runtime_jlls, runtime_dirs)
+    generate_loader_config(out_dir, rootfs, platform, prefix, runtime_jlls, runtime_dirs)
 
-Write `out_dir/ld.so.cache`: the dynamic loader cache of `rootfs` (a rootfs for
-`platform`) with `runtime_dirs` (where `runtime_jlls`, which must already be prepared,
-get deployed when `prefix` is mounted inside the sandbox) taking precedence over the
-rootfs's own libraries.  `ldconfig` runs within a sandbox, emulated through QEMU when
-`platform` cannot run natively.
+Write the dynamic loader configuration that makes `runtime_dirs` (where `runtime_jlls`,
+which must already be prepared, get deployed when `prefix` is mounted inside the sandbox)
+take precedence over the libraries of `rootfs` (a rootfs for `platform`), as a layer to
+overlay onto the rootfs's `/etc`:
+- `out_dir/ld.so.conf.d/$(LD_SO_CONF_NAME)`, an `ld.so.conf` drop-in listing
+  `runtime_dirs`.
+- `out_dir/ld.so.cache`, the cache that `ldconfig` builds from the rootfs's standard
+  `/etc/ld.so.conf` with that drop-in added.  That `ld.so.conf` includes
+  `/etc/ld.so.conf.d/*.conf` in lexical order, and the drop-in's name sorts first.
+
+`ldconfig` runs within a sandbox, emulated through QEMU when `platform` cannot run
+natively.
 """
-function generate_ld_so_cache(out_dir::String, rootfs::String, platform::Platform, prefix::String,
-                              runtime_jlls::Vector{JLLSource}, runtime_dirs::Vector{String})
-    mktempdir() do tmp
-        prefix_dir = joinpath(tmp, "prefix")
+function generate_loader_config(out_dir::String, rootfs::String, platform::Platform, prefix::String,
+                                runtime_jlls::Vector{JLLSource}, runtime_dirs::Vector{String})
+    conf_path = joinpath(out_dir, "ld.so.conf.d", LD_SO_CONF_NAME)
+    mkpath(dirname(conf_path))
+    open(conf_path; write=true) do io
+        foreach(dir -> println(io, dir), runtime_dirs)
+    end
+
+    mktempdir() do prefix_dir
         deploy(runtime_jlls, prefix_dir)
-        conf_dir = joinpath(tmp, "conf")
-        mkpath(conf_dir)
-        open(joinpath(conf_dir, "ld.so.conf"); write=true) do io
-            foreach(dir -> println(io, dir), runtime_dirs)
-            println(io, "include /etc/ld.so.conf.d/*.conf")
-        end
         mounts = Dict{String,Sandbox.MountInfo}(
             "/" => Sandbox.MountInfo(rootfs, Sandbox.MountType.Overlayed),
             prefix => Sandbox.MountInfo(prefix_dir, Sandbox.MountType.ReadOnly),
-            "/workspace/ldconfig" => Sandbox.MountInfo(conf_dir, Sandbox.MountType.ReadOnly),
+            "/etc/ld.so.conf.d/$(LD_SO_CONF_NAME)" => Sandbox.MountInfo(conf_path, Sandbox.MountType.ReadOnly),
             "/workspace/out" => Sandbox.MountInfo(out_dir, Sandbox.MountType.ReadWrite),
         )
         sandbox_config = Sandbox.SandboxConfig(
@@ -321,7 +335,7 @@ function generate_ld_so_cache(out_dir::String, rootfs::String, platform::Platfor
             multiarch=[platform],
         )
         Sandbox.with_executor() do exe
-            run(exe, sandbox_config, `/sbin/ldconfig -X -f /workspace/ldconfig/ld.so.conf -C /workspace/out/ld.so.cache`)
+            run(exe, sandbox_config, `/sbin/ldconfig -X -C /workspace/out/ld.so.cache`)
         end
     end
 end
@@ -368,8 +382,9 @@ end
 The environment for using `toolchain` deployed at `deployed_prefix`.  On Linux, the
 runtime libraries are added to `LD_LIBRARY_PATH`, except within a build sandbox (when
 `build_sandbox_prefix` is given): that provides them through the dynamic loader cache
-named by `BB_LD_SO_CACHE` (see `toolchain_sources()`), which, unlike `LD_LIBRARY_PATH`,
-neither overrides a program's own `RUNPATH` nor exposes them to the linker.
+configuration that `toolchain_sources()` generates as a layer for the rootfs's `/etc`,
+which, unlike `LD_LIBRARY_PATH`, neither overrides a program's own `RUNPATH` nor exposes
+them to the linker.
 """
 function toolchain_env(toolchain::HostToolsToolchain, deployed_prefix::String;
                        build_sandbox_prefix::Union{Nothing,String} = nothing)
@@ -402,9 +417,7 @@ function toolchain_env(toolchain::HostToolsToolchain, deployed_prefix::String;
         insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname="PATH", pathsep=";")
     elseif Sys.isapple()
         insert_PATH!(env, :PRE, [joinpath(deployed_prefix, "lib")]; varname="DYLD_FALLBACK_LIBRARY_PATH")
-    elseif build_sandbox_prefix !== nothing
-        env["BB_LD_SO_CACHE"] = joinpath(build_sandbox_prefix, "etc", "ld.so.cache")
-    else
+    elseif build_sandbox_prefix === nothing
         insert_PATH!(env, :PRE, runtime_library_dirs(toolchain, deployed_prefix); varname="LD_LIBRARY_PATH")
     end
     return env
