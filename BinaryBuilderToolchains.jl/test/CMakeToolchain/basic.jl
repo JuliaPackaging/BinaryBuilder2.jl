@@ -69,6 +69,12 @@
         wrapper_prefixes=["host-"],
     )
 
+    # The host toolchain file must take its sysroot and install prefix from the host
+    # `CToolchain` and prefix, not from the default (target) ones.
+    host_toolchain_file = sprint(io -> BinaryBuilderToolchains.generate_cmake_toolchain_file(host_cmaketoolchain, io))
+    @test occursin("\$ENV{HOST_CC} -print-sysroot", host_toolchain_file)
+    @test occursin("set(CMAKE_INSTALL_PREFIX \$ENV{host_prefix})", host_toolchain_file)
+
     target_platform = CrossPlatform(BBHostPlatform() => BBHostPlatformCxxTag(true))
     target_ctoolchain = CToolchain(
         target_platform;

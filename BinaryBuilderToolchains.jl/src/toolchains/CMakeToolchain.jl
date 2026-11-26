@@ -100,10 +100,13 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
         end
     end
 
-    # Important paths
+    # Important paths, taken from the environment variables of the `CToolchain` and the
+    # install prefix that this toolchain is paired with (e.g. `$HOST_CC` and `$host_prefix`
+    # for a toolchain with the `HOST_` environment prefix).
+    env_prefix = toolchain.env_prefixes[argmax(length.(toolchain.env_prefixes))]
     println(io, """
-    set(CMAKE_INSTALL_PREFIX \$ENV{prefix})
-    execute_process(COMMAND \$ENV{CC} -print-sysroot OUTPUT_VARIABLE CMAKE_SYSROOT OUTPUT_STRIP_TRAILING_WHITESPACE)
+    set(CMAKE_INSTALL_PREFIX \$ENV{$(lowercase(env_prefix))prefix})
+    execute_process(COMMAND \$ENV{$(env_prefix)CC} -print-sysroot OUTPUT_VARIABLE CMAKE_SYSROOT OUTPUT_STRIP_TRAILING_WHITESPACE)
     """)
 
     # CMake's platform modules (e.g. `Platform/UnixPaths.cmake`) append `/usr/local`,
@@ -151,7 +154,6 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
         "CMAKE_RANLIB" => "RANLIB",
     )
 
-    env_prefix = toolchain.env_prefixes[argmax(length.(toolchain.env_prefixes))]
     for (cmake_var, env_var) in cmake_to_env
         println(io, """
         if(DEFINED ENV{$(env_prefix)$(env_var)})
