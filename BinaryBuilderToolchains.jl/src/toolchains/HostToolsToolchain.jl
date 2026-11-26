@@ -334,7 +334,7 @@ function generate_loader_config(out_dir::String, rootfs::String, platform::Platf
             Dict("PATH" => "/usr/sbin:/usr/bin:/sbin:/bin");
             multiarch=[platform],
         )
-        Sandbox.with_executor() do exe
+        Sandbox.with_executor(Sandbox.UnprivilegedUserNamespacesExecutor) do exe
             run(exe, sandbox_config, `/sbin/ldconfig -X -C /workspace/out/ld.so.cache`)
         end
     end

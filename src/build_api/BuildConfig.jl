@@ -476,6 +476,10 @@ end
 end
 
 import Sandbox: SandboxConfig
+
+# Builds always run in an unprivileged user namespace
+const BB2_EXECUTOR = Sandbox.UnprivilegedUserNamespacesExecutor
+
 function SandboxConfig(config::BuildConfig,
                        mounts::Dict{String,MountInfo};
                        env = config.env,
@@ -534,7 +538,7 @@ end
 function runshell(config::BuildConfig; verbose::Bool = AbstractBuildMeta(config).verbose, shell::Cmd = `/bin/bash`)
     mounts = deploy(config; verbose)
     sandbox_config = SandboxConfig(config, mounts; verbose)
-    with_executor() do exe
+    with_executor(BB2_EXECUTOR) do exe
         run(exe, sandbox_config, ignorestatus(shell))
     end
 end
@@ -624,7 +628,7 @@ end
         verbose,
     )
     exe = with_trace(config, "bb2.sandbox_executor") do
-        Sandbox.preferred_executor()()
+        BB2_EXECUTOR()
     end
 
     try
