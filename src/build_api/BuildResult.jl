@@ -113,7 +113,7 @@ function Base.show(io::IO, result::BuildResult)
     print(io, styled"BuildResult($(config.src_name), $(config.src_version), $(target_platform_string(config))) ({$(color):$(result.status)})")
 end
 
-function Sandbox.SandboxConfig(result::BuildResult; kwargs...)
+function Sandbox.SandboxConfig(result::BuildResult; @nospecialize(kwargs...))
     meta = AbstractBuildMeta(result)
     mounts = copy(result.mounts)
     mounts["/workspace/logs/build"] = MountInfo(artifact_path(meta.universe, result.log_artifact), MountType.ReadOnly)

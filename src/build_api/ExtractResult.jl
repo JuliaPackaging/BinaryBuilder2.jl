@@ -105,7 +105,7 @@ function Base.show(io::IO, result::ExtractResult)
 end
 
 Artifacts.artifact_path(result::ExtractResult) = artifact_path(result.config.build.config.meta.universe, result.artifact)
-function Sandbox.SandboxConfig(result::ExtractResult; scratch_dir::String = mktempdir(), kwargs...)
+function Sandbox.SandboxConfig(result::ExtractResult; scratch_dir::String = mktempdir(), @nospecialize(kwargs...))
     meta = AbstractBuildMeta(result)
     mounts = copy(result.config.build.mounts)
     mounts["/workspace/logs/build"] = MountInfo(artifact_path(meta.universe, result.config.build.log_artifact), MountType.ReadOnly)

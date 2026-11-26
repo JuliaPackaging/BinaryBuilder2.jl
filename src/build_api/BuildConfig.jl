@@ -70,7 +70,7 @@ struct BuildConfig
                          target_specs::Vector{BuildTargetSpec},
                          script::AbstractString;
                          build_script_path::Union{AbstractString,Nothing} = nothing,
-                         kwargs...,
+                         @nospecialize(kwargs...),
                          )
         sources = Vector{AbstractSource}(sources)
         if count(bts -> :native ∈ bts.flags, target_specs) != 1
@@ -489,7 +489,7 @@ function SandboxConfig(config::BuildConfig,
                        verbose::Bool = false,
                        save_env::Bool = true,
                        pwd = "/workspace/srcdir",
-                       kwargs...)
+                       @nospecialize(kwargs...))
     if !save_env
         env = copy(env)
         env["BB_SAVE_ENV"] = "false"

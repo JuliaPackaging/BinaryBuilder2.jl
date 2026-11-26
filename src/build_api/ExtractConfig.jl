@@ -167,7 +167,7 @@ are created inside `scratch_dir`; callers that run the sandbox to completion sho
 a `scratch_dir` they remove afterwards (e.g. from `mktempdir() do ... end`).
 """
 function SandboxConfig(config::ExtractConfig, output_dir::String, mounts = copy(config.build.mounts);
-                       scratch_dir::String = mktempdir(), kwargs...)
+                       scratch_dir::String = mktempdir(), @nospecialize(kwargs...))
     # We're going to alter the mounts of the build a bit for extraction.
     # First, we're going swap out any mounts for deployed sources in `${prefix}`
     # This results in `${prefix}` containing only the files that were added by our build

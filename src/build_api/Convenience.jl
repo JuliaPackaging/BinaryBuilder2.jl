@@ -142,7 +142,8 @@ const acceptable_statuses = (:success, :skipped, :cached)
                         audit_config::Union{AuditConfig,Function} = AuditConfig(),
 
                         eager_cleanup::Bool = true,
-                        kwargs...)
+                        # Recipes pass many different extra keywords; compile once for all of them
+                        @nospecialize(kwargs...))
     trace_status = "success"
     if trace_enabled(meta)
         start_trace_session!(meta)
@@ -366,7 +367,7 @@ function build_tarballs(;src_name::String,
                          src_version::Union{String,VersionNumber},
                          sources::Vector,
                          script::String,
-                         kwargs...)
+                         @nospecialize(kwargs...))
     return build_tarballs(
         src_name,
         src_version,
@@ -537,7 +538,7 @@ AbstractBuildMeta(packagings::Dict{PackageConfig,<:Union{Nothing,PackageResult}}
 function runshell(platform::CrossPlatform;
                   target_specs::Vector = apply_spec_plan(make_target_spec_plan(), platform.host, platform.target),
                   meta = BuildMeta(),
-                  kwargs...)
+                  @nospecialize(kwargs...))
     config = BuildConfig(
         meta,
         "test",
@@ -553,5 +554,5 @@ function runshell(platform::CrossPlatform;
         cleanup(meta.universe)
     end
 end
-runshell(platform::Platform; kwargs...) = runshell(CrossPlatform(BBHostPlatform() => platform); kwargs...)
-runshell(triplet::String; kwargs...) = runshell(parse(Platform, triplet); kwargs...)
+runshell(platform::Platform; @nospecialize(kwargs...)) = runshell(CrossPlatform(BBHostPlatform() => platform); kwargs...)
+runshell(triplet::String; @nospecialize(kwargs...)) = runshell(parse(Platform, triplet); kwargs...)

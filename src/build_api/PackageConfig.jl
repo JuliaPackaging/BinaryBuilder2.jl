@@ -141,8 +141,8 @@ function normalize_init_block(code::AbstractString)
 end
 
 # Helper functions for quickly packaging a few ExtractResults
-PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), kwargs...) = PackageConfig(Dict(jll_name => results); kwargs...)
-PackageConfig(result::ExtractResult; kwargs...) = PackageConfig([result]; kwargs...)
+PackageConfig(results::Vector{ExtractResult}; jll_name::AbstractString = default_jll_name(results), @nospecialize(kwargs...)) = PackageConfig(Dict(jll_name => results); kwargs...)
+PackageConfig(result::ExtractResult; @nospecialize(kwargs...)) = PackageConfig([result]; kwargs...)
 
 # Helper function for resynthesizing a `PackageConfig` out of some `ExtractResults`
 # that are coming from Yggdrasil builders
