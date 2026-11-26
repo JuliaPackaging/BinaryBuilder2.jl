@@ -429,8 +429,9 @@ end
     prepare(config; verbose)
 
     # Assemble mounts into this dictionary
+    rootfs = Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host)
     mounts = Dict{String,MountInfo}(
-        "/" => MountInfo(Sandbox.debian_rootfs(;platform = get_host_target_spec(config).platform.host), MountType.Overlayed),
+        "/" => MountInfo(rootfs, MountType.Overlayed),
         "/var/cache/ccache" => MountInfo(ccache_cache("ccache"), MountType.ReadWrite),
     )
 
@@ -450,14 +451,22 @@ end
         end
     end
 
-    # Replace the rootfs's dynamic loader cache with the one generated for our runtime libraries
-    if haskey(config.env, "BB_LD_SO_CACHE")
-        cache_path = config.env["BB_LD_SO_CACHE"]
-        prefix = only(p for p in keys(config.source_trees) if startswith(cache_path, p * "/"))
-        mounts["/etc/ld.so.cache"] = MountInfo(
-            joinpath(mounts[prefix].host_path, relpath(cache_path, prefix)),
-            MountType.ReadOnly,
-        )
+    # Layer the dynamic loader configuration that the `HostToolsToolchain` generates for
+    # its runtime libraries onto the rootfs's `/etc`.  Like the rootfs, `/etc` is an
+    # overlay whose changes persist for the whole build, so `ldconfig` can rebuild the
+    # cache and later runs (e.g. the extraction) see the rebuilt cache.
+    layers = String[]
+    for bts in config.target_specs, toolchain in bts.toolchains
+        isa(toolchain, HostToolsToolchain) || continue
+        prefix = toolchain_prefix(bts, toolchain)
+        layer = joinpath(mounts[prefix].host_path, BinaryBuilderToolchains.LOADER_CONFIG_DIR)
+        isdir(layer) && push!(layers, layer)
+    end
+    if length(layers) > 1
+        throw(ArgumentError("Only one `HostToolsToolchain` may provide the loader configuration, found $(length(layers))"))
+    end
+    if !isempty(layers)
+        mounts["/etc"] = MountInfo([only(layers), joinpath(rootfs, "etc")], MountType.Overlayed)
     end
     return mounts
 end

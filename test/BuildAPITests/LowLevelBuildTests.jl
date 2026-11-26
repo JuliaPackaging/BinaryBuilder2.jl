@@ -422,10 +422,27 @@ end
         # No `HostToolsToolchain` directory is on `LD_LIBRARY_PATH`; the runtime libraries
         # are in the generated loader cache, the other HostTools libraries aren't.
         [[ ":${LD_LIBRARY_PATH:-}:" != *:/opt/host-tools/* ]]
-        cmp "${BB_LD_SO_CACHE}" /etc/ld.so.cache
+        cmp "/opt/host-tools/etc/loader/ld.so.cache" /etc/ld.so.cache
+        cmp "/opt/host-tools/etc/loader/ld.so.conf.d/00-bb2-runtime.conf" /etc/ld.so.conf.d/00-bb2-runtime.conf
+        [[ -f /etc/ld.so.conf.d/libc.conf ]]
         ldconfig -p > ldcache.txt
         grep -q "RUNTIME_DIR/libstdc++.so.6" ldcache.txt
         if grep -q "/opt/host-tools/lib/" ldcache.txt; then exit 1; fi
+
+        # `ldconfig` can rebuild the cache within the build, from the same configuration
+        ldconfig
+        cmp "/opt/host-tools/etc/loader/ld.so.cache" /etc/ld.so.cache
+
+        # A library directory added to the configuration during the build gets into the
+        # cache, behind the runtime libraries
+        mkdir -p /opt/bb2probe
+        echo 'int bb2probe(void) { return 42; }' > probe.c
+        "${HOSTCC}" -shared -fPIC -Wl,-soname,libbb2probe.so.1 -o /opt/bb2probe/libbb2probe.so.1 probe.c
+        echo /opt/bb2probe > /etc/ld.so.conf.d/bb2probe.conf
+        ldconfig
+        ldconfig -p > ldcache.txt
+        grep -q "/opt/bb2probe/libbb2probe.so.1" ldcache.txt
+        [[ "$(grep -m1 'libstdc++.so.6 ' ldcache.txt)" == *"RUNTIME_DIR/libstdc++.so.6" ]]
 
         # C++ programs built with our newest GCC need a newer `libstdc++` than the rootfs has
         cat > prog.cpp <<'END'
@@ -444,21 +461,25 @@ end
         """, "RUNTIME_DIR" => runtime_dir),
     )
     @test !haskey(build_config.env, "LD_LIBRARY_PATH")
-    @test build_config.env["BB_LD_SO_CACHE"] == "/opt/host-tools/etc/ld.so.cache"
 
     # The loader cache is generated once for a given set of runtime libraries, not per build
     cache_source(config) = only(s for s in config.source_trees["/opt/host-tools"]
-                                if isa(s, GeneratedSource) && s.ds.target == "etc")
+                                if isa(s, GeneratedSource) && s.ds.target == "etc/loader")
     other_config = BuildConfig(meta, "other", v"1.0.0", [], apply_spec_plan(spec_plan, native_linux, native_linux), "true")
     @test cache_source(build_config).name_hash == cache_source(other_config).name_hash
     build_result = build!(build_config)
     @test build_result.status == :success
 
-    # Extraction scripts can run the programs too
+    # Extraction scripts can run the programs too, and see the cache the build rebuilt
     extract_script = raw"""
     [[ "$(${bindir}/cxxprog)" == "1" ]]
+    ldconfig -p | grep -q libbb2probe.so.1
     extract ${bindir}/cxxprog
     """
     extract_result = extract!(ExtractConfig(build_result, extract_script, [ExecutableProduct("cxxprog", :cxxprog)]))
     @test extract_result.status == :success
+
+    # The cache the build rebuilt went into the build's own `/etc` overlay, not the layer
+    layer_cache = joinpath(first(build_result.mounts["/etc"].host_paths), "ld.so.cache")
+    @test !occursin("bb2probe", read(layer_cache, String))
 end
