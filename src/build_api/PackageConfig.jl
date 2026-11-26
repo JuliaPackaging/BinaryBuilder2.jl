@@ -445,10 +445,12 @@ end
     end
 
     with_trace(meta, "bb2.package_phase"; to, timer_name="package", args=(jll_name=config.name,)) do
-        builds = vcat(
+        builds = with_trace(meta, "bb2.jll_build_infos"; to=nothing) do; vcat(
             ([JLLBuildInfo(name, extraction, config.extra_deps; config.julia_compat, init_def = config.init_block) for extraction in extractions] for (name, extractions) in config.named_extractions)...,
-        )
-        audit_package!(config.name, config.julia_compat, config.named_extractions)
+        ); end
+        with_trace(meta, "bb2.audit_package"; to=nothing) do
+            audit_package!(config.name, config.julia_compat, config.named_extractions)
+        end
         jll = JLLInfo(;
             name = config.name,
             version = config.version,
@@ -459,7 +461,7 @@ end
 
         with_trace(meta, "bb2.register_jll"; to, timer_name="register_jll!", args=(jll_name=config.name,)) do
             # Register this JLL out into our universe
-            register_jll!(meta.universe, jll; verbose)
+            register_jll!(meta.universe, jll; verbose, meta)
         end
     end
 

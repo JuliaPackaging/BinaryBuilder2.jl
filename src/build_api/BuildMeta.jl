@@ -510,6 +510,8 @@ function start_trace_session!(meta::BuildMeta)
         return nothing
     end
     clear_trace!()
+    # Lets `with_trace()` report how much of each zone was spent compiling
+    Base.cumulative_compile_timing(true)
     trace_event(
         meta,
         "bb2.trace_session_start";

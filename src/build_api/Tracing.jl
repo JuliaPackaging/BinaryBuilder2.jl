@@ -243,12 +243,21 @@ function with_trace(f::Function, x, name::AbstractString;
         return timed_f()
     end
     trace_begin(meta, name; cat, args)
+    compile_start = compile_time_ns()
     try
         return timed_f()
     finally
-        trace_end(meta, name; cat, args)
+        # Time spent compiling while the zone was open, process-wide
+        compile_s = round((compile_time_ns() - compile_start) / 1e9; digits=3)
+        trace_end(meta, name; cat, args=merge(something(args, NamedTuple()), (compile_s=compile_s,)))
     end
 end
+
+# Time this process has spent compiling, while `Base.cumulative_compile_timing(true)` is on
+compile_time_ns() = first(Base.cumulative_compile_time_ns())
+
+# Code that can run outside of a build passes `nothing` as its meta, and runs untraced
+with_trace(f::Function, ::Nothing, name::AbstractString; kwargs...) = f()
 
 start_trace_session!(::AbstractBuildMeta) = nothing
 finish_trace_session!(::AbstractBuildMeta; status::AbstractString = "success") = nothing

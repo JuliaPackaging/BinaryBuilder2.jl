@@ -387,7 +387,9 @@ function prepare_source_tree(config::BuildConfig, prefix::String,
             # our universe's environment in to all of our source trees, so that
             # if we build, e.g. `Zlib_jll`, we use that `Zlib_jll` for everything
             # in the rest of the build.
-            cp(dirname(environment_path(universe)), project_dir; force=true)
+            with_trace(config, "bb2.copy_universe_env"; to=nothing) do
+                cp(dirname(environment_path(universe)), project_dir; force=true)
+            end
             # This verbose needs like a `verbose = verbose_level >= 2` or something
             prepare(deps;
                 verbose=false,
@@ -438,7 +440,9 @@ end
     # Key our deployment directories off of the same universe repository
     registries = Pkg.Registry.reachable_registries(; depots=[depot_path(config.meta.universe)])
     for (idx, (prefix, srcs)) in enumerate(config.source_trees)
-        srcs_hashes = bytes2hex.(spec_hash.(srcs; registries))
+        srcs_hashes = with_trace(config, "bb2.source_tree_spec_hash"; to=nothing, args=(prefix=prefix,)) do
+            bytes2hex.(spec_hash.(srcs; registries))
+        end
         combined_hash = bytes2hex(sha1(string(srcs_hashes)))
         host_path = builds_dir(string(idx, "-", combined_hash))
         @debug("BuildConfig source", prefix, srcs_hashes, combined_hash)
@@ -612,13 +616,16 @@ end
     build_log_io = IOBuffer()
     mounts = deploy(config; verbose)
     # The sources are on disk now, so record them for the JLL (and the build cache)
-    srcs_records = source_records(config)
-    dep_versions = dependency_versions(config)
+    srcs_records, dep_versions = with_trace(config, "bb2.source_records") do
+        source_records(config), dependency_versions(config)
+    end
     sandbox_config, collector = sandbox_and_collector(
         build_log_io, config, mounts;
         verbose,
     )
-    exe = Sandbox.preferred_executor()()
+    exe = with_trace(config, "bb2.sandbox_executor") do
+        Sandbox.preferred_executor()()
+    end
 
     try
         if "build-start" ∈ debug_modes
@@ -633,7 +640,9 @@ end
         if run_status != :success && verbose
             @error("Build failed", run_status, exception=(run_exception, run_backtrace))
         end
-        wait(collector)
+        with_trace(config, "bb2.wait_build_collector") do
+            wait(collector)
+        end
     catch e
         run_status = :errored
         run_exception = e
@@ -645,18 +654,20 @@ end
     build_log = String(take!(build_log_io))
 
     # Generate "log" artifact that will later be packaged up.
-    log_artifact_hash = in_universe(meta.universe) do env
+    log_artifact_hash = with_trace(config, "bb2.build_log_artifact") do; in_universe(meta.universe) do env
         Pkg.Artifacts.create_artifact() do artifact_dir
             open(joinpath(artifact_dir, "$(config.src_name)-build.log"); write=true) do io
                 write(io, build_log)
             end
         end
-    end
+    end; end
     log_artifact_hash = SHA1Hash(log_artifact_hash)
 
     # Parse out the environment from the build
     if run_status != :errored
-        env = parse_metadir_env(exe, config, mounts)
+        env = with_trace(config, "bb2.parse_metadir_env") do
+            parse_metadir_env(exe, config, mounts)
+        end
     else
         env = Dict{String,String}()
     end
@@ -664,7 +675,9 @@ end
     # Try to capture the ccache statslog written to the metadir
     ccache_log_artifact_hash = nothing
     if run_status != :errored
-        ccache_log_artifact_hash = store_ccache_log_artifact(meta.universe, read_metadir_ccache_statslog(exe, config, mounts))
+        ccache_log_artifact_hash = with_trace(config, "bb2.ccache_log_artifact") do
+            store_ccache_log_artifact(meta.universe, read_metadir_ccache_statslog(exe, config, mounts))
+        end
     end
 
     result = BuildResult(

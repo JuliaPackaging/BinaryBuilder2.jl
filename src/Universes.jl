@@ -959,7 +959,7 @@ Given a `JLLInfo`, generate the JLL out into the `dev` folder of the given unive
 upload the JLL and its binaries to the universe's `deploy_org`, and push up the
 registry changes as well.
 """
-function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = false, verbose::Bool = false)
+function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = false, verbose::Bool = false, meta = nothing)
     # Clone/fork/init ourselves a git repo
     if verbose
         @info("Initializing JLL repository", name=jll.name)
@@ -972,7 +972,9 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
 
     uni_branch_name = u.name !== nothing ? "bb2/$(u.name)" : nothing
 
-    jll_repo_url = init_jll_repo(u, jll.name, jll_path; branch_name=uni_branch_name, verbose)
+    jll_repo_url = with_trace(meta, "bb2.init_jll_repo") do
+        init_jll_repo(u, jll.name, jll_path; branch_name=uni_branch_name, verbose)
+    end
     if uni_branch_name !== nothing
         branch!(jll_path, uni_branch_name)
     end
@@ -988,15 +990,19 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         if verbose
             @info("Compressing artifacts", num_artifacts=length(jll.builds))
         end
-        export_artifacts!(u, jll, tag_name, export_dir)
+        with_trace(meta, "bb2.export_artifacts") do
+            export_artifacts!(u, jll, tag_name, export_dir)
+        end
     end
 
     # Next, generate the JLL in-place and commit it
-    generate_jll(jll_path, jll)
-    commit!(jll_path, "$(jll.name) v$(jll.version)")
-    deploy_jll(jll_path, u.deploy_org, uni_branch_name, jll.name, tag_name, export_dir, verbose)
+    with_trace(meta, "bb2.generate_jll") do
+        generate_jll(jll_path, jll)
+        commit!(jll_path, "$(jll.name) v$(jll.version)")
+        deploy_jll(jll_path, u.deploy_org, uni_branch_name, jll.name, tag_name, export_dir, verbose)
+    end
 
-    in_universe(u) do env
+    with_trace(meta, "bb2.pkg_develop_jll") do; in_universe(u) do env
         # Next, add that JLL to the universe's environment
         # Pkg refuses to develop a package that is in the running Julia's sysimage
         # (e.g. `CompilerSupportLibraries_jll`, `OpenBLAS_jll`) unless this check is
@@ -1009,13 +1015,13 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
         finally
             Pkg.respect_sysimage_versions(respect)
         end
-    end
+    end; end
 
     # Finally, register it into the universe's local BB2 registry
     reg_path = registry_path(u, first(u.registries))
 
     # This `with_logger()` will quash the unconditional `@info()` that LocalRegistry spits out
-    with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
+    with_trace(meta, "bb2.local_registry_register") do; with_logger(MinLevelLogger(current_logger(), verbose ? Logging.Info : Logging.Error)) do
         LocalRegistry.register(
             jll_path;
             registry=reg_path,
@@ -1026,10 +1032,12 @@ function register_jll!(u::Universe, jll::JLLInfo; skip_artifact_export::Bool = f
             # When iterating, this is pretty useful.
             ignore_reregistration=true,
         )
-    end
+    end; end
 
     # Reload our cached RegistryInstance
-    u.registry_instances[1] = RegistryInstance(reg_path)
+    with_trace(meta, "bb2.reload_registry_instance") do
+        u.registry_instances[1] = RegistryInstance(reg_path)
+    end
 
     # Push the registry branch up
     if u.deploy_org !== nothing
