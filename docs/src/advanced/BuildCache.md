@@ -56,95 +56,95 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │ [build_metadata]
 │   script_hash = sha1:5ffe533b830f08a0326348a9160afafc8ada44db
 │ [target_specs]
-│   host: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
-│   target: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│   host: aarch64-linux-gnu-target_arch+aarch64-target_libc+glibc-target_os+linux
+│   target: aarch64-linux-gnu-target_arch+aarch64-target_libc+glibc-target_os+linux
 │ [source_trees]
-│   /opt/host-aarch64-linux-gnu = sha1:c93a7338fd433ea0cf05412797c3a2f2f56ed4fc
-│     - GeneratedSource: wrappers sha1:50d3349f37e70c5afea24df916b5ccda46d4686a
-│     - GeneratedSource: wrappers sha1:29ac0578502558d5588c5852490360daa930ab1d
-│     - JLLSource Binutils_jll gcc sha1:73b1ecaf836cc6ddbd739d57a5cd80d4d450760e
-│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:dcd821e0679fc7c79bf3a7bc5a4198a6a7a70be3
-│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:fd018f9f6a0f73d37aa3563eb01db457b9dbc87e
-│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
-│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
-│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
-│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
-│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
-│   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
-│     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
-│     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
-│     - GeneratedSource: etc sha1:21d1efb7eec2192c8660cd5e69c0886df0211695
-│     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
-│     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
-│     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
-│     - JLLSource Ccache_jll  sha1:429af3de201dbce885b8a9977151ac262d1d9d08
-│     - JLLSource file_jll  sha1:767774b8baf3ce5b7914b848902988d9d8699e74
-│     - JLLSource flex_jll  sha1:9313ac5d8d5bfffa5e4d746d0c20bed007a3de0a
-│     - JLLSource gawk_jll  sha1:7fb969cb4acdaff07c2428835ac72edc8d5db0ff
-│     - JLLSource GNUMake_jll  sha1:2e2c3137676fc4eba8f19a6d29e460958d17cfbd
-│     - JLLSource Libtool_jll  sha1:ad97640a7b5f4ac2b43640739c4b1d3aba6ef401
-│     - JLLSource M4_jll  sha1:071130900095248610f9d42f7b9047d78d073264
-│     - JLLSource Ninja_jll  sha1:1f9322f3e16f9ffaf03e32fc68f0c0e760b0bf57
-│     - JLLSource Patchelf_jll  sha1:e87753be5c1a24405679f1fc974ed5b21ad235f6
-│     - JLLSource Perl_jll  sha1:07c4e02273090f8cbe6b272c7b59cb62c732619e
-│     - JLLSource Python_jll  sha1:9587861c4becb10739a51ed598743e3df578f330
-│     - JLLSource patch_jll  sha1:f11306dcb47232e182bad68054de9d58d6ae4312
-│     - JLLSource patchutils_jll  sha1:3a5f15175566d7f5b5fe8eb28209b5ff1ebe8a47
-│     - JLLSource CURL_jll  sha1:5853d1de75bf9862f6c21c887c724e966925107c
-│     - JLLSource Git_jll  sha1:c89a70239a8350aa9b9cd211723ee55e765a9da5
-│     - JLLSource rsync_jll  sha1:a2cd62df467b3dc631144f6ad3aeb1e53bcbf916
-│     - JLLSource MozillaCACerts_jll  sha1:669a7ce2060d13d27b9eb8628293143223401415
-│     - JLLSource Tar_jll  sha1:c3a2a8b1326850f05e8c3df6a7305902d8319b13
-│     - JLLSource Gzip_jll  sha1:8529081ed272fe664e6f443aad17e9f556429879
-│     - JLLSource Bzip2_jll  sha1:85d6b3c7d19cb820d9426d7c9ed0a581998da2b2
-│     - JLLSource unzip_jll  sha1:a07d565f19435ec706153d73656f7f6e571996d8
-│     - JLLSource Zstd_jll  sha1:9ecc08626722c3a0c44f5d686deb815100ad90a7
-│     - JLLSource XZ_jll  sha1:2e4a13dabe6042122a014e3377e78e48ee0c3284
-│     - JLLSource Zlib_jll  sha1:3e5d79fad08b74b404fbcd65f4a08e7be4fddf38
-│     - JLLSource Vim_jll  sha1:49237b707e236f2744121a9e5cf4f5d8c4c50ee3
-│     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
-│     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
-│     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
-│     - JLLSource libstdcxx_jll runtime sha1:41ead73ddcba2f19defc585a57c00476e4bb639e
-│     - JLLSource GCC_support_libraries_jll runtime sha1:b6130349f1f9da267a315dbbcef7049ff4202ee2
-│   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
-│     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
-│     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
-│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
-│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
-│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
-│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
-│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
-│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
-│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
-│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
+│   /opt/host-aarch64-linux-gnu = sha1:558b97151e26ad8329ed4a7e099a75e7ccf01ed2
+│     - GeneratedSource: wrappers sha1:85b6f63e39dab7aa8fe0cce7a3d5baa1d52c7c76
+│     - GeneratedSource: wrappers sha1:0bf1fd170d5d0ec906551e91639563283ea1d001
+│     - JLLSource Binutils_jll gcc sha1:265ac0fca2dc65da2ffaa6a5ad20d6d16d1623df
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:9dc8b93248cd24d5e4ea90c01856a6553e69ba22
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:f48edfeeb834732af7cea2caec502b42e6519b2d
+│     - JLLSource GCC_jll gcc sha1:d74cb5b93fcac07759ac3bdde8f450668e877940
+│     - JLLSource GCC_support_libraries_jll gcc sha1:262d7535a798070bd1bc3cb791ee9cf4e6838cdb
+│     - JLLSource GCC_crt_objects_jll gcc sha1:43f8c8448210e34e95e9b91cf9e607240c9d7ee3
+│     - JLLSource libstdcxx_jll gcc sha1:b66b45d43925f9375efef1be896935d2a6fc11aa
+│     - JLLSource pkgconf_jll pkgconf sha1:08ebecab56e453db55392f9451fdf2ab9bdda249
+│   /opt/host-tools = sha1:c7e46419b2552566abb367aca3e7dd712ff8fbba
+│     - GeneratedSource: etc/certs sha1:c5652e051531eb0a6c2f4766ee6136907f3a9e27
+│     - GeneratedSource: wrappers sha1:0bbde73922fc56d829f527124aaba7e03ed00825
+│     - GeneratedSource: etc/loader sha1:ebb0fba8300d88f7087189c8c471d2bb02e93eef
+│     - JLLSource automake_jll  sha1:51f43e63b741f003fa924a4d82f5aecb36c974f1
+│     - JLLSource autoconf_jll  sha1:46425db7398509605de27fc93c5f9de656f596ed
+│     - JLLSource Bison_jll  sha1:1f9a9127381c8bad8e336b2acc051cd5b7acebd6
+│     - JLLSource Ccache_jll  sha1:636724fb4417b4bc8dfb7a6ce5c0b9bf3660db52
+│     - JLLSource file_jll  sha1:e9c7c64915f3a298af037615521b3ac257335205
+│     - JLLSource flex_jll  sha1:c9106fe2b6d3592434cbd4bf5ce7a612080bf4dd
+│     - JLLSource gawk_jll  sha1:a2f7c5157a69052bf7d3aa502912acb1ffa2706b
+│     - JLLSource GNUMake_jll  sha1:bf24c81bf1ed3788b02b69b8a6dbc115cafd1ca5
+│     - JLLSource Libtool_jll  sha1:15c2c3fe8ba35d0cf45cad9d213cba3b8c5b43f9
+│     - JLLSource M4_jll  sha1:7132a68b4489e7e053bc11e555d59de61519c40d
+│     - JLLSource Ninja_jll  sha1:d41359c208bf73f19a237566e8d85384394e9e3f
+│     - JLLSource Patchelf_jll  sha1:4f4c0358f487cb52099967863aca531ac4bb9b3a
+│     - JLLSource Perl_jll  sha1:b69ed0df1d3a32ca7e180eb6374ee303026dcbff
+│     - JLLSource Python_jll  sha1:59a95a14ea3ba5a0a597cc99d068c991844061ba
+│     - JLLSource patch_jll  sha1:f2408be1f9a680760d4f94684e3b9f1cfdfccf92
+│     - JLLSource patchutils_jll  sha1:8f3517d3e3fdfc03359330d577bfe8cf65b81ede
+│     - JLLSource CURL_jll  sha1:408cd2f6a207a93bb29ded87cc938bbf35685439
+│     - JLLSource Git_jll  sha1:99a55980528b5aaf7164a486c94bfbcee6e7ff69
+│     - JLLSource rsync_jll  sha1:3b319377f338dd181c0e61278d26286834a8097f
+│     - JLLSource MozillaCACerts_jll  sha1:f45b029ddf86c0b0b9e46a78120d12e7d5069389
+│     - JLLSource Tar_jll  sha1:9c18aed62be69b2de24816be4c21c916836f73a9
+│     - JLLSource Gzip_jll  sha1:ba902da9069feaef5777fe8dd0d94c21eb77fdae
+│     - JLLSource Bzip2_jll  sha1:b9eaf073d757bd442839dd5208d54c91dd40ccb5
+│     - JLLSource unzip_jll  sha1:68d208e1bbc25a1ca436002fdbf074b56c859a00
+│     - JLLSource Zstd_jll  sha1:5f03ee0aa248f9a8b88065f0f398787c14e5a590
+│     - JLLSource XZ_jll  sha1:dfa4e39ecdb0ab663b1a0844ea5399f62425e857
+│     - JLLSource Zlib_jll  sha1:f155c5fd788123618c464ccf54ecf3e724781c54
+│     - JLLSource Vim_jll  sha1:b85c043ca176690025ed896e7d09d8b654e7766a
+│     - JLLSource strace_jll  sha1:e4d5efc4349341e4aec534c109a39a85b8ddcb74
+│     - JLLSource libtree_jll  sha1:31b5758e11ec188ea824c6e8028e72bdec520f74
+│     - JLLSource ripgrep_jll  sha1:af8985028c1f1d0ec073ee81226b3db43dd6c439
+│     - JLLSource libstdcxx_jll runtime sha1:1e8c06932a70d97dcc9ebbfbf672837c7bd0260b
+│     - JLLSource GCC_support_libraries_jll runtime sha1:f989d3f5b7dd4db0b199013b0872b2c07c27eab8
+│   /opt/target-aarch64-linux-gnu = sha1:b9c4a8b63e7ededde072c4ef0464288e24815318
+│     - GeneratedSource: wrappers sha1:8f7cd737ff168d78373469edb0cf07e0e5e2a44c
+│     - GeneratedSource: wrappers sha1:b2e500f186890ca4b13ea8634c2b9287a90d2499
+│     - JLLSource Binutils_jll gcc sha1:265ac0fca2dc65da2ffaa6a5ad20d6d16d1623df
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:9dc8b93248cd24d5e4ea90c01856a6553e69ba22
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:f48edfeeb834732af7cea2caec502b42e6519b2d
+│     - JLLSource GCC_jll gcc sha1:d74cb5b93fcac07759ac3bdde8f450668e877940
+│     - JLLSource GCC_support_libraries_jll gcc sha1:262d7535a798070bd1bc3cb791ee9cf4e6838cdb
+│     - JLLSource GCC_crt_objects_jll gcc sha1:43f8c8448210e34e95e9b91cf9e607240c9d7ee3
+│     - JLLSource libstdcxx_jll gcc sha1:b66b45d43925f9375efef1be896935d2a6fc11aa
+│     - JLLSource pkgconf_jll pkgconf sha1:08ebecab56e453db55392f9451fdf2ab9bdda249
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
 │   /workspace/destdir/target-aarch64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:091bf082e48cbb7ce5a24f701eeacc6a117df8c9
-│     - GeneratedSource:  sha1:693ad3f9fb2974038857fa03f1fb6338f068db9e
+│   /workspace/metadir = sha1:aaa0d245ac10b10ab94373170dd0c03d7701832c
+│     - GeneratedSource:  sha1:8530abbcee8051b560872b79c9201c9d9aea53da
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │     - DirectorySource:  sha1:dbeb610a5ce1290d66c3340ff123041d079df083
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 v1.2.2 = sha1:fc730fd71fcc6996072126b5056b28a235b3cb28
-│   BinaryBuilderAuditor v0.3.0 = sha1:6e06ec871d08017cf16402e743f91a4e2807c24b
+│   BinaryBuilder2 v1.4.4 = sha1:6d290be9244057f54318ca86b63d20992320aa57
+│   BinaryBuilderAuditor v0.4.7 = sha1:cfe5b11125ad337abee50df6622064bb0ac3721d
 │   BinaryBuilderGitUtils v0.3.0 = sha1:9fe8fe2a6fec7bcbf47cdca0e3a6189989ff5f4a
-│   BinaryBuilderPlatformExtensions v0.2.1 = sha1:0932b3529a238dc2db243b16c170b93d197345cf
-│   BinaryBuilderProducts v0.3.0 = sha1:909099b068360e9edca71294f212a44080455ba3
-│   BinaryBuilderSources v0.2.5 = sha1:51e7fd808de0cb6ec9e256d9b468d4728d23eb99
-│   BinaryBuilderToolchains v0.3.4 = sha1:864a849652194a89fc00ad173392b66386d716ec
-│   JLLGenerator v0.5.2 = sha1:a6c22056b4f70a3024f47adf625f790622cf5bf1
-│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   BinaryBuilderPlatformExtensions v0.2.2 = sha1:bebe0418f40164ff08d191b85cc55c6db1c1168a
+│   BinaryBuilderProducts v0.4.0 = sha1:d51596bd9cc8bb0935cb8f33c80b79ce8bdd17ee
+│   BinaryBuilderSources v0.3.6 = sha1:cd2720a0f8f0b3011c52f062be951ff326a5f776
+│   BinaryBuilderToolchains v0.5.0 = sha1:642f70c6b149fc191e7b44844c4b6670160b3ec2
+│   JLLGenerator v0.6.0 = sha1:5e510be2e08fc91283c414abefb108c481901294
+│   JLLPrefixes v0.4.3 = sha1:64570d6b5f41521d8c7899b9c050d76a03f4528a
 │   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
-│   LazyJLLWrappers v1.2.1 = sha1:e6ee0a34be8d06343ad0c72cfeddd4c1b5d8f0cf
-│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
-│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   LazyJLLWrappers v1.2.7 = sha1:ad57e8d126ed98ec169e1a710c5dd9e04d298c1d
+│   MultiHashParsing v0.2.2 = sha1:0476b43f1f3c55ade6bf70609530991ddb4c2c89
+│   Sandbox v2.3.0 = sha1:5759ba67d24e88176a84c23bb47bac5395a23765
 │   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
 │   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
-└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/BuildConfig.jl:289
-sha1:22094feb0ff157d2b9da3673094104aa9538b7b1
+└ @ BinaryBuilder2 ~/src/experiments/BB2-compiler-toolchains-transfer/worktrees/BinaryBuilder2.jl-ldconfig-dropin/src/build_api/BuildConfig.jl:290
+sha1:70763ef1f5e90f97dc2c29d226088d7196d84abe
 ```
 
 The same can be done for an `ExtractConfig` object (note that it prints out the `BuildConfig` object as well during debugging, because it hashes that as an input as well!)
@@ -157,102 +157,102 @@ julia> debug_logger = ConsoleLogger(stderr, Logging.Debug)
 │ [build_metadata]
 │   script_hash = sha1:5ffe533b830f08a0326348a9160afafc8ada44db
 │ [target_specs]
-│   host: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
-│   target: aarch64-linux-gnu-target_libc+glibc-target_os+linux-target_arch+aarch64
+│   host: aarch64-linux-gnu-target_arch+aarch64-target_libc+glibc-target_os+linux
+│   target: aarch64-linux-gnu-target_arch+aarch64-target_libc+glibc-target_os+linux
 │ [source_trees]
-│   /opt/host-aarch64-linux-gnu = sha1:345439351f0b414937facb57a089cafa86265434
-│     - GeneratedSource: wrappers sha1:50d3349f37e70c5afea24df916b5ccda46d4686a
-│     - GeneratedSource: wrappers sha1:29ac0578502558d5588c5852490360daa930ab1d
-│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
-│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
-│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
-│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
-│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
-│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
-│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
-│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
-│   /opt/host-tools = sha1:a99b8f8ac8873e38db58d88a841a347c6ac6aa84
-│     - GeneratedSource: etc/certs sha1:8528365da6b8dbe06c1d18059e7579fae48a628f
-│     - GeneratedSource: wrappers sha1:ef2d319bfb84a499bfa6f3683b240c5d3f6a9a93
-│     - GeneratedSource: etc sha1:21d1efb7eec2192c8660cd5e69c0886df0211695
-│     - JLLSource automake_jll  sha1:0473257b95998d068e017f28d493c91104b2401a
-│     - JLLSource autoconf_jll  sha1:e6bf4dc3edb532a45199ebebb690994fb77bab03
-│     - JLLSource Bison_jll  sha1:45114dd3d9a0e32f6a88ab7d09b54764d9772507
-│     - JLLSource Ccache_jll  sha1:429af3de201dbce885b8a9977151ac262d1d9d08
-│     - JLLSource file_jll  sha1:767774b8baf3ce5b7914b848902988d9d8699e74
-│     - JLLSource flex_jll  sha1:9313ac5d8d5bfffa5e4d746d0c20bed007a3de0a
-│     - JLLSource gawk_jll  sha1:7fb969cb4acdaff07c2428835ac72edc8d5db0ff
-│     - JLLSource GNUMake_jll  sha1:2e2c3137676fc4eba8f19a6d29e460958d17cfbd
-│     - JLLSource Libtool_jll  sha1:ad97640a7b5f4ac2b43640739c4b1d3aba6ef401
-│     - JLLSource M4_jll  sha1:071130900095248610f9d42f7b9047d78d073264
-│     - JLLSource Ninja_jll  sha1:1f9322f3e16f9ffaf03e32fc68f0c0e760b0bf57
-│     - JLLSource Patchelf_jll  sha1:e87753be5c1a24405679f1fc974ed5b21ad235f6
-│     - JLLSource Perl_jll  sha1:07c4e02273090f8cbe6b272c7b59cb62c732619e
-│     - JLLSource Python_jll  sha1:9587861c4becb10739a51ed598743e3df578f330
-│     - JLLSource patch_jll  sha1:f11306dcb47232e182bad68054de9d58d6ae4312
-│     - JLLSource patchutils_jll  sha1:3a5f15175566d7f5b5fe8eb28209b5ff1ebe8a47
-│     - JLLSource CURL_jll  sha1:5853d1de75bf9862f6c21c887c724e966925107c
-│     - JLLSource Git_jll  sha1:c89a70239a8350aa9b9cd211723ee55e765a9da5
-│     - JLLSource rsync_jll  sha1:a2cd62df467b3dc631144f6ad3aeb1e53bcbf916
-│     - JLLSource MozillaCACerts_jll  sha1:669a7ce2060d13d27b9eb8628293143223401415
-│     - JLLSource Tar_jll  sha1:c3a2a8b1326850f05e8c3df6a7305902d8319b13
-│     - JLLSource Gzip_jll  sha1:8529081ed272fe664e6f443aad17e9f556429879
-│     - JLLSource Bzip2_jll  sha1:85d6b3c7d19cb820d9426d7c9ed0a581998da2b2
-│     - JLLSource unzip_jll  sha1:a07d565f19435ec706153d73656f7f6e571996d8
-│     - JLLSource Zstd_jll  sha1:9ecc08626722c3a0c44f5d686deb815100ad90a7
-│     - JLLSource XZ_jll  sha1:2e4a13dabe6042122a014e3377e78e48ee0c3284
-│     - JLLSource Zlib_jll  sha1:3e5d79fad08b74b404fbcd65f4a08e7be4fddf38
-│     - JLLSource Vim_jll  sha1:49237b707e236f2744121a9e5cf4f5d8c4c50ee3
-│     - JLLSource strace_jll  sha1:aaee4e4c4e6fe05bc97d14c93ab918039a51b8f9
-│     - JLLSource libtree_jll  sha1:d17dd460992baf9d552dbd9d80590abac8e87709
-│     - JLLSource ripgrep_jll  sha1:d67e5231677e9b301405e755df33d9bfee373f3f
-│     - JLLSource libstdcxx_jll runtime sha1:41ead73ddcba2f19defc585a57c00476e4bb639e
-│     - JLLSource GCC_support_libraries_jll runtime sha1:b6130349f1f9da267a315dbbcef7049ff4202ee2
-│   /opt/target-aarch64-linux-gnu = sha1:49679d5b1d11fd6f38eb4d5b6300f03d454c9fb8
-│     - GeneratedSource: wrappers sha1:f813e5e426d3c27600070a83463b921ed9538590
-│     - GeneratedSource: wrappers sha1:b314c42581af715c6aafafcb31ca300983fd4939
-│     - JLLSource Binutils_jll gcc sha1:f4909c7aac7cb4ff36721b11fbab51f5ec89d7b2
-│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:aa6c30fedeae9eb76ecb973552be25af6f9166b7
-│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:d569fe16f62743af8827bc2195aa0e1ee29ac101
-│     - JLLSource GCC_jll gcc sha1:9135e6a48ea24ed3d4bfaf82248b1e3989bf3f72
-│     - JLLSource GCC_support_libraries_jll gcc sha1:fb8379c58b375ef8cdc65b4c64c93fa6a80ba79d
-│     - JLLSource GCC_crt_objects_jll gcc sha1:9d1f3b2d2fcc2841f092656b9c368c092f93ce4e
-│     - JLLSource libstdcxx_jll gcc sha1:dc8638083d3f446fa010285ab8fffcb04de0d360
-│     - JLLSource pkgconf_jll pkgconf sha1:a5af16e601f93deb3cfa2aebbe8ff20784bf562a
+│   /opt/host-aarch64-linux-gnu = sha1:558b97151e26ad8329ed4a7e099a75e7ccf01ed2
+│     - GeneratedSource: wrappers sha1:85b6f63e39dab7aa8fe0cce7a3d5baa1d52c7c76
+│     - GeneratedSource: wrappers sha1:0bf1fd170d5d0ec906551e91639563283ea1d001
+│     - JLLSource Binutils_jll gcc sha1:265ac0fca2dc65da2ffaa6a5ad20d6d16d1623df
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:9dc8b93248cd24d5e4ea90c01856a6553e69ba22
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:f48edfeeb834732af7cea2caec502b42e6519b2d
+│     - JLLSource GCC_jll gcc sha1:d74cb5b93fcac07759ac3bdde8f450668e877940
+│     - JLLSource GCC_support_libraries_jll gcc sha1:262d7535a798070bd1bc3cb791ee9cf4e6838cdb
+│     - JLLSource GCC_crt_objects_jll gcc sha1:43f8c8448210e34e95e9b91cf9e607240c9d7ee3
+│     - JLLSource libstdcxx_jll gcc sha1:b66b45d43925f9375efef1be896935d2a6fc11aa
+│     - JLLSource pkgconf_jll pkgconf sha1:08ebecab56e453db55392f9451fdf2ab9bdda249
+│   /opt/host-tools = sha1:c7e46419b2552566abb367aca3e7dd712ff8fbba
+│     - GeneratedSource: etc/certs sha1:c5652e051531eb0a6c2f4766ee6136907f3a9e27
+│     - GeneratedSource: wrappers sha1:0bbde73922fc56d829f527124aaba7e03ed00825
+│     - GeneratedSource: etc/loader sha1:ebb0fba8300d88f7087189c8c471d2bb02e93eef
+│     - JLLSource automake_jll  sha1:51f43e63b741f003fa924a4d82f5aecb36c974f1
+│     - JLLSource autoconf_jll  sha1:46425db7398509605de27fc93c5f9de656f596ed
+│     - JLLSource Bison_jll  sha1:1f9a9127381c8bad8e336b2acc051cd5b7acebd6
+│     - JLLSource Ccache_jll  sha1:636724fb4417b4bc8dfb7a6ce5c0b9bf3660db52
+│     - JLLSource file_jll  sha1:e9c7c64915f3a298af037615521b3ac257335205
+│     - JLLSource flex_jll  sha1:c9106fe2b6d3592434cbd4bf5ce7a612080bf4dd
+│     - JLLSource gawk_jll  sha1:a2f7c5157a69052bf7d3aa502912acb1ffa2706b
+│     - JLLSource GNUMake_jll  sha1:bf24c81bf1ed3788b02b69b8a6dbc115cafd1ca5
+│     - JLLSource Libtool_jll  sha1:15c2c3fe8ba35d0cf45cad9d213cba3b8c5b43f9
+│     - JLLSource M4_jll  sha1:7132a68b4489e7e053bc11e555d59de61519c40d
+│     - JLLSource Ninja_jll  sha1:d41359c208bf73f19a237566e8d85384394e9e3f
+│     - JLLSource Patchelf_jll  sha1:4f4c0358f487cb52099967863aca531ac4bb9b3a
+│     - JLLSource Perl_jll  sha1:b69ed0df1d3a32ca7e180eb6374ee303026dcbff
+│     - JLLSource Python_jll  sha1:59a95a14ea3ba5a0a597cc99d068c991844061ba
+│     - JLLSource patch_jll  sha1:f2408be1f9a680760d4f94684e3b9f1cfdfccf92
+│     - JLLSource patchutils_jll  sha1:8f3517d3e3fdfc03359330d577bfe8cf65b81ede
+│     - JLLSource CURL_jll  sha1:408cd2f6a207a93bb29ded87cc938bbf35685439
+│     - JLLSource Git_jll  sha1:99a55980528b5aaf7164a486c94bfbcee6e7ff69
+│     - JLLSource rsync_jll  sha1:3b319377f338dd181c0e61278d26286834a8097f
+│     - JLLSource MozillaCACerts_jll  sha1:f45b029ddf86c0b0b9e46a78120d12e7d5069389
+│     - JLLSource Tar_jll  sha1:9c18aed62be69b2de24816be4c21c916836f73a9
+│     - JLLSource Gzip_jll  sha1:ba902da9069feaef5777fe8dd0d94c21eb77fdae
+│     - JLLSource Bzip2_jll  sha1:b9eaf073d757bd442839dd5208d54c91dd40ccb5
+│     - JLLSource unzip_jll  sha1:68d208e1bbc25a1ca436002fdbf074b56c859a00
+│     - JLLSource Zstd_jll  sha1:5f03ee0aa248f9a8b88065f0f398787c14e5a590
+│     - JLLSource XZ_jll  sha1:dfa4e39ecdb0ab663b1a0844ea5399f62425e857
+│     - JLLSource Zlib_jll  sha1:f155c5fd788123618c464ccf54ecf3e724781c54
+│     - JLLSource Vim_jll  sha1:b85c043ca176690025ed896e7d09d8b654e7766a
+│     - JLLSource strace_jll  sha1:e4d5efc4349341e4aec534c109a39a85b8ddcb74
+│     - JLLSource libtree_jll  sha1:31b5758e11ec188ea824c6e8028e72bdec520f74
+│     - JLLSource ripgrep_jll  sha1:af8985028c1f1d0ec073ee81226b3db43dd6c439
+│     - JLLSource libstdcxx_jll runtime sha1:1e8c06932a70d97dcc9ebbfbf672837c7bd0260b
+│     - JLLSource GCC_support_libraries_jll runtime sha1:f989d3f5b7dd4db0b199013b0872b2c07c27eab8
+│   /opt/target-aarch64-linux-gnu = sha1:b9c4a8b63e7ededde072c4ef0464288e24815318
+│     - GeneratedSource: wrappers sha1:8f7cd737ff168d78373469edb0cf07e0e5e2a44c
+│     - GeneratedSource: wrappers sha1:b2e500f186890ca4b13ea8634c2b9287a90d2499
+│     - JLLSource Binutils_jll gcc sha1:265ac0fca2dc65da2ffaa6a5ad20d6d16d1623df
+│     - JLLSource LinuxKernelHeaders_jll gcc/aarch64-linux-gnu/usr sha1:9dc8b93248cd24d5e4ea90c01856a6553e69ba22
+│     - JLLSource Glibc_jll gcc/aarch64-linux-gnu sha1:f48edfeeb834732af7cea2caec502b42e6519b2d
+│     - JLLSource GCC_jll gcc sha1:d74cb5b93fcac07759ac3bdde8f450668e877940
+│     - JLLSource GCC_support_libraries_jll gcc sha1:262d7535a798070bd1bc3cb791ee9cf4e6838cdb
+│     - JLLSource GCC_crt_objects_jll gcc sha1:43f8c8448210e34e95e9b91cf9e607240c9d7ee3
+│     - JLLSource libstdcxx_jll gcc sha1:b66b45d43925f9375efef1be896935d2a6fc11aa
+│     - JLLSource pkgconf_jll pkgconf sha1:08ebecab56e453db55392f9451fdf2ab9bdda249
 │   /usr/local = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │   /usr/share/licenses = sha1:d2d5d79765fa352588f9fc23b2abfef1a5d0fb96
 │     - DirectorySource:  sha1:c356bf9f9da20681cd510e2ae79a7e30941b6261
 │   /workspace/destdir/target-aarch64-linux-gnu = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
-│   /workspace/metadir = sha1:091bf082e48cbb7ce5a24f701eeacc6a117df8c9
-│     - GeneratedSource:  sha1:693ad3f9fb2974038857fa03f1fb6338f068db9e
+│   /workspace/metadir = sha1:aaa0d245ac10b10ab94373170dd0c03d7701832c
+│     - GeneratedSource:  sha1:8530abbcee8051b560872b79c9201c9d9aea53da
 │   /workspace/scripts = sha1:a7189afd9cd7aa875783487b074364ffa0a276ed
 │     - DirectorySource:  sha1:dbeb610a5ce1290d66c3340ff123041d079df083
 │   /workspace/srcdir = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [environment]
-│   BinaryBuilder2 v1.2.2 = sha1:fc730fd71fcc6996072126b5056b28a235b3cb28
-│   BinaryBuilderAuditor v0.3.0 = sha1:6e06ec871d08017cf16402e743f91a4e2807c24b
+│   BinaryBuilder2 v1.4.4 = sha1:6d290be9244057f54318ca86b63d20992320aa57
+│   BinaryBuilderAuditor v0.4.7 = sha1:cfe5b11125ad337abee50df6622064bb0ac3721d
 │   BinaryBuilderGitUtils v0.3.0 = sha1:9fe8fe2a6fec7bcbf47cdca0e3a6189989ff5f4a
-│   BinaryBuilderPlatformExtensions v0.2.1 = sha1:0932b3529a238dc2db243b16c170b93d197345cf
-│   BinaryBuilderProducts v0.3.0 = sha1:909099b068360e9edca71294f212a44080455ba3
-│   BinaryBuilderSources v0.2.5 = sha1:51e7fd808de0cb6ec9e256d9b468d4728d23eb99
-│   BinaryBuilderToolchains v0.3.4 = sha1:864a849652194a89fc00ad173392b66386d716ec
-│   JLLGenerator v0.5.2 = sha1:a6c22056b4f70a3024f47adf625f790622cf5bf1
-│   JLLPrefixes v0.4.2 = sha1:ffa37008d2c195492c50fad49e18906b524c3552
+│   BinaryBuilderPlatformExtensions v0.2.2 = sha1:bebe0418f40164ff08d191b85cc55c6db1c1168a
+│   BinaryBuilderProducts v0.4.0 = sha1:d51596bd9cc8bb0935cb8f33c80b79ce8bdd17ee
+│   BinaryBuilderSources v0.3.6 = sha1:cd2720a0f8f0b3011c52f062be951ff326a5f776
+│   BinaryBuilderToolchains v0.5.0 = sha1:642f70c6b149fc191e7b44844c4b6670160b3ec2
+│   JLLGenerator v0.6.0 = sha1:5e510be2e08fc91283c414abefb108c481901294
+│   JLLPrefixes v0.4.3 = sha1:64570d6b5f41521d8c7899b9c050d76a03f4528a
 │   KeywordArgumentExtraction v1.2.0 = sha1:4131dc24111f7e6708381b6194452df6e611239f
-│   LazyJLLWrappers v1.2.1 = sha1:e6ee0a34be8d06343ad0c72cfeddd4c1b5d8f0cf
-│   MultiHashParsing v0.2.1 = sha1:ff1ccf39c899dbad78cf5dadb9d8f55e6405fdc7
-│   Sandbox v2.1.4 = sha1:2ae8f3cc0a6c40ad2e283a0147e065c21480e51a
+│   LazyJLLWrappers v1.2.7 = sha1:ad57e8d126ed98ec169e1a710c5dd9e04d298c1d
+│   MultiHashParsing v0.2.2 = sha1:0476b43f1f3c55ade6bf70609530991ddb4c2c89
+│   Sandbox v2.3.0 = sha1:5759ba67d24e88176a84c23bb47bac5395a23765
 │   ScratchSpaceGarbageCollector v0.1.2 = sha1:9671df55bab8965e27397e40ccc71f81ecb4ddc2
 │   TreeArchival v0.2.0 = sha1:f13cb32318ba8fa878ab174e40f68ba875fe134a
-└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/BuildConfig.jl:289
+└ @ BinaryBuilder2 ~/src/experiments/BB2-compiler-toolchains-transfer/worktrees/BinaryBuilder2.jl-ldconfig-dropin/src/build_api/BuildConfig.jl:290
 ┌ Debug: ExtractConfig hash buffer:
 │ [extraction_metadata]
-│   build_hash = sha1:fd633e730dc47f012582f48b44393503f45257aa
+│   build_hash = sha1:70763ef1f5e90f97dc2c29d226088d7196d84abe
 │   script_hash = sha1:da39a3ee5e6b4b0d3255bfef95601890afd80709
 │ [products]
 │   libfoo = ["libfoo"]
-└ @ BinaryBuilder2 /media/share/dev/BinaryBuilder2/src/build_api/ExtractConfig.jl:112
-sha1:e53042b52d7a3e7371da37a12e14aba39ce9258d
+└ @ BinaryBuilder2 ~/src/experiments/BB2-compiler-toolchains-transfer/worktrees/BinaryBuilder2.jl-ldconfig-dropin/src/build_api/ExtractConfig.jl:141
+sha1:9ee4849d5ba56938a7c0b8297f187b7612b5054f
 ```
 
 
