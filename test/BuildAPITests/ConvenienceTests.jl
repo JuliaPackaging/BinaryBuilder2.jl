@@ -232,6 +232,29 @@ end
         end
     end
 
+    @testset "CMake search prefixes" begin
+        # `/usr/local` is the host prefix; CMake searches it by default for every
+        # Unix-like target, so non-host `CMakeToolchain`s must be told to ignore it,
+        # whether they're cross-compiling or not.
+        plan = make_target_spec_plan(;
+            host_toolchains = [CToolchain(), CMakeToolchain(), HostToolsToolchain()],
+            target_toolchains = [CToolchain(), CMakeToolchain()],
+        )
+        host = Platform(arch(HostPlatform()), "linux")
+        for target in (host, Platform(arch(HostPlatform()) == "aarch64" ? "x86_64" : "aarch64", "linux"))
+            for spec in apply_spec_plan(plan, host, target)
+                cmake = only(t for t in spec.toolchains if isa(t, CMakeToolchain))
+                @test cmake.prefix_paths == [BinaryBuilder2.target_prefix(spec)]
+                if spec.name == "host"
+                    @test BinaryBuilder2.target_prefix(spec) == BinaryBuilder2.host_prefix()
+                    @test isempty(cmake.ignore_prefix_paths)
+                else
+                    @test cmake.ignore_prefix_paths == [BinaryBuilder2.host_prefix()]
+                end
+            end
+        end
+    end
+
     @testset "dependency compat" begin
         # The platformless `JLLSource` constructor splits its keyword arguments between
         # `PkgSpec` and `JLLSource`.

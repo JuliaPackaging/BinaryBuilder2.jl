@@ -5,9 +5,22 @@ struct CMakeToolchain <: AbstractToolchain
     wrapper_prefixes::Vector{String}
     env_prefixes::Vector{String}
 
+    # Prefixes that `find_package()`, `find_library()`, etc... search before CMake's
+    # platform-default prefixes.  In BinaryBuilder this is the prefix that this
+    # toolchain's dependencies are installed into.
+    prefix_paths::Vector{String}
+
+    # Prefixes that `find_*()` never search, even though CMake's platform modules
+    # list them by default.  In BinaryBuilder the target toolchain ignores the host
+    # prefix `/usr/local`, which CMake searches by default on every Unix-like target
+    # (cross-compiling or not), but which holds dependencies built for the host.
+    ignore_prefix_paths::Vector{String}
+
     function CMakeToolchain(platform::CrossPlatform;
                             env_prefixes = [""],
-                            wrapper_prefixes = ["\${triplet}-", ""])
+                            wrapper_prefixes = ["\${triplet}-", ""],
+                            prefix_paths = String[],
+                            ignore_prefix_paths = String[])
         if isempty(wrapper_prefixes)
             throw(ArgumentError("Cannot have empty wrapper prefixes!  Did you mean [\"\"]?"))
         end
@@ -18,6 +31,8 @@ struct CMakeToolchain <: AbstractToolchain
             platform,
             string.(wrapper_prefixes),
             string.(env_prefixes),
+            string.(prefix_paths),
+            string.(ignore_prefix_paths),
         )
     end
 end
@@ -91,6 +106,26 @@ function generate_cmake_toolchain_file(toolchain::CMakeToolchain, io::IO)
     execute_process(COMMAND \$ENV{CC} -print-sysroot OUTPUT_VARIABLE CMAKE_SYSROOT OUTPUT_STRIP_TRAILING_WHITESPACE)
     """)
 
+    # CMake's platform modules (e.g. `Platform/UnixPaths.cmake`) append `/usr/local`,
+    # `/usr`, `/`, etc... to `CMAKE_SYSTEM_PREFIX_PATH` after this file is read, so
+    # prepending here puts our prefixes ahead of those, while still leaving them behind
+    # anything the user passes in via `CMAKE_PREFIX_PATH`.  The toolchain file may be
+    # read more than once per configure, so don't add duplicate entries.
+    for path in reverse(toolchain.prefix_paths)
+        println(io, """
+        if(NOT "$(path)" IN_LIST CMAKE_SYSTEM_PREFIX_PATH)
+            list(PREPEND CMAKE_SYSTEM_PREFIX_PATH "$(path)")
+        endif()
+        """)
+    end
+    for path in toolchain.ignore_prefix_paths
+        println(io, """
+        if(NOT "$(path)" IN_LIST CMAKE_SYSTEM_IGNORE_PREFIX_PATH)
+            list(APPEND CMAKE_SYSTEM_IGNORE_PREFIX_PATH "$(path)")
+        endif()
+        """)
+    end
+
     if Sys.isapple(toolchain.platform.target)
         # Set frameworks for macOS
         println(io, """
@@ -153,6 +188,8 @@ function toolchain_sources(toolchain::CMakeToolchain; build_sandbox_prefix::Unio
             triplet(toolchain.platform),
             toolchain.env_prefixes...,
             toolchain.wrapper_prefixes...,
+            "prefix_paths", toolchain.prefix_paths...,
+            "ignore_prefix_paths", toolchain.ignore_prefix_paths...,
         ))),
     )
     return [
