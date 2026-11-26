@@ -32,6 +32,7 @@ testsuite = Dict{String,Expr}(
     "CToolchain/macos_strip" => include_test("CToolchain/macos_strip.jl"),
     "CToolchain/macos_as" => include_test("CToolchain/macos_as.jl"),
     "CMakeToolchain/basic" => include_test("CMakeToolchain/basic.jl"),
+    "CMakeToolchain/search_paths" => include_test("CMakeToolchain/search_paths.jl"),
 )
 for target in supported_platforms(CToolchain)
     testsuite["CToolchain/compile_all/$(triplet(target))"] = target_test("CToolchain/compile_all.jl", CToolchain, target)

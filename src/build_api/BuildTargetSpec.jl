@@ -115,6 +115,25 @@ function alter_toolchain(target_prefix::String, pw::PlatformlessWrapper{CToolcha
     ]
     return pw
 end
+function alter_toolchain(target_prefix::String, pw::PlatformlessWrapper{CMakeToolchain})
+    pw = copy(pw)
+
+    # Search the install prefix for dependencies.
+    pw.kwargs[:prefix_paths] = String[
+        get(pw.kwargs, :prefix_paths, String[])...,
+        target_prefix,
+    ]
+    # CMake searches `/usr/local` by default on all Unix-like platforms, whether
+    # cross-compiling or not, but in our build environment that is the host prefix,
+    # holding dependencies built for the host.  Only the host toolchain may look there.
+    if target_prefix != host_prefix()
+        pw.kwargs[:ignore_prefix_paths] = String[
+            get(pw.kwargs, :ignore_prefix_paths, String[])...,
+            host_prefix(),
+        ]
+    end
+    return pw
+end
 alter_toolchain(::String, pw::PlatformlessWrapper) = pw
 alter_toolchain(::String, toolchain::AbstractToolchain) = toolchain
 
