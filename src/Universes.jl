@@ -36,10 +36,58 @@ function registries_to_download(registries::Vector{RegistrySpec}, depot_path::St
 end
 
 """
+    installed_registry_tree_hash(reg::RegistryInstance)
+
+Return the git tree hash of the installed registry `reg` (for a git checkout, that of
+`HEAD`), or `nothing` if it is neither a tarball nor a git checkout.
+"""
+function installed_registry_tree_hash(reg::RegistryInstance)
+    if reg.tree_info !== nothing
+        return bytes2hex(reg.tree_info.bytes)
+    end
+    if !isdir(joinpath(reg.path, ".git"))
+        return nothing
+    end
+    return readchomp(Git.git(["-C", reg.path, "rev-parse", "HEAD^{tree}"]))
+end
+
+"""
+    link_installed_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
+
+If a depot on `DEPOT_PATH` has the snapshot `tree_hash` of `reg` installed, symlink it
+into `depot_path` and return `true`.
+"""
+function link_installed_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
+    regdir = joinpath(depot_path, "registries")
+    if ispath(joinpath(regdir, reg.name)) || ispath(joinpath(regdir, string(reg.name, ".toml")))
+        return false
+    end
+    depots = filter(d -> abspath(d) != abspath(depot_path), Base.DEPOT_PATH)
+    for inst in Pkg.Registry.reachable_registries(; depots)
+        same_registry = reg.uuid === nothing ? inst.name == reg.name : inst.uuid == reg.uuid
+        if !same_registry || installed_registry_tree_hash(inst) != tree_hash
+            continue
+        end
+        mkpath(regdir)
+        if isdir(inst.path)
+            symlink(inst.path, joinpath(regdir, reg.name))
+        else
+            # `inst.path` is the `.toml` that names the tarball next to it
+            tarball = TOML.parsefile(inst.path)["path"]::String
+            symlink(joinpath(dirname(inst.path), tarball), joinpath(regdir, tarball))
+            symlink(inst.path, joinpath(regdir, string(reg.name, ".toml")))
+        end
+        return true
+    end
+    return false
+end
+
+"""
     download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot_path::String)
 
-Download the snapshot of `reg` whose git tree hash is `tree_hash` from the package
-server into `depot_path`, the same way that `Pkg` stores the registries it downloads
+Make the snapshot of `reg` whose git tree hash is `tree_hash` available in `depot_path`,
+linking an installed copy if a depot on `DEPOT_PATH` has one, and otherwise downloading
+it from the package server the same way that `Pkg` stores the registries it downloads
 (a tarball next to a `.toml` that records its tree hash).  Does nothing if `depot_path`
 already holds that snapshot.
 """
@@ -48,6 +96,9 @@ function download_registry_snapshot!(reg::RegistrySpec, tree_hash::String, depot
     regdir = joinpath(depot_path, "registries")
     toml_path = joinpath(regdir, string(reg.name, ".toml"))
     if isfile(toml_path) && get(TOML.parsefile(toml_path), "git-tree-sha1", nothing) == tree_hash
+        return
+    end
+    if link_installed_registry_snapshot!(reg, tree_hash, depot_path)
         return
     end
 
