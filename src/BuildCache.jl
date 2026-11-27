@@ -1,4 +1,6 @@
 using MultiHashParsing, TOML, StructEquality
+using BinaryBuilderSources: atomic_write
+import FileWatching
 export BuildCache
 
 """
@@ -327,12 +329,22 @@ function import_archives(bc::BuildCache, dir::String)
 end
 
 
+is_sha1_hex(str::AbstractString) = occursin(r"^[0-9a-f]{40}$", str)
+
+# Write `path` through a staging file that is then renamed into place, so that a reader
+# (or a crash) never sees a partially written or interleaved file.
+write_db_file(f::Function, path::String) = atomic_write(staging_path -> open(f, staging_path; write=true), path)
+
 function load_build_entries!(build_entries::Dict{SHA1Hash,BuildCacheBuildEntry}, cache_dir::String)
     safe_open(joinpath(cache_dir, "build_entries.db"); read=true) do io
         for line in readlines(io)
             parts = split(line, " ")
             length(parts) == 2 || continue
             build_hash_str, log_artifact_hash_str = parts
+            if !is_sha1_hex(build_hash_str) || !is_sha1_hex(log_artifact_hash_str)
+                @warn("Skipping malformed line in build cache database", path=joinpath(cache_dir, "build_entries.db"), line=first(line, 200))
+                continue
+            end
             env_path = joinpath(cache_dir, "envs", "$(build_hash_str).env")
             if !isfile(env_path)
                 continue
@@ -358,6 +370,10 @@ function load_extract_entries!(extract_entries::Dict{SHA1Hash,BuildCacheExtractE
             parts = split(line, " ")
             length(parts) == 3 || continue
             extract_hash_str, artifact_hash_str, log_artifact_hash_str = parts
+            if !all(is_sha1_hex, parts)
+                @warn("Skipping malformed line in build cache database", path=joinpath(cache_dir, "extract_entries.db"), line=first(line, 200))
+                continue
+            end
             jlp_path = joinpath(cache_dir, "jll_lib_products", "$(extract_hash_str).jlp")
             if !isfile(jlp_path)
                 @debug("skip: jlp nonexistent", extract_hash=extract_hash_str)
@@ -394,8 +410,18 @@ function save_cache(bc::BuildCache)
         return
     end
 
+    # Processes that share `cache_dir` (e.g. concurrent builds) each merge the on-disk
+    # entries into their own; holding this lock from loading to writing keeps one
+    # process from overwriting entries that another saved in the meantime.  A lock
+    # left behind by a process that died is taken over once it goes stale.
+    FileWatching.Pidfile.mkpidlock(joinpath(bc.cache_dir, "save_cache.lock"); stale_age=60) do
+        save_cache_locked(bc)
+    end
+end
+
+function save_cache_locked(bc::BuildCache)
     # Write out `artifacts_dir` so that we can persist that setting properly
-    open(joinpath(bc.cache_dir, "artifacts_dir"); write=true) do io
+    write_db_file(joinpath(bc.cache_dir, "artifacts_dir")) do io
         println(io, bc.artifacts_dir)
     end
 
@@ -414,7 +440,7 @@ function save_cache(bc::BuildCache)
     mkpath(joinpath(bc.cache_dir, "envs"))
     mkpath(joinpath(bc.cache_dir, "sources"))
     mkpath(joinpath(bc.cache_dir, "dependency_versions"))
-    open(joinpath(bc.cache_dir, "build_entries.db"); write=true) do io
+    write_db_file(joinpath(bc.cache_dir, "build_entries.db")) do io
         for (build_hash, b) in merged_build_entries
             println(io, "$(bytes2hex(build_hash)) $(bytes2hex(b.log_artifact))")
 
@@ -438,7 +464,7 @@ function save_cache(bc::BuildCache)
 
     # Serialize out extraction output cache
     mkpath(joinpath(bc.cache_dir, "jll_lib_products"))
-    open(joinpath(bc.cache_dir, "extract_entries.db"); write=true) do io
+    write_db_file(joinpath(bc.cache_dir, "extract_entries.db")) do io
         for (extract_hash, e) in merged_extract_entries
             println(io, "$(bytes2hex(extract_hash)) $(bytes2hex(e.artifact)) $(bytes2hex(e.log_artifact))")
 
