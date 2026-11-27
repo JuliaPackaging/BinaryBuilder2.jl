@@ -3,6 +3,7 @@ using BinaryBuilder2: load_cache, save_cache, prune!, export_archive, import_arc
 using BinaryBuilder2: load_build_entries!, load_extract_entries!
 using BinaryBuilder2: BuildCacheBuildEntry, BuildCacheExtractEntry, Universe, export_source_records, export_dependency_versions
 using JLLGenerator, TOML
+import FileWatching
 using BinaryBuilder2.BinaryBuilderAuditor: RuntimeRequirement, RuntimeRequirements
 
 @testset "BuildCache" begin
@@ -101,6 +102,8 @@ using BinaryBuilder2.BinaryBuilderAuditor: RuntimeRequirement, RuntimeRequiremen
         save_cache(bc)
         @test isfile(joinpath(cache_dir, "build_entries.db"))
         @test isfile(joinpath(cache_dir, "extract_entries.db"))
+        # `save_cache()` writes each file through a temporary file that it then moves into place
+        @test sort(filter(f -> isfile(joinpath(cache_dir, f)), readdir(cache_dir))) == ["artifacts_dir", "build_entries.db", "extract_entries.db"]
 
         # Also export buildcache entries:
         export_archive(bc, build1_hash, extract1_hash, archive_dir)
@@ -247,6 +250,12 @@ end
         @test length(entries3) == 1
         @test haskey(entries3, h1)
 
+        # A line with NUL bytes (as left behind by a torn concurrent write) → entry skipped
+        write(db, "\0"^64 * "$(bytes2hex(h2)) $(bytes2hex(log2))\n$(bytes2hex(h1)) $(bytes2hex(log1))\n")
+        entries_nul = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(entries_nul, cache_dir)
+        @test collect(keys(entries_nul)) == [h1]
+
         # Missing db file → empty result, no error
         rm(db)
         entries4 = Dict{SHA1Hash,BuildCacheBuildEntry}()
@@ -326,6 +335,12 @@ end
         @test length(entries4) == 1
         @test haskey(entries4, h1)
 
+        # A line with NUL bytes (as left behind by a torn concurrent write) → entry skipped
+        write(db, "\0"^64 * "$(bytes2hex(h2)) $(bytes2hex(art2)) $(bytes2hex(log2))\n$(bytes2hex(h1)) $(bytes2hex(art1)) $(bytes2hex(log1))\n")
+        entries_nul = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(entries_nul, cache_dir)
+        @test collect(keys(entries_nul)) == [h1]
+
         # Missing db file → empty result, no error
         rm(db)
         entries5 = Dict{SHA1Hash,BuildCacheExtractEntry}()
@@ -339,5 +354,49 @@ end
         load_extract_entries!(entries6, cache_dir)
         @test haskey(entries6, h1)
         @test entries6[h2] === existing_entry
+    end
+end
+
+@testset "concurrent save_cache" begin
+    # Several `BuildCache`s that share a `cache_dir` and save at the same time all keep
+    # their entries, and leave no staging or lock files behind.
+    mktempdir() do cache_dir
+        n = 8
+        caches = map(1:n) do i
+            bc = BuildCache(; cache_dir, artifacts_dir=cache_dir)
+            put!(bc, SHA1Hash(sha1("build$(i)")), SHA1Hash(sha1("extract$(i)")),
+                 SHA1Hash(sha1("build_log$(i)")), Dict("i" => string(i)),
+                 SHA1Hash(sha1("artifact$(i)")), SHA1Hash(sha1("extract_log$(i)")),
+                 AbstractJLLProduct[], RuntimeRequirements())
+            bc
+        end
+        @sync for bc in caches
+            Threads.@spawn save_cache(bc)
+        end
+
+        build_entries = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(build_entries, cache_dir)
+        @test sort(collect(keys(build_entries))) == sort([SHA1Hash(sha1("build$(i)")) for i in 1:n])
+        extract_entries = Dict{SHA1Hash,BuildCacheExtractEntry}()
+        load_extract_entries!(extract_entries, cache_dir)
+        @test length(extract_entries) == n
+        @test sort(readdir(cache_dir)) == ["artifacts_dir", "build_entries.db", "dependency_versions", "envs", "extract_entries.db", "jll_lib_products", "sources"]
+
+        # `save_cache()` waits for the lock that another saving process holds
+        bc = BuildCache(; cache_dir, artifacts_dir=cache_dir)
+        put!(bc, SHA1Hash(sha1("build_late")), SHA1Hash(sha1("extract_late")),
+             SHA1Hash(sha1("build_log_late")), Dict("late" => "1"),
+             SHA1Hash(sha1("artifact_late")), SHA1Hash(sha1("extract_log_late")),
+             AbstractJLLProduct[], RuntimeRequirements())
+        lock = FileWatching.Pidfile.mkpidlock(joinpath(cache_dir, "save_cache.lock"))
+        t = Threads.@spawn save_cache(bc)
+        sleep(2)
+        @test !istaskdone(t)
+        close(lock)
+        wait(t)
+        build_entries = Dict{SHA1Hash,BuildCacheBuildEntry}()
+        load_build_entries!(build_entries, cache_dir)
+        @test length(build_entries) == n + 1
+        @test haskey(build_entries, SHA1Hash(sha1("build_late")))
     end
 end
