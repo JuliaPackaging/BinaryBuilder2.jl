@@ -185,7 +185,7 @@ function build_eager_mode(jb::JLLBlocks, lib_products)
     # through the object itself, so that its dependencies and on-load callback run.
     for lib in lib_products
         var_name, path_var_name, _ = product_names(lib)
-        push!(statements, :(dlopen($(use_lazy_libraries() ? var_name : path_var_name))))
+        push!(statements, :(dlopen($(use_lazy_libraries() ? var_name : :(LazyJLLWrappers.dlopen_path($(path_var_name)))))))
     end
 
     push!(jb.top_level_blocks, quote
