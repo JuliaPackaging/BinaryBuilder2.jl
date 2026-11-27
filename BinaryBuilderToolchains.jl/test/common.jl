@@ -21,9 +21,12 @@ function capture_output(cmd)
     return p, output
 end
 
+# General has the bootstrap toolchain JLLs (`GCCBootstrap_jll`, `GCCBootstrapManual_jll`)
+# for x86_64 hosts only, so the `*_bootstrap` vendors are only tested there.
+bootstrap_vendors_available(curr_arch = arch(BBHostPlatform())) = curr_arch == "x86_64"
+
 function vendors_to_test(curr_arch = arch(BBHostPlatform()))
-    # Only test the `*_bootstrap` vendors on x86_64, where I actually did the bootstrapping.
-    if curr_arch == "x86_64"
+    if bootstrap_vendors_available(curr_arch)
         return (:auto, :gcc, :clang, :gcc_bootstrap, :clang_bootstrap)
     else
         return (:auto, :gcc, :clang)

@@ -34,6 +34,10 @@ testsuite = Dict{String,Expr}(
     "CMakeToolchain/basic" => include_test("CMakeToolchain/basic.jl"),
     "CMakeToolchain/search_paths" => include_test("CMakeToolchain/search_paths.jl"),
 )
+# General has the bootstrap toolchain JLLs for x86_64 hosts only
+if Sys.ARCH != :x86_64
+    delete!(testsuite, "CToolchain/native/bootstrap")
+end
 for target in supported_platforms(CToolchain)
     testsuite["CToolchain/compile_all/$(triplet(target))"] = target_test("CToolchain/compile_all.jl", CToolchain, target)
 end
