@@ -11,20 +11,12 @@ const jll_pins = Dict{Tuple{String,String},String}(
     ("GCC_crt_objects_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")        => "1c6f56fd5471f56f46f7b46e5859ae480b6b4104",
     ("GCC_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                    => "181c76956103befe66bb9fd4a424c259f71777e1",
     ("GCC_support_libraries_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")  => "bd35c7ff60f26aef389e6094ce4229dbc85528d6",
-    ("GCCBootstrap_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")          => "8d20e6cbb2fed8d8f4a27ea4d484f07b4d6449ae",
-    ("GCCBootstrap_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")           => "dd01ef390f652b38876fd181832ed024d7cb2262",
-    ("GCCBootstrapManual_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")    => "af907c5086943c7af3181cb1d05496cf72f16d31",
-    ("GCCBootstrapManual_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")     => "e5e7fbffdbac657c907cb2dd2ce5297e9001fa0c",
     ("libLLVM_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")                => "f36dd1b43f296b5239151ceade31bfdbbe7f0e85",
     # TODO: When this moves to a General release of libstdcxx_jll, built from GCC >= 14.3 or
     # with the PR116159 patch (`<iostream>` references `std::ios_base_library_init()` only
     # on ELF), remove the `/alternatename:_ZSt21ios_base_library_initv` workaround in
     # `clang_wrappers()`.
     ("libstdcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")              => "636a940505a67f597bf22c18bb0fd2dbbae2b45c",
-    ("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-aarch64-linux-gnu")   => "b19e567cc04c54f10890368a419c1f73fef305e6",
-    ("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")    => "05d6642da497ddbeea187988ab1fca1e38364f5f",
-    ("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-aarch64-linux-gnu") => "62fd2c28b11f48366ea8de7dcc9f711a735b8462",
-    ("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")  => "7214cef0c101b668960de5bf364a227f0ca5bfff",
     ("LLVMCompilerRT_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")         => "6906d5e391b23af8f2486c5350e9e4392944de65",
     ("LLVMLibcxx_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")             => "cae8f7a4b36bb5ea06c1ff48dfeb08ee2a38c8c8",
     ("LLVMLibunwind_jll", "bb2/GCCBootstrap-x86_64-linux-gnu")          => "a2d527dc0159edf7cd4f11fc319bdceae781cd17",

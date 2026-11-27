@@ -12,8 +12,11 @@ end
     universe_name = "BB2_tests-$(randstring(4))"
     meta = BuildMeta(;universe_name,target_list=[BBHostPlatform()])
     bootstrap_dir = joinpath(pkgdir(BinaryBuilder2), "bootstrap")
+    # `bootstrap/Zlib` builds with `CToolchain(; vendor=:gcc_bootstrap)`, and General has
+    # the bootstrap toolchain JLLs for x86_64 hosts only
+    build_zlib = Sys.ARCH == :x86_64
 
-    @testset "Zlib" begin
+    build_zlib && @testset "Zlib" begin
         # Test a `--dry-run` first!
         zlib_build_script_path = joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl")
         run_build_tarballs(meta, zlib_build_script_path; dry_run=true)
@@ -134,7 +137,7 @@ end
 
     # Test that we can see these builds in our universe:
     uni = Universe(universe_name; persistent=false)
-    jll_names = ["Zlib_jll", "Ncurses_jll", "Readline_jll"]
+    jll_names = build_zlib ? ["Zlib_jll", "Ncurses_jll", "Readline_jll"] : ["Ncurses_jll", "Readline_jll"]
     @test all(BinaryBuilder2.contains_jll.((uni,), jll_names))
 
     # Test that these builds got the correct build_script_path
@@ -144,13 +147,13 @@ end
             @test abspath(build_result.config.build_script_path) == true_path
         end
     end
-    check_build_script_path("Zlib")
+    build_zlib && check_build_script_path("Zlib")
     check_build_script_path("Readline")
     check_build_script_path("Ncurses")
 
     # All the tests above target a native linux; let's run a test on Windows and macOS, just so that
     # we're exercising those troublesome platforms in at least some way:
-    @testset "Zlib on Windows and macOS" begin
+    build_zlib && @testset "Zlib on Windows and macOS" begin
         meta = BuildMeta(;universe_name,target_list=[Platform("x86_64", "windows"), Platform("aarch64", "macos"; os_version=v"20")])
         run_build_tarballs(meta, joinpath(bootstrap_dir, "Zlib", "build_tarballs.jl"))
         package_result = get_package_result(meta, "Zlib")

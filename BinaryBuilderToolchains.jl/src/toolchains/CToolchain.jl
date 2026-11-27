@@ -500,10 +500,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LLVMBootstrap_Clang_jll",
             platform;
             uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
-            ),
             version=v"17.0.0",
             target=get_simple_vendor(vendor),
         ),
@@ -511,10 +507,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             "LLVMBootstrap_libLLVM_jll",
             platform;
             uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
-            repo=Pkg.Types.GitRepo(
-                rev=pinned_rev("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
-            ),
             version=v"17.0.0",
             target=get_simple_vendor(vendor),
         ),
@@ -555,10 +547,6 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
                     "GCCBootstrapManual_jll",
                     platform;
                     uuid = Base.UUID("f60369a9-3442-5217-af1b-bf3786f10eba"),
-                    repo=Pkg.Types.GitRepo(
-                        rev=pinned_rev("GCCBootstrapManual_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                        source="https://github.com/staticfloat/GCCBootstrapManual_jll.jl"
-                    ),
                     version=v"14.2.0",
                     target="gcc",
                 ),
@@ -568,14 +556,7 @@ function jll_source_selection(vendor::Symbol, platform::CrossPlatform,
             push!(deps, JLLSource(
                 "GCCBootstrap_jll",
                 platform;
-                repo=Pkg.Types.GitRepo(
-                    # When we push up a new build of `GCCBootstrap_jll`, we always built it
-                    # for the host we're actually doing the bootstrap from.  Because of this,
-                    # we only get a single host architecture at a time.  That's fine, but
-                    # it means that we need to choose branches named by the host platform.
-                    rev=pinned_rev("GCCBootstrap_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                    source="https://github.com/staticfloat/GCCBootstrap_jll.jl"
-                ),
+                uuid=Base.UUID("7627cfbf-f290-59f7-b5e8-595c7b62b918"),
                 version=v"14.2.0",
                 target="gcc",
             ))

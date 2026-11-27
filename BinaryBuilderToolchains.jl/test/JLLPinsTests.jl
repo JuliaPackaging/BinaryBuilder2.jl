@@ -16,7 +16,10 @@ using BinaryBuilderSources: tracks_branch
             @test !any(log -> occursin("tracks a branch", log.message), logs)
             repo_deps = filter(dep -> dep.package.repo.source !== nothing,
                                vcat(toolchain.deps, toolchain.binutils_toolchain.deps))
-            @test !isempty(repo_deps)
+            # The `:bootstrap` toolchains for Linux and Windows come entirely from General
+            if vendor == :auto
+                @test !isempty(repo_deps)
+            end
             @test !any(dep -> tracks_branch(dep.package), repo_deps)
         end
     end

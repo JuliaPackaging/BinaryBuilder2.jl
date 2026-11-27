@@ -90,10 +90,6 @@ function binutils_jll_source_selection(vendor, platform)
                     "LLVMBootstrap_Clang_jll",
                     platform;
                     uuid=Base.UUID("b81fd3a9-9257-59d0-818a-b16b9f1e1eb9"),
-                    repo=Pkg.Types.GitRepo(
-                        rev=pinned_rev("LLVMBootstrap_Clang_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                        source="https://github.com/staticfloat/LLVMBootstrap_Clang_jll.jl"
-                    ),
                     version=v"17.0.0",
                     target=get_simple_vendor(vendor),
                 ),
@@ -101,10 +97,6 @@ function binutils_jll_source_selection(vendor, platform)
                     "LLVMBootstrap_libLLVM_jll",
                     platform;
                     uuid=Base.UUID("de72bca2-3cdf-50cb-9084-6e985cd8d9f3"),
-                    repo=Pkg.Types.GitRepo(
-                        rev=pinned_rev("LLVMBootstrap_libLLVM_jll", "bb2/GCCBootstrap-$(triplet(platform.host))"),
-                        source="https://github.com/staticfloat/LLVMBootstrap_libLLVM_jll.jl"
-                    ),
                     version=v"17.0.0",
                     target=get_simple_vendor(vendor),
                 ),

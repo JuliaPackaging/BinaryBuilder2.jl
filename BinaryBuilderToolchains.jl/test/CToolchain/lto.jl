@@ -16,6 +16,9 @@
             (Platform("x86_64", "windows"), :clang, :auto),
             (Platform("i686", "windows"), :clang, :ld),
         ]
+        if !bootstrap_vendors_available()
+            filter!(((_, vendor, _),) -> vendor ∉ (:gcc_bootstrap, :clang_bootstrap), lto_targets)
+        end
         for (target, vendor, linker) in lto_targets
             target_cp = CrossPlatform(BBHostPlatform() => target)
             native = target == HostPlatform()

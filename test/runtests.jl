@@ -29,6 +29,12 @@ testsuite = Dict{String,Expr}(
     "BuildAPI/FrameworkProduct" => include_test("BuildAPITests/FrameworkProductTests.jl"),
 )
 
+# `CustomSpec` builds with `CToolchain(; vendor=:bootstrap)`, and General has the bootstrap
+# toolchain JLLs for x86_64 hosts only
+if Sys.ARCH != :x86_64
+    delete!(testsuite, "BuildAPI/CustomSpec")
+end
+
 init_code = quote
     import Random
     include($(joinpath(@__DIR__, "TestingUtils.jl")))
